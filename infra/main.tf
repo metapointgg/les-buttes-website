@@ -1,8 +1,10 @@
 locals {
-  aliases         = var.custom_domain_enabled ? [var.domain_name, "www.${var.domain_name}"] : []
-  manage_dns      = var.custom_domain_enabled && var.hosted_zone_id != null
-  create_cert     = var.custom_domain_enabled && var.existing_certificate_arn == null && local.manage_dns
-  certificate_arn = local.create_cert ? aws_acm_certificate.site[0].arn : var.existing_certificate_arn
+  aliases                  = var.custom_domain_enabled ? [var.domain_name, "www.${var.domain_name}"] : []
+  manage_dns               = var.custom_domain_enabled && var.hosted_zone_id != null
+  create_cert              = var.custom_domain_enabled && var.existing_certificate_arn == null && local.manage_dns
+  certificate_arn          = local.create_cert ? aws_acm_certificate.site[0].arn : var.existing_certificate_arn
+  create_github_oidc       = var.github_oidc_provider_arn == null
+  github_oidc_provider_arn = local.create_github_oidc ? aws_iam_openid_connect_provider.github[0].arn : var.github_oidc_provider_arn
 }
 
 resource "aws_s3_bucket" "site" {
@@ -248,6 +250,8 @@ resource "aws_route53_record" "www" {
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
+  count = local.create_github_oidc ? 1 : 0
+
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
@@ -259,7 +263,7 @@ data "aws_iam_policy_document" "github_assume" {
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
+      identifiers = [local.github_oidc_provider_arn]
     }
 
     condition {
