@@ -23,14 +23,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - run: npm ci
-      - run: npm run build
+      - name: Inspect OIDC claims
+        shell: bash
+        run: |
+          response="$(curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")"
+          token="$(jq -r '.value' <<<"${response}")"
+          TOKEN="${token}" python - <<'PY'
+          import base64
+          import json
+          import os
+
+          payload = os.environ["TOKEN"].split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          keys = (
+              "sub",
+              "aud",
+              "repository",
+              "ref",
+              "job_workflow_ref",
+              "workflow",
+              "actor",
+              "environment",
+          )
+          print(json.dumps({key: claims.get(key) for key in keys if key in claims}, indent=2))
+          PY
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
       - name: Upload assets
         run: aws s3 sync dist/ s3://${{ env.S3_BUCKET }}/ --delete --exclude "*.html" --exclude "*.xml" --exclude "*.txt" --cache-control "public,max-age=31536000,immutable"
       - name: Upload HTML
