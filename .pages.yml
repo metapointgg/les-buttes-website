@@ -87,6 +87,15 @@ content:
       - { name: title, label: Main heading, type: string, required: true }
       - { name: eyebrow, label: Short heading, type: string, required: true }
       - { name: intro, label: Introduction, type: text, required: true }
+      - name: heroImage
+        label: Homepage main image
+        description: Used only on the Home page.
+        type: image
+        options: { media: images }
+      - name: heroAlt
+        label: Homepage image description
+        description: Briefly describe the image for visitors using screen readers. Used only on the Home page.
+        type: text
       - { name: seo, component: seo }
       - name: body
         label: Main page text
