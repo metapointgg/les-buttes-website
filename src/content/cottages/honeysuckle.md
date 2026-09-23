@@ -21,10 +21,10 @@ gallery:
   - image: /src/assets/images/cottages/honeysuckle/garden.jpg
     alt: Honeysuckle Cottage's lawned private garden
     caption: Private outdoor space
-  - image: /src/assets/images/cottages/honeysuckle/kitchen.jpg
+  - image: /src/assets/images/cottages/honeysuckle/kitchen-detail.jpg
     alt: Honeysuckle Cottage's fitted kitchen
     caption: Fully equipped kitchen
-  - image: /src/assets/images/cottages/honeysuckle/kitchen-detail.jpg
+  - image: /src/assets/images/cottages/honeysuckle/kitchen.jpg
     alt: The kitchen cooking area in Honeysuckle Cottage
     caption: Everything needed for self-catering
   - image: /src/assets/images/cottages/honeysuckle/sitting-room.jpg
