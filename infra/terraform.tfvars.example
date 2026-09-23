@@ -3,6 +3,7 @@ domain_name = "lesbuttes.com"
 custom_domain_enabled = false
 hosted_zone_id = null
 github_repository = "metapointgg/les-buttes-website"
+github_oidc_subject = "repo:metapointgg:93396632/les-buttes-website:1384090441:ref:refs/heads/main"
 # Set this when the AWS account already has the shared GitHub Actions OIDC provider.
 github_oidc_provider_arn = null
 budget_alert_email = "info@lesbuttes.com"

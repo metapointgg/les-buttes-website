@@ -31,6 +31,12 @@ variable "github_repository" {
   type        = string
 }
 
+variable "github_oidc_subject" {
+  description = "Exact GitHub Actions OIDC subject allowed to assume the deployment role"
+  type        = string
+  default     = "repo:metapointgg:93396632/les-buttes-website:1384090441:ref:refs/heads/main"
+}
+
 variable "github_oidc_provider_arn" {
   description = "ARN of an existing GitHub Actions OIDC provider; leave null to create one"
   type        = string
