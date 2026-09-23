@@ -1,6 +1,7 @@
 aws_region = "eu-west-2"
 domain_name = "lesbuttes.com"
-hosted_zone_id = "Z0123456789EXAMPLE"
-github_repository = "metapointgg/les-buttes-site"
+custom_domain_enabled = false
+hosted_zone_id = null
+github_repository = "metapointgg/les-buttes-website"
 budget_alert_email = "info@lesbuttes.com"
 monthly_budget_usd = 5
