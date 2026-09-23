@@ -1,0 +1,4 @@
+---
+interface Props{quote:string;guest:string;sourceUrl:string} const{quote,guest,sourceUrl}=Astro.props;
+---
+<figure class="review"><div class="stars" aria-label="Five-star review">★★★★★</div><blockquote>“{quote}”</blockquote><figcaption>{guest} · <a href={sourceUrl} target="_blank" rel="noopener">Read reviews on Airbnb</a></figcaption></figure>

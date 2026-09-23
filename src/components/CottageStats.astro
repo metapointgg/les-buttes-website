@@ -1,0 +1,5 @@
+---
+import Icon from './Icon.astro'; interface Props{sleeps:number;bedrooms:number;beds:number;bathrooms:number;dogFriendly?:boolean;compact?:boolean} const{sleeps,bedrooms,beds,bathrooms,dogFriendly=false,compact=false}=Astro.props;
+const items=[['guests',`Sleeps ${sleeps}`],['bed',`${bedrooms} bedrooms`],['bed',`${beds} beds`],['bath',`${bathrooms} bathrooms`]] as const;
+---
+<ul class:list={['cottage-stats',compact&&'compact']} aria-label="Accommodation summary">{items.map(([icon,label],i)=><li class:list={[compact&&i===2&&'hide-compact']}><Icon name={icon} size={18}/>{label}</li>)}{dogFriendly&&<li>● Dog friendly</li>}</ul>

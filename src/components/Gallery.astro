@@ -1,0 +1,4 @@
+---
+import ResponsiveImage from './ResponsiveImage.astro'; interface Props{items:{image:string;alt:string;caption:string}[]} const{items}=Astro.props;
+---
+<div class="gallery">{items.map((item,i)=><figure class:list={[i===0&&'wide']}><ResponsiveImage src={item.image} alt={item.alt} widths={[420,720,1100]} sizes={i===0?'(max-width:760px) 100vw,66vw':'(max-width:760px) 100vw,33vw'}/><figcaption>{item.caption}</figcaption></figure>)}</div>

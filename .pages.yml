@@ -1,0 +1,132 @@
+media:
+  - name: images
+    label: Cottage images
+    input: src/assets/images
+    output: /src/assets/images
+    rename: safe
+    categories: [image]
+components:
+  seo:
+    type: object
+    label: Search and social sharing
+    fields:
+      - { name: title, label: Page title, type: string, required: true }
+      - { name: description, label: Search description, type: text, required: true }
+content:
+  - name: cottages
+    label: Cottages
+    type: collection
+    path: src/content/cottages
+    format: yaml-frontmatter
+    filename: "{primary}.md"
+    view: { primary: name, fields: [name, status, sleeps], sort: [name, status] }
+    fields:
+      - { name: name, label: Cottage name, type: string, required: true }
+      - { name: slug, label: Web address, type: string, required: true, pattern: "^[a-z0-9-]+$" }
+      - { name: eyebrow, label: Short heading, type: string, required: true }
+      - { name: tagline, type: string, required: true }
+      - { name: summary, type: text, required: true }
+      - name: status
+        type: select
+        required: true
+        options:
+          values:
+            - { value: available, label: Available to book }
+            - { value: coming-soon, label: Not currently available }
+      - { name: sleeps, label: Guests, type: number, required: true }
+      - { name: bedrooms, type: number, required: true }
+      - { name: beds, type: number, required: true }
+      - { name: bathrooms, type: number, required: true }
+      - { name: dogFriendly, label: Dog friendly, type: boolean, required: true }
+      - { name: airbnbUrl, label: Airbnb booking link, type: string }
+      - name: heroImage
+        label: Main image
+        type: image
+        required: true
+        options: { media: images }
+      - { name: heroAlt, label: Main image description, type: text, required: true }
+      - name: gallery
+        label: Photo gallery
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{caption}" } }
+        fields:
+          - name: image
+            type: image
+            required: true
+            options: { media: images }
+          - { name: alt, label: Image description, type: text, required: true }
+          - { name: caption, type: string, required: true }
+      - { name: facilities, label: What is included, type: string, list: true }
+      - name: highlights
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{title}" } }
+        fields:
+          - { name: title, type: string, required: true }
+          - { name: text, type: text, required: true }
+      - name: review
+        label: Featured guest review
+        type: object
+        fields:
+          - { name: quote, type: text }
+          - { name: guest, type: string }
+          - { name: sourceUrl, label: Airbnb review link, type: string }
+      - { name: seo, component: seo }
+      - name: body
+        label: Main description
+        type: rich-text
+        required: true
+        options: { media: images }
+  - name: pages
+    label: General pages
+    type: collection
+    path: src/content/pages
+    format: yaml-frontmatter
+    operations: { create: false, delete: false, rename: false }
+    view: { primary: title, fields: [title, eyebrow], sort: [title] }
+    fields:
+      - { name: title, label: Main heading, type: string, required: true }
+      - { name: eyebrow, label: Short heading, type: string, required: true }
+      - { name: intro, label: Introduction, type: text, required: true }
+      - { name: seo, component: seo }
+      - name: body
+        label: Main page text
+        type: rich-text
+        required: true
+        options: { media: images }
+  - name: site
+    label: Site settings
+    type: file
+    path: src/data/site.json
+    format: json
+    fields:
+      - { name: name, type: string, required: true }
+      - { name: shortName, type: string, required: true }
+      - { name: url, type: string, required: true }
+      - { name: email, type: string, required: true }
+      - { name: telephoneDisplay, type: string, required: true }
+      - { name: telephoneHref, type: string, required: true }
+      - name: address
+        type: object
+        fields:
+          - { name: street, type: string }
+          - { name: locality, type: string }
+          - { name: island, type: string }
+          - { name: postcode, type: string }
+          - { name: country, type: string }
+      - name: coordinates
+        type: object
+        fields:
+          - { name: latitude, type: number }
+          - { name: longitude, type: number }
+      - name: airbnb
+        type: object
+        fields:
+          - { name: geranium, type: string }
+          - { name: honeysuckle, type: string }
+settings:
+  commit:
+    templates:
+      create: "content: add {filename}"
+      update: "content: update {filename}"
+      delete: "content: remove {filename}"
+      rename: "content: rename {oldFilename} to {newFilename}"

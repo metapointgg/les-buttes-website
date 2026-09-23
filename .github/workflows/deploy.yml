@@ -1,0 +1,26 @@
+name: Build and deploy website
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+permissions: { contents: read, id-token: write }
+concurrency: { group: production, cancel-in-progress: true }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Upload assets
+        run: aws s3 sync dist/ s3://${{ vars.S3_BUCKET }}/ --delete --exclude "*.html" --exclude "*.xml" --exclude "*.txt" --cache-control "public,max-age=31536000,immutable"
+      - name: Upload HTML
+        run: aws s3 sync dist/ s3://${{ vars.S3_BUCKET }}/ --exclude "*" --include "*.html" --include "*.xml" --include "*.txt" --cache-control "public,max-age=0,must-revalidate"
+      - name: Refresh CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

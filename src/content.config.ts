@@ -1,0 +1,11 @@
+import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
+const seo = z.object({ title: z.string(), description: z.string() });
+const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/cottages' }), schema: z.object({
+  name:z.string(), slug:z.string(), eyebrow:z.string(), tagline:z.string(), summary:z.string(), status:z.enum(['available','coming-soon']),
+  sleeps:z.number(), bedrooms:z.number(), beds:z.number(), bathrooms:z.number(), dogFriendly:z.boolean(), airbnbUrl:z.string().url().optional(),
+  heroImage:z.string(), heroAlt:z.string(), gallery:z.array(z.object({image:z.string(),alt:z.string(),caption:z.string()})), facilities:z.array(z.string()),
+  highlights:z.array(z.object({title:z.string(),text:z.string()})), review:z.object({quote:z.string(),guest:z.string(),sourceUrl:z.string().url()}).optional(), seo
+})});
+const pages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }), schema: z.object({ title:z.string(),eyebrow:z.string(),intro:z.string(),seo }) });
+export const collections = { cottages, pages };

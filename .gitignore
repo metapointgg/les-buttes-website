@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+infra/.terraform/
+infra/*.tfstate*
+infra/terraform.tfvars
