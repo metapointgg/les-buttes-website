@@ -40,9 +40,11 @@ Pages CMS commits edits to GitHub; the deployment workflow rebuilds the site aut
 
 Only use short excerpts from genuine Airbnb reviews and retain the listing review URL. Do not add changing review totals or star averages unless they will be actively maintained.
 
-## AWS deployment
+## AWS preview deployment
 
-Copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`, enter the real Route 53 hosted-zone ID and then run:
+The default configuration creates a private S3 bucket and a CloudFront distribution using its temporary `cloudfront.net` HTTPS address. It does not request a certificate or change DNS.
+
+Copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars` and run:
 
 ```bash
 cd infra
@@ -51,7 +53,7 @@ terraform plan
 terraform apply
 ```
 
-If DNS is hosted elsewhere, supply `existing_certificate_arn` for a validated ACM certificate in `us-east-1` and leave `hosted_zone_id` unset. Preserve all existing MX, SPF, DKIM and DMARC records during any DNS move.
+The `site_url` output is the temporary review address. For the later custom-domain launch, set `custom_domain_enabled = true` and supply `existing_certificate_arn` for a validated ACM certificate in `us-east-1`. DNS may remain with its current provider; leave `hosted_zone_id` unset and add the certificate-validation and CloudFront records there manually. Preserve all existing MX, SPF, DKIM and DMARC records.
 
 Set these GitHub Actions repository variables from the Terraform outputs:
 
