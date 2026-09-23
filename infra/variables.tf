@@ -31,6 +31,13 @@ variable "github_repository" {
   type        = string
 }
 
+variable "github_oidc_provider_arn" {
+  description = "ARN of an existing GitHub Actions OIDC provider; leave null to create one"
+  type        = string
+  default     = null
+  nullable    = true
+}
+
 variable "budget_alert_email" {
   type = string
 }
