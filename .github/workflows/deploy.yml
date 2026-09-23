@@ -23,47 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect OIDC claims
-        id: oidc
-        shell: bash
-        run: |
-          response="$(curl --fail --silent --show-error \
-            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")"
-          token="$(jq -r '.value' <<<"${response}")"
-          TOKEN="${token}" python - <<'PY'
-          import base64
-          import json
-          import os
-          import re
-
-          payload = os.environ["TOKEN"].split(".")[1]
-          payload += "=" * (-len(payload) % 4)
-          claims = json.loads(base64.urlsafe_b64decode(payload))
-          keys = (
-              "sub",
-              "aud",
-              "repository",
-              "ref",
-              "job_workflow_ref",
-              "workflow",
-              "actor",
-              "environment",
-          )
-          selected = {key: claims.get(key) for key in keys if key in claims}
-          print(json.dumps(selected, indent=2))
-          with open("oidc-claims.json", "w", encoding="utf-8") as handle:
-              json.dump(selected, handle, indent=2)
-          safe_subject = re.sub(r"[^A-Za-z0-9._-]+", "-", claims["sub"])
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
-              handle.write(f"artifact_name=oidc-{safe_subject}\n")
-          PY
-      - name: Publish OIDC diagnostic
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.oidc.outputs.artifact_name }}
-          path: oidc-claims.json
-          retention-days: 1
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
