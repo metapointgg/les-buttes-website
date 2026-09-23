@@ -1,4 +1,9 @@
-locals { aliases=[var.domain_name,"www.${var.domain_name}"] manage_dns=var.hosted_zone_id!=null create_cert=var.existing_certificate_arn==null&&local.manage_dns certificate_arn=local.create_cert?aws_acm_certificate.site[0].arn:var.existing_certificate_arn }
+locals {
+  aliases         = var.custom_domain_enabled ? [var.domain_name,"www.${var.domain_name}"] : []
+  manage_dns      = var.custom_domain_enabled && var.hosted_zone_id != null
+  create_cert     = var.custom_domain_enabled && var.existing_certificate_arn == null && local.manage_dns
+  certificate_arn = local.create_cert ? aws_acm_certificate.site[0].arn : var.existing_certificate_arn
+}
 resource "aws_s3_bucket" "site" { bucket_prefix="les-buttes-site-" }
 resource "aws_s3_bucket_public_access_block" "site" { bucket=aws_s3_bucket.site.id block_public_acls=true block_public_policy=true ignore_public_acls=true restrict_public_buckets=true }
 resource "aws_s3_bucket_ownership_controls" "site" { bucket=aws_s3_bucket.site.id rule { object_ownership="BucketOwnerEnforced" } }
@@ -19,8 +24,13 @@ resource "aws_cloudfront_distribution" "site" { enabled=true is_ipv6_enabled=tru
   custom_error_response { error_code=403 response_code=404 response_page_path="/404.html" error_caching_min_ttl=60 }
   custom_error_response { error_code=404 response_code=404 response_page_path="/404.html" error_caching_min_ttl=60 }
   restrictions { geo_restriction { restriction_type="none" } }
-  viewer_certificate { acm_certificate_arn=local.certificate_arn ssl_support_method="sni-only" minimum_protocol_version="TLSv1.2_2021" }
-  lifecycle { precondition { condition=local.certificate_arn!=null error_message="Set hosted_zone_id or provide a validated us-east-1 certificate ARN." } }
+  viewer_certificate {
+    cloudfront_default_certificate = !var.custom_domain_enabled
+    acm_certificate_arn            = var.custom_domain_enabled ? local.certificate_arn : null
+    ssl_support_method             = var.custom_domain_enabled ? "sni-only" : null
+    minimum_protocol_version       = var.custom_domain_enabled ? "TLSv1.2_2021" : "TLSv1"
+  }
+  lifecycle { precondition { condition=!var.custom_domain_enabled || local.certificate_arn!=null error_message="When custom_domain_enabled is true, set hosted_zone_id or provide a validated us-east-1 certificate ARN." } }
   depends_on=[aws_acm_certificate_validation.site]
 }
 data "aws_iam_policy_document" "bucket" { statement { actions=["s3:GetObject"] resources=["${aws_s3_bucket.site.arn}/*"] principals { type="Service" identifiers=["cloudfront.amazonaws.com"] } condition { test="StringEquals" variable="AWS:SourceArn" values=[aws_cloudfront_distribution.site.arn] } } }
