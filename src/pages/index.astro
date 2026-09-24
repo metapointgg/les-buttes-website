@@ -1,6 +1,6 @@
 ---
 import{getCollection,getEntry,render}from'astro:content';import BaseLayout from'../layouts/BaseLayout.astro';import HeroMedia from'../components/HeroMedia.astro';import CottageCard from'../components/CottageCard.astro';import Callout from'../components/Callout.astro';import Icon from'../components/Icon.astro';
-const page=await getEntry('pages','home');if(!page)throw new Error('Missing home');const{Content}=await render(page);const cottages=(await getCollection('cottages')).filter(c=>c.data.status==='available').sort((a,b)=>a.data.name.localeCompare(b.data.name));
+const page=await getEntry('pages','home');if(!page)throw new Error('Missing home');const{Content}=await render(page);const cottages=(await getCollection('cottages')).filter(c=>c.data.available).sort((a,b)=>a.data.name.localeCompare(b.data.name));
 ---
 <BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
 <section class="home-hero">
