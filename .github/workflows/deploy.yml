@@ -33,6 +33,13 @@ jobs:
       - run: npm run build
       - name: Upload assets
         run: aws s3 sync dist/ s3://${{ env.S3_BUCKET }}/ --delete --exclude "*.html" --exclude "*.xml" --exclude "*.txt" --cache-control "public,max-age=31536000,immutable"
+      - name: Set video metadata
+        run: |
+          if [ -f dist/videos/explore-guernsey-web.mp4 ]; then
+            aws s3 cp dist/videos/explore-guernsey-web.mp4 s3://${{ env.S3_BUCKET }}/videos/explore-guernsey-web.mp4 \
+              --content-type "video/mp4" \
+              --cache-control "public,max-age=31536000,immutable"
+          fi
       - name: Upload HTML
         run: aws s3 sync dist/ s3://${{ env.S3_BUCKET }}/ --exclude "*" --include "*.html" --include "*.xml" --include "*.txt" --cache-control "public,max-age=0,must-revalidate"
       - name: Refresh CloudFront
