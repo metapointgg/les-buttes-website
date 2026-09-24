@@ -5,7 +5,6 @@ intro: Sandy beaches, dramatic cliff paths, fascinating history and excellent lo
 heroMediaType: video
 heroImage: /src/assets/images/cottages/honeysuckle/garden.jpg
 heroAlt: A peaceful garden at Les Buttes
-heroVideo: /videos/explore-guernsey-web.mp4
 experienceImage: /src/assets/images/cottages/honeysuckle/garden.jpg
 experienceImageAlt: A peaceful garden at Les Buttes
 experienceImagePan: true
