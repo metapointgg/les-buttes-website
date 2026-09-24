@@ -1,11 +1,11 @@
 ---
 name: Geranium Cottage
 slug: geranium
+available: true
 eyebrow: A charming cottage for four
 tagline: Character, comfort and a garden of your own
 summary: A detached two-bedroom cottage with a bright conservatory, two
   bathrooms and a private sheltered garden.
-status: available
 sleeps: 4
 bedrooms: 2
 beds: 3
