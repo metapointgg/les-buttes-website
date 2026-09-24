@@ -1,5 +1,6 @@
 ---
 title: A family welcome since 1981
+urlStub: /about/
 eyebrow: About Les Buttes
 intro: Traditional granite buildings, quiet lanes and more than four decades of
   welcoming visitors to this corner of Guernsey.
