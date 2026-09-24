@@ -4,7 +4,7 @@ const nav=[['/','Home'],['/cottages/','Our cottages'],['/explore-guernsey/','Exp
 const current=(href:string)=>href==='/'?path==='/':path.startsWith(href);
 ---
 <header class="site-header"><div class="announcement">Family-run Guernsey cottages in St Pierre du Bois</div><div class="header-inner wrap">
-<a class="brand" href="/" aria-label="Les Buttes Holiday Cottages — home"><span class="brand-mark" aria-hidden="true">✦</span><span><strong>Les Buttes</strong><small>Holiday cottages · Guernsey</small></span></a>
+<a class="brand" href="/" aria-label="Les Buttes Holiday Cottages — home"><span class="brand-mark" aria-hidden="true">LB</span><span><strong>Les Buttes</strong><small>Holiday cottages · Guernsey</small></span></a>
 <nav class="desktop-nav" aria-label="Primary navigation">{nav.map(([href,label])=><a href={href} aria-current={current(href)?'page':undefined}>{label}</a>)}</nav><a class="button header-book" href="/cottages/">Book your stay</a>
 <details class="mobile-menu"><summary><Icon name="menu" size={22}/>Menu</summary><nav>{nav.map(([href,label])=><a href={href} aria-current={current(href)?'page':undefined}>{label}</a>)}<a class="button" href="/cottages/">Book your stay</a></nav></details>
 </div></header>

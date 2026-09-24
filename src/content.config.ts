@@ -8,6 +8,7 @@ const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', bas
   highlights:z.array(z.object({title:z.string(),text:z.string()})), review:z.object({quote:z.string(),guest:z.string(),sourceUrl:z.string().url()}).optional(), seo
 })});
 const pages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }), schema: z.object({
-  title:z.string(), eyebrow:z.string(), intro:z.string(), heroImage:z.string().optional(), heroAlt:z.string().optional(), seo
+  title:z.string(), eyebrow:z.string(), intro:z.string(), heroImage:z.string().optional(), heroAlt:z.string().optional(),
+  welcomeEyebrow:z.string().optional(), welcomeTitle:z.string().optional(), welcomeQuote:z.string().optional(), welcomeNote:z.string().optional(), seo
 }) });
 export const collections = { cottages, pages };

@@ -96,6 +96,10 @@ content:
         label: Homepage image description
         description: Briefly describe the image for visitors using screen readers. Used only on the Home page.
         type: text
+      - { name: welcomeEyebrow, label: Homepage welcome short heading, type: string }
+      - { name: welcomeTitle, label: Homepage welcome heading, type: string }
+      - { name: welcomeQuote, label: Homepage welcome quotation, type: text }
+      - { name: welcomeNote, label: Homepage welcome note, type: text }
       - { name: seo, component: seo }
       - name: body
         label: Main page text
