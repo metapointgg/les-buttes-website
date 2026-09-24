@@ -1,5 +1,6 @@
 ---
 title: Find the cottage that feels right for you
+urlStub: /cottages/
 eyebrow: Our cottages
 intro: Choose charming Geranium for up to four guests or spacious Honeysuckle for a family or group of up to six.
 seo:
