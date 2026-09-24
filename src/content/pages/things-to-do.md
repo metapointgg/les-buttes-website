@@ -10,7 +10,7 @@ heroVideo: /videos/explore-guernsey-web.mp4
 heroPoster: /src/assets/images/explore-guernsey-poster.jpg
 experienceImage: /src/assets/images/petit-bot-001.jpg
 experienceImageAlt: A peaceful garden at Les Buttes
-experienceImagePan: true
+experienceImagePan: false
 seo:
   title: Things to Do in Guernsey | Les Buttes Holiday Cottages
   description: Explore Guernsey beaches, cliff walks, historic sites, St Peter
