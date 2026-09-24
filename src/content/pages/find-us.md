@@ -1,5 +1,6 @@
 ---
 title: Peacefully placed in St Pierre du Bois
+urlStub: /find-us/
 eyebrow: Find us
 intro: Les Buttes is tucked down a quiet lane in rural St Pierre du Bois, close to village amenities, beaches and the south-coast cliffs.
 seo:
