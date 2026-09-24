@@ -1,0 +1,62 @@
+---
+import ResponsiveImage from './ResponsiveImage.astro';
+
+interface Props {
+  mediaType?: 'image' | 'video';
+  imageSrc?: string;
+  imageAlt?: string;
+  pan?: boolean;
+  videoSrc?: string;
+  posterSrc?: string;
+  class?: string;
+  decorative?: boolean;
+  widths?: number[];
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+  fetchpriority?: 'high' | 'low' | 'auto';
+}
+
+const {
+  mediaType = 'image',
+  imageSrc,
+  imageAlt = '',
+  pan = false,
+  videoSrc,
+  posterSrc,
+  class: className,
+  decorative = false,
+  widths = [480, 768, 1100, 1440],
+  sizes = '(max-width: 768px) 100vw, 50vw',
+  loading = 'lazy',
+  fetchpriority = 'auto'
+} = Astro.props;
+
+const useVideo = mediaType === 'video' && Boolean(videoSrc);
+const fallbackImage = posterSrc || imageSrc;
+---
+<div class:list={['hero-media', className, !useVideo && pan && 'image-pan']} data-media-type={useVideo ? 'video' : 'image'}>
+  {fallbackImage && (
+    <ResponsiveImage
+      src={fallbackImage}
+      alt={decorative ? '' : imageAlt}
+      class="hero-media-fallback"
+      widths={widths}
+      sizes={sizes}
+      loading={loading}
+      fetchpriority={fetchpriority}
+    />
+  )}
+  {useVideo && (
+    <video
+      class="hero-media-video"
+      src={videoSrc}
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      aria-hidden="true"
+      tabindex="-1"
+    />
+  )}
+</div>
