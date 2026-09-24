@@ -1,5 +1,6 @@
 ---
 title: We are here to help
+urlStub: /contact/
 eyebrow: Contact us
 intro: Whether you have a question before your stay or need help with an
   existing booking, please get in touch.
