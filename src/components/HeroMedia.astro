@@ -33,6 +33,7 @@ const {
 
 const useVideo = mediaType === 'video' && Boolean(videoSrc);
 const fallbackImage = posterSrc || imageSrc;
+const videoType = videoSrc?.toLowerCase().endsWith('.webm') ? 'video/webm' : 'video/mp4';
 ---
 <div class:list={['hero-media', className, !useVideo && pan && 'image-pan']} data-media-type={useVideo ? 'video' : 'image'}>
   {fallbackImage && (
@@ -49,14 +50,52 @@ const fallbackImage = posterSrc || imageSrc;
   {useVideo && (
     <video
       class="hero-media-video"
-      src={videoSrc}
       autoplay
       muted
       loop
       playsinline
-      preload="metadata"
+      preload="auto"
+      disablepictureinpicture
       aria-hidden="true"
       tabindex="-1"
-    />
+    >
+      <source src={videoSrc} type={videoType} />
+    </video>
   )}
 </div>
+{useVideo && (
+  <script is:inline>
+    (() => {
+      if (window.__lesButtesHeroMediaInit) return;
+      window.__lesButtesHeroMediaInit = true;
+
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      const startVideos = () => {
+        if (reducedMotion.matches) return;
+
+        document.querySelectorAll('.hero-media-video').forEach((video) => {
+          video.muted = true;
+          video.defaultMuted = true;
+          video.playsInline = true;
+
+          const playVideo = () => {
+            const attempt = video.play();
+            if (attempt && typeof attempt.catch === 'function') {
+              attempt.catch(() => {});
+            }
+          };
+
+          if (video.readyState >= 2) playVideo();
+          else video.addEventListener('canplay', playVideo, { once: true });
+        });
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startVideos, { once: true });
+      } else {
+        startVideos();
+      }
+    })();
+  </script>
+)}
