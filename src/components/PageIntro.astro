@@ -1,4 +1,61 @@
 ---
-interface Props{eyebrow:string;title:string;intro:string} const{eyebrow,title,intro}=Astro.props;
+import HeroMedia from './HeroMedia.astro';
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  intro: string;
+  mediaType?: 'image' | 'video';
+  imageSrc?: string;
+  imageAlt?: string;
+  pan?: boolean;
+  videoSrc?: string;
+  posterSrc?: string;
+}
+
+const {
+  eyebrow,
+  title,
+  intro,
+  mediaType = 'image',
+  imageSrc,
+  imageAlt = '',
+  pan = false,
+  videoSrc,
+  posterSrc
+} = Astro.props;
+
+const hasMedia = Boolean(imageSrc || videoSrc);
 ---
-<header class="page-intro"><p class="eyebrow">{eyebrow}</p><h1>{title}</h1><p class="lede">{intro}</p><slot/></header>
+{hasMedia ? (
+  <header class="page-intro page-intro-with-media">
+    <HeroMedia
+      mediaType={mediaType}
+      imageSrc={imageSrc}
+      imageAlt={imageAlt}
+      pan={pan}
+      videoSrc={videoSrc}
+      posterSrc={posterSrc}
+      class="page-intro-background"
+      decorative
+      widths={[640, 960, 1280, 1600, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="page-intro-overlay" aria-hidden="true"></div>
+    <div class="wrap page-intro-content">
+      <p class="eyebrow eyebrow-light">{eyebrow}</p>
+      <h1>{title}</h1>
+      <p class="lede">{intro}</p>
+      <slot />
+    </div>
+  </header>
+) : (
+  <header class="page-intro">
+    <p class="eyebrow">{eyebrow}</p>
+    <h1>{title}</h1>
+    <p class="lede">{intro}</p>
+    <slot />
+  </header>
+)}
