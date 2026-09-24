@@ -26,20 +26,19 @@ content:
     path: src/content/cottages
     format: yaml-frontmatter
     filename: "{primary}.md"
-    view: { primary: name, fields: [name, status, sleeps], sort: [name, status] }
+    view: { primary: name, fields: [name, available, sleeps], sort: [name] }
     fields:
       - { name: name, label: Cottage name, type: string, required: true }
       - { name: slug, label: Web address, type: string, required: true, pattern: "^[a-z0-9-]+$" }
+      - name: available
+        label: Available on website
+        description: Turn this on to show the cottage on the website. Turn it off to hide the cottage from listings, its cottage page and the sitemap.
+        type: boolean
+        default: true
+        required: true
       - { name: eyebrow, label: Short heading, type: string, required: true }
       - { name: tagline, type: string, required: true }
       - { name: summary, type: text, required: true }
-      - name: status
-        type: select
-        required: true
-        options:
-          values:
-            - { value: available, label: Available to book }
-            - { value: coming-soon, label: Not currently available }
       - { name: sleeps, label: Guests, type: number, required: true }
       - { name: bedrooms, type: number, required: true }
       - { name: beds, type: number, required: true }
