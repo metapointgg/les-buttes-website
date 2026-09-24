@@ -1,11 +1,11 @@
 ---
 name: Honeysuckle Cottage
 slug: honeysuckle
+available: true
 eyebrow: A spacious cottage for six
 tagline: Room to relax together
 summary: A three-bedroom converted barn with two bathrooms, two conservatories
   and private outdoor space.
-status: available
 sleeps: 6
 bedrooms: 3
 beds: 5
