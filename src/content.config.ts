@@ -9,7 +9,7 @@ const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', bas
   highlights:z.array(z.object({title:z.string(),text:z.string()})), review:z.object({quote:z.string(),guest:z.string(),sourceUrl:z.string().url()}).optional(), seo
 })});
 const pages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }), schema: z.object({
-  title:z.string(), eyebrow:z.string(), intro:z.string(), heroMediaType:z.enum(['image','video']).optional(), heroImage:z.string().optional(), heroAlt:z.string().optional(), heroPan:z.boolean().optional(), heroVideo:z.string().optional(), heroPoster:z.string().optional(),
+  title:z.string(), urlStub:z.string(), eyebrow:z.string(), intro:z.string(), heroMediaType:z.enum(['image','video']).optional(), heroImage:z.string().optional(), heroAlt:z.string().optional(), heroPan:z.boolean().optional(), heroVideo:z.string().optional(), heroPoster:z.string().optional(),
   experienceImage:z.string().optional(), experienceImageAlt:z.string().optional(), experienceImagePan:z.boolean().optional(),
   welcomeEyebrow:z.string().optional(), welcomeTitle:z.string().optional(), welcomeQuote:z.string().optional(), welcomeNote:z.string().optional(), seo
 }) });
