@@ -1,5 +1,6 @@
 ---
 title: Enjoy Guernsey at your own pace
+urlStub: /explore-guernsey/
 eyebrow: Explore Guernsey
 intro: Sandy beaches, dramatic cliff paths, fascinating history and excellent
   local food are all within easy reach of Les Buttes.
