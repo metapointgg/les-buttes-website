@@ -1,5 +1,6 @@
 ---
 title: A gentler pace of island life
+urlStub: /
 eyebrow: St Peter's · Guernsey
 intro: Stay in a family-run cottage within a restored 16th-century Guernsey
   farm, surrounded by quiet lanes and within easy reach of beaches and
