@@ -5,6 +5,13 @@ media:
     output: /src/assets/images
     rename: safe
     categories: [image]
+  - name: videos
+    label: Website videos
+    input: public/videos
+    output: /videos
+    rename: safe
+    categories: [video]
+    extensions: [mp4, webm]
 components:
   seo:
     type: object
@@ -39,17 +46,37 @@ content:
       - { name: bathrooms, type: number, required: true }
       - { name: dogFriendly, label: Dog friendly, type: boolean, required: true }
       - { name: airbnbUrl, label: Airbnb booking link, type: string }
+      - name: heroMediaType
+        label: Main media type
+        description: Choose a photograph or an autoplaying silent video for the cottage's main feature media.
+        type: select
+        default: image
+        options:
+          values:
+            - { value: image, label: Image }
+            - { value: video, label: Video }
       - name: heroImage
         label: Main image
+        description: Used as the main image, and as the fallback when video is selected.
         type: image
         required: true
         options: { media: images }
       - { name: heroAlt, label: Main image description, type: text, required: true }
       - name: heroPan
         label: Pan main image
-        description: Adds subtle lateral movement to this cottage's main image. Gallery photographs remain static.
+        description: Adds subtle lateral movement when the main media type is Image. Gallery photographs remain static.
         type: boolean
         default: false
+      - name: heroVideo
+        label: Main video
+        description: Optional MP4 or WebM background video. It plays muted, loops and has no controls.
+        type: file
+        options: { media: videos, categories: [video] }
+      - name: heroPoster
+        label: Video fallback image
+        description: Optional still image shown while video loads and to visitors who prefer reduced motion. If omitted, Main image is used.
+        type: image
+        options: { media: images }
       - name: gallery
         label: Photo gallery
         type: object
@@ -92,9 +119,18 @@ content:
       - { name: title, label: Main heading, type: string, required: true }
       - { name: eyebrow, label: Short heading, type: string, required: true }
       - { name: intro, label: Introduction, type: text, required: true }
+      - name: heroMediaType
+        label: Main media type
+        description: Choose whether the page's principal feature media is an image or a silent looping video.
+        type: select
+        default: image
+        options:
+          values:
+            - { value: image, label: Image }
+            - { value: video, label: Video }
       - name: heroImage
         label: Page main image
-        description: Used on the Home and About pages.
+        description: Used on the Home and About pages and as the still/fallback image for an Explore Guernsey hero video.
         type: image
         options: { media: images }
       - name: heroAlt
@@ -103,9 +139,19 @@ content:
         type: text
       - name: heroPan
         label: Pan page main image
-        description: Adds subtle lateral movement to the principal image on the Home or About page.
+        description: Adds subtle lateral movement when the main media type is Image.
         type: boolean
         default: false
+      - name: heroVideo
+        label: Page main video
+        description: Optional MP4 or WebM. It autoplays muted, loops and is replaced by the fallback image for reduced-motion visitors.
+        type: file
+        options: { media: videos, categories: [video] }
+      - name: heroPoster
+        label: Video fallback image
+        description: Optional still image shown while video loads and when motion is disabled. If omitted, Page main image is used.
+        type: image
+        options: { media: images }
       - name: experienceImage
         label: Explore Guernsey feature image
         description: Used beside the Island experiences text on the Things to do page.
