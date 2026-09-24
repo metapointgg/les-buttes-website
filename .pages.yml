@@ -114,9 +114,14 @@ content:
     path: src/content/pages
     format: yaml-frontmatter
     operations: { create: false, delete: false, rename: false }
-    view: { primary: title, fields: [title, eyebrow], sort: [title] }
+    view:
+      primary: seo.title
+      fields: [seo.title, urlStub]
+      sort: [seo.title]
+      search: [seo.title, urlStub, title, eyebrow]
     fields:
       - { name: title, label: Main heading, type: string, required: true }
+      - { name: urlStub, label: URL stub, type: string, required: true, readonly: true, pattern: "^/$|^/[a-z0-9-]+/$" }
       - { name: eyebrow, label: Short heading, type: string, required: true }
       - { name: intro, label: Introduction, type: text, required: true }
       - name: heroMediaType
