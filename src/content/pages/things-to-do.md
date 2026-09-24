@@ -2,6 +2,8 @@
 title: Enjoy Guernsey at your own pace
 eyebrow: Explore Guernsey
 intro: Sandy beaches, dramatic cliff paths, fascinating history and excellent local food are all within easy reach of Les Buttes.
+experienceImage: /src/assets/images/cottages/honeysuckle/garden.jpg
+experienceImageAlt: A peaceful garden at Les Buttes
 seo:
   title: Things to Do in Guernsey | Les Buttes Holiday Cottages
   description: Explore Guernsey beaches, cliff walks, historic sites, St Peter Port and island experiences from Les Buttes Holiday Cottages.

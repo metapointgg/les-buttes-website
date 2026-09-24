@@ -96,6 +96,15 @@ content:
         label: Homepage image description
         description: Briefly describe the image for visitors using screen readers. Used only on the Home page.
         type: text
+      - name: experienceImage
+        label: Explore Guernsey feature image
+        description: Used beside the Island experiences text on the Things to do page.
+        type: image
+        options: { media: images }
+      - name: experienceImageAlt
+        label: Explore Guernsey image description
+        description: Briefly describe the feature image for visitors using screen readers.
+        type: text
       - { name: welcomeEyebrow, label: Homepage welcome short heading, type: string }
       - { name: welcomeTitle, label: Homepage welcome heading, type: string }
       - { name: welcomeQuote, label: Homepage welcome quotation, type: text }
