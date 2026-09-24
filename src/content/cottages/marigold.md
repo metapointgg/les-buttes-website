@@ -1,10 +1,10 @@
 ---
 name: Marigold Cottage
 slug: marigold
+available: false
 eyebrow: Returning in the future
 tagline: A cottage being thoughtfully renewed
 summary: Marigold is currently unavailable while plans are developed for its refurbishment and return as part of Les Buttes.
-status: coming-soon
 sleeps: 0
 bedrooms: 0
 beds: 0
