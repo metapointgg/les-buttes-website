@@ -13,6 +13,7 @@ dogFriendly: true
 airbnbUrl: https://www.airbnb.com/rooms/17564897
 heroImage: /src/assets/images/cottages/geranium/exterior.jpg
 heroAlt: The traditional granite exterior of Geranium Cottage at Les Buttes
+heroPan: true
 gallery:
   - { image: /src/assets/images/cottages/geranium/exterior.jpg, alt: "Geranium Cottage's granite exterior and flower-filled entrance", caption: Traditional Guernsey character }
   - { image: /src/assets/images/cottages/geranium/garden.jpg, alt: "Geranium Cottage's private garden and conservatory", caption: "A private, sheltered garden" }

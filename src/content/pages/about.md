@@ -1,13 +1,13 @@
 ---
 title: A family welcome since 1981
 eyebrow: About Les Buttes
-intro: Traditional granite buildings, quiet lanes and more than four decades of
-  welcoming visitors to this corner of Guernsey.
-heroImage: /src/assets/images/cottages/honeysuckle/exterior.jpg
+intro: Traditional granite buildings, quiet lanes and more than four decades of welcoming visitors to this corner of Guernsey.
+heroImage: /src/assets/images/cottages/geranium/exterior.jpg
+heroAlt: Traditional granite exterior of Geranium Cottage
+heroPan: true
 seo:
   title: About Les Buttes Holiday Cottages, Guernsey
-  description: Learn about the family-run Les Buttes Holiday Cottages, set around
-    a restored 16th-century farm in St Pierre du Bois, Guernsey.
+  description: Learn about the family-run Les Buttes Holiday Cottages, set around a restored 16th-century farm in St Pierre du Bois, Guernsey.
 ---
 Les Buttes is a family-owned, restored 16th-century farm in the rural parish of St Pierre du Bois. Its traditional barns and outbuildings sit around the old farmyard and have been adapted over time into individual holiday cottages.
 

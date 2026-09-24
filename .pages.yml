@@ -45,6 +45,11 @@ content:
         required: true
         options: { media: images }
       - { name: heroAlt, label: Main image description, type: text, required: true }
+      - name: heroPan
+        label: Pan main image
+        description: Adds subtle lateral movement to this cottage's main image. Gallery photographs remain static.
+        type: boolean
+        default: false
       - name: gallery
         label: Photo gallery
         type: object
@@ -88,14 +93,19 @@ content:
       - { name: eyebrow, label: Short heading, type: string, required: true }
       - { name: intro, label: Introduction, type: text, required: true }
       - name: heroImage
-        label: Homepage main image
-        description: Used only on the Home page.
+        label: Page main image
+        description: Used on the Home and About pages.
         type: image
         options: { media: images }
       - name: heroAlt
-        label: Homepage image description
-        description: Briefly describe the image for visitors using screen readers. Used only on the Home page.
+        label: Page main image description
+        description: Briefly describe the main image for visitors using screen readers.
         type: text
+      - name: heroPan
+        label: Pan page main image
+        description: Adds subtle lateral movement to the principal image on the Home or About page.
+        type: boolean
+        default: false
       - name: experienceImage
         label: Explore Guernsey feature image
         description: Used beside the Island experiences text on the Things to do page.
@@ -105,6 +115,11 @@ content:
         label: Explore Guernsey image description
         description: Briefly describe the feature image for visitors using screen readers.
         type: text
+      - name: experienceImagePan
+        label: Pan Explore Guernsey feature image
+        description: Adds subtle lateral movement to the Island experiences image.
+        type: boolean
+        default: false
       - { name: welcomeEyebrow, label: Homepage welcome short heading, type: string }
       - { name: welcomeTitle, label: Homepage welcome heading, type: string }
       - { name: welcomeQuote, label: Homepage welcome quotation, type: text }

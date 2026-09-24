@@ -4,7 +4,7 @@ const page=await getEntry('pages','home');if(!page)throw new Error('Missing home
 ---
 <BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
 <section class="home-hero">
-  <div class="home-hero-image"><ResponsiveImage src={page.data.heroImage ?? '/src/assets/images/cottages/honeysuckle/exterior.jpg'} alt={page.data.heroAlt ?? 'The granite buildings at Les Buttes Holiday Cottages'} widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high"/></div>
+  <div class:list={['home-hero-image',page.data.heroPan&&'image-pan']}><ResponsiveImage src={page.data.heroImage ?? '/src/assets/images/cottages/honeysuckle/exterior.jpg'} alt={page.data.heroAlt ?? 'The granite buildings at Les Buttes Holiday Cottages'} widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high"/></div>
   <div class="wrap home-hero-inner"><div class="home-hero-copy"><p class="eyebrow eyebrow-light">{page.data.eyebrow}</p><h1>{page.data.title}</h1><p class="lede">{page.data.intro}</p><div class="hero-actions"><a class="button button-light" href="/cottages/">Explore our cottages</a><a class="button button-outline" href="/cottages/">Check availability</a></div></div></div>
 </section>
 <div class="wrap home-facts" aria-label="Les Buttes at a glance"><div><strong>Two cottages</strong><span>Each with its own character</span></div><div><strong>Sleeps 4–6</strong><span>For couples and families</span></div><div><strong>Private gardens</strong><span>Peaceful, sheltered spaces</span></div><div><strong>Close to the coast</strong><span>Beaches and cliff paths nearby</span></div></div>

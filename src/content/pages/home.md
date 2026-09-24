@@ -4,6 +4,7 @@ eyebrow: St Peter's · Guernsey
 intro: Stay in a family-run cottage within a restored 16th-century Guernsey farm, surrounded by quiet lanes and within easy reach of beaches and spectacular coastal walks.
 heroImage: /src/assets/images/cottages/honeysuckle/exterior.jpg
 heroAlt: The granite buildings and garden at Les Buttes Holiday Cottages
+heroPan: true
 welcomeEyebrow: Welcome to Les Buttes
 welcomeTitle: A traditional Guernsey welcome
 welcomeQuote: A peaceful place to slow down, breathe in the sea air and enjoy Guernsey at your own pace.
