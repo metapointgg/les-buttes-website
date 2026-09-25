@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageIntro from '../PageIntro.astro';
+import PageSections from '../PageSections.astro';
+
+interface Props { pageData:any }
+const {pageData:p}=Astro.props;
+const hasHero=Boolean(p.heroImage||p.heroVideo);
+---
+<BaseLayout title={p.seo.title} description={p.seo.description}>
+  {hasHero ? (
+    <PageIntro
+      eyebrow={p.eyebrow}
+      title={p.title}
+      intro={p.intro}
+      mediaType={p.heroMediaType}
+      imageSrc={p.heroImage}
+      imageAlt={p.heroAlt}
+      pan={p.heroPan}
+      videoSrc={p.heroVideo}
+      posterSrc={p.heroPoster}
+    />
+  ) : (
+    <div class="wrap"><PageIntro eyebrow={p.eyebrow} title={p.title} intro={p.intro}/></div>
+  )}
+  <PageSections sections={p.sections}/>
+</BaseLayout>
