@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import ContentPageTemplate from '../components/templates/ContentPageTemplate.astro';
 
 export async function getStaticPaths(){
-  const pages=(await getCollection('subpages')).filter(p=>p.data.published&&p.data.slug!=='gallery');
+  const pages=(await getCollection('subpages')).filter(p=>p.data.published&&!['gallery','gardens'].includes(p.data.slug));
   return pages.map(page=>({params:{slug:page.data.slug},props:{page}}));
 }
 
