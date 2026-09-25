@@ -36,15 +36,12 @@ sections:
       - title: Mature gardens
         text: Lawns, orchard and peaceful corners.
         icon: garden
-      - title: Beaches and coastal walks
-        text: Coastline and cliff paths within easy reach.
+      - title: Coast within easy reach
+        text: Beaches and cliff paths around the island.
         icon: beach
-      - title: Dog friendly
-        text: Geranium Cottage welcomes dogs.
-        icon: guests
       - title: Family-run since 1981
         text: A personal welcome and practical help.
-        icon: guernsey
+        icon: guests
   - enabled: true
     type: cottageListing
     theme: paper
@@ -91,11 +88,11 @@ sections:
     theme: cream
     width: wide
     eyebrow: Location
-    title: Peaceful, but never far away
-    text: Les Buttes is in St Pierre du Bois, with village amenities, beaches and coastal walks all within easy reach.
+    title: Peaceful St Pierre du Bois, well placed for the island
+    text: Les Buttes feels rural and tucked away, while village amenities, beaches, cliff paths and the rest of Guernsey remain easy to reach.
     items:
       - title: St Pierre du Bois
-        text: Village shops, post office, pub and bus stops are close at hand.
+        text: Village shops, pub and bus stops are close at hand.
         icon: pin
       - title: West-coast beaches
         text: Sandy beaches and sunset coastline are within easy reach.
