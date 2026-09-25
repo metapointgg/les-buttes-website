@@ -39,9 +39,15 @@ const pageSection = z.object({
   imageAlt: z.string().optional(),
   imageCaption: z.string().optional(),
   imagePosition: z.enum(['left','right']).optional(),
+  showCottagePreviewStrip: z.boolean().optional(),
   items: z.array(sectionItem).optional(),
   listItems: z.array(z.string()).optional(),
-  galleryImages: z.array(z.object({ image:z.string(), alt:z.string().optional(), caption:z.string().optional() })).optional(),
+  galleryImages: z.array(z.object({
+    image:z.string(),
+    alt:z.string().optional(),
+    caption:z.string().optional(),
+    category:z.enum(['cottages','interiors','gardens','guernsey']).optional()
+  })).optional(),
   quote: z.string().optional(),
   attribution: z.string().optional(),
   buttonLabel: z.string().optional(),
