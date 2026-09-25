@@ -284,6 +284,58 @@ content:
       - { name: sections, component: pageSections }
       - { name: seo, component: seo }
 
+  - name: design
+    label: Design settings
+    type: file
+    path: src/data/design.json
+    format: json
+    fields:
+      - name: typography
+        label: Typography
+        description: Global font choices and type sizes used across all page templates. Changes here apply site-wide.
+        type: object
+        fields:
+          - name: bodyFont
+            label: Body font
+            type: select
+            required: true
+            options:
+              values:
+                - { value: systemSans, label: System sans / Inter (current) }
+                - { value: humanistSans, label: Humanist sans / Avenir }
+                - { value: classicSerif, label: Classic serif / Georgia }
+          - name: headingFont
+            label: Heading font
+            type: select
+            required: true
+            options:
+              values:
+                - { value: heritageSerif, label: Heritage serif / Iowan & Baskerville (current) }
+                - { value: georgia, label: Georgia serif }
+                - { value: systemSans, label: System sans / Inter }
+          - { name: bodySize, label: Body text size (px), type: number, required: true, description: Standard paragraph and navigation text. Current value 16. }
+          - { name: bodyLineHeight, label: Body line height, type: number, required: true, description: Current value 1.7. }
+          - { name: headingLineHeight, label: Heading line height, type: number, required: true, description: Current value 1.08. }
+          - { name: pageTitleMin, label: Page title minimum (px), type: number, required: true }
+          - { name: pageTitleMax, label: Page title maximum (px), type: number, required: true }
+          - { name: homeTitleMin, label: Homepage hero title minimum (px), type: number, required: true }
+          - { name: homeTitleMax, label: Homepage hero title maximum (px), type: number, required: true }
+          - { name: sectionTitleMin, label: Section heading minimum (px), type: number, required: true }
+          - { name: sectionTitleMax, label: Section heading maximum (px), type: number, required: true }
+          - { name: subheadingMin, label: Subheading minimum (px), type: number, required: true }
+          - { name: subheadingMax, label: Subheading maximum (px), type: number, required: true }
+          - { name: cottageTitleMin, label: Cottage card title minimum (px), type: number, required: true }
+          - { name: cottageTitleMax, label: Cottage card title maximum (px), type: number, required: true }
+          - { name: leadMin, label: Intro / lead text minimum (px), type: number, required: true }
+          - { name: leadMax, label: Intro / lead text maximum (px), type: number, required: true }
+          - { name: proseSize, label: Long-form text size (px), type: number, required: true }
+          - { name: smallCardHeadingSize, label: Small card heading size (px), type: number, required: true }
+          - { name: eyebrowSize, label: Short heading / eyebrow size (px), type: number, required: true }
+          - { name: buttonSize, label: Button text size (px), type: number, required: true }
+          - { name: smallTextSize, label: Small text / captions size (px), type: number, required: true }
+          - { name: quoteMin, label: Quote minimum (px), type: number, required: true }
+          - { name: quoteMax, label: Quote maximum (px), type: number, required: true }
+
   - name: site
     label: Site settings
     type: file
