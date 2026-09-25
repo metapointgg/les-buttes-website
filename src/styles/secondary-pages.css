@@ -1,0 +1,107 @@
+/* Secondary-page refinement: bring inner pages up to the homepage visual standard. */
+
+/* Cottage comparison */
+.cottage-compare-section{padding-top:clamp(3.5rem,6vw,5.5rem)}
+.cottage-compare-heading{max-width:54rem;margin-bottom:clamp(2rem,4vw,3.25rem)}
+.cottage-compare-grid{gap:clamp(1.25rem,2.5vw,2rem)!important}
+.cottage-card-comparison .card-image{aspect-ratio:16/9!important}
+.cottage-card-comparison .card-body{padding:1.35rem 1.35rem 1.5rem!important}
+.cottage-card-comparison .cottage-card-tagline{margin:0 0 .35rem;color:var(--ink);font-family:var(--display);font-size:clamp(1.2rem,2vw,1.45rem);line-height:1.2}
+.cottage-preview-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;padding:.35rem;background:var(--cream);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cottage-preview-strip picture,.cottage-preview-strip img{display:block;width:100%;height:100%}
+.cottage-preview-strip img{aspect-ratio:4/3;object-fit:cover}
+
+/* Image-led cards throughout secondary pages */
+.section-builder-card-grid:has(.section-builder-card.has-image){gap:1.15rem!important;border:0!important}
+.section-builder-card.has-image{overflow:hidden;background:var(--paper)!important;border:1px solid var(--line)!important;border-radius:.45rem!important}
+.section-builder-card.has-image+.section-builder-card.has-image{border-top:1px solid var(--line)!important}
+.section-builder-card.has-image .section-builder-card-image{aspect-ratio:16/10}
+.section-builder-card.has-image .section-builder-card-content{padding:1.25rem 1.3rem 1.4rem!important}
+.section-builder-card.has-image h3{font-family:var(--display);font-size:clamp(1.35rem,2.2vw,1.7rem)!important;font-weight:500!important;line-height:1.15}
+.section-builder-card.has-image p{font-size:.94rem;line-height:1.55}
+
+/* Understated story timeline */
+.section-builder-card-grid:has(.section-builder-kicker){gap:0!important;border-block:1px solid var(--line)!important}
+.section-builder-card:has(.section-builder-kicker){position:relative;padding-left:0!important;background:transparent!important;border:0!important;border-radius:0!important}
+.section-builder-card:has(.section-builder-kicker)+.section-builder-card:has(.section-builder-kicker){border-top:1px solid var(--line)!important}
+.section-builder-card:has(.section-builder-kicker) .section-builder-card-content{padding:1.5rem 0!important}
+.section-builder-kicker{margin-bottom:.45rem!important;font-size:.95rem!important;letter-spacing:.08em;text-transform:uppercase}
+
+/* Map/location panels */
+.map-card{border-radius:.45rem!important;box-shadow:none!important}
+.map-card-content strong{display:block;margin-bottom:.35rem;font-family:var(--display);font-size:1.35rem;font-weight:500}
+.notice{border-left:0!important;border:1px solid rgba(180,123,58,.35)!important;border-radius:.45rem;background:#f4ead8!important;color:var(--ink)}
+
+/* Cottage detail: editorial sub-sections */
+.cottage-detail-section{overflow:hidden}
+.cottage-detail-grid{display:grid;gap:clamp(2rem,5vw,5rem);align-items:center}
+.cottage-detail-copy{max-width:34rem}
+.cottage-detail-copy h2{max-width:13ch}
+.cottage-detail-note{padding:.9rem 0;border-top:1px solid var(--line)}
+.cottage-detail-note:first-of-type{margin-top:1.25rem}
+.cottage-detail-note strong{display:block;margin-bottom:.15rem}
+.cottage-detail-note p{margin:0;color:var(--soft)}
+.cottage-detail-media{display:grid;grid-template-columns:repeat(2,1fr);gap:.55rem}
+.cottage-detail-media figure{position:relative;overflow:hidden;min-height:11rem;margin:0;background:var(--pale);border-radius:.35rem}
+.cottage-detail-media figure.is-primary{grid-column:1/-1;min-height:22rem}
+.cottage-detail-media picture,.cottage-detail-media img{width:100%;height:100%}
+.cottage-detail-media img{object-fit:cover}
+.cottage-detail-media figcaption{position:absolute;right:.55rem;bottom:.55rem;left:.55rem;padding:.45rem .6rem;color:#fff;background:linear-gradient(90deg,#081a15cc,#081a1526);border-radius:.25rem;font-size:.76rem}
+.cottage-garden-section{padding-block:0;background:var(--deep);color:#fff}
+.cottage-garden-grid{display:grid;max-width:none!important;width:100%!important}
+.cottage-garden-image{min-height:30rem}
+.cottage-garden-image picture,.cottage-garden-image img{width:100%;height:100%}
+.cottage-garden-image img{object-fit:cover}
+.cottage-garden-copy{display:flex;flex-direction:column;justify-content:center;padding:clamp(2.5rem,6vw,5rem);background:var(--deep)}
+.cottage-garden-copy h2{color:#fff;max-width:12ch}
+.cottage-garden-copy p:not(.eyebrow){max-width:31rem;color:#ffffffc7}
+.cottage-location-story{padding-block:clamp(3rem,6vw,5rem)}
+.cottage-location-grid{display:grid;gap:clamp(2rem,5vw,4rem);align-items:center}
+.cottage-location-grid h2{color:#fff;max-width:12ch}
+.cottage-location-grid p:not(.eyebrow){max-width:36rem;color:#ffffffc7}
+.cottage-location-image{overflow:hidden;min-height:22rem;border-radius:.35rem}
+.cottage-location-image picture,.cottage-location-image img{width:100%;height:100%}
+.cottage-location-image img{object-fit:cover}
+
+/* More immersive inner-page galleries */
+.section-builder-gallery{gap:.6rem!important}
+.section-builder-gallery figure{border-radius:.3rem!important}
+.section-builder-gallery figcaption{font-size:.74rem!important}
+
+@media(min-width:48rem){
+  .cottage-card-comparison .card-body{padding:1.55rem 1.6rem 1.7rem!important}
+  .section-builder-card-grid:has(.section-builder-kicker){grid-template-columns:repeat(3,1fr)!important}
+  .section-builder-card:has(.section-builder-kicker)+.section-builder-card:has(.section-builder-kicker){border-top:0!important;border-left:1px solid var(--line)!important}
+  .section-builder-card:has(.section-builder-kicker) .section-builder-card-content{padding:1.8rem!important}
+  .map-card{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(17rem,.55fr)}
+  .map-card iframe{min-height:28rem}
+  .map-card-content{display:flex;flex-direction:column;justify-content:center;padding:2rem}
+  .cottage-detail-grid{grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr)}
+  .cottage-detail-grid.image-left{grid-template-columns:minmax(0,1.22fr) minmax(0,.78fr)}
+  .cottage-garden-grid{grid-template-columns:minmax(0,1.4fr) minmax(20rem,.6fr)}
+  .cottage-location-grid{grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr)}
+}
+
+@media(min-width:64rem){
+  .cottage-card-comparison .card-image{aspect-ratio:3/2!important}
+  .section-builder-card-grid:has(.section-builder-card.has-image){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .section-builder-card-grid-icons:has(.section-builder-card.has-image){grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .cottage-detail-media figure.is-primary{min-height:28rem}
+  .cottage-garden-image{min-height:38rem}
+}
+
+@media(max-width:47.99rem){
+  .cottage-preview-strip{gap:.22rem;padding:.22rem}
+  .cottage-card-comparison .card-image{aspect-ratio:4/3!important}
+  .cottage-detail-grid,.cottage-location-grid{gap:1.5rem}
+  .cottage-detail-media{grid-template-columns:1fr 1fr}
+  .cottage-detail-media figure{min-height:9rem}
+  .cottage-detail-media figure.is-primary{min-height:18rem}
+  .cottage-garden-image{min-height:22rem}
+  .cottage-garden-copy{padding:2.4rem 1rem 3rem}
+  .cottage-location-image{min-height:18rem}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .cottage-preview-strip img,.section-builder-card-image img{transition:none!important}
+}
