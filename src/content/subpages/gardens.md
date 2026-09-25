@@ -46,7 +46,7 @@ sections:
     items:
       - title: Veg Patch
         text: Our productive garden area is used for seasonal vegetables, herbs and soft
-          fruit, with planting changing throughout the year.
+          fruit, with planting changing throughout the year
         image: /src/assets/images/veg-patch.png
         external: false
       - title: Sunken Garden
