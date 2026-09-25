@@ -1,0 +1,61 @@
+---
+import design from '../data/design.json';
+
+const bodyFonts: Record<string,string> = {
+  systemSans: 'Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif',
+  humanistSans: 'Avenir,"Avenir Next",Segoe UI,sans-serif',
+  classicSerif: 'Georgia,"Times New Roman",serif'
+};
+const headingFonts: Record<string,string> = {
+  heritageSerif: '"Iowan Old Style",Baskerville,"Times New Roman",serif',
+  georgia: 'Georgia,"Times New Roman",serif',
+  systemSans: 'Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif'
+};
+const t = design.typography;
+const bodyFont = bodyFonts[t.bodyFont] ?? bodyFonts.systemSans;
+const headingFont = headingFonts[t.headingFont] ?? headingFonts.heritageSerif;
+const px = (value:number) => `${value}px`;
+const css = `
+:root{
+  --body:${bodyFont};
+  --display:${headingFont};
+  --type-body-size:${px(t.bodySize)};
+  --type-body-line:${t.bodyLineHeight};
+  --type-heading-line:${t.headingLineHeight};
+  --type-page-title-min:${px(t.pageTitleMin)};
+  --type-page-title-max:${px(t.pageTitleMax)};
+  --type-home-title-min:${px(t.homeTitleMin)};
+  --type-home-title-max:${px(t.homeTitleMax)};
+  --type-section-title-min:${px(t.sectionTitleMin)};
+  --type-section-title-max:${px(t.sectionTitleMax)};
+  --type-subheading-min:${px(t.subheadingMin)};
+  --type-subheading-max:${px(t.subheadingMax)};
+  --type-cottage-title-min:${px(t.cottageTitleMin)};
+  --type-cottage-title-max:${px(t.cottageTitleMax)};
+  --type-lead-min:${px(t.leadMin)};
+  --type-lead-max:${px(t.leadMax)};
+  --type-prose:${px(t.proseSize)};
+  --type-small-card-heading:${px(t.smallCardHeadingSize)};
+  --type-eyebrow:${px(t.eyebrowSize)};
+  --type-button:${px(t.buttonSize)};
+  --type-small:${px(t.smallTextSize)};
+  --type-quote-min:${px(t.quoteMin)};
+  --type-quote-max:${px(t.quoteMax)};
+}
+body{font-size:var(--type-body-size);line-height:var(--type-body-line)}
+h1,h2,h3{line-height:var(--type-heading-line)}
+h1{font-size:clamp(var(--type-page-title-min),7vw,var(--type-page-title-max))}
+.home-hero-copy h1{font-size:clamp(var(--type-home-title-min),7vw,var(--type-home-title-max))}
+h2{font-size:clamp(var(--type-section-title-min),4vw,var(--type-section-title-max))}
+h3{font-size:clamp(var(--type-subheading-min),2vw,var(--type-subheading-max))}
+.card-body h2{font-size:clamp(var(--type-cottage-title-min),4vw,var(--type-cottage-title-max))}
+.lede,.home-hero-copy .lede{font-size:clamp(var(--type-lead-min),2vw,var(--type-lead-max))}
+.prose,.intro-copy,.section-builder-copy>p:not(.eyebrow){font-size:var(--type-prose)}
+.eyebrow{font-size:var(--type-eyebrow)}
+.button,.section-builder-pill{font-size:var(--type-button)}
+.promise-card h3,.experience-card h2,.info-card h2,.highlight-card h3,.section-builder-card h3{font-size:var(--type-small-card-heading)}
+.home-facts span,.footer-bottom,.gallery figcaption,.section-builder-image figcaption,.section-builder-gallery figcaption{font-size:var(--type-small)}
+.review blockquote,.welcome-quote blockquote,.section-builder-quote blockquote{font-size:clamp(var(--type-quote-min),4vw,var(--type-quote-max))}
+`;
+---
+<style is:inline set:html={css}></style>
