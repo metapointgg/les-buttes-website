@@ -1,6 +1,6 @@
 media:
   - name: images
-    label: Cottage images
+    label: Website images
     input: src/assets/images
     output: /src/assets/images
     rename: safe
@@ -107,8 +107,9 @@ content:
         type: rich-text
         required: true
         options: { media: images }
+
   - name: pages
-    label: General pages
+    label: Main pages
     type: collection
     path: src/content/pages
     format: yaml-frontmatter
@@ -134,16 +135,13 @@ content:
             - { value: video, label: Video }
       - name: heroImage
         label: Page main image
-        description: Used on the Home and About pages and as the still/fallback image for an Explore Guernsey hero video.
         type: image
         options: { media: images }
       - name: heroAlt
         label: Page main image description
-        description: Briefly describe the main image for visitors using screen readers.
         type: text
       - name: heroPan
         label: Pan page main image
-        description: Adds subtle lateral movement when the main media type is Image.
         type: boolean
         default: false
       - name: heroVideo
@@ -153,21 +151,17 @@ content:
         options: { media: videos, categories: [video] }
       - name: heroPoster
         label: Video fallback image
-        description: Optional still image shown while video loads and when motion is disabled. If omitted, Page main image is used.
         type: image
         options: { media: images }
       - name: experienceImage
         label: Explore Guernsey feature image
-        description: Used beside the Island experiences text on the Things to do page.
         type: image
         options: { media: images }
       - name: experienceImageAlt
         label: Explore Guernsey image description
-        description: Briefly describe the feature image for visitors using screen readers.
         type: text
       - name: experienceImagePan
         label: Pan Explore Guernsey feature image
-        description: Adds subtle lateral movement to the Island experiences image.
         type: boolean
         default: false
       - { name: welcomeEyebrow, label: Homepage welcome short heading, type: string }
@@ -180,6 +174,118 @@ content:
         type: rich-text
         required: true
         options: { media: images }
+
+  - name: subpages
+    label: Sub pages
+    type: collection
+    path: src/content/subpages
+    format: yaml-frontmatter
+    filename: "{primary}.md"
+    view:
+      primary: title
+      fields: [seo.title, slug, published]
+      sort: [title]
+      search: [title, slug, seo.title, eyebrow]
+    fields:
+      - { name: title, label: Main heading, type: string, required: true }
+      - name: slug
+        label: URL slug
+        description: The page address without slashes, for example gardens creates /gardens/.
+        type: string
+        required: true
+        pattern: "^[a-z0-9-]+$"
+      - name: published
+        label: Published on website
+        description: Turn this off to remove the page from the public website and sitemap.
+        type: boolean
+        default: true
+        required: true
+      - name: showInNavigation
+        label: Show in main navigation
+        type: boolean
+        default: false
+      - name: navigationLabel
+        label: Navigation label
+        description: Optional shorter label for the main menu. If blank, the main heading is used.
+        type: string
+      - name: navigationOrder
+        label: Navigation order
+        description: Lower numbers appear earlier in the menu. Cottages is 20, Explore Guernsey is 40.
+        type: number
+      - { name: eyebrow, label: Short heading, type: string, required: true }
+      - { name: intro, label: Introduction, type: text, required: true }
+      - name: heroMediaType
+        label: Main media type
+        type: select
+        default: image
+        options:
+          values:
+            - { value: image, label: Image }
+            - { value: video, label: Video }
+      - name: heroImage
+        label: Page main image
+        type: image
+        options: { media: images }
+      - { name: heroAlt, label: Main image description, type: text }
+      - name: heroPan
+        label: Pan page main image
+        type: boolean
+        default: false
+      - name: heroVideo
+        label: Page main video
+        type: file
+        options: { media: videos, categories: [video] }
+      - name: heroPoster
+        label: Video fallback image
+        type: image
+        options: { media: images }
+      - name: sections
+        label: Page sections
+        description: Add and reorder sections to build the page. Each section can be switched off without deleting it.
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{title}" } }
+        fields:
+          - name: enabled
+            label: Show section
+            type: boolean
+            default: true
+          - name: type
+            label: Section type
+            type: select
+            required: true
+            options:
+              values:
+                - { value: text, label: Text }
+                - { value: feature, label: Image and text }
+                - { value: cards, label: Cards }
+                - { value: list, label: List }
+                - { value: map, label: Map / large image }
+          - { name: eyebrow, label: Short heading, type: string }
+          - { name: title, label: Section heading, type: string, required: true }
+          - { name: text, label: Section text, type: text }
+          - name: image
+            label: Section image
+            type: image
+            options: { media: images }
+          - { name: imageAlt, label: Image description, type: text }
+          - name: imagePosition
+            label: Image position
+            type: select
+            default: left
+            options:
+              values:
+                - { value: left, label: Left }
+                - { value: right, label: Right }
+          - name: items
+            label: Cards
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{title}" } }
+            fields:
+              - { name: title, label: Card heading, type: string, required: true }
+              - { name: text, label: Card text, type: text }
+          - { name: listItems, label: List items, type: string, list: true }
+      - { name: seo, component: seo }
+
   - name: site
     label: Site settings
     type: file
