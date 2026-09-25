@@ -1,10 +1,17 @@
 ---
-import Icon from './Icon.astro'; const path=Astro.url.pathname;
+import Icon from './Icon.astro';
+import logoHeader from '../assets/images/logo-header.png';
+const path=Astro.url.pathname;
 const nav=[['/','Home'],['/cottages/','Our cottages'],['/explore-guernsey/','Explore Guernsey'],['/about/','About'],['/find-us/','Find us'],['/contact/','Contact']];
 const current=(href:string)=>href==='/'?path==='/':path.startsWith(href);
 ---
 <header class="site-header"><div class="announcement">Family-run Guernsey cottages in St Pierre du Bois</div><div class="header-inner wrap">
-<a class="brand" href="/" aria-label="Les Buttes Holiday Cottages — home"><span class="brand-mark" aria-hidden="true">LB</span><span><strong>Les Buttes</strong><small>Holiday cottages · Guernsey</small></span></a>
+<a class="brand illustrated-brand" href="/" aria-label="Les Buttes Holiday Cottages — home"><img src={logoHeader.src} width={logoHeader.width} height={logoHeader.height} alt="" /></a>
 <nav class="desktop-nav" aria-label="Primary navigation">{nav.map(([href,label])=><a href={href} aria-current={current(href)?'page':undefined}>{label}</a>)}</nav><a class="button header-book" href="/cottages/">Book your stay</a>
 <details class="mobile-menu"><summary><Icon name="menu" size={22}/>Menu</summary><nav>{nav.map(([href,label])=><a href={href} aria-current={current(href)?'page':undefined}>{label}</a>)}<a class="button" href="/cottages/">Book your stay</a></nav></details>
 </div></header>
+<style>
+.illustrated-brand{display:block;flex:none;line-height:0;padding:.2rem 0}
+.illustrated-brand img{display:block;width:clamp(10rem,22vw,14rem);height:auto}
+@media(max-width:29rem){.illustrated-brand img{width:9.4rem}}
+</style>
