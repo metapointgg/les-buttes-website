@@ -258,8 +258,31 @@ content:
                 - { value: text, label: Text }
                 - { value: feature, label: Image and text }
                 - { value: cards, label: Cards }
+                - { value: iconCards, label: Icon cards }
                 - { value: list, label: List }
+                - { value: gallery, label: Image gallery }
+                - { value: quote, label: Quote }
+                - { value: cta, label: Call to action }
                 - { value: map, label: Map / large image }
+          - name: theme
+            label: Section background
+            type: select
+            default: auto
+            options:
+              values:
+                - { value: auto, label: Automatic alternating }
+                - { value: cream, label: Cream }
+                - { value: paper, label: White }
+                - { value: green, label: Green }
+          - name: width
+            label: Content width
+            type: select
+            default: standard
+            options:
+              values:
+                - { value: standard, label: Standard }
+                - { value: narrow, label: Narrow }
+                - { value: wide, label: Wide }
           - { name: eyebrow, label: Short heading, type: string }
           - { name: title, label: Section heading, type: string, required: true }
           - { name: text, label: Section text, type: text }
@@ -277,13 +300,50 @@ content:
                 - { value: left, label: Left }
                 - { value: right, label: Right }
           - name: items
-            label: Cards
+            label: Cards / icon cards
             type: object
             list: { collapsible: { collapsed: true, summary: "{title}" } }
             fields:
               - { name: title, label: Card heading, type: string, required: true }
               - { name: text, label: Card text, type: text }
+              - name: icon
+                label: Icon
+                type: select
+                options:
+                  values:
+                    - { value: beach, label: Beach }
+                    - { value: walk, label: Walking }
+                    - { value: guernsey, label: Guernsey }
+                    - { value: history, label: History }
+                    - { value: islands, label: Islands }
+                    - { value: food, label: Food }
+                    - { value: pin, label: Location }
+                    - { value: bed, label: Bed }
+                    - { value: bath, label: Bathroom }
+                    - { value: guests, label: Guests }
+                    - { value: phone, label: Phone }
+                    - { value: mail, label: Email }
+              - { name: linkLabel, label: Link label, type: string }
+              - { name: linkUrl, label: Link URL, type: string }
           - { name: listItems, label: List items, type: string, list: true }
+          - name: galleryImages
+            label: Gallery images
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{caption}" } }
+            fields:
+              - name: image
+                label: Image
+                type: image
+                required: true
+                options: { media: images }
+              - { name: alt, label: Image description, type: text }
+              - { name: caption, label: Caption, type: string }
+          - { name: quote, label: Quotation, type: text }
+          - { name: attribution, label: Quote attribution, type: string }
+          - { name: buttonLabel, label: Button label, type: string }
+          - { name: buttonUrl, label: Button URL, type: string }
+          - { name: secondaryButtonLabel, label: Secondary button label, type: string }
+          - { name: secondaryButtonUrl, label: Secondary button URL, type: string }
       - { name: seo, component: seo }
 
   - name: site
