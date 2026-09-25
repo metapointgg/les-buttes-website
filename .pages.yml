@@ -12,6 +12,7 @@ media:
     rename: safe
     categories: [video]
     extensions: [mp4, webm]
+
 components:
   seo:
     type: object
@@ -19,6 +20,121 @@ components:
     fields:
       - { name: title, label: Page title, type: string, required: true }
       - { name: description, label: Search description, type: text, required: true }
+
+  pageSections:
+    type: object
+    label: Page sections
+    description: Add and reorder sections to build the page. Each section can be switched off without deleting it.
+    list: { collapsible: { collapsed: true, summary: "{title}" } }
+    fields:
+      - name: enabled
+        label: Show section
+        type: boolean
+        default: true
+      - name: type
+        label: Section type
+        type: select
+        required: true
+        options:
+          values:
+            - { value: text, label: Text }
+            - { value: feature, label: Image and text }
+            - { value: image, label: Single image }
+            - { value: cards, label: Cards }
+            - { value: iconCards, label: Icon cards }
+            - { value: list, label: List }
+            - { value: gallery, label: Image gallery }
+            - { value: quote, label: Quote }
+            - { value: cta, label: Call to action }
+            - { value: map, label: Map / large image }
+      - name: theme
+        label: Section background
+        type: select
+        default: auto
+        options:
+          values:
+            - { value: auto, label: Automatic alternating }
+            - { value: cream, label: Cream }
+            - { value: paper, label: White }
+            - { value: green, label: Green }
+      - name: width
+        label: Content width
+        type: select
+        default: standard
+        options:
+          values:
+            - { value: standard, label: Standard }
+            - { value: narrow, label: Narrow }
+            - { value: wide, label: Wide }
+      - { name: eyebrow, label: Short heading, type: string }
+      - { name: title, label: Section heading, type: string, required: true }
+      - { name: text, label: Section text, type: text }
+      - name: image
+        label: Section image
+        type: image
+        options: { media: images }
+      - { name: imageAlt, label: Image description, type: text }
+      - { name: imageCaption, label: Image caption, type: string }
+      - name: imagePosition
+        label: Image position
+        type: select
+        default: left
+        options:
+          values:
+            - { value: left, label: Left }
+            - { value: right, label: Right }
+      - name: items
+        label: Cards / icon cards
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{title}" } }
+        fields:
+          - { name: kicker, label: Small label / number, type: string }
+          - { name: title, label: Card heading, type: string, required: true }
+          - { name: text, label: Card text, type: text }
+          - name: icon
+            label: Icon
+            type: select
+            options:
+              values:
+                - { value: beach, label: Beach }
+                - { value: walk, label: Walking }
+                - { value: guernsey, label: Guernsey }
+                - { value: history, label: History }
+                - { value: islands, label: Islands }
+                - { value: food, label: Food }
+                - { value: pin, label: Location }
+                - { value: bed, label: Bed }
+                - { value: bath, label: Bathroom }
+                - { value: guests, label: Guests }
+                - { value: phone, label: Phone }
+                - { value: mail, label: Email }
+                - { value: external, label: External link }
+                - { value: arrow, label: Arrow }
+          - { name: linkLabel, label: Link label, type: string }
+          - { name: linkUrl, label: Link URL, type: string }
+          - { name: external, label: Open link in new tab, type: boolean, default: false }
+      - { name: listItems, label: List items, type: string, list: true }
+      - name: galleryImages
+        label: Gallery images
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{caption}" } }
+        fields:
+          - name: image
+            label: Image
+            type: image
+            required: true
+            options: { media: images }
+          - { name: alt, label: Image description, type: text }
+          - { name: caption, label: Caption, type: string }
+      - { name: quote, label: Quotation, type: text }
+      - { name: attribution, label: Quote attribution, type: string }
+      - { name: buttonLabel, label: Button label, type: string }
+      - { name: buttonUrl, label: Button URL, type: string }
+      - { name: buttonExternal, label: Open button in new tab, type: boolean, default: false }
+      - { name: secondaryButtonLabel, label: Secondary button label, type: string }
+      - { name: secondaryButtonUrl, label: Secondary button URL, type: string }
+      - { name: secondaryButtonExternal, label: Open secondary button in new tab, type: boolean, default: false }
+
 content:
   - name: cottages
     label: Cottages
@@ -137,13 +253,8 @@ content:
         label: Page main image
         type: image
         options: { media: images }
-      - name: heroAlt
-        label: Page main image description
-        type: text
-      - name: heroPan
-        label: Pan page main image
-        type: boolean
-        default: false
+      - { name: heroAlt, label: Page main image description, type: text }
+      - { name: heroPan, label: Pan page main image, type: boolean, default: false }
       - name: heroVideo
         label: Page main video
         description: Optional MP4 or WebM. It autoplays muted, loops and is replaced by the fallback image for reduced-motion visitors.
@@ -153,26 +264,16 @@ content:
         label: Video fallback image
         type: image
         options: { media: images }
-      - name: experienceImage
-        label: Explore Guernsey feature image
-        type: image
-        options: { media: images }
-      - name: experienceImageAlt
-        label: Explore Guernsey image description
-        type: text
-      - name: experienceImagePan
-        label: Pan Explore Guernsey feature image
-        type: boolean
-        default: false
+      - { name: sections, component: pageSections }
       - { name: welcomeEyebrow, label: Homepage welcome short heading, type: string }
       - { name: welcomeTitle, label: Homepage welcome heading, type: string }
       - { name: welcomeQuote, label: Homepage welcome quotation, type: text }
       - { name: welcomeNote, label: Homepage welcome note, type: text }
       - { name: seo, component: seo }
       - name: body
-        label: Main page text
+        label: Page-specific text
+        description: Used by specialist page templates such as Home, Contact and Find Us. Standard section-driven pages may leave this blank.
         type: rich-text
-        required: true
         options: { media: images }
 
   - name: subpages
@@ -200,10 +301,7 @@ content:
         type: boolean
         default: true
         required: true
-      - name: showInNavigation
-        label: Show in main navigation
-        type: boolean
-        default: false
+      - { name: showInNavigation, label: Show in main navigation, type: boolean, default: false }
       - name: navigationLabel
         label: Navigation label
         description: Optional shorter label for the main menu. If blank, the main heading is used.
@@ -227,10 +325,7 @@ content:
         type: image
         options: { media: images }
       - { name: heroAlt, label: Main image description, type: text }
-      - name: heroPan
-        label: Pan page main image
-        type: boolean
-        default: false
+      - { name: heroPan, label: Pan page main image, type: boolean, default: false }
       - name: heroVideo
         label: Page main video
         type: file
@@ -239,111 +334,7 @@ content:
         label: Video fallback image
         type: image
         options: { media: images }
-      - name: sections
-        label: Page sections
-        description: Add and reorder sections to build the page. Each section can be switched off without deleting it.
-        type: object
-        list: { collapsible: { collapsed: true, summary: "{title}" } }
-        fields:
-          - name: enabled
-            label: Show section
-            type: boolean
-            default: true
-          - name: type
-            label: Section type
-            type: select
-            required: true
-            options:
-              values:
-                - { value: text, label: Text }
-                - { value: feature, label: Image and text }
-                - { value: cards, label: Cards }
-                - { value: iconCards, label: Icon cards }
-                - { value: list, label: List }
-                - { value: gallery, label: Image gallery }
-                - { value: quote, label: Quote }
-                - { value: cta, label: Call to action }
-                - { value: map, label: Map / large image }
-          - name: theme
-            label: Section background
-            type: select
-            default: auto
-            options:
-              values:
-                - { value: auto, label: Automatic alternating }
-                - { value: cream, label: Cream }
-                - { value: paper, label: White }
-                - { value: green, label: Green }
-          - name: width
-            label: Content width
-            type: select
-            default: standard
-            options:
-              values:
-                - { value: standard, label: Standard }
-                - { value: narrow, label: Narrow }
-                - { value: wide, label: Wide }
-          - { name: eyebrow, label: Short heading, type: string }
-          - { name: title, label: Section heading, type: string, required: true }
-          - { name: text, label: Section text, type: text }
-          - name: image
-            label: Section image
-            type: image
-            options: { media: images }
-          - { name: imageAlt, label: Image description, type: text }
-          - name: imagePosition
-            label: Image position
-            type: select
-            default: left
-            options:
-              values:
-                - { value: left, label: Left }
-                - { value: right, label: Right }
-          - name: items
-            label: Cards / icon cards
-            type: object
-            list: { collapsible: { collapsed: true, summary: "{title}" } }
-            fields:
-              - { name: title, label: Card heading, type: string, required: true }
-              - { name: text, label: Card text, type: text }
-              - name: icon
-                label: Icon
-                type: select
-                options:
-                  values:
-                    - { value: beach, label: Beach }
-                    - { value: walk, label: Walking }
-                    - { value: guernsey, label: Guernsey }
-                    - { value: history, label: History }
-                    - { value: islands, label: Islands }
-                    - { value: food, label: Food }
-                    - { value: pin, label: Location }
-                    - { value: bed, label: Bed }
-                    - { value: bath, label: Bathroom }
-                    - { value: guests, label: Guests }
-                    - { value: phone, label: Phone }
-                    - { value: mail, label: Email }
-              - { name: linkLabel, label: Link label, type: string }
-              - { name: linkUrl, label: Link URL, type: string }
-          - { name: listItems, label: List items, type: string, list: true }
-          - name: galleryImages
-            label: Gallery images
-            type: object
-            list: { collapsible: { collapsed: true, summary: "{caption}" } }
-            fields:
-              - name: image
-                label: Image
-                type: image
-                required: true
-                options: { media: images }
-              - { name: alt, label: Image description, type: text }
-              - { name: caption, label: Caption, type: string }
-          - { name: quote, label: Quotation, type: text }
-          - { name: attribution, label: Quote attribution, type: string }
-          - { name: buttonLabel, label: Button label, type: string }
-          - { name: buttonUrl, label: Button URL, type: string }
-          - { name: secondaryButtonLabel, label: Secondary button label, type: string }
-          - { name: secondaryButtonUrl, label: Secondary button URL, type: string }
+      - { name: sections, component: pageSections }
       - { name: seo, component: seo }
 
   - name: site
@@ -376,6 +367,7 @@ content:
         fields:
           - { name: geranium, type: string }
           - { name: honeysuckle, type: string }
+
 settings:
   commit:
     templates:
