@@ -11,27 +11,37 @@ sections:
   - enabled: true
     type: feature
     theme: paper
+    width: wide
     eyebrow: Our story
     title: A home, a family and a shared vision
     text: |-
       Les Buttes is a family-owned, restored 16th-century farm in the rural parish of St Pierre du Bois. Its traditional barns and outbuildings sit around the old farmyard and have been adapted over time into individual holiday cottages.
 
       The Ozanne family began welcoming self-catering guests in 1981. What started as a small family enterprise has become part of life at Les Buttes, with generations of visitors returning to enjoy the cottages and the island.
-
-      Today, Geranium and Honeysuckle offer comfortable accommodation with their own character and private outdoor space. The approach remains personal and straightforward.
     image: /src/assets/images/cottages/geranium/garden.jpg
     imageAlt: A garden and traditional buildings at Les Buttes
     imagePosition: right
   - enabled: true
-    type: quote
+    type: feature
     theme: cream
+    width: wide
+    eyebrow: Les Buttes today
+    title: Characterful cottages, a personal welcome
+    text: Today, Geranium and Honeysuckle offer comfortable accommodation with their own character and private outdoor space. The approach remains personal, practical and straightforward.
+    image: /src/assets/images/cottages/honeysuckle/exterior.jpg
+    imageAlt: Honeysuckle Cottage at Les Buttes
+    imagePosition: left
+  - enabled: true
+    type: quote
+    theme: paper
     eyebrow: The Les Buttes approach
     title: A warm welcome
     quote: A warm welcome, practical help when it is needed and the freedom to enjoy Guernsey at your own pace.
     attribution: Les Buttes Holiday Cottages
   - enabled: true
     type: cards
-    theme: paper
+    theme: cream
+    width: wide
     title: Les Buttes through the years
     items:
       - kicker: 16th century
@@ -47,7 +57,7 @@ sections:
     type: cta
     title: Come and make your own Les Buttes memories
     text: Choose the cottage that suits your party, then check live dates and prices through Airbnb.
-    buttonLabel: Meet the cottages
+    buttonLabel: View cottages
     buttonUrl: /cottages/
 seo:
   title: About Les Buttes Holiday Cottages, Guernsey
