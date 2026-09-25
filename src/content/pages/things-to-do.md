@@ -81,7 +81,7 @@ sections:
     type: cta
     title: A peaceful base for your island days
     text: Return from the coast, town or neighbouring islands to your own cottage and garden at Les Buttes.
-    buttonLabel: View cottages
+    buttonLabel: Explore our cottages
     buttonUrl: /cottages/
 seo:
   title: Things to Do in Guernsey | Les Buttes Holiday Cottages
