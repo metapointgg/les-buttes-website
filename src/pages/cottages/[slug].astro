@@ -2,6 +2,7 @@
 import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HeroMedia from '../../components/HeroMedia.astro';
+import ResponsiveImage from '../../components/ResponsiveImage.astro';
 import CottageStats from '../../components/CottageStats.astro';
 import Gallery from '../../components/Gallery.astro';
 import ReviewQuote from '../../components/ReviewQuote.astro';
@@ -18,6 +19,12 @@ if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const c=cottage.data;
 const {Content}=await render(cottage);
 const storyImage=c.gallery.find(item=>item.caption.toLowerCase().includes('kitchen')) ?? c.gallery[1] ?? c.gallery[0];
+const livingImages=c.gallery.filter(item=>/(kitchen|sitting|dining|conservatory|self-catering)/i.test(item.caption)).slice(0,3);
+const bedroomImages=c.gallery.filter(item=>/(bedroom|bathroom|shower)/i.test(item.caption)).slice(0,4);
+const gardenImage=c.gallery.find(item=>/(garden|outdoor)/i.test(item.caption));
+const livingHighlight=c.highlights.find(item=>/(living|indoor|cottage)/i.test(item.title)) ?? c.highlights[0];
+const sleepingHighlights=c.highlights.filter(item=>/(sleep|bed|bath|space for)/i.test(item.title));
+const gardenFacility=c.facilities.find(item=>/garden/i.test(item));
 type FacilityIcon='bed'|'bath'|'kitchen'|'living'|'garden'|'wifi';
 const bedroomLabel=`${c.bedrooms} ${c.bedrooms===1?'bedroom':'bedrooms'}`;
 const bathroomLabel=c.slug==='geranium'
@@ -44,10 +51,10 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
         <div class="cottage-editorial-copy">
           <p class="eyebrow eyebrow-light">{c.eyebrow}</p>
           <h1>{c.name}</h1>
-          <div class="facts-bar"><CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly}/></div>
           <p class="cottage-hero-summary">{c.tagline}. {c.summary}</p>
+          <div class="facts-bar"><CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly}/></div>
           <div class="cottage-actions">
-            {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">Check availability on Airbnb <Icon name="external" size={17}/></a>}
+            {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">Check availability <Icon name="external" size={17}/></a>}
             <a class="button button-outline" href="/contact/">Ask a question</a>
           </div>
         </div>
@@ -57,14 +64,51 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
     <section class="section paper">
       <div class="wrap cottage-story-grid">
         <div class="cottage-story-copy">
-          <p class="eyebrow">About the cottage</p>
+          <p class="eyebrow">Overview</p>
           <h2>Character and comfort</h2>
           <div class="prose"><Content/></div>
-          {c.highlights.length>0&&<div class="cottage-highlight-row">{c.highlights.map(item=><article><h3>{item.title}</h3><p>{item.text}</p></article>)}</div>}
         </div>
         {storyImage&&<HeroMedia mediaType="image" imageSrc={storyImage.image} imageAlt={storyImage.alt} class="cottage-story-media" widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 42vw" />}
       </div>
     </section>
+
+    {livingImages.length>0&&<section class="section cottage-detail-section">
+      <div class="wrap cottage-detail-grid">
+        <div class="cottage-detail-copy">
+          <p class="eyebrow">Living spaces</p>
+          <h2>Room to settle in</h2>
+          {livingHighlight&&<p class="lede">{livingHighlight.text}</p>}
+        </div>
+        <div class="cottage-detail-media cottage-detail-media-living">
+          {livingImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
+        </div>
+      </div>
+    </section>}
+
+    {bedroomImages.length>0&&<section class="section paper cottage-detail-section">
+      <div class="wrap cottage-detail-grid image-left">
+        <div class="cottage-detail-media cottage-detail-media-sleeping">
+          {bedroomImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
+        </div>
+        <div class="cottage-detail-copy">
+          <p class="eyebrow">Bedrooms & bathrooms</p>
+          <h2>Space to sleep comfortably</h2>
+          {sleepingHighlights.map(item=><div class="cottage-detail-note"><strong>{item.title}</strong><p>{item.text}</p></div>)}
+        </div>
+      </div>
+    </section>}
+
+    {gardenImage&&<section class="section cottage-garden-section">
+      <div class="wrap cottage-garden-grid">
+        <div class="cottage-garden-image"><ResponsiveImage src={gardenImage.image} alt={gardenImage.alt} widths={[640,960,1280,1600]} sizes="(max-width: 768px) 100vw, 62vw"/></div>
+        <div class="cottage-garden-copy">
+          <p class="eyebrow">Outside space</p>
+          <h2>A garden of your own</h2>
+          <p>{gardenFacility ?? c.summary}</p>
+          {c.highlights.find(item=>/outdoor|garden/i.test(item.title))&&<p>{c.highlights.find(item=>/outdoor|garden/i.test(item.title))?.text}</p>}
+        </div>
+      </div>
+    </section>}
 
     <section class="section cottage-facilities-section">
       <div class="wrap">
@@ -81,8 +125,21 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
       </div>
     </section>
 
-    {c.gallery.length>0&&<section class="section paper"><div class="wrap"><header class="section-heading"><p class="eyebrow">Take a look around</p><h2>{c.name} gallery</h2></header><Gallery items={c.gallery}/></div></section>}
-    {c.review&&<section class="section wrap"><ReviewQuote quote={c.review.quote} guest={c.review.guest} sourceUrl={c.review.sourceUrl}/></section>}
+    {c.review&&<section class="section paper wrap"><ReviewQuote quote={c.review.quote} guest={c.review.guest} sourceUrl={c.review.sourceUrl}/></section>}
+
+    <section class="section green cottage-location-story">
+      <div class="wrap cottage-location-grid">
+        <div>
+          <p class="eyebrow eyebrow-light">Explore Guernsey</p>
+          <h2>Your base in St Pierre du Bois</h2>
+          <p>Return from beaches, cliff paths and island days to the peace of your cottage at Les Buttes.</p>
+          <a class="button button-light" href="/explore-guernsey/">Explore Guernsey <Icon name="arrow" size={18}/></a>
+        </div>
+        <div class="cottage-location-image"><ResponsiveImage src="/src/assets/images/petit-bot-001.jpg" alt="Petit Bot bay on Guernsey's south coast" widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 48vw"/></div>
+      </div>
+    </section>
+
+    {c.gallery.length>0&&<section class="section paper"><div class="wrap"><header class="section-heading"><p class="eyebrow">More photographs</p><h2>Take a closer look at {c.name}</h2></header><Gallery items={c.gallery}/></div></section>}
   </article>
-  <Callout title={`Make ${c.name} your Guernsey base`} text="View current availability, prices and booking terms on Airbnb. If you have a question first, we are here to help." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability on Airbnb':'Contact us'} secondaryHref="/contact/" secondaryLabel="Contact us"/>
+  <Callout title={`Make ${c.name} your Guernsey base`} text="View current availability, prices and booking terms securely through Airbnb. If you have a question first, we are here to help." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'} secondaryHref="/contact/" secondaryLabel="Contact us"/>
 </BaseLayout>
