@@ -8,7 +8,11 @@ const heroFields = {
   heroAlt: z.string().optional(),
   heroPan: z.boolean().optional(),
   heroVideo: z.string().optional(),
-  heroPoster: z.string().optional()
+  heroPoster: z.string().optional(),
+  heroPrimaryLabel: z.string().optional(),
+  heroPrimaryUrl: z.string().optional(),
+  heroSecondaryLabel: z.string().optional(),
+  heroSecondaryUrl: z.string().optional()
 };
 
 const sectionItem = z.object({
@@ -25,7 +29,7 @@ const sectionItem = z.object({
 
 const pageSection = z.object({
   enabled: z.boolean().optional(),
-  type: z.enum(['text','feature','image','cards','iconCards','list','gallery','quote','splitQuote','cottageListing','cta','map','notice','steps','locationMap']),
+  type: z.enum(['text','feature','image','cards','iconCards','featureStrip','list','gallery','quote','splitQuote','cottageListing','cta','map','notice','steps','locationMap']),
   theme: z.enum(['auto','cream','paper','green']).optional(),
   width: z.enum(['narrow','standard','wide']).optional(),
   eyebrow: z.string().optional(),
