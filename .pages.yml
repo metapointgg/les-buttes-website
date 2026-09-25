@@ -27,10 +27,7 @@ components:
     description: Add and reorder sections to build the page. Each section can be switched off without deleting it.
     list: { collapsible: { collapsed: true, summary: "{title}" } }
     fields:
-      - name: enabled
-        label: Show section
-        type: boolean
-        default: true
+      - { name: enabled, label: Show section, type: boolean, default: true }
       - name: type
         label: Section type
         type: select
@@ -42,6 +39,8 @@ components:
             - { value: image, label: Single image }
             - { value: cards, label: Cards }
             - { value: iconCards, label: Icon cards }
+            - { value: splitQuote, label: Split text and quote }
+            - { value: cottageListing, label: Available cottage listing }
             - { value: list, label: List }
             - { value: gallery, label: Image gallery }
             - { value: quote, label: Quote }
@@ -130,7 +129,7 @@ components:
           - { name: alt, label: Image description, type: text }
           - { name: caption, label: Caption, type: string }
       - { name: quote, label: Quotation, type: text }
-      - { name: attribution, label: Quote attribution, type: string }
+      - { name: attribution, label: Quote attribution / supporting note, type: string }
       - { name: buttonLabel, label: Button label, type: string }
       - { name: buttonUrl, label: Button URL, type: string }
       - { name: buttonExternal, label: Open button in new tab, type: boolean, default: false }
@@ -180,11 +179,7 @@ content:
         required: true
         options: { media: images }
       - { name: heroAlt, label: Main image description, type: text, required: true }
-      - name: heroPan
-        label: Pan main image
-        description: Adds subtle lateral movement when the main media type is Image. Gallery photographs remain static.
-        type: boolean
-        default: false
+      - { name: heroPan, label: Pan main image, description: Adds subtle lateral movement when the main media type is Image. Gallery photographs remain static., type: boolean, default: false }
       - name: heroVideo
         label: Main video
         description: Optional MP4 or WebM background video. It plays muted, loops and has no controls.
@@ -200,10 +195,7 @@ content:
         type: object
         list: { collapsible: { collapsed: true, summary: "{caption}" } }
         fields:
-          - name: image
-            type: image
-            required: true
-            options: { media: images }
+          - { name: image, type: image, required: true, options: { media: images } }
           - { name: alt, label: Image description, type: text, required: true }
           - { name: caption, type: string, required: true }
       - { name: facilities, label: What is included, type: string, list: true }
@@ -221,11 +213,7 @@ content:
           - { name: guest, type: string }
           - { name: sourceUrl, label: Airbnb review link, type: string }
       - { name: seo, component: seo }
-      - name: body
-        label: Main description
-        type: rich-text
-        required: true
-        options: { media: images }
+      - { name: body, label: Main description, type: rich-text, required: true, options: { media: images } }
 
   - name: pages
     label: Main pages
@@ -252,32 +240,13 @@ content:
           values:
             - { value: image, label: Image }
             - { value: video, label: Video }
-      - name: heroImage
-        label: Page main image
-        type: image
-        options: { media: images }
+      - { name: heroImage, label: Page main image, type: image, options: { media: images } }
       - { name: heroAlt, label: Page main image description, type: text }
       - { name: heroPan, label: Pan page main image, type: boolean, default: false }
-      - name: heroVideo
-        label: Page main video
-        description: Optional MP4 or WebM. It autoplays muted, loops and is replaced by the fallback image for reduced-motion visitors.
-        type: file
-        options: { media: videos, categories: [video] }
-      - name: heroPoster
-        label: Video fallback image
-        type: image
-        options: { media: images }
+      - { name: heroVideo, label: Page main video, description: Optional MP4 or WebM. It autoplays muted, loops and is replaced by the fallback image for reduced-motion visitors., type: file, options: { media: videos, categories: [video] } }
+      - { name: heroPoster, label: Video fallback image, type: image, options: { media: images } }
       - { name: sections, component: pageSections }
-      - { name: welcomeEyebrow, label: Homepage welcome short heading, type: string }
-      - { name: welcomeTitle, label: Homepage welcome heading, type: string }
-      - { name: welcomeQuote, label: Homepage welcome quotation, type: text }
-      - { name: welcomeNote, label: Homepage welcome note, type: text }
       - { name: seo, component: seo }
-      - name: body
-        label: Page-specific text
-        description: Used by specialist page templates such as Home. Standard section-driven pages may leave this blank.
-        type: rich-text
-        options: { media: images }
 
   - name: subpages
     label: Sub pages
@@ -292,27 +261,11 @@ content:
       search: [title, slug, seo.title, eyebrow]
     fields:
       - { name: title, label: Main heading, type: string, required: true }
-      - name: slug
-        label: URL slug
-        description: The page address without slashes, for example gardens creates /gardens/.
-        type: string
-        required: true
-        pattern: "^[a-z0-9-]+$"
-      - name: published
-        label: Published on website
-        description: Turn this off to remove the page from the public website and sitemap.
-        type: boolean
-        default: true
-        required: true
+      - { name: slug, label: URL slug, description: The page address without slashes, for example gardens creates /gardens/., type: string, required: true, pattern: "^[a-z0-9-]+$" }
+      - { name: published, label: Published on website, description: Turn this off to remove the page from the public website and sitemap., type: boolean, default: true, required: true }
       - { name: showInNavigation, label: Show in main navigation, type: boolean, default: false }
-      - name: navigationLabel
-        label: Navigation label
-        description: Optional shorter label for the main menu. If blank, the main heading is used.
-        type: string
-      - name: navigationOrder
-        label: Navigation order
-        description: Lower numbers appear earlier in the menu. Cottages is 20, Explore Guernsey is 40.
-        type: number
+      - { name: navigationLabel, label: Navigation label, description: Optional shorter label for the main menu. If blank, the main heading is used., type: string }
+      - { name: navigationOrder, label: Navigation order, description: Lower numbers appear earlier in the menu. Cottages is 20, Explore Guernsey is 40., type: number }
       - { name: eyebrow, label: Short heading, type: string, required: true }
       - { name: intro, label: Introduction, type: text, required: true }
       - name: heroMediaType
@@ -323,20 +276,11 @@ content:
           values:
             - { value: image, label: Image }
             - { value: video, label: Video }
-      - name: heroImage
-        label: Page main image
-        type: image
-        options: { media: images }
+      - { name: heroImage, label: Page main image, type: image, options: { media: images } }
       - { name: heroAlt, label: Main image description, type: text }
       - { name: heroPan, label: Pan page main image, type: boolean, default: false }
-      - name: heroVideo
-        label: Page main video
-        type: file
-        options: { media: videos, categories: [video] }
-      - name: heroPoster
-        label: Video fallback image
-        type: image
-        options: { media: images }
+      - { name: heroVideo, label: Page main video, type: file, options: { media: videos, categories: [video] } }
+      - { name: heroPoster, label: Video fallback image, type: image, options: { media: images } }
       - { name: sections, component: pageSections }
       - { name: seo, component: seo }
 
