@@ -40,5 +40,7 @@ if (!page) throw new Error('Missing home');
       </div>
     </div>
   </section>
-  <PageSections sections={page.data.sections}/>
+  <div class="home-sections">
+    <PageSections sections={page.data.sections}/>
+  </div>
 </BaseLayout>
