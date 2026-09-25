@@ -56,9 +56,7 @@ const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', bas
 
 const pages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }), schema: z.object({
   title:z.string(), urlStub:z.string(), eyebrow:z.string(), intro:z.string(), ...heroFields,
-  sections:z.array(pageSection).optional(),
-  experienceImage:z.string().optional(), experienceImageAlt:z.string().optional(), experienceImagePan:z.boolean().optional(),
-  welcomeEyebrow:z.string().optional(), welcomeTitle:z.string().optional(), welcomeQuote:z.string().optional(), welcomeNote:z.string().optional(), seo
+  sections:z.array(pageSection).optional(), seo
 }) });
 
 const subpages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/subpages' }), schema: z.object({
