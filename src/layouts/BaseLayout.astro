@@ -5,6 +5,7 @@ import DesignTokens from '../components/DesignTokens.astro';
 import '../styles/global.css';
 import '../styles/editorial.css';
 import '../styles/refinement.css';
+import '../styles/secondary-pages.css';
 import site from '../data/site.json';
 interface Props { title:string; description:string; canonical?:string; jsonLd?:Record<string,unknown>; noindex?:boolean }
 const {title,description,canonical=new URL(Astro.url.pathname,site.url).toString(),jsonLd,noindex=false}=Astro.props;
