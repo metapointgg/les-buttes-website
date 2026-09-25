@@ -60,7 +60,7 @@ sections:
     type: cta
     title: Picture yourself here?
     text: Explore Geranium and Honeysuckle, then check current availability through Airbnb.
-    buttonLabel: View cottages
+    buttonLabel: Explore our cottages
     buttonUrl: /cottages/
 seo:
   title: Les Buttes Gallery | Guernsey Holiday Cottages
