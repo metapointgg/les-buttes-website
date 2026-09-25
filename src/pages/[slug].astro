@@ -1,8 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PageIntro from '../components/PageIntro.astro';
-import PageSections from '../components/PageSections.astro';
+import ContentPageTemplate from '../components/templates/ContentPageTemplate.astro';
 
 export async function getStaticPaths(){
   const pages=(await getCollection('subpages')).filter(p=>p.data.published);
@@ -10,14 +8,5 @@ export async function getStaticPaths(){
 }
 
 const {page}=Astro.props;
-const p=page.data;
-const hasHero=Boolean(p.heroImage||p.heroVideo);
 ---
-<BaseLayout title={p.seo.title} description={p.seo.description}>
-  {hasHero ? (
-    <PageIntro eyebrow={p.eyebrow} title={p.title} intro={p.intro} mediaType={p.heroMediaType} imageSrc={p.heroImage} imageAlt={p.heroAlt} pan={p.heroPan} videoSrc={p.heroVideo} posterSrc={p.heroPoster}/>
-  ) : (
-    <div class="wrap"><PageIntro eyebrow={p.eyebrow} title={p.title} intro={p.intro}/></div>
-  )}
-  <PageSections sections={p.sections}/>
-</BaseLayout>
+<ContentPageTemplate pageData={page.data}/>
