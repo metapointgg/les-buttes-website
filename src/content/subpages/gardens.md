@@ -29,7 +29,6 @@ sections:
       Around the garden are quieter corners and seating areas, while the
       historic buildings and old stone walls give the grounds their distinctive
       Guernsey character.
-    image: /src/assets/images/gardens/garden-seating.jpg
     imageAlt: A sheltered garden seating and dining area surrounded by planting at
       Les Buttes
     imagePosition: right
@@ -53,7 +52,7 @@ sections:
       - title: Sunken Garden
         text: A sheltered garden framed by old stonework and mature planting, with
           seating and a more intimate atmosphere.
-        image: /src/assets/images/gardens/garden-seating.jpg
+        image: /src/assets/images/garden-seating.png
         external: false
     buttonExternal: false
     secondaryButtonExternal: false
