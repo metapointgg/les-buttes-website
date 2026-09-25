@@ -1,0 +1,99 @@
+/* Second-pass refinement based on the approved image-led homepage direction. */
+
+/* Restrained interactions */
+.button svg,.text-link svg{transition:transform .18s ease}
+.button:hover svg,.text-link:hover svg{transform:translateX(.18rem)}
+.desktop-nav a{transition:color .18s ease,text-decoration-color .18s ease}
+.home-sections .cottage-card .card-image img{transition:transform .45s ease}
+.home-sections .cottage-card:hover .card-image img{transform:scale(1.015)}
+
+/* Welcome: use the brand illustration as a quiet editorial device rather than another large photograph. */
+.home-sections .section:first-child{padding-block:clamp(3.25rem,5.5vw,5.25rem)}
+.home-sections .section:first-child .section-builder-feature{gap:clamp(2rem,5vw,4.5rem)!important}
+.home-sections .section:first-child .section-builder-copy{max-width:45rem!important}
+.home-sections .section:first-child .section-builder-copy h2{max-width:17ch}
+.home-sections .section:first-child .section-builder-feature-image{aspect-ratio:auto!important;overflow:visible!important;background:transparent!important;border-radius:0!important;box-shadow:none!important}
+.home-sections .section:first-child .section-builder-feature-image picture,
+.home-sections .section:first-child .section-builder-feature-image img{position:static!important;width:100%!important;height:auto!important;max-height:13rem;object-fit:contain!important;opacity:.82}
+.home-sections .section:first-child .section-builder-feature:hover .section-builder-feature-image img{transform:none!important}
+
+/* The trust strip should read as a quiet row of reasons to stay, not a corporate card grid. */
+.home-sections .section-builder-feature-strip-section{padding-block:.55rem;background:var(--cream)!important}
+.home-sections .section-builder-feature-strip{grid-template-columns:1fr!important;gap:0!important}
+.home-sections .section-builder-feature-strip article{grid-template-columns:1fr!important;justify-items:center!important;min-height:0!important;padding:1rem .85rem!important;border:0!important;text-align:center}
+.home-sections .section-builder-feature-strip-icon{margin-bottom:.1rem;color:var(--green)}
+.home-sections .section-builder-feature-strip strong{font-size:.88rem!important;line-height:1.35}
+.home-sections .section-builder-feature-strip span{max-width:15rem;font-size:.75rem!important;line-height:1.4}
+
+/* Cottage cards: larger visual, shorter human-oriented copy and a clear on-site CTA. */
+.home-sections .cottage-grid{gap:1.35rem!important}
+.home-sections .cottage-card .card-image{aspect-ratio:16/9!important}
+.home-sections .cottage-card .card-body{padding:1.15rem 1.25rem 1.35rem!important}
+.home-sections .cottage-card .card-body h2{font-size:clamp(1.7rem,3vw,2.35rem)!important}
+.home-sections .cottage-card-summary{min-height:2.7em;margin-bottom:.8rem!important;font-size:.92rem;line-height:1.45}
+.home-sections .cottage-card-button{color:#fff!important;background:var(--green)!important;border-color:var(--green)!important}
+.home-sections .cottage-card-button:hover{background:var(--deep)!important}
+
+/* Give the Guernsey section a genuine cinematic break in the page rhythm. */
+.home-sections .section.green{position:relative;min-height:clamp(29rem,50vw,39rem);overflow:hidden;padding:0!important;background:var(--deep)!important}
+.home-sections .section.green .section-builder-feature{position:relative;display:flex!important;width:100%!important;max-width:none!important;min-height:clamp(29rem,50vw,39rem);margin:0!important;padding:0!important;align-items:flex-end!important}
+.home-sections .section.green .section-builder-feature-image{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto!important;border-radius:0!important;outline:0!important;box-shadow:none!important}
+.home-sections .section.green .section-builder-feature-image picture,
+.home-sections .section.green .section-builder-feature-image img{position:absolute!important;inset:0;width:100%!important;height:100%!important;object-fit:cover!important}
+.home-sections .section.green .section-builder-feature::after{position:absolute;inset:0;z-index:1;content:"";background:linear-gradient(90deg,rgba(5,24,20,.82) 0%,rgba(8,31,25,.62) 44%,rgba(15,39,30,.18) 78%,rgba(15,39,30,.05) 100%)}
+.home-sections .section.green .section-builder-copy{position:relative;z-index:2;width:min(100%,50rem);max-width:50rem!important;padding:clamp(3.75rem,8vw,6.5rem) clamp(1rem,7vw,7rem)}
+.home-sections .section.green .section-builder-copy h2{max-width:12ch;font-size:clamp(2.8rem,6vw,5rem)}
+.home-sections .section.green .section-builder-copy>p:not(.eyebrow){max-width:38rem;color:rgba(255,255,255,.88)!important}
+.home-sections .section.green .section-builder-feature:hover .section-builder-feature-image img{transform:scale(1.006)}
+
+/* Location reassurance: calm icon row with no card chrome. */
+.home-sections .section:has(.section-builder-card-grid-icons) .section-heading{max-width:54rem;margin-inline:auto;text-align:center}
+.home-sections .section:has(.section-builder-card-grid-icons) .section-heading .eyebrow{justify-content:center}
+.home-sections .section-builder-card-grid-icons{gap:0!important;border:0!important}
+.home-sections .section-builder-card-grid-icons .section-builder-card{border:0!important;text-align:center}
+.home-sections .section-builder-card-grid-icons .section-builder-card-content{align-items:center;padding:1.15rem 1rem!important}
+.home-sections .section-builder-card-grid-icons .section-builder-icon{margin-inline:auto;border:0!important;background:transparent!important}
+.home-sections .section-builder-card-grid-icons .section-builder-card h3{font-family:var(--body);font-size:.9rem!important;font-weight:700}
+.home-sections .section-builder-card-grid-icons .section-builder-card p{max-width:16rem;font-size:.78rem;line-height:1.45}
+.home-sections .section:has(.section-builder-card-grid-icons) .section-builder-section-action{text-align:center}
+
+/* Shorten the family story visually so it feels like a personal note, not another accommodation section. */
+.home-sections .section:has(.section-builder-feature.image-right):not(.green) .section-builder-copy>p:not(.eyebrow){max-width:38rem}
+
+/* The final booking panel should feel like a deliberate conclusion to the page. */
+.home-sections .callout{width:100%!important;max-width:none!important;margin:0!important;padding:clamp(3.5rem,7vw,6rem) max(1rem,calc((100vw - 76rem)/2 + 2rem))!important;border-radius:0!important;background:linear-gradient(120deg,#103b30 0%,#194c3d 58%,#285545 100%)!important;border-top:1px solid rgba(255,255,255,.14)}
+.home-sections .callout h2{max-width:15ch;font-size:clamp(2.6rem,5.2vw,4.3rem)}
+.home-sections .callout p:not(.eyebrow){max-width:38rem}
+.home-sections .callout-actions{align-items:center}
+
+@media(min-width:48rem){
+  .home-sections .section:first-child .section-builder-feature{grid-template-columns:1.15fr .85fr!important}
+  .home-sections .section-builder-feature-strip{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .home-sections .section-builder-card-grid-icons{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .home-sections .section-builder-card-grid-icons .section-builder-card{border:0!important}
+}
+
+@media(min-width:72rem){
+  .home-sections .section-builder-feature-strip{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+  .home-sections .section-builder-card-grid-icons{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .home-sections .section-builder-card-grid-icons .section-builder-card{border:0!important}
+}
+
+@media(max-width:47.99rem){
+  .home-hero{min-height:35rem!important}
+  .home-hero-inner{padding-block:3.25rem!important}
+  .home-hero-copy h1{max-width:9.5ch!important}
+  .home-sections .section:first-child .section-builder-feature-image{display:none}
+  .home-sections .section-builder-feature-strip article{padding:.9rem .55rem!important}
+  .home-sections .section.green,.home-sections .section.green .section-builder-feature{min-height:30rem}
+  .home-sections .section.green .section-builder-copy{padding:3.5rem 1.25rem}
+  .home-sections .section.green .section-builder-copy h2{font-size:clamp(2.7rem,12vw,4rem)}
+  .home-sections .section-builder-card-grid-icons{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .home-sections .section-builder-card-grid-icons .section-builder-card-content{padding:1rem .5rem!important}
+  .home-sections .callout{padding:3.5rem 1.25rem!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .button svg,.text-link svg,.home-sections .cottage-card .card-image img{transition:none!important}
+  .button:hover svg,.text-link:hover svg,.home-sections .cottage-card:hover .card-image img,.home-sections .section.green .section-builder-feature:hover .section-builder-feature-image img{transform:none!important}
+}
