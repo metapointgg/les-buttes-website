@@ -25,17 +25,40 @@ const pages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: 
   welcomeEyebrow:z.string().optional(), welcomeTitle:z.string().optional(), welcomeQuote:z.string().optional(), welcomeNote:z.string().optional(), seo
 }) });
 
+const sectionItem = z.object({
+  title:z.string(),
+  text:z.string().optional(),
+  icon:z.enum(['bed','bath','guests','phone','mail','pin','beach','walk','guernsey','history','islands','food']).optional(),
+  linkLabel:z.string().optional(),
+  linkUrl:z.string().optional()
+});
+
+const galleryImage = z.object({
+  image:z.string(),
+  alt:z.string().optional(),
+  caption:z.string().optional()
+});
+
 const subPageSection = z.object({
   enabled: z.boolean().optional(),
-  type: z.enum(['text','feature','cards','list','map']),
+  type: z.enum(['text','feature','cards','iconCards','list','gallery','quote','cta','map']),
+  theme: z.enum(['auto','cream','paper','green']).optional(),
+  width: z.enum(['standard','narrow','wide']).optional(),
   eyebrow: z.string().optional(),
   title: z.string(),
   text: z.string().optional(),
   image: z.string().optional(),
   imageAlt: z.string().optional(),
   imagePosition: z.enum(['left','right']).optional(),
-  items: z.array(z.object({ title:z.string(), text:z.string().optional() })).optional(),
-  listItems: z.array(z.string()).optional()
+  items: z.array(sectionItem).optional(),
+  listItems: z.array(z.string()).optional(),
+  galleryImages: z.array(galleryImage).optional(),
+  quote: z.string().optional(),
+  attribution: z.string().optional(),
+  buttonLabel: z.string().optional(),
+  buttonUrl: z.string().optional(),
+  secondaryButtonLabel: z.string().optional(),
+  secondaryButtonUrl: z.string().optional()
 });
 
 const subpages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/subpages' }), schema: z.object({
