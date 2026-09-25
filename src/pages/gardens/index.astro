@@ -1,0 +1,98 @@
+---
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import ResponsiveImage from '../../components/ResponsiveImage.astro';
+import Callout from '../../components/Callout.astro';
+
+const page=await getEntry('subpages','gardens');
+if(!page) throw new Error('Missing gardens content');
+const sections:any[]=page.data.sections??[];
+const mainGarden:any=sections.find(section=>section.type==='feature'&&section.enabled!==false);
+const gardenAreas:any=sections.find(section=>section.type==='cards'&&section.enabled!==false);
+const gallery:any=sections.find(section=>section.type==='gallery'&&section.enabled!==false);
+const orchard:any=sections.find(section=>section.type==='list'&&section.enabled!==false);
+const valley:any=sections.find(section=>section.type==='text'&&section.enabled!==false);
+const cta:any=sections.find(section=>section.type==='cta'&&section.enabled!==false);
+const paragraphs=(text?:string)=>text?.split(/\n\s*\n/).filter(Boolean)??[];
+---
+<BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
+  <PageIntro eyebrow={page.data.eyebrow} title={page.data.title} intro={page.data.intro} mediaType={page.data.heroMediaType} imageSrc={page.data.heroImage} imageAlt={page.data.heroAlt} pan={page.data.heroPan} videoSrc={page.data.heroVideo} posterSrc={page.data.heroPoster}/>
+
+  {mainGarden&&<section class="section paper garden-main-section">
+    <div class="wrap garden-main-layout">
+      <div class="garden-main-copy">
+        {mainGarden.eyebrow&&<p class="eyebrow">{mainGarden.eyebrow}</p>}
+        <h2>{mainGarden.title}</h2>
+        {paragraphs(mainGarden.text).map(text=><p>{text}</p>)}
+      </div>
+      {mainGarden.image&&<div class="garden-main-image"><ResponsiveImage src={mainGarden.image} alt={mainGarden.imageAlt??''} widths={[640,960,1280,1600]} sizes="(max-width: 760px) 100vw, 62vw"/></div>}
+    </div>
+  </section>}
+
+  {gardenAreas&&<section class="section garden-areas-section">
+    <div class="wrap garden-wide">
+      <header class="section-heading garden-areas-heading">
+        {gardenAreas.eyebrow&&<p class="eyebrow">{gardenAreas.eyebrow}</p>}
+        <h2>{gardenAreas.title}</h2>
+        {gardenAreas.text&&<p class="lede">{gardenAreas.text}</p>}
+      </header>
+      <div class="garden-area-grid">
+        {gardenAreas.items?.map((item:any,index:number)=><article class:list={['garden-area-card',item.image&&'has-image']}>
+          {item.image&&<div class="garden-area-image"><ResponsiveImage src={item.image} alt={item.imageAlt??''} widths={[480,720,960]} sizes="(max-width: 760px) 100vw, 50vw"/></div>}
+          <div class="garden-area-copy"><span class="garden-area-number">0{index+1}</span><h3>{item.title}</h3>{item.text&&<p>{item.text}</p>}</div>
+        </article>)}
+      </div>
+    </div>
+  </section>}
+
+  {gallery?.galleryImages?.length>0&&<section class="section paper garden-gallery-section">
+    <div class="wrap garden-wide">
+      <header class="section-heading garden-gallery-heading">
+        {gallery.eyebrow&&<p class="eyebrow">{gallery.eyebrow}</p>}
+        <h2>{gallery.title}</h2>
+        {gallery.text&&<p class="lede">{gallery.text}</p>}
+      </header>
+      <div class="garden-mosaic">
+        {gallery.galleryImages.map((item:any,index:number)=><figure class:list={[index===0&&'garden-mosaic-primary']}>
+          <ResponsiveImage src={item.image} alt={item.alt??''} widths={[480,768,1100,1440]} sizes={index===0?'(max-width:760px) 100vw, 58vw':'(max-width:760px) 100vw, 34vw'}/>
+          {item.caption&&<figcaption>{item.caption}</figcaption>}
+        </figure>)}
+      </div>
+    </div>
+  </section>}
+
+  {(orchard||valley)&&<section class="section garden-grounds-section">
+    <div class="wrap garden-grounds-grid">
+      {orchard&&<article class="garden-orchard">
+        {orchard.eyebrow&&<p class="eyebrow">{orchard.eyebrow}</p>}
+        <h2>{orchard.title}</h2>
+        {orchard.text&&<p>{orchard.text}</p>}
+        {orchard.listItems?.length>0&&<ul>{orchard.listItems.map((item:string)=><li>{item}</li>)}</ul>}
+      </article>}
+      {valley&&<article class="garden-valley">
+        {valley.eyebrow&&<p class="eyebrow eyebrow-light">{valley.eyebrow}</p>}
+        <h2>{valley.title}</h2>
+        {valley.text&&<p>{valley.text}</p>}
+      </article>}
+    </div>
+  </section>}
+
+  {cta&&<Callout title={cta.title} text={cta.text} href={cta.buttonUrl??'/cottages/'} label={cta.buttonLabel??'Explore our cottages'}/>} 
+</BaseLayout>
+
+<style>
+.garden-wide{max-width:88rem}
+.garden-main-layout{display:grid;gap:clamp(2rem,6vw,5rem);align-items:center;max-width:88rem}
+.garden-main-copy{max-width:34rem}.garden-main-copy h2{max-width:12ch}.garden-main-copy p:not(.eyebrow){color:var(--soft);font-size:1.04rem}
+.garden-main-image{overflow:hidden;min-height:28rem;border-radius:.5rem}.garden-main-image picture,.garden-main-image img{width:100%;height:100%}.garden-main-image img{object-fit:cover}
+.garden-areas-heading,.garden-gallery-heading{max-width:52rem}
+.garden-area-grid{display:grid;gap:1rem}.garden-area-card{display:grid;overflow:hidden;background:var(--paper);border:1px solid var(--line);border-radius:.5rem}.garden-area-card:not(.has-image){background:linear-gradient(145deg,var(--paper),#f4ecde)}
+.garden-area-image{min-height:18rem}.garden-area-image picture,.garden-area-image img{width:100%;height:100%}.garden-area-image img{object-fit:cover}
+.garden-area-copy{padding:clamp(1.4rem,3vw,2rem)}.garden-area-number{display:block;margin-bottom:.9rem;color:var(--gold);font-size:.78rem;font-weight:700;letter-spacing:.1em}.garden-area-copy h3{margin:0 0 .55rem;font:500 clamp(1.7rem,3vw,2.4rem)/1.1 var(--display)}.garden-area-copy p{margin:0;color:var(--soft)}
+.garden-mosaic{display:grid;gap:.65rem}.garden-mosaic figure{position:relative;overflow:hidden;min-height:18rem;margin:0;border-radius:.4rem;background:var(--pale)}.garden-mosaic picture,.garden-mosaic img{width:100%;height:100%}.garden-mosaic img{object-fit:cover}.garden-mosaic figcaption{position:absolute;right:.6rem;bottom:.6rem;left:.6rem;padding:.55rem .7rem;color:#fff;background:linear-gradient(90deg,#061d18c7,#061d1835);border-radius:.25rem;font-size:.78rem}
+.garden-grounds-grid{display:grid;gap:0;overflow:hidden;max-width:88rem;border-radius:.5rem}.garden-orchard,.garden-valley{padding:clamp(2rem,5vw,4rem)}.garden-orchard{background:var(--paper)}.garden-orchard h2,.garden-valley h2{max-width:12ch}.garden-orchard>p{color:var(--soft)}.garden-orchard ul{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.6rem 0 0;padding:0;list-style:none}.garden-orchard li{padding:.55rem .85rem;background:var(--cream);border:1px solid var(--line);border-radius:999px;font-size:.84rem;font-weight:600}.garden-valley{display:flex;flex-direction:column;justify-content:center;color:#fff;background:var(--deep)}.garden-valley h2{color:#fff}.garden-valley p:not(.eyebrow){max-width:34rem;color:#ffffffc7;font-size:1.05rem}
+@media(min-width:48rem){.garden-area-grid{grid-template-columns:repeat(2,1fr)}.garden-mosaic{grid-template-columns:1.35fr .65fr;grid-template-rows:repeat(2,15rem)}.garden-mosaic figure{min-height:0}.garden-mosaic-primary{grid-row:1/3}.garden-mosaic figure:nth-child(n+4){display:none}.garden-grounds-grid{grid-template-columns:.9fr 1.1fr}}
+@media(min-width:64rem){.garden-main-layout{grid-template-columns:minmax(20rem,.72fr) minmax(0,1.28fr)}.garden-main-image{min-height:38rem}.garden-area-card.has-image .garden-area-image{min-height:23rem}.garden-area-grid{gap:1.25rem}}
+@media(max-width:47.99rem){.garden-main-image{min-height:22rem}.garden-area-card.has-image .garden-area-image{min-height:17rem}.garden-mosaic{grid-template-columns:1fr}.garden-mosaic figure{min-height:16rem}.garden-grounds-grid{border-radius:0}}
+</style>
