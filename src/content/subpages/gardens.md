@@ -9,6 +9,7 @@ eyebrow: Our gardens
 intro: Lawns, orchard, a sunken garden and a peaceful valley — all surrounded by
   mature trees and planting at Les Buttes.
 heroMediaType: image
+heroImage: /src/assets/images/main-garden.jpg
 heroAlt: The spacious Main Garden at Les Buttes, with lawns, mature trees and
   colourful planting
 heroPan: false
