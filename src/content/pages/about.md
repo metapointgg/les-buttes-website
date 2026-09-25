@@ -47,7 +47,7 @@ sections:
       - kicker: 16th century
         title: Historic surroundings
         text: The cottages sit within the buildings of a restored traditional Guernsey farm.
-      - kicker: 1981
+      - kicker: "1981"
         title: A family enterprise
         text: The Ozanne family began welcoming self-catering guests to Les Buttes.
       - kicker: Today
