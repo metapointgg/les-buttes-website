@@ -91,7 +91,7 @@ sections:
     type: cta
     title: Stay among the gardens
     text: Geranium and Honeysuckle each have their own private outdoor space as well as the wider Les Buttes setting to enjoy.
-    buttonLabel: View cottages
+    buttonLabel: Explore our cottages
     buttonUrl: /cottages/
 seo:
   title: Gardens at Les Buttes Holiday Cottages, Guernsey
