@@ -1,0 +1,132 @@
+---
+import ResponsiveImage from './ResponsiveImage.astro';
+import Callout from './Callout.astro';
+import Icon from './Icon.astro';
+
+interface Props { sections?: any[] }
+const { sections = [] } = Astro.props;
+const visibleSections = sections.filter(section => section.enabled !== false);
+const paragraphs = (text?: string) => text?.split(/\n\s*\n/).filter(Boolean) ?? [];
+const sectionTheme = (section:any,index:number) => {
+  if(section.theme === 'green') return 'green';
+  if(section.theme === 'cream') return '';
+  if(section.theme === 'paper') return 'paper';
+  return index % 2 === 0 ? 'paper' : '';
+};
+const widthClass = (section:any) => section.width === 'narrow' ? 'section-builder-narrow' : section.width === 'wide' ? 'section-builder-wide' : '';
+---
+{visibleSections.map((section,index) => {
+  const theme = sectionTheme(section,index);
+  const width = widthClass(section);
+  const eyebrowClass = theme === 'green' ? 'eyebrow eyebrow-light' : 'eyebrow';
+
+  if(section.type === 'cta') return (
+    <Callout
+      title={section.title}
+      text={section.text ?? ''}
+      href={section.buttonUrl ?? '/contact/'}
+      label={section.buttonLabel ?? 'Find out more'}
+      secondaryHref={section.secondaryButtonUrl}
+      secondaryLabel={section.secondaryButtonLabel}
+    />
+  );
+
+  if(section.type === 'feature') return (
+    <section class:list={['section',theme]}>
+      <div class:list={['wrap','section-builder-feature',width,section.imagePosition === 'right' && 'image-right']}>
+        {section.image && <div class="section-builder-feature-image"><ResponsiveImage src={section.image} alt={section.imageAlt ?? ''} widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 50vw"/></div>}
+        <div class="section-builder-copy">
+          {section.eyebrow && <p class={eyebrowClass}>{section.eyebrow}</p>}
+          <h2>{section.title}</h2>
+          {paragraphs(section.text).map(text => <p>{text}</p>)}
+          {section.buttonLabel && section.buttonUrl && <a class:list={['button',theme === 'green' && 'button-light']} href={section.buttonUrl}>{section.buttonLabel}<Icon name="arrow" size={18}/></a>}
+        </div>
+      </div>
+    </section>
+  );
+
+  if(section.type === 'cards' || section.type === 'iconCards') return (
+    <section class:list={['section',theme]}>
+      <div class:list={['wrap',width]}>
+        <header class="section-heading">
+          {section.eyebrow && <p class={eyebrowClass}>{section.eyebrow}</p>}
+          <h2>{section.title}</h2>
+          {paragraphs(section.text).map(text => <p class="lede">{text}</p>)}
+        </header>
+        {section.items?.length > 0 && <div class="section-builder-card-grid">{section.items.map((item:any) => <article class:list={['section-builder-card',theme === 'green' && 'on-green']}>
+          {section.type === 'iconCards' && item.icon && <span class="section-builder-icon"><Icon name={item.icon} size={26}/></span>}
+          <h3>{item.title}</h3>
+          {item.text && <p>{item.text}</p>}
+          {item.linkLabel && item.linkUrl && <a class="text-link" href={item.linkUrl}>{item.linkLabel}<Icon name="arrow" size={17}/></a>}
+        </article>)}</div>}
+      </div>
+    </section>
+  );
+
+  if(section.type === 'list') return (
+    <section class:list={['section',theme]}>
+      <div class:list={['wrap','section-builder-narrow',width]}>
+        {section.eyebrow && <p class={eyebrowClass}>{section.eyebrow}</p>}
+        <h2>{section.title}</h2>
+        {paragraphs(section.text).map(text => <p class="lede">{text}</p>)}
+        {section.listItems?.length > 0 && <ul class="section-builder-list">{section.listItems.map((item:string) => <li>{item}</li>)}</ul>}
+      </div>
+    </section>
+  );
+
+  if(section.type === 'gallery') return (
+    <section class:list={['section',theme]}>
+      <div class:list={['wrap',width]}>
+        <header class="section-heading">
+          {section.eyebrow && <p class={eyebrowClass}>{section.eyebrow}</p>}
+          <h2>{section.title}</h2>
+          {paragraphs(section.text).map(text => <p class="lede">{text}</p>)}
+        </header>
+        {section.galleryImages?.length > 0 && <div class="section-builder-gallery">{section.galleryImages.map((item:any) => <figure>
+          <ResponsiveImage src={item.image} alt={item.alt ?? ''} widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 33vw"/>
+          {item.caption && <figcaption>{item.caption}</figcaption>}
+        </figure>)}</div>}
+      </div>
+    </section>
+  );
+
+  if(section.type === 'quote') return (
+    <section class:list={['section',theme]}>
+      <div class:list={['wrap','section-builder-quote',width]}>
+        {section.eyebrow && <p class={eyebrowClass}>{section.eyebrow}</p>}
+        <blockquote>“{section.quote ?? section.text ?? ''}”</blockquote>
+        {section.attribution && <p class="section-builder-attribution">{section.attribution}</p>}
+      </div>
+    </section>
+  );
+
+  if(section.type === 'map') return (
+    <section class:list={['section',theme]}>
+      <div class:list={['wrap',width]}>
+        <header class="section-heading">
+          {section.eyebrow && <p class={eyebrowClass}>{section.eyebrow}</p>}
+          <h2>{section.title}</h2>
+          {paragraphs(section.text).map(text => <p class="lede">{text}</p>)}
+        </header>
+        {section.image && <div class="section-builder-map"><ResponsiveImage src={section.image} alt={section.imageAlt ?? ''} widths={[640,960,1280,1600]} sizes="100vw"/></div>}
+      </div>
+    </section>
+  );
+
+  return (
+    <section class:list={['section',theme]}>
+      <div class:list={['wrap','section-builder-narrow',width]}>
+        {section.eyebrow && <p class={eyebrowClass}>{section.eyebrow}</p>}
+        <h2>{section.title}</h2>
+        <div class="prose">{paragraphs(section.text).map(text => <p>{text}</p>)}</div>
+        {section.buttonLabel && section.buttonUrl && <a class:list={['button',theme === 'green' && 'button-light']} href={section.buttonUrl}>{section.buttonLabel}<Icon name="arrow" size={18}/></a>}
+      </div>
+    </section>
+  );
+})}
+
+<style>
+.section-builder-narrow{max-width:56rem}.section-builder-wide{max-width:88rem}.section-builder-feature{display:grid;gap:clamp(2rem,6vw,5rem);align-items:center}.section-builder-feature-image{overflow:hidden;aspect-ratio:4/3;border-radius:var(--radius);box-shadow:var(--shadow)}.section-builder-feature-image picture,.section-builder-feature-image img{width:100%;height:100%;object-fit:cover}.section-builder-copy{max-width:42rem}.section-builder-copy>p:not(.eyebrow){color:var(--soft);font-size:1.06rem}.green .section-builder-copy>p:not(.eyebrow),.green .lede{color:#ffffffc7}.section-builder-copy .button{margin-top:.5rem}.section-builder-card-grid{display:grid;gap:1rem}.section-builder-card{padding:1.5rem;background:var(--paper);border:1px solid var(--line);border-radius:.85rem}.section-builder-card.on-green{background:#ffffff12;border-color:#ffffff2b}.section-builder-card h3{font:700 1.05rem var(--body);letter-spacing:0}.section-builder-card p{color:var(--soft)}.section-builder-card.on-green p{color:#ffffffc7}.section-builder-card.on-green .text-link{color:#fff}.section-builder-icon{display:grid;width:3rem;height:3rem;margin-bottom:1.1rem;place-items:center;color:var(--green);background:var(--pale);border-radius:50%}.section-builder-card.on-green .section-builder-icon{color:var(--deep);background:#ffffffe8}.section-builder-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.75rem;margin:2rem 0 0;padding:0;list-style:none}.section-builder-list li{padding:1rem 1.15rem;background:var(--paper);border:1px solid var(--line);border-radius:.75rem;font-weight:600}.paper .section-builder-list li{background:var(--cream)}.green .section-builder-list li{background:#ffffff12;border-color:#ffffff2b}.section-builder-gallery{display:grid;gap:.75rem}.section-builder-gallery figure{position:relative;overflow:hidden;min-height:16rem;margin:0;background:var(--pale);border-radius:.8rem}.section-builder-gallery picture,.section-builder-gallery img{width:100%;height:100%;object-fit:cover}.section-builder-gallery figcaption{position:absolute;right:.6rem;bottom:.6rem;left:.6rem;padding:.55rem .7rem;color:#fff;background:linear-gradient(90deg,#000a,#0002);border-radius:.4rem;font-size:.8rem}.section-builder-quote{max-width:58rem;text-align:center}.section-builder-quote blockquote{margin:0;font:500 clamp(2rem,5vw,3.8rem)/1.18 var(--display)}.section-builder-attribution{margin:1.5rem 0 0;color:var(--soft);font-weight:700}.green .section-builder-attribution{color:#ffffffbf}.section-builder-map{overflow:hidden;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.section-builder-map picture,.section-builder-map img{width:100%;height:auto}.green .text-link{color:#fff}
+@media(min-width:48rem){.section-builder-card-grid{grid-template-columns:repeat(2,1fr)}.section-builder-feature{grid-template-columns:1fr 1fr}.section-builder-feature.image-right .section-builder-feature-image{order:2}.section-builder-gallery{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:64rem){.section-builder-card-grid{grid-template-columns:repeat(3,1fr)}.section-builder-gallery{grid-template-columns:repeat(3,1fr)}}
+</style>
