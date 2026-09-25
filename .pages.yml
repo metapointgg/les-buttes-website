@@ -45,6 +45,9 @@ components:
             - { value: list, label: List }
             - { value: gallery, label: Image gallery }
             - { value: quote, label: Quote }
+            - { value: notice, label: Notice / information box }
+            - { value: steps, label: Numbered steps }
+            - { value: locationMap, label: Les Buttes location map }
             - { value: cta, label: Call to action }
             - { value: map, label: Map / large image }
       - name: theme
@@ -84,13 +87,13 @@ components:
             - { value: left, label: Left }
             - { value: right, label: Right }
       - name: items
-        label: Cards / icon cards
+        label: Cards / icon cards / steps
         type: object
         list: { collapsible: { collapsed: true, summary: "{title}" } }
         fields:
           - { name: kicker, label: Small label / number, type: string }
-          - { name: title, label: Card heading, type: string, required: true }
-          - { name: text, label: Card text, type: text }
+          - { name: title, label: Item heading, type: string, required: true }
+          - { name: text, label: Item text, type: text }
           - name: icon
             label: Icon
             type: select
@@ -272,7 +275,7 @@ content:
       - { name: seo, component: seo }
       - name: body
         label: Page-specific text
-        description: Used by specialist page templates such as Home, Contact and Find Us. Standard section-driven pages may leave this blank.
+        description: Used by specialist page templates such as Home. Standard section-driven pages may leave this blank.
         type: rich-text
         options: { media: images }
 
