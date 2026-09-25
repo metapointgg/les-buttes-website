@@ -1,15 +1,28 @@
 ---
-import{getEntry}from'astro:content';
-import BaseLayout from'../layouts/BaseLayout.astro';
-import HeroMedia from'../components/HeroMedia.astro';
-import PageSections from'../components/PageSections.astro';
-const page=await getEntry('pages','home');if(!page)throw new Error('Missing home');
+import { getEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroMedia from '../components/HeroMedia.astro';
+import PageSections from '../components/PageSections.astro';
+import Icon from '../components/Icon.astro';
+const page = await getEntry('pages','home');
+if (!page) throw new Error('Missing home');
 ---
 <BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
-<section class="home-hero">
-  <HeroMedia mediaType={page.data.heroMediaType} imageSrc={page.data.heroImage ?? '/src/assets/images/cottages/honeysuckle/exterior.jpg'} imageAlt={page.data.heroAlt ?? 'The granite buildings at Les Buttes Holiday Cottages'} pan={page.data.heroPan} videoSrc={page.data.heroVideo} posterSrc={page.data.heroPoster} class="home-hero-image" widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high" decorative />
-  <div class="wrap home-hero-inner"><div class="home-hero-copy"><p class="eyebrow eyebrow-light">{page.data.eyebrow}</p><h1>{page.data.title}</h1><p class="lede">{page.data.intro}</p><div class="hero-actions"><a class="button button-light" href="/cottages/">Explore our cottages</a><a class="button button-outline" href="/cottages/">Check availability</a></div></div></div>
-</section>
-<div class="wrap home-facts" aria-label="Les Buttes at a glance"><div><strong>Two cottages</strong><span>Each with its own character</span></div><div><strong>Sleeps 4–6</strong><span>For couples and families</span></div><div><strong>Private gardens</strong><span>Peaceful, sheltered spaces</span></div><div><strong>Close to the coast</strong><span>Beaches and cliff paths nearby</span></div></div>
-<PageSections sections={page.data.sections}/>
+  <section class="home-hero">
+    <HeroMedia mediaType={page.data.heroMediaType} imageSrc={page.data.heroImage ?? '/src/assets/images/cottages/honeysuckle/exterior.jpg'} imageAlt={page.data.heroAlt ?? 'The granite buildings at Les Buttes Holiday Cottages'} pan={page.data.heroPan} videoSrc={page.data.heroVideo} posterSrc={page.data.heroPoster} class="home-hero-image" widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high" decorative />
+    <div class="wrap home-hero-inner">
+      <div class="home-hero-copy">
+        <p class="eyebrow eyebrow-light">{page.data.eyebrow}</p>
+        <h1>{page.data.title}</h1>
+        <p class="lede">{page.data.intro}</p>
+        <div class="hero-actions"><a class="button button-light" href="/cottages/">View our cottages <Icon name="arrow" size={17}/></a></div>
+      </div>
+    </div>
+  </section>
+  <div class="wrap home-highlight-strip" aria-label="Why stay at Les Buttes">
+    <article><span class="home-highlight-icon"><Icon name="pin" size={25}/></span><div><strong>Tranquil location</strong><span>Set in peaceful St Pierre du Bois.</span></div></article>
+    <article><span class="home-highlight-icon"><Icon name="walk" size={25}/></span><div><strong>Beautiful gardens</strong><span>Explore the gardens, orchard and valley.</span></div></article>
+    <article><span class="home-highlight-icon"><Icon name="guests" size={25}/></span><div><strong>A warm welcome</strong><span>Family-run since 1981.</span></div></article>
+  </div>
+  <PageSections sections={page.data.sections}/>
 </BaseLayout>

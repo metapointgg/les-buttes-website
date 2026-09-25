@@ -1,13 +1,19 @@
 ---
 title: A gentler pace of island life
 urlStub: /
-eyebrow: St Peter's · Guernsey
+eyebrow: Les Buttes · Guernsey
 intro: Stay in a family-run cottage within a restored 16th-century Guernsey farm, surrounded by quiet lanes and within easy reach of beaches and spectacular coastal walks.
 heroMediaType: image
 heroImage: /src/assets/images/cottages/honeysuckle/exterior.jpg
 heroAlt: The granite buildings and garden at Les Buttes Holiday Cottages
 heroPan: false
 sections:
+  - enabled: true
+    type: cottageListing
+    theme: paper
+    eyebrow: Our cottages
+    title: Stay at Les Buttes
+    text: Two characterful cottages, surrounded by gardens, with easy access to Guernsey’s beaches, cliff paths and attractions.
   - enabled: true
     type: splitQuote
     theme: cream
@@ -19,12 +25,6 @@ sections:
       St Pierre du Bois village is a short walk away, with a supermarket, post office, pub and bus stops. Guernsey’s west-coast beaches and south-coast cliffs are also within easy reach.
     quote: A peaceful place to slow down, breathe in the sea air and enjoy Guernsey at your own pace.
     attribution: Your cottage will be prepared before arrival, with linen, towels and a small welcome supply of tea, coffee and milk.
-  - enabled: true
-    type: cottageListing
-    theme: paper
-    eyebrow: Our cottages
-    title: Find your home from home
-    text: Choose charming Geranium for up to four guests or spacious Honeysuckle for a family or group of up to six.
   - enabled: true
     type: cards
     theme: green

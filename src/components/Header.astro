@@ -5,8 +5,8 @@ import logoHeader from '../assets/images/logo-header.png';
 const path=Astro.url.pathname;
 const fixedNav=[
   {href:'/',label:'Home',order:10},
-  {href:'/cottages/',label:'Our cottages',order:20},
-  {href:'/explore-guernsey/',label:'Explore Guernsey',order:40},
+  {href:'/cottages/',label:'Cottages',order:20},
+  {href:'/explore-guernsey/',label:'Explore',order:40},
   {href:'/about/',label:'About',order:50},
   {href:'/find-us/',label:'Find us',order:60},
   {href:'/contact/',label:'Contact',order:70}
@@ -17,13 +17,16 @@ const subNav=(await getCollection('subpages'))
 const nav=[...fixedNav,...subNav].sort((a,b)=>a.order-b.order);
 const current=(href:string)=>href==='/'?path==='/':path.startsWith(href);
 ---
-<header class="site-header"><div class="announcement">Family-run Guernsey cottages in St Pierre du Bois</div><div class="header-inner wrap">
-<a class="brand illustrated-brand" href="/" aria-label="Les Buttes Holiday Cottages — home"><img src={logoHeader.src} width={logoHeader.width} height={logoHeader.height} alt="" /></a>
-<nav class="desktop-nav" aria-label="Primary navigation">{nav.map(item=><a href={item.href} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}</nav><a class="button header-book" href="/cottages/">Book your stay</a>
-<details class="mobile-menu"><summary><Icon name="menu" size={22}/>Menu</summary><nav>{nav.map(item=><a href={item.href} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}<a class="button" href="/cottages/">Book your stay</a></nav></details>
-</div></header>
+<header class="site-header">
+  <div class="header-inner wrap">
+    <a class="brand illustrated-brand" href="/" aria-label="Les Buttes Holiday Cottages — home"><img src={logoHeader.src} width={logoHeader.width} height={logoHeader.height} alt="" /></a>
+    <nav class="desktop-nav" aria-label="Primary navigation">{nav.map(item=><a href={item.href} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}</nav>
+    <a class="button header-book" href="/cottages/">Book via Airbnb</a>
+    <details class="mobile-menu"><summary><Icon name="menu" size={22}/>Menu</summary><nav>{nav.map(item=><a href={item.href} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}<a class="button" href="/cottages/">Book via Airbnb</a></nav></details>
+  </div>
+</header>
 <style>
-.illustrated-brand{display:block;flex:none;line-height:0;padding:.2rem 0}
-.illustrated-brand img{display:block;width:clamp(10rem,22vw,14rem);height:auto}
-@media(max-width:29rem){.illustrated-brand img{width:9.4rem}}
+.illustrated-brand{display:block;flex:none;line-height:0;padding:.15rem 0}
+.illustrated-brand img{display:block;width:clamp(9.4rem,17vw,11.5rem);height:auto}
+@media(max-width:29rem){.illustrated-brand img{width:9rem}}
 </style>

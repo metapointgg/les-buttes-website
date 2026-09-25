@@ -12,23 +12,23 @@ sections:
     type: feature
     theme: paper
     eyebrow: Our story
-    title: A farmstead made for welcoming guests
+    title: A home, a family and a shared vision
     text: |-
       Les Buttes is a family-owned, restored 16th-century farm in the rural parish of St Pierre du Bois. Its traditional barns and outbuildings sit around the old farmyard and have been adapted over time into individual holiday cottages.
 
       The Ozanne family began welcoming self-catering guests in 1981. What started as a small family enterprise has become part of life at Les Buttes, with generations of visitors returning to enjoy the cottages and the island.
 
-      Today, Geranium and Honeysuckle offer comfortable accommodation with their own character and private outdoor space. The approach remains personal and straightforward: a warm welcome, practical help when it is needed and the freedom to enjoy Guernsey at your own pace.
-    image: /src/assets/images/cottages/geranium/exterior.jpg
-    imageAlt: Traditional granite exterior of Geranium Cottage
-    imagePosition: left
+      Today, Geranium and Honeysuckle offer comfortable accommodation with their own character and private outdoor space. The approach remains personal and straightforward.
+    image: /src/assets/images/cottages/geranium/garden.jpg
+    imageAlt: A garden and traditional buildings at Les Buttes
+    imagePosition: right
   - enabled: true
-    type: image
+    type: quote
     theme: cream
-    width: narrow
-    title: A place with a story
-    image: /src/assets/images/cottage-illustration.png
-    imageAlt: Line illustration of the historic Les Buttes farmhouse and entrance
+    eyebrow: The Les Buttes approach
+    title: A warm welcome
+    quote: A warm welcome, practical help when it is needed and the freedom to enjoy Guernsey at your own pace.
+    attribution: Les Buttes Holiday Cottages
   - enabled: true
     type: cards
     theme: paper
