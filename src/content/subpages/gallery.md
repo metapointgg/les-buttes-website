@@ -23,24 +23,33 @@ sections:
       - image: /src/assets/images/cottages/geranium/exterior.jpg
         alt: Geranium Cottage's granite exterior and flower-filled entrance
         caption: Geranium Cottage
-      - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
-        alt: Honeysuckle Cottage at Les Buttes
-        caption: Honeysuckle Cottage
       - image: /src/assets/images/main-garden.jpg
         alt: The Main Garden at Les Buttes
         caption: The Main Garden
-      - image: /src/assets/images/cottages/geranium/garden.jpg
-        alt: Geranium Cottage's private garden
-        caption: Geranium's garden
-      - image: /src/assets/images/cottages/honeysuckle/garden.jpg
-        alt: Honeysuckle Cottage's private garden
-        caption: Honeysuckle's garden
+      - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
+        alt: Honeysuckle Cottage at Les Buttes
+        caption: Honeysuckle Cottage
+      - image: /src/assets/images/garden-seating.png
+        alt: Outdoor dining and seating among mature planting
+        caption: A place to slow down
       - image: /src/assets/images/cottages/geranium/sitting-room.jpg
         alt: Geranium Cottage sitting room
         caption: Geranium sitting room
       - image: /src/assets/images/cottages/honeysuckle/kitchen.jpg
         alt: Honeysuckle Cottage kitchen
         caption: Honeysuckle kitchen
+      - image: /src/assets/images/cottages/geranium/king-bedroom.jpg
+        alt: Geranium Cottage double bedroom
+        caption: Geranium double bedroom
+      - image: /src/assets/images/cottages/honeysuckle/king-bedroom.jpg
+        alt: Honeysuckle Cottage ground-floor king-size bedroom
+        caption: Honeysuckle king-size bedroom
+      - image: /src/assets/images/cottages/geranium/garden.jpg
+        alt: Geranium Cottage's private garden
+        caption: Geranium's garden
+      - image: /src/assets/images/cottages/honeysuckle/garden.jpg
+        alt: Honeysuckle Cottage's private garden
+        caption: Honeysuckle's garden
       - image: /src/assets/images/les-buttes-about-hero.jpg
         alt: The historic Les Buttes farmhouse
         caption: Les Buttes
@@ -51,7 +60,7 @@ sections:
     type: cta
     title: Picture yourself here?
     text: Explore Geranium and Honeysuckle, then check current availability through Airbnb.
-    buttonLabel: View the cottages
+    buttonLabel: View cottages
     buttonUrl: /cottages/
 seo:
   title: Les Buttes Gallery | Guernsey Holiday Cottages
