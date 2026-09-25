@@ -1,58 +1,129 @@
 ---
 title: A gentler pace of island life
 urlStub: /
-eyebrow: Les Buttes · Guernsey
-intro: Stay in a family-run cottage within a restored 16th-century Guernsey farm, surrounded by quiet lanes and within easy reach of beaches and spectacular coastal walks.
+eyebrow: Guernsey holiday cottages
+intro: Characterful self-catering cottages in St Pierre du Bois, Guernsey.
 heroMediaType: image
-heroImage: /src/assets/images/cottages/honeysuckle/exterior.jpg
-heroAlt: The granite buildings and garden at Les Buttes Holiday Cottages
+heroImage: /src/assets/images/cottages/geranium/exterior.jpg
+heroAlt: Geranium Cottage and its garden at Les Buttes Holiday Cottages
 heroPan: false
+heroPrimaryLabel: Explore our cottages
+heroPrimaryUrl: /cottages/
+heroSecondaryLabel: Discover Guernsey
+heroSecondaryUrl: /explore-guernsey/
 sections:
+  - enabled: true
+    type: feature
+    theme: paper
+    width: wide
+    eyebrow: Welcome to Les Buttes
+    title: Historic cottages. A warmer way to experience Guernsey.
+    text: Set within a restored 16th-century Guernsey farm, Geranium and Honeysuckle are surrounded by gardens, quiet lanes and an island made for unhurried days.
+    image: /src/assets/images/cottages/honeysuckle/exterior.jpg
+    imageAlt: Honeysuckle Cottage at Les Buttes
+    imagePosition: right
+    buttonLabel: Our story
+    buttonUrl: /about/
+  - enabled: true
+    type: featureStrip
+    theme: cream
+    width: wide
+    title: Why stay at Les Buttes
+    items:
+      - title: Historic farm setting
+        text: Restored traditional Guernsey buildings.
+        icon: history
+      - title: Mature gardens
+        text: Lawns, orchard and peaceful corners.
+        icon: garden
+      - title: Coast within easy reach
+        text: Beaches and cliff walks around the island.
+        icon: beach
+      - title: Family-run since 1981
+        text: A personal welcome and practical help.
+        icon: guests
   - enabled: true
     type: cottageListing
     theme: paper
+    width: wide
     eyebrow: Our cottages
-    title: Stay at Les Buttes
-    text: Two characterful cottages, surrounded by gardens, with easy access to Guernsey’s beaches, cliff paths and attractions.
+    title: Two cottages, each with its own character
+    text: Comfortable, characterful places to stay for couples, families and friends.
   - enabled: true
-    type: splitQuote
+    type: quote
     theme: cream
-    eyebrow: Welcome to Les Buttes
-    title: A traditional Guernsey welcome
-    text: |-
-      The Ozanne family has welcomed guests to Les Buttes since 1981. Our cottages combine the character of the original granite farm buildings with the practical comforts needed for an easy, relaxing stay.
-
-      St Pierre du Bois village is a short walk away, with a supermarket, post office, pub and bus stops. Guernsey’s west-coast beaches and south-coast cliffs are also within easy reach.
-    quote: A peaceful place to slow down, breathe in the sea air and enjoy Guernsey at your own pace.
-    attribution: Your cottage will be prepared before arrival, with linen, towels and a small welcome supply of tea, coffee and milk.
+    width: wide
+    eyebrow: Guest review
+    title: A guest's view
+    quote: Fantastic cottage for a family holiday. Lots of space, everything you need and a wonderful peaceful location.
+    attribution: Andy, Airbnb guest
+    image: /src/assets/images/cottages/honeysuckle/garden.jpg
+    imageAlt: Honeysuckle Cottage garden at Les Buttes
   - enabled: true
-    type: cards
+    type: feature
+    theme: paper
+    width: wide
+    eyebrow: The gardens
+    title: Gardens, fresh air and time together
+    text: Mature gardens, sunny places to sit and quieter corners give Les Buttes room to breathe. Explore the Main Garden, Orchard, Sunken Garden and Valley.
+    image: /src/assets/images/main-garden.jpg
+    imageAlt: The Main Garden at Les Buttes with lawns and mature planting
+    imagePosition: left
+    buttonLabel: Explore the gardens
+    buttonUrl: /gardens/
+  - enabled: true
+    type: feature
     theme: green
-    eyebrow: At a glance
-    title: The little things are taken care of
-    items:
-      - title: Ready for your arrival
-        text: Fresh linen, towels, tea, coffee, and delicious local milk and butter from the island’s famous Guernsey cows.
-      - title: Comfort included
-        text: Heating, electricity and Wi-Fi are included, so there are no unwelcome surprises during your stay.
-      - title: Close to the coast
-        text: West-coast beaches, south-coast cliff paths and village amenities are all within easy reach.
-  - enabled: true
-    type: text
-    theme: cream
-    width: standard
+    width: wide
     eyebrow: Explore Guernsey
-    title: Wild coastline, quiet lanes and island stories
-    text: Fill your days with sandy beaches, cliff-top walks, historic sites and leisurely meals — or simply choose a favourite corner of the garden and do very little at all.
-    buttonLabel: Things to do in Guernsey
+    title: Coastal walks, beaches and island days
+    text: Discover hidden beaches, dramatic cliff-top paths and an island small enough to explore at your own pace.
+    image: /src/assets/images/petit-bot-001.jpg
+    imageAlt: Petit Bot bay on Guernsey's south coast
+    imagePosition: right
+    buttonLabel: Explore Guernsey
     buttonUrl: /explore-guernsey/
+  - enabled: true
+    type: iconCards
+    theme: cream
+    width: wide
+    eyebrow: Location
+    title: Peaceful St Pierre du Bois, well placed for the island
+    text: Les Buttes feels rural and tucked away, while village amenities, beaches, cliff paths and the rest of Guernsey remain easy to reach.
+    items:
+      - title: St Pierre du Bois
+        text: Village shops, pub and bus stops are close at hand.
+        icon: pin
+      - title: West-coast beaches
+        text: Sandy beaches and sunset coastline are within easy reach.
+        icon: beach
+      - title: South-coast cliffs
+        text: Cliff paths and sheltered bays are part of the wider area.
+        icon: walk
+      - title: Around Guernsey
+        text: Use Les Buttes as a peaceful base for exploring the island.
+        icon: guernsey
+    buttonLabel: Find us
+    buttonUrl: /find-us/
+  - enabled: true
+    type: feature
+    theme: paper
+    width: wide
+    eyebrow: Our story
+    title: A special place in St Pierre du Bois
+    text: The Ozanne family has welcomed self-catering guests to Les Buttes since 1981. The setting has evolved, but the approach remains personal, practical and relaxed.
+    image: /src/assets/images/les-buttes-about-hero.jpg
+    imageAlt: The historic Les Buttes farmhouse in St Pierre du Bois
+    imagePosition: right
+    buttonLabel: Read our story
+    buttonUrl: /about/
   - enabled: true
     type: cta
     title: Ready to plan your Guernsey stay?
-    text: See each cottage in detail, then check live availability and reserve securely through Airbnb.
-    buttonLabel: Discover Geranium
+    text: Choose the cottage that suits you, then check live availability, prices and booking terms securely through Airbnb.
+    buttonLabel: View Geranium
     buttonUrl: /cottages/geranium/
-    secondaryButtonLabel: Discover Honeysuckle
+    secondaryButtonLabel: View Honeysuckle
     secondaryButtonUrl: /cottages/honeysuckle/
 seo:
   title: Les Buttes | Guernsey Holiday Cottages & Self Catering

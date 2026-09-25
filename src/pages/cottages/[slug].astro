@@ -47,7 +47,7 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
           <div class="facts-bar"><CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly}/></div>
           <p class="cottage-hero-summary">{c.tagline}. {c.summary}</p>
           <div class="cottage-actions">
-            {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">View on Airbnb <Icon name="external" size={17}/></a>}
+            {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">Check availability on Airbnb <Icon name="external" size={17}/></a>}
             <a class="button button-outline" href="/contact/">Ask a question</a>
           </div>
         </div>
@@ -84,5 +84,5 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
     {c.gallery.length>0&&<section class="section paper"><div class="wrap"><header class="section-heading"><p class="eyebrow">Take a look around</p><h2>{c.name} gallery</h2></header><Gallery items={c.gallery}/></div></section>}
     {c.review&&<section class="section wrap"><ReviewQuote quote={c.review.quote} guest={c.review.guest} sourceUrl={c.review.sourceUrl}/></section>}
   </article>
-  <Callout title={`Make ${c.name} your Guernsey base`} text="View current availability, prices and booking terms on Airbnb. If you have a question first, we are here to help." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'} secondaryHref="/contact/" secondaryLabel="Contact us"/>
+  <Callout title={`Make ${c.name} your Guernsey base`} text="View current availability, prices and booking terms on Airbnb. If you have a question first, we are here to help." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability on Airbnb':'Contact us'} secondaryHref="/contact/" secondaryLabel="Contact us"/>
 </BaseLayout>

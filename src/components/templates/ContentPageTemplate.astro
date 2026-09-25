@@ -19,7 +19,14 @@ const hasHero=Boolean(p.heroImage||p.heroVideo);
       pan={p.heroPan}
       videoSrc={p.heroVideo}
       posterSrc={p.heroPoster}
-    />
+    >
+      {(p.heroPrimaryLabel && p.heroPrimaryUrl) || (p.heroSecondaryLabel && p.heroSecondaryUrl) ? (
+        <div class="hero-actions page-intro-actions">
+          {p.heroPrimaryLabel && p.heroPrimaryUrl && <a class="button button-light" href={p.heroPrimaryUrl}>{p.heroPrimaryLabel}</a>}
+          {p.heroSecondaryLabel && p.heroSecondaryUrl && <a class="button button-outline" href={p.heroSecondaryUrl}>{p.heroSecondaryLabel}</a>}
+        </div>
+      ) : null}
+    </PageIntro>
   ) : (
     <div class="wrap"><PageIntro eyebrow={p.eyebrow} title={p.title} intro={p.intro}/></div>
   )}

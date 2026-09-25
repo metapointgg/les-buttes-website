@@ -1,4 +1,53 @@
 ---
-import ResponsiveImage from './ResponsiveImage.astro'; interface Props{items:{image:string;alt:string;caption:string}[]} const{items}=Astro.props;
+import ResponsiveImage from './ResponsiveImage.astro';
+interface Props{items:{image:string;alt:string;caption:string}[]}
+const{items}=Astro.props;
 ---
-<div class="gallery">{items.map((item,i)=><figure class:list={[i===0&&'wide']}><ResponsiveImage src={item.image} alt={item.alt} widths={[420,720,1100]} sizes={i===0?'(max-width:760px) 100vw,66vw':'(max-width:760px) 100vw,33vw'}/><figcaption>{item.caption}</figcaption></figure>)}</div>
+<div class="gallery cottage-gallery">
+  {items.map((item,i)=>{
+    const dialogId=`cottage-gallery-${i}`;
+    return <figure class:list={[i===0&&'wide']}>
+      <button class="cottage-gallery-trigger" type="button" data-cottage-gallery-open={dialogId} aria-label={`Open ${item.caption}`}>
+        <ResponsiveImage src={item.image} alt={item.alt} widths={[420,720,1100]} sizes={i===0?'(max-width:760px) 100vw,66vw':'(max-width:760px) 100vw,33vw'}/>
+      </button>
+      <figcaption>{item.caption}</figcaption>
+      <dialog id={dialogId} class="cottage-gallery-lightbox">
+        <button class="cottage-gallery-close" type="button" data-cottage-gallery-close aria-label="Close image">×</button>
+        <ResponsiveImage src={item.image} alt={item.alt} widths={[960,1280,1600]} sizes="92vw"/>
+        <p>{item.caption}</p>
+      </dialog>
+    </figure>
+  })}
+</div>
+
+<script is:inline>
+document.addEventListener('click', function(event) {
+  const target = event.target instanceof Element ? event.target : null;
+  const openButton = target?.closest('[data-cottage-gallery-open]');
+  if (openButton) {
+    const id = openButton.getAttribute('data-cottage-gallery-open');
+    const dialog = id ? document.getElementById(id) : null;
+    if (dialog instanceof HTMLDialogElement) dialog.showModal();
+    return;
+  }
+  const closeButton = target?.closest('[data-cottage-gallery-close]');
+  if (closeButton) {
+    const dialog = closeButton.closest('dialog');
+    if (dialog instanceof HTMLDialogElement) dialog.close();
+    return;
+  }
+  if (target instanceof HTMLDialogElement) target.close();
+});
+</script>
+
+<style>
+.cottage-gallery{gap:.8rem}
+.cottage-gallery figure{border-radius:.3rem}
+.cottage-gallery-trigger{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+.cottage-gallery-trigger picture,.cottage-gallery-trigger img{width:100%;height:100%;object-fit:cover}
+.cottage-gallery-lightbox{width:min(94vw,88rem);max-height:92vh;padding:0;border:0;background:#0c1713;box-shadow:0 30px 90px #0008}
+.cottage-gallery-lightbox::backdrop{background:#07110de8}
+.cottage-gallery-lightbox picture,.cottage-gallery-lightbox img{display:block;width:100%;max-height:82vh;object-fit:contain}
+.cottage-gallery-lightbox p{margin:0;padding:.8rem 1rem;color:#fff;text-align:center}
+.cottage-gallery-close{position:absolute;z-index:3;top:.65rem;right:.65rem;display:grid;width:2.5rem;height:2.5rem;place-items:center;color:#fff;background:#0b231dcc;border:1px solid #ffffff66;border-radius:50%;font-size:1.5rem;cursor:pointer}
+</style>

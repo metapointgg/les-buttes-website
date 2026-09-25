@@ -39,11 +39,12 @@ components:
             - { value: image, label: Single image }
             - { value: cards, label: Cards }
             - { value: iconCards, label: Icon cards }
+            - { value: featureStrip, label: Quiet feature strip }
             - { value: splitQuote, label: Split text and quote }
             - { value: cottageListing, label: Available cottage listing }
             - { value: list, label: List }
             - { value: gallery, label: Image gallery }
-            - { value: quote, label: Quote }
+            - { value: quote, label: Quote / photographic testimonial }
             - { value: notice, label: Notice / information box }
             - { value: steps, label: Numbered steps }
             - { value: locationMap, label: Les Buttes location map }
@@ -73,6 +74,7 @@ components:
       - { name: text, label: Section text, type: text }
       - name: image
         label: Section image
+        description: For Quote sections, adding an image creates a full-width photographic testimonial.
         type: image
         options: { media: images }
       - { name: imageAlt, label: Image description, type: text }
@@ -86,7 +88,7 @@ components:
             - { value: left, label: Left }
             - { value: right, label: Right }
       - name: items
-        label: Cards / icon cards / steps
+        label: Cards / icon cards / feature strip / steps
         type: object
         list: { collapsible: { collapsed: true, summary: "{title}" } }
         fields:
@@ -255,6 +257,10 @@ content:
       - { name: heroPan, label: Pan page main image, type: boolean, default: false }
       - { name: heroVideo, label: Page main video, description: Optional MP4 or WebM. It autoplays muted, loops and is replaced by the fallback image for reduced-motion visitors., type: file, options: { media: videos, categories: [video] } }
       - { name: heroPoster, label: Video fallback image, type: image, options: { media: images } }
+      - { name: heroPrimaryLabel, label: Hero primary button label, type: string }
+      - { name: heroPrimaryUrl, label: Hero primary button URL, type: string }
+      - { name: heroSecondaryLabel, label: Hero secondary button label, type: string }
+      - { name: heroSecondaryUrl, label: Hero secondary button URL, type: string }
       - { name: sections, component: pageSections }
       - { name: seo, component: seo }
 
@@ -275,7 +281,7 @@ content:
       - { name: published, label: Published on website, description: Turn this off to remove the page from the public website and sitemap., type: boolean, default: true, required: true }
       - { name: showInNavigation, label: Show in main navigation, type: boolean, default: false }
       - { name: navigationLabel, label: Navigation label, description: Optional shorter label for the main menu. If blank, the main heading is used., type: string }
-      - { name: navigationOrder, label: Navigation order, description: Lower numbers appear earlier in the menu. Cottages is 20, Explore Guernsey is 40., type: number }
+      - { name: navigationOrder, label: Navigation order, description: Lower numbers appear earlier in the menu. Our Cottages is 20 and Explore Guernsey is 40., type: number }
       - { name: eyebrow, label: Short heading, type: string, required: true }
       - { name: intro, label: Introduction, type: text, required: true }
       - name: heroMediaType
@@ -291,6 +297,10 @@ content:
       - { name: heroPan, label: Pan page main image, type: boolean, default: false }
       - { name: heroVideo, label: Page main video, type: file, options: { media: videos, categories: [video] } }
       - { name: heroPoster, label: Video fallback image, type: image, options: { media: images } }
+      - { name: heroPrimaryLabel, label: Hero primary button label, type: string }
+      - { name: heroPrimaryUrl, label: Hero primary button URL, type: string }
+      - { name: heroSecondaryLabel, label: Hero secondary button label, type: string }
+      - { name: heroSecondaryUrl, label: Hero secondary button URL, type: string }
       - { name: sections, component: pageSections }
       - { name: seo, component: seo }
 
