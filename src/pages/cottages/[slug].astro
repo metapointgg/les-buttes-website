@@ -18,8 +18,9 @@ const cottage=await getEntry('cottages',Astro.params.slug!);
 if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const c=cottage.data;
 const {Content}=await render(cottage);
-const storyImage=c.gallery.find(item=>item.caption.toLowerCase().includes('kitchen')) ?? c.gallery[1] ?? c.gallery[0];
-const livingImages=c.gallery.filter(item=>/(kitchen|sitting|dining|conservatory|self-catering)/i.test(item.caption)).slice(0,3);
+const storyImage=c.gallery.find(item=>/sitting|conservatory/i.test(item.caption)) ?? c.gallery[1] ?? c.gallery[0];
+const livingImages=c.gallery.filter(item=>/(sitting|conservatory|living)/i.test(item.caption)).slice(0,3);
+const kitchenImages=c.gallery.filter(item=>/(kitchen|dining|self-catering)/i.test(item.caption)).slice(0,3);
 const bedroomImages=c.gallery.filter(item=>/(bedroom|bathroom|shower)/i.test(item.caption)).slice(0,4);
 const gardenImage=c.gallery.find(item=>/(garden|outdoor)/i.test(item.caption));
 const livingHighlight=c.highlights.find(item=>/(living|indoor|cottage)/i.test(item.title)) ?? c.highlights[0];
@@ -33,6 +34,9 @@ const bathroomLabel=c.slug==='geranium'
 const gardenLabel=c.facilities.some(item=>/enclosed garden/i.test(item))
   ? 'Enclosed garden with outdoor seating'
   : 'Private garden with outdoor space';
+const kitchenCopy=c.slug==='geranium'
+  ? 'A fully equipped kitchen with dining area keeps self-catering simple and practical.'
+  : 'A fully equipped kitchen and separate dining room give families and groups room to cook and eat together.';
 const facilityOverview:Array<{icon:FacilityIcon;title:string;text:string}>=[
   {icon:'bed',title:`Sleeps ${c.sleeps}`,text:bedroomLabel},
   {icon:'bath',title:'Bathrooms',text:bathroomLabel},
@@ -79,21 +83,34 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
           <h2>Room to settle in</h2>
           {livingHighlight&&<p class="lede">{livingHighlight.text}</p>}
         </div>
-        <div class="cottage-detail-media cottage-detail-media-living">
+        <div class:list={['cottage-detail-media','cottage-detail-media-living',c.slug==='honeysuckle'&&'is-roomier']}>
           {livingImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
         </div>
       </div>
     </section>}
 
-    {bedroomImages.length>0&&<section class="section paper cottage-detail-section">
+    {kitchenImages.length>0&&<section class="section paper cottage-detail-section">
       <div class="wrap cottage-detail-grid image-left">
-        <div class="cottage-detail-media cottage-detail-media-sleeping">
-          {bedroomImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
+        <div class="cottage-detail-media cottage-detail-media-kitchen">
+          {kitchenImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
         </div>
+        <div class="cottage-detail-copy">
+          <p class="eyebrow">Kitchen & dining</p>
+          <h2>Made for easy self-catering</h2>
+          <p class="lede">{kitchenCopy}</p>
+        </div>
+      </div>
+    </section>}
+
+    {bedroomImages.length>0&&<section class="section cottage-detail-section">
+      <div class="wrap cottage-detail-grid">
         <div class="cottage-detail-copy">
           <p class="eyebrow">Bedrooms & bathrooms</p>
           <h2>Space to sleep comfortably</h2>
           {sleepingHighlights.map(item=><div class="cottage-detail-note"><strong>{item.title}</strong><p>{item.text}</p></div>)}
+        </div>
+        <div class="cottage-detail-media cottage-detail-media-sleeping">
+          {bedroomImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
         </div>
       </div>
     </section>}
@@ -102,7 +119,7 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
       <div class="wrap cottage-garden-grid">
         <div class="cottage-garden-image"><ResponsiveImage src={gardenImage.image} alt={gardenImage.alt} widths={[640,960,1280,1600]} sizes="(max-width: 768px) 100vw, 62vw"/></div>
         <div class="cottage-garden-copy">
-          <p class="eyebrow">Outside space</p>
+          <p class="eyebrow eyebrow-light">Outside space</p>
           <h2>A garden of your own</h2>
           <p>{gardenFacility ?? c.summary}</p>
           {c.highlights.find(item=>/outdoor|garden/i.test(item.title))&&<p>{c.highlights.find(item=>/outdoor|garden/i.test(item.title))?.text}</p>}
