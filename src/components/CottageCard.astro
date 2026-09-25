@@ -25,7 +25,7 @@ const previewImages = c.gallery.filter(item => item.image !== c.heroImage).slice
     <h2><a href={`/cottages/${c.slug}/`}>{c.name}</a></h2>
     {showPreviewStrip && <p class="cottage-card-tagline">{c.tagline}</p>}
     <p class="cottage-card-summary">{showPreviewStrip ? c.summary : c.tagline}</p>
-    <CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly} compact/>
+    <CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly} compact={!showPreviewStrip}/>
     <div class="card-actions">
       <a class="button button-secondary cottage-card-button" href={`/cottages/${c.slug}/`}>View cottage<Icon name="arrow" size={18}/></a>
     </div>
