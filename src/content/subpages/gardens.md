@@ -35,6 +35,8 @@ sections:
     items:
       - title: Veg Patch
         text: Our productive garden area is used for seasonal vegetables, herbs and soft fruit, with planting changing throughout the year.
+        image: /src/assets/images/veg-patch-card.jpg
+        imageAlt: The covered productive Veg Patch at Les Buttes with raised growing beds
       - title: Sunken Garden
         text: A sheltered garden framed by old stonework and mature planting, with seating and a more intimate atmosphere.
         image: /src/assets/images/garden-seating.png
