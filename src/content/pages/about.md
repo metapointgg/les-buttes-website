@@ -5,8 +5,8 @@ eyebrow: About Les Buttes
 intro: Traditional granite buildings, quiet lanes and more than four decades of
   welcoming visitors to this corner of Guernsey.
 heroMediaType: image
-heroImage: /src/assets/images/cottages/geranium/exterior.jpg
-heroAlt: Traditional granite exterior of Geranium Cottage
+heroImage: /src/assets/images/les-buttes-about-hero.jpg
+heroAlt: The historic Les Buttes farmhouse in St Pierre du Bois, Guernsey
 heroPan: false
 experienceImagePan: false
 seo:
