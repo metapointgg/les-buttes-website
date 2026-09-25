@@ -15,7 +15,9 @@ const sectionItem = z.object({
   kicker: z.string().optional(),
   title: z.string(),
   text: z.string().optional(),
-  icon: z.enum(['arrow','bed','bath','guests','phone','mail','pin','external','menu','beach','walk','guernsey','history','islands','food']).optional(),
+  image: z.string().optional(),
+  imageAlt: z.string().optional(),
+  icon: z.enum(['arrow','bed','bath','guests','phone','mail','pin','external','menu','beach','walk','guernsey','history','islands','food','kitchen','living','garden','wifi']).optional(),
   linkLabel: z.string().optional(),
   linkUrl: z.string().optional(),
   external: z.boolean().optional()
