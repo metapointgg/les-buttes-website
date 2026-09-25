@@ -11,6 +11,12 @@ interface Props {
 const { cottage, showPreviewStrip = false } = Astro.props;
 const c = cottage.data;
 const previewImages = c.gallery.filter(item => item.image !== c.heroImage).slice(0,3);
+const outdoorSpace = c.facilities.find(item => /garden|outdoor/i.test(item));
+const comparisonFit = c.slug === 'geranium'
+  ? 'Guests looking for a detached two-bedroom cottage, two bathrooms and an enclosed private garden.'
+  : c.slug === 'honeysuckle'
+    ? 'Families or groups wanting more space across three bedrooms, with room for up to six guests.'
+    : c.summary;
 ---
 <article class:list={["cottage-card",showPreviewStrip && "cottage-card-comparison"]}>
   <a class="card-image" href={`/cottages/${c.slug}/`} tabindex="-1">
@@ -26,6 +32,10 @@ const previewImages = c.gallery.filter(item => item.image !== c.heroImage).slice
     {showPreviewStrip && <p class="cottage-card-tagline">{c.tagline}</p>}
     <p class="cottage-card-summary">{showPreviewStrip ? c.summary : c.tagline}</p>
     <CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly} compact={!showPreviewStrip}/>
+    {showPreviewStrip&&<div class="cottage-comparison-notes">
+      <p><strong>Best suited to</strong><span>{comparisonFit}</span></p>
+      {outdoorSpace&&<p><strong>Outdoor space</strong><span>{outdoorSpace}</span></p>}
+    </div>}
     <div class="card-actions">
       <a class="button button-secondary cottage-card-button" href={`/cottages/${c.slug}/`}>View cottage<Icon name="arrow" size={18}/></a>
     </div>
