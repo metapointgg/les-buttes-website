@@ -1,11 +1,6 @@
 ---
 import{getEntry}from'astro:content';
-import BaseLayout from'../../layouts/BaseLayout.astro';
-import PageIntro from'../../components/PageIntro.astro';
-import PageSections from'../../components/PageSections.astro';
+import ContentPageTemplate from'../../components/templates/ContentPageTemplate.astro';
 const page=await getEntry('pages','find-us');if(!page)throw new Error('Missing');
 ---
-<BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
-  <div class="wrap"><PageIntro eyebrow={page.data.eyebrow} title={page.data.title} intro={page.data.intro}/></div>
-  <PageSections sections={page.data.sections}/>
-</BaseLayout>
+<ContentPageTemplate pageData={page.data}/>
