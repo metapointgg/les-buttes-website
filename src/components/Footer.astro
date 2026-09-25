@@ -4,8 +4,70 @@ import Icon from './Icon.astro';
 import logoHeader from '../assets/images/logo-header.png';
 const year=new Date().getFullYear();
 ---
-<footer class="site-footer"><div class="wrap footer-grid"><div class="footer-intro"><a class="footer-brand" href="/" aria-label="Les Buttes Holiday Cottages — home"><img src={logoHeader.src} width={logoHeader.width} height={logoHeader.height} alt="" loading="lazy" /></a><p class="eyebrow eyebrow-light">A warm Guernsey welcome</p><h2>Slow down. Settle in. Make yourself at home.</h2><p>Family-run self-catering cottages in peaceful St Pierre du Bois.</p></div><div><h3>Visit</h3><address>{site.address.street}<br/>{site.address.locality}<br/>{site.address.island} {site.address.postcode}</address><a class="footer-link" href="/find-us/"><Icon name="pin" size={18}/>Directions</a></div><div><h3>Contact</h3><a class="footer-link" href={`tel:${site.telephoneHref}`}><Icon name="phone" size={18}/>{site.telephoneDisplay}</a><a class="footer-link" href={`mailto:${site.email}`}><Icon name="mail" size={18}/>{site.email}</a></div><div><h3>Explore</h3><a href="/cottages/">Our cottages</a><a href="/gardens/">Gardens</a><a href="/explore-guernsey/">Things to do</a><a href="/about/">Our story</a><a href="/privacy/">Privacy</a></div></div><div class="wrap footer-bottom"><p>© {year} {site.name}</p><p>Bookings are made securely through Airbnb.</p></div></footer>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-intro">
+      <p class="eyebrow eyebrow-light">A warm Guernsey welcome</p>
+      <h2>Slow down. Settle in. Make yourself at home.</h2>
+      <p>Family-run self-catering cottages in peaceful St Pierre du Bois.</p>
+    </div>
+
+    <a class="footer-brand" href="/" aria-label="Les Buttes Holiday Cottages — home">
+      <img src={logoHeader.src} width={logoHeader.width} height={logoHeader.height} alt="" loading="lazy" />
+    </a>
+
+    <div class="footer-column footer-visit">
+      <h3>Visit</h3>
+      <address>{site.address.street}<br/>{site.address.locality}<br/>{site.address.island} {site.address.postcode}</address>
+      <a class="footer-link" href="/find-us/"><Icon name="pin" size={18}/>Directions</a>
+    </div>
+
+    <div class="footer-column footer-contact">
+      <h3>Contact</h3>
+      <a class="footer-link" href={`tel:${site.telephoneHref}`}><Icon name="phone" size={18}/>{site.telephoneDisplay}</a>
+      <a class="footer-link" href={`mailto:${site.email}`}><Icon name="mail" size={18}/>{site.email}</a>
+    </div>
+
+    <div class="footer-column footer-explore">
+      <h3>Explore</h3>
+      <a href="/cottages/">Our cottages</a>
+      <a href="/gardens/">Gardens</a>
+      <a href="/explore-guernsey/">Things to do</a>
+      <a href="/about/">Our story</a>
+      <a href="/privacy/">Privacy</a>
+    </div>
+  </div>
+
+  <div class="wrap footer-bottom">
+    <p>© {year} {site.name}</p>
+    <p>Bookings are made securely through Airbnb.</p>
+  </div>
+</footer>
+
 <style>
-.footer-brand{display:block!important;width:min(100%,17rem)!important;margin:0 0 1.5rem!important;padding:.35rem .45rem;background:#f7f3e9;border-radius:.55rem;line-height:0}
+.site-footer{margin-top:clamp(4rem,10vw,8rem);padding-top:clamp(3.5rem,7vw,5rem);color:#fff;background:var(--deep)}
+.site-footer .footer-grid{display:grid;grid-template-areas:"intro" "brand" "visit" "contact" "explore";gap:2.25rem;padding-bottom:clamp(2.5rem,5vw,4rem)}
+.footer-intro{grid-area:intro;max-width:29rem}
+.footer-intro h2{max-width:14ch;margin-bottom:2rem;font-size:clamp(2.6rem,5vw,4.1rem)}
+.footer-intro>p:last-child{max-width:27rem;margin:0;color:#ffffffc4}
+.footer-brand{grid-area:brand;display:block!important;width:min(100%,17rem)!important;margin:0!important;padding:.4rem .55rem;background:#f7f3e9;border-radius:.55rem;line-height:0;align-self:start}
 .footer-brand img{display:block;width:100%;height:auto}
+.footer-column h3{margin:0 0 .8rem;font:700 .82rem var(--body);letter-spacing:.08em;text-transform:uppercase}
+.footer-column address{margin:0 0 .8rem;color:#ffffffc4;line-height:1.8}
+.site-footer .footer-column>a{margin:.65rem 0;color:#ffffffe2}
+.footer-link{display:flex!important;align-items:center;gap:.55rem}
+.footer-visit{grid-area:visit}.footer-contact{grid-area:contact}.footer-explore{grid-area:explore}
+.site-footer .footer-bottom{display:flex;flex-direction:column;gap:.45rem;margin-top:0;padding-block:1.35rem;color:#ffffff8c;border-top:1px solid #ffffff24;font-size:.78rem}
+.site-footer .footer-bottom p{margin:0}
+@media(min-width:40rem) and (max-width:63.99rem){
+  .site-footer .footer-grid{grid-template-areas:"intro intro" "brand brand" "visit contact" "explore explore";grid-template-columns:1fr 1fr}
+  .footer-explore{display:grid;grid-template-columns:repeat(3,max-content);column-gap:1.5rem;align-items:start}
+  .footer-explore h3{grid-column:1/-1}
+}
+@media(min-width:64rem){
+  .site-footer .footer-grid{grid-template-areas:"intro . . brand" "intro visit contact explore";grid-template-columns:minmax(22rem,2.25fr) minmax(10rem,.9fr) minmax(15rem,1.25fr) minmax(9rem,.8fr);grid-template-rows:auto 1fr;column-gap:clamp(2.5rem,5vw,6rem);row-gap:1.25rem;align-items:start}
+  .footer-brand{justify-self:end}
+  .footer-intro{align-self:start}
+  .site-footer .footer-bottom{flex-direction:row;justify-content:space-between;align-items:center}
+}
 </style>
