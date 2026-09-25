@@ -25,12 +25,12 @@ const current=(href:string)=>href==='/'?path==='/':path.startsWith(href);
     <nav class="desktop-nav" aria-label="Primary navigation">
       {nav.map(item=><a href={item.href} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
     </nav>
-    <a class="button header-book" href="/cottages/">Book on Airbnb</a>
+    <a class="button header-book" href="/cottages/">Check availability</a>
     <details class="mobile-menu">
       <summary><Icon name="menu" size={22}/>Menu</summary>
       <nav>
         {nav.map(item=><a href={item.href} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
-        <a class="button" href="/cottages/">Book on Airbnb</a>
+        <a class="button" href="/cottages/">Check availability</a>
       </nav>
     </details>
   </div>
