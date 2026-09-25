@@ -1,6 +1,75 @@
 ---
-import{getEntry}from'astro:content';
-import ContentPageTemplate from'../../components/templates/ContentPageTemplate.astro';
-const page=await getEntry('pages','contact');if(!page)throw new Error('Missing');
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import ResponsiveImage from '../../components/ResponsiveImage.astro';
+import PageSections from '../../components/PageSections.astro';
+import Icon from '../../components/Icon.astro';
+import site from '../../data/site.json';
+
+const page=await getEntry('pages','contact');
+if(!page) throw new Error('Missing');
+const sections:any[]=page.data.sections??[];
+const intro:any=sections.find(section=>section.type==='feature'&&section.enabled!==false);
+const methods:any=sections.find(section=>section.type==='iconCards'&&section.enabled!==false);
+const location:any=sections.find(section=>section.type==='locationMap'&&section.enabled!==false);
+const notice:any=sections.find(section=>section.type==='notice'&&section.enabled!==false);
+const tokens:Record<string,string>={email:site.email,telephoneHref:site.telephoneHref,telephoneDisplay:site.telephoneDisplay};
+const resolve=(value?:string)=>value?.replace(/\{\{(\w+)\}\}/g,(_,key)=>tokens[key]??`{{${key}}}`)??'';
+const paragraphs=(text?:string)=>resolve(text).split(/\n\s*\n/).filter(Boolean);
 ---
-<ContentPageTemplate pageData={page.data}/>
+<BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
+  <PageIntro eyebrow={page.data.eyebrow} title={page.data.title} intro={page.data.intro} mediaType={page.data.heroMediaType} imageSrc={page.data.heroImage} imageAlt={page.data.heroAlt} pan={page.data.heroPan} videoSrc={page.data.heroVideo} posterSrc={page.data.heroPoster}/>
+
+  <section class="section paper contact-editorial-section">
+    <div class="wrap contact-editorial-grid">
+      <div class="contact-editorial-story">
+        {intro?.eyebrow&&<p class="eyebrow">{intro.eyebrow}</p>}
+        <h2>{intro?.title??'Speak to the family at Les Buttes'}</h2>
+        {paragraphs(intro?.text).map(text=><p class="lede">{text}</p>)}
+        {intro?.image&&<div class="contact-editorial-image"><ResponsiveImage src={intro.image} alt={intro.imageAlt??''} widths={[480,768,1100]} sizes="(max-width: 760px) 100vw, 54vw"/></div>}
+      </div>
+
+      <aside class="contact-details-panel" aria-label="Contact details">
+        <p class="eyebrow">Contact details</p>
+        <h2>Ways to reach us</h2>
+        <div class="contact-detail-list">
+          {methods?.items?.map((item:any)=>{
+            const href=resolve(item.linkUrl);
+            const label=resolve(item.linkLabel);
+            const content=<>
+              <span class="contact-detail-icon"><Icon name={item.icon??'arrow'} size={22}/></span>
+              <span><strong>{item.title}</strong>{item.text&&<small>{item.text}</small>}{label&&<span class="contact-detail-link-label">{label}</span>}</span>
+            </>;
+            return href?<a class="contact-detail-item" href={href} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>{content}</a>:<div class="contact-detail-item">{content}</div>;
+          })}
+        </div>
+        <div class="contact-address-block">
+          <strong>Les Buttes Holiday Cottages</strong>
+          <span>{site.address.street}<br/>{site.address.locality}<br/>{site.address.island} {site.address.postcode}</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <PageSections sections={[location,notice].filter(Boolean)}/>
+</BaseLayout>
+
+<style>
+.contact-editorial-grid{display:grid;gap:clamp(2rem,6vw,5rem);align-items:start}
+.contact-editorial-story{max-width:48rem}
+.contact-editorial-story h2{max-width:13ch}
+.contact-editorial-story .lede{max-width:42rem;color:var(--soft);font-size:1.03rem}
+.contact-editorial-image{overflow:hidden;margin-top:2rem;aspect-ratio:16/10;border-radius:.5rem}
+.contact-editorial-image picture,.contact-editorial-image img{width:100%;height:100%}.contact-editorial-image img{object-fit:cover}
+.contact-details-panel{padding:clamp(1.5rem,4vw,2.5rem);background:var(--cream);border:1px solid var(--line);border-radius:.5rem}
+.contact-details-panel h2{margin-bottom:1.4rem;font-size:clamp(1.8rem,3vw,2.5rem)}
+.contact-detail-list{display:grid;border-top:1px solid var(--line)}
+.contact-detail-item{display:grid;grid-template-columns:2.7rem 1fr;gap:.8rem;padding:1.05rem 0;color:var(--ink);border-bottom:1px solid var(--line);text-decoration:none}
+a.contact-detail-item:hover .contact-detail-link-label{text-decoration:underline}
+.contact-detail-icon{display:grid;width:2.35rem;height:2.35rem;place-items:center;color:var(--green);background:var(--paper);border-radius:50%}
+.contact-detail-item strong{display:block;margin-bottom:.15rem;font-size:.98rem}.contact-detail-item small{display:block;color:var(--soft);font-size:.82rem;line-height:1.45}.contact-detail-link-label{display:block;margin-top:.3rem;color:var(--green);font-size:.85rem;font-weight:700}
+.contact-address-block{margin-top:1.5rem;padding-top:1.25rem}.contact-address-block strong{display:block;margin-bottom:.35rem;font-family:var(--display);font-size:1.25rem;font-weight:500}.contact-address-block span{color:var(--soft);font-size:.9rem;line-height:1.6}
+@media(min-width:58rem){.contact-editorial-grid{grid-template-columns:minmax(0,1.15fr) minmax(20rem,.65fr)}}
+@media(max-width:40rem){.contact-details-panel{padding:1.3rem}.contact-editorial-image{aspect-ratio:4/3}}
+</style>
