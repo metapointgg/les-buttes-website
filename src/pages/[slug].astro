@@ -44,7 +44,7 @@ const paragraphs=(text?:string)=>text?.split(/\n\s*\n/).filter(Boolean)??[];
             <h2>{section.title}</h2>
             {paragraphs(section.text).map(text=><p class="lede">{text}</p>)}
           </header>
-          {section.items?.length>0&&<div class="subpage-card-grid">{section.items.map(item=><article class="info-card"><h3>{item.title}</h3>{item.text&&<p>{item.text}</p>}</article>)}</div>}
+          {(section.items?.length??0)>0&&<div class="subpage-card-grid">{section.items?.map(item=><article class="info-card"><h3>{item.title}</h3>{item.text&&<p>{item.text}</p>}</article>)}</div>}
         </div>
       </section>
     );
@@ -55,7 +55,7 @@ const paragraphs=(text?:string)=>text?.split(/\n\s*\n/).filter(Boolean)??[];
           {section.eyebrow&&<p class="eyebrow">{section.eyebrow}</p>}
           <h2>{section.title}</h2>
           {paragraphs(section.text).map(text=><p class="lede">{text}</p>)}
-          {section.listItems?.length>0&&<ul class="subpage-list">{section.listItems.map(item=><li>{item}</li>)}</ul>}
+          {(section.listItems?.length??0)>0&&<ul class="subpage-list">{section.listItems?.map(item=><li>{item}</li>)}</ul>}
         </div>
       </section>
     );
