@@ -3,32 +3,44 @@ title: Find the cottage that feels right for you
 urlStub: /cottages/
 eyebrow: Our cottages
 intro: Choose charming Geranium for up to four guests or spacious Honeysuckle for a family or group of up to six.
+heroMediaType: image
+heroImage: /src/assets/images/cottages/geranium/exterior.jpg
+heroAlt: Geranium Cottage at Les Buttes surrounded by planting
+heroPan: false
 sections:
   - enabled: true
-    type: cottageListing
-    theme: paper
-    title: Choose your cottage
-    text: |-
-      Each Les Buttes cottage has its own character and private space, while sharing the same peaceful rural setting and convenient location.
-
-      Heating, electricity, Wi-Fi, linen and towels are included. We also provide tea, coffee, and delicious local milk and butter from the island’s famous Guernsey cows for your arrival.
+    type: featureStrip
+    theme: cream
+    width: wide
+    title: Included in every stay
+    items:
+      - title: Heating & electricity
+        text: Included in the price of your stay.
+      - title: Wi-Fi
+        text: Complimentary Wi-Fi in both cottages.
+        icon: wifi
+      - title: Linen & towels
+        text: Bed linen and towels are provided.
+      - title: A Guernsey welcome
+        text: Tea, coffee, local milk and butter for your arrival.
   - enabled: true
     type: cards
-    theme: cream
-    title: Good to know
+    theme: paper
+    width: wide
+    eyebrow: Booking
+    title: Simple, secure booking through Airbnb
+    text: Availability, current pricing, payment and booking terms are handled through Airbnb.
     items:
-      - title: Simple, secure booking
-        text: Live availability, current prices and reservations are handled through Airbnb.
-      - title: Everything included
-        text: Heating, electricity, Wi-Fi, linen and towels are included in your stay.
-      - title: Where are we?
-        text: Les Buttes is in peaceful St Pierre du Bois, close to village amenities, beaches and the south-coast cliffs.
-        linkLabel: View map
-        linkUrl: /find-us/#map
+      - title: Live availability
+        text: See the dates currently available for each cottage.
+      - title: Current price
+        text: Airbnb shows the price for the dates and party size you select.
+      - title: Payment & terms
+        text: Payment and booking terms are handled securely through Airbnb.
   - enabled: true
     type: cta
-    title: Questions before you choose?
-    text: Tell us who is travelling and what matters most to you. We’ll be happy to help.
+    title: Need help choosing?
+    text: Tell us who is travelling and what matters most to you. We’ll be happy to help you decide which cottage suits your stay.
     buttonLabel: Contact Les Buttes
     buttonUrl: /contact/
 seo:
