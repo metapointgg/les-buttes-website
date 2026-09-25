@@ -14,10 +14,10 @@ const c = cottage.data;
   </a>
   <div class="card-body">
     <h2><a href={`/cottages/${c.slug}/`}>{c.name}</a></h2>
-    <p class="cottage-card-summary">{c.summary}</p>
+    <p class="cottage-card-summary">{c.tagline}</p>
     <CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly} compact/>
     <div class="card-actions">
-      <a class="button button-secondary cottage-card-button" href={`/cottages/${c.slug}/`}>View cottage<Icon name="arrow" size={18}/></a>
+      <a class="button button-secondary cottage-card-button" href={`/cottages/${c.slug}/`}>View {c.name}<Icon name="arrow" size={18}/></a>
     </div>
   </div>
 </article>
