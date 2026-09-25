@@ -18,6 +18,22 @@ if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const c=cottage.data;
 const {Content}=await render(cottage);
 const storyImage=c.gallery.find(item=>item.caption.toLowerCase().includes('kitchen')) ?? c.gallery[1] ?? c.gallery[0];
+type FacilityIcon='bed'|'bath'|'kitchen'|'living'|'garden'|'wifi';
+const bedroomLabel=`${c.bedrooms} ${c.bedrooms===1?'bedroom':'bedrooms'}`;
+const bathroomLabel=c.slug==='geranium'
+  ? 'One family bathroom and one shower room'
+  : `${c.bathrooms} ${c.bathrooms===1?'bathroom':'bathrooms'}`;
+const gardenLabel=c.facilities.some(item=>/enclosed garden/i.test(item))
+  ? 'Enclosed garden with outdoor seating'
+  : 'Private garden with outdoor space';
+const facilityOverview:Array<{icon:FacilityIcon;title:string;text:string}>=[
+  {icon:'bed',title:`Sleeps ${c.sleeps}`,text:bedroomLabel},
+  {icon:'bath',title:'Bathrooms',text:bathroomLabel},
+  {icon:'kitchen',title:'Kitchen',text:'Fully equipped kitchen'},
+  {icon:'living',title:'Living space',text:'Comfortable lounge and dining area'},
+  {icon:'garden',title:'Private garden',text:gardenLabel},
+  {icon:'wifi',title:'Wi-Fi',text:'Complimentary Wi-Fi'}
+];
 const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.name,description:c.summary,url:new URL(`/cottages/${c.slug}/`,site.url).toString(),image:new URL('/social-card.svg',site.url).toString(),numberOfBedrooms:c.bedrooms||undefined,numberOfBathroomsTotal:c.bathrooms||undefined,occupancy:c.sleeps?{'@type':'QuantitativeValue',value:c.sleeps}:undefined};
 ---
 <BaseLayout title={c.seo.title} description={c.seo.description} jsonLd={jsonLd}>
@@ -50,12 +66,19 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
       </div>
     </section>
 
-    <section class="section wrap">
-      <header class="section-heading">
-        <p class="eyebrow">Facilities</p>
-        <h2>Everything you need for a comfortable stay</h2>
-      </header>
-      <ul class="cottage-facility-grid">{c.facilities.map(item=><li>{item}</li>)}</ul>
+    <section class="section cottage-facilities-section">
+      <div class="wrap">
+        <header class="section-heading cottage-facilities-heading">
+          <p class="eyebrow">Facilities</p>
+          <h2>Everything you need for a comfortable stay</h2>
+        </header>
+        <ul class="cottage-facility-grid">
+          {facilityOverview.map(item=><li>
+            <span class="cottage-facility-icon"><Icon name={item.icon} size={48}/></span>
+            <div class="cottage-facility-copy"><h3>{item.title}</h3><p>{item.text}</p></div>
+          </li>)}
+        </ul>
+      </div>
     </section>
 
     {c.gallery.length>0&&<section class="section paper"><div class="wrap"><header class="section-heading"><p class="eyebrow">Take a look around</p><h2>{c.name} gallery</h2></header><Gallery items={c.gallery}/></div></section>}
