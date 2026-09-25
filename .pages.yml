@@ -93,6 +93,12 @@ components:
           - { name: kicker, label: Small label / number, type: string }
           - { name: title, label: Item heading, type: string, required: true }
           - { name: text, label: Item text, type: text }
+          - name: image
+            label: Card image
+            description: Optional image shown above the card text.
+            type: image
+            options: { media: images }
+          - { name: imageAlt, label: Card image description, type: text }
           - name: icon
             label: Icon
             type: select
@@ -108,6 +114,10 @@ components:
                 - { value: bed, label: Bed }
                 - { value: bath, label: Bathroom }
                 - { value: guests, label: Guests }
+                - { value: kitchen, label: Kitchen }
+                - { value: living, label: Living space }
+                - { value: garden, label: Garden }
+                - { value: wifi, label: Wi-Fi }
                 - { value: phone, label: Phone }
                 - { value: mail, label: Email }
                 - { value: external, label: External link }
