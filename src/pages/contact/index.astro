@@ -37,11 +37,14 @@ const paragraphs=(text?:string)=>resolve(text).split(/\n\s*\n/).filter(Boolean);
           {methods?.items?.map((item:any)=>{
             const href=resolve(item.linkUrl);
             const label=resolve(item.linkLabel);
-            const content=<>
+            if(href) return <a class="contact-detail-item" href={href} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>
               <span class="contact-detail-icon"><Icon name={item.icon??'arrow'} size={22}/></span>
               <span><strong>{item.title}</strong>{item.text&&<small>{item.text}</small>}{label&&<span class="contact-detail-link-label">{label}</span>}</span>
-            </>;
-            return href?<a class="contact-detail-item" href={href} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>{content}</a>:<div class="contact-detail-item">{content}</div>;
+            </a>;
+            return <div class="contact-detail-item">
+              <span class="contact-detail-icon"><Icon name={item.icon??'arrow'} size={22}/></span>
+              <span><strong>{item.title}</strong>{item.text&&<small>{item.text}</small>}{label&&<span class="contact-detail-link-label">{label}</span>}</span>
+            </div>;
           })}
         </div>
         <div class="contact-address-block">
