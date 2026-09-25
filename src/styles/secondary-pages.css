@@ -10,6 +10,10 @@
 .cottage-preview-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;padding:.35rem;background:var(--cream);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .cottage-preview-strip picture,.cottage-preview-strip img{display:block;width:100%;height:100%}
 .cottage-preview-strip img{aspect-ratio:4/3;object-fit:cover}
+.cottage-comparison-notes{display:grid;gap:.7rem;margin:1.15rem 0 1.35rem;padding-top:1rem;border-top:1px solid var(--line)}
+.cottage-comparison-notes p{display:grid;grid-template-columns:minmax(6.8rem,.7fr) minmax(0,1.3fr);gap:.75rem;margin:0;font-size:.86rem;line-height:1.45}
+.cottage-comparison-notes strong{color:var(--ink);font-weight:700}
+.cottage-comparison-notes span{color:var(--soft)}
 
 /* Image-led cards throughout secondary pages */
 .section-builder-card-grid:has(.section-builder-card.has-image){gap:1.15rem!important;border:0!important}
@@ -93,6 +97,7 @@
 @media(max-width:47.99rem){
   .cottage-preview-strip{gap:.22rem;padding:.22rem}
   .cottage-card-comparison .card-image{aspect-ratio:4/3!important}
+  .cottage-comparison-notes p{grid-template-columns:1fr;gap:.15rem}
   .cottage-detail-grid,.cottage-location-grid{gap:1.5rem}
   .cottage-detail-media{grid-template-columns:1fr 1fr}
   .cottage-detail-media figure{min-height:9rem}
