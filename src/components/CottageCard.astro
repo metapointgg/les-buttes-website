@@ -4,20 +4,30 @@ import ResponsiveImage from './ResponsiveImage.astro';
 import CottageStats from './CottageStats.astro';
 import Icon from './Icon.astro';
 
-interface Props { cottage: CollectionEntry<'cottages'> }
-const { cottage } = Astro.props;
+interface Props {
+  cottage: CollectionEntry<'cottages'>;
+  showPreviewStrip?: boolean;
+}
+const { cottage, showPreviewStrip = false } = Astro.props;
 const c = cottage.data;
+const previewImages = c.gallery.filter(item => item.image !== c.heroImage).slice(0,3);
 ---
-<article class="cottage-card">
+<article class:list={["cottage-card",showPreviewStrip && "cottage-card-comparison"]}>
   <a class="card-image" href={`/cottages/${c.slug}/`} tabindex="-1">
     <ResponsiveImage src={c.heroImage} alt="" widths={[480,720,960]} sizes="(max-width:760px) 100vw,50vw"/>
   </a>
+  {showPreviewStrip && previewImages.length > 0 && (
+    <div class="cottage-preview-strip" aria-hidden="true">
+      {previewImages.map(item => <ResponsiveImage src={item.image} alt="" widths={[220,320,420]} sizes="(max-width:760px) 33vw, 15vw" />)}
+    </div>
+  )}
   <div class="card-body">
     <h2><a href={`/cottages/${c.slug}/`}>{c.name}</a></h2>
-    <p class="cottage-card-summary">{c.tagline}</p>
+    {showPreviewStrip && <p class="cottage-card-tagline">{c.tagline}</p>}
+    <p class="cottage-card-summary">{showPreviewStrip ? c.summary : c.tagline}</p>
     <CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly} compact/>
     <div class="card-actions">
-      <a class="button button-secondary cottage-card-button" href={`/cottages/${c.slug}/`}>View {c.name}<Icon name="arrow" size={18}/></a>
+      <a class="button button-secondary cottage-card-button" href={`/cottages/${c.slug}/`}>View cottage<Icon name="arrow" size={18}/></a>
     </div>
   </div>
 </article>
