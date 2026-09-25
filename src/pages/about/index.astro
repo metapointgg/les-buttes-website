@@ -1,5 +1,9 @@
 ---
-import{getEntry,render}from'astro:content';import BaseLayout from'../../layouts/BaseLayout.astro';import PageIntro from'../../components/PageIntro.astro';import HeroMedia from'../../components/HeroMedia.astro';import Callout from'../../components/Callout.astro';import cottageIllustration from'../../assets/images/cottage-illustration.png';const page=await getEntry('pages','about');if(!page)throw new Error('Missing');const{Content}=await render(page);
+import{getEntry}from'astro:content';
+import BaseLayout from'../../layouts/BaseLayout.astro';
+import PageIntro from'../../components/PageIntro.astro';
+import PageSections from'../../components/PageSections.astro';
+const page=await getEntry('pages','about');if(!page)throw new Error('Missing');
 ---
 <BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
   <PageIntro
@@ -13,41 +17,5 @@ import{getEntry,render}from'astro:content';import BaseLayout from'../../layouts/
     videoSrc={page.data.heroVideo}
     posterSrc={page.data.heroPoster}
   />
-
-  <section class="section-tight paper">
-    <div class="wrap intro-split">
-      <HeroMedia
-        mediaType="image"
-        imageSrc="/src/assets/images/cottages/geranium/exterior.jpg"
-        imageAlt="Traditional granite exterior of Geranium Cottage"
-        class="cottage-hero-image"
-      />
-      <div>
-        <p class="eyebrow">Our story</p>
-        <h2>A farmstead made for welcoming guests</h2>
-        <div class="prose"><Content/></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="heritage-mark" aria-label="Illustration of Les Buttes">
-    <div class="wrap">
-      <img src={cottageIllustration.src} width={cottageIllustration.width} height={cottageIllustration.height} alt="Line illustration of the historic Les Buttes farmhouse and entrance" loading="lazy" />
-    </div>
-  </section>
-
-  <section class="section wrap">
-    <div class="info-grid">
-      <article class="info-card"><span class="number">16th century</span><h2>Historic surroundings</h2><p>The cottages sit within the buildings of a restored traditional Guernsey farm.</p></article>
-      <article class="info-card"><span class="number">Since 1981</span><h2>A family enterprise</h2><p>The Ozanne family has welcomed self-catering guests for more than four decades.</p></article>
-      <article class="info-card"><span class="number">Today</span><h2>A simple promise</h2><p>Comfortable cottages, practical help and freedom to discover Guernsey in your own time.</p></article>
-    </div>
-  </section>
-
-  <Callout title="Come and make your own Les Buttes memories" text="Choose the cottage that suits your party, then check live dates and prices through Airbnb." href="/cottages/" label="Meet the cottages"/>
+  <PageSections sections={page.data.sections}/>
 </BaseLayout>
-
-<style>
-.heritage-mark{padding:clamp(2.25rem,5vw,4rem) 0 0;background:var(--cream)}
-.heritage-mark img{display:block;width:min(100%,48rem);height:auto;margin:0 auto;mix-blend-mode:multiply}
-</style>
