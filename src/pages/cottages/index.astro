@@ -1,6 +1,41 @@
 ---
-import{getEntry}from'astro:content';
-import ContentPageTemplate from'../../components/templates/ContentPageTemplate.astro';
-const page=await getEntry('pages','our-cottages');if(!page)throw new Error('Missing content');
+import { getCollection, getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import PageSections from '../../components/PageSections.astro';
+import CottageCard from '../../components/CottageCard.astro';
+
+const page=await getEntry('pages','our-cottages');
+if(!page) throw new Error('Missing content');
+const cottages=(await getCollection('cottages'))
+  .filter(c=>c.data.available)
+  .sort((a,b)=>a.data.name.localeCompare(b.data.name));
 ---
-<ContentPageTemplate pageData={page.data}/>
+<BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
+  <PageIntro
+    eyebrow={page.data.eyebrow}
+    title={page.data.title}
+    intro={page.data.intro}
+    mediaType={page.data.heroMediaType}
+    imageSrc={page.data.heroImage}
+    imageAlt={page.data.heroAlt}
+    pan={page.data.heroPan}
+    videoSrc={page.data.heroVideo}
+    posterSrc={page.data.heroPoster}
+  />
+
+  <section class="section paper cottage-compare-section">
+    <div class="wrap section-builder-wide">
+      <header class="section-heading cottage-compare-heading">
+        <p class="eyebrow">Compare the cottages</p>
+        <h2>Two cottages, each with its own character</h2>
+        <p class="lede">Geranium is a detached two-bedroom cottage for four. Honeysuckle offers more space for up to six across three bedrooms.</p>
+      </header>
+      <div class="cottage-grid cottage-compare-grid">
+        {cottages.map(c=><CottageCard cottage={c} showPreviewStrip />)}
+      </div>
+    </div>
+  </section>
+
+  <PageSections sections={page.data.sections}/>
+</BaseLayout>
