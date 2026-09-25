@@ -2,43 +2,61 @@
 title: Gardens to explore and enjoy
 slug: gardens
 eyebrow: Our gardens
-intro: Wander beyond the cottages through lawns and planting, the orchard, the sunken garden and the peaceful valley at Les Buttes.
+intro: Lawns, orchard, a sunken garden and a peaceful valley — all surrounded by mature trees and planting at Les Buttes.
 published: true
 showInNavigation: true
 navigationLabel: Gardens
 navigationOrder: 30
 heroMediaType: image
-heroImage: /src/assets/images/cottages/honeysuckle/garden.jpg
-heroAlt: A green garden at Les Buttes Holiday Cottages
+heroImage: /src/assets/images/gardens/main-garden.jpg
+heroAlt: The spacious Main Garden at Les Buttes, with lawns, mature trees and colourful planting
 heroPan: false
 sections:
   - enabled: true
-    type: cards
+    type: feature
     theme: paper
     eyebrow: The Main Garden
     title: A peaceful space at the heart of Les Buttes
-    text: The Main Garden includes the Veg Patch and the Sunken Garden, with lawns, mature planting and quiet corners around the historic buildings.
+    text: |-
+      The Main Garden is a large, peaceful lawn bordered by mature trees, shrubs and seasonal planting. It gives guests space to sit, read, play or simply enjoy being outdoors.
+
+      Around the garden are quieter corners and seating areas, while the historic buildings and old stone walls give the grounds their distinctive Guernsey character.
+    image: /src/assets/images/gardens/garden-seating.jpg
+    imageAlt: A sheltered garden seating and dining area surrounded by planting at Les Buttes
+    imagePosition: right
+  - enabled: true
+    type: cards
+    theme: cream
+    eyebrow: Within the Main Garden
+    title: Quiet corners to discover
+    text: The Veg Patch and Sunken Garden each form a distinct part of the wider garden and give the grounds a different character through the seasons.
     items:
       - title: Veg Patch
-        text: The productive part of the garden, used for seasonal fruit, vegetables and herbs.
+        text: Our productive garden area is used for seasonal vegetables, herbs and soft fruit, with planting changing throughout the year.
       - title: Sunken Garden
-        text: A sheltered garden area framed by mature planting and stonework.
+        text: A sheltered garden framed by old stonework and mature planting, with seating and a more intimate atmosphere.
   - enabled: true
     type: list
-    theme: cream
+    theme: paper
     eyebrow: The Orchard
     title: Fruit trees through the seasons
-    text: The Orchard is home to a collection of established fruit trees. We will add the full tree list here as it is recorded.
-    listItems: []
+    text: The orchard includes a mix of established fruit trees, producing blossom in spring and fruit through summer and autumn.
+    listItems:
+      - Apple
+      - Pear
+      - Plum
+      - Fig
+      - Cherry
+      - Damson
   - enabled: true
     type: text
-    theme: paper
+    theme: cream
     eyebrow: Beyond the gardens
     title: The Valley
-    text: The Valley forms a quieter, more natural part of the Les Buttes grounds and gives the gardens a sense of space beyond the cottages.
+    text: The Valley is the quieter, more natural part of the Les Buttes grounds. Mature trees, changing light and the fall of the land create a sense of space away from the cottages and more formal garden areas.
   - enabled: false
     type: map
-    theme: cream
+    theme: paper
     eyebrow: Find your way around
     title: Gardens map
     text: A detailed map of the gardens and grounds will be added here.
