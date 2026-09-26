@@ -38,6 +38,11 @@ sections:
         icon: beach
       - title: Family run since 1981
         icon: guests
+  - enabled: true
+    type: cottageListing
+    theme: paper
+    width: wide
+    title: Our Cottages
 seo:
   title: Les Buttes | Guernsey Holiday Cottages & Self Catering
   description: Family-run self-catering holiday cottages in peaceful St Pierre du Bois, Guernsey. Discover Geranium and Honeysuckle and book securely through Airbnb.
