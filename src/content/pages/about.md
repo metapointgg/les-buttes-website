@@ -15,8 +15,8 @@ sections:
     eyebrow: Origins
     title: A 16th-century Guernsey farmstead
     text: Les Buttes is a family-owned, restored 16th-century farm in the rural parish of St Pierre du Bois. Its traditional barns and outbuildings sit around the old farmyard and have been adapted over time into individual holiday cottages.
-    image: /src/assets/images/cottages/geranium/garden.jpg
-    imageAlt: Traditional buildings and garden at Les Buttes
+    image: /src/assets/images/les-buttes-about-hero.jpg
+    imageAlt: The historic Les Buttes farmhouse in St Pierre du Bois
     imagePosition: right
   - enabled: true
     type: feature
@@ -35,8 +35,8 @@ sections:
     eyebrow: Today
     title: Characterful cottages, a personal welcome
     text: Geranium and Honeysuckle now offer comfortable accommodation with their own character and private outdoor space. The approach remains personal, practical and straightforward.
-    image: /src/assets/images/cottages/honeysuckle/exterior.jpg
-    imageAlt: Honeysuckle Cottage at Les Buttes
+    image: /src/assets/images/cottages/geranium/garden.jpg
+    imageAlt: Geranium Cottage garden and outdoor seating at Les Buttes
     imagePosition: right
   - enabled: true
     type: cards
