@@ -26,7 +26,7 @@ const comparisonFit = c.slug === 'geranium'
     <h2><a href={`/cottages/${c.slug}/`}>{c.name}</a></h2>
     {showPreviewStrip && <p class="cottage-card-tagline">{c.tagline}</p>}
     <p class="cottage-card-summary">{showPreviewStrip ? c.summary : c.tagline}</p>
-    <CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly} compact={showPreviewStrip || !showPreviewStrip}/>
+    <CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly} compact={true}/>
     {showPreviewStrip&&<div class="cottage-comparison-notes">
       <p><strong>Best suited to</strong><span>{comparisonFit}</span></p>
       {outdoorSpace&&<p><strong>Outdoor space</strong><span>{outdoorSpace}</span></p>}
