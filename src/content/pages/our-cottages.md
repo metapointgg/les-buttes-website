@@ -16,13 +16,16 @@ sections:
     items:
       - title: Heating & electricity
         text: Included in the price of your stay.
+        icon: living
       - title: Wi-Fi
         text: Complimentary Wi-Fi in both cottages.
         icon: wifi
       - title: Linen & towels
         text: Bed linen and towels are provided.
+        icon: bed
       - title: A Guernsey welcome
         text: Tea, coffee, local milk and butter for your arrival.
+        icon: guernsey
   - enabled: true
     type: cards
     theme: paper
