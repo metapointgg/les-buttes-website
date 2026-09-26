@@ -12,6 +12,7 @@ const gardenAreas:any=sections.find(section=>section.type==='cards'&&section.ena
 const orchard:any=sections.find(section=>section.type==='list'&&section.enabled!==false);
 const valley:any=sections.find(section=>section.type==='text'&&section.enabled!==false);
 const paragraphs=(text?:string)=>text?.split(/\n\s*\n/).filter(Boolean)??[];
+const heroImage=page.data.heroImage??'/src/assets/images/main-garden.jpg';
 
 const existingAreas=(gardenAreas?.items??[]).map((item:any,index:number)=>({
   ...item,
@@ -36,7 +37,7 @@ const gardenCards=[
 <BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
   <header class="gardens-reference-hero">
     <div class="gardens-reference-hero-media">
-      <ResponsiveImage src={page.data.heroImage} alt={page.data.heroAlt??''} widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high"/>
+      <ResponsiveImage src={heroImage} alt={page.data.heroAlt??''} widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high"/>
     </div>
     <div class="gardens-reference-hero-overlay" aria-hidden="true"></div>
     <div class="wrap gardens-reference-hero-copy">
