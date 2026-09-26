@@ -2,6 +2,19 @@
 .page-cottages .cottage-comparison-notes p::before{content:none!important}
 .page-cottages .cottage-comparison-notes p{border-left:3px solid rgba(180,123,58,.55)}
 
+/* Our Cottages: keep the comparison useful without making it read like a specification table. */
+.page-cottages .cottage-card-comparison .card-body{display:flex;flex-direction:column}
+.page-cottages .cottage-card-comparison .cottage-card-tagline{margin-bottom:.7rem!important;color:var(--soft)}
+.page-cottages .cottage-card-comparison .cottage-stats{margin-bottom:.35rem!important}
+.page-cottages .cottage-dog-friendly{display:flex;align-items:center;gap:.45rem;margin:.15rem 0 .55rem;color:var(--green);font-size:.8rem;font-weight:650}
+.page-cottages .cottage-decision-cues{display:grid;gap:.52rem;margin:.55rem 0 1rem;padding:0;list-style:none}
+.page-cottages .cottage-decision-cues li{position:relative;padding-left:1.35rem;color:var(--ink);font-size:.86rem;line-height:1.42}
+.page-cottages .cottage-decision-cues li::before{content:'';position:absolute;left:.18rem;top:.47em;width:.42rem;height:.42rem;border:1.5px solid var(--green);transform:rotate(45deg);border-radius:.05rem}
+.page-cottages .cottage-decision-cues strong{font-weight:700}
+.page-cottages .cottage-card-comparison .card-actions{margin-top:auto!important;padding-top:.2rem}
+.page-cottages .cottage-card-comparison .cottage-card-button{min-height:2.75rem}
+.page-cottages .cottage-preview-strip{margin-top:0}
+
 .page-cottages-geranium .cottage-location-facts,.page-cottages-honeysuckle .cottage-location-facts{display:flex;flex-wrap:wrap;gap:.6rem 1rem;margin:1.35rem 0 1.5rem}
 .page-cottages-geranium .cottage-location-facts span,.page-cottages-honeysuckle .cottage-location-facts span{display:inline-flex;align-items:center;gap:.45rem;color:#ffffffd8;font-size:.8rem;font-weight:650}
 .page-cottages-geranium .cottage-location-facts svg,.page-cottages-honeysuckle .cottage-location-facts svg{color:var(--gold2);stroke-width:1.7}
@@ -23,6 +36,8 @@
   .page-home .section-builder-feature-strip,.page-cottages .section-builder-feature-strip{grid-template-columns:repeat(4,minmax(0,1fr))!important}
 }
 @media(max-width:47.99rem){
+  .page-cottages .cottage-decision-cues{gap:.6rem;margin-top:.65rem}
+  .page-cottages .cottage-decision-cues li{font-size:.9rem}
   .page-cottages-geranium .cottage-location-facts,.page-cottages-honeysuckle .cottage-location-facts{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
   .page-explore-guernsey .section-builder-card-grid-icons{grid-template-columns:1fr!important}
 }
