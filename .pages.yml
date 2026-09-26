@@ -24,7 +24,7 @@ components:
   pageSections:
     type: object
     label: Page sections
-    description: Add and reorder sections to build the page. Each section can be switched off without deleting it.
+    description: Edit the sections used by each page. The website templates control their final layout and styling.
     list: { collapsible: { collapsed: true, summary: "{title}" } }
     fields:
       - { name: enabled, label: Show section, type: boolean, default: true }
@@ -39,7 +39,7 @@ components:
             - { value: image, label: Single image }
             - { value: cards, label: Cards }
             - { value: iconCards, label: Icon cards }
-            - { value: featureStrip, label: Quiet feature strip }
+            - { value: featureStrip, label: Feature strip }
             - { value: splitQuote, label: Split text and quote }
             - { value: cottageListing, label: Available cottage listing }
             - { value: list, label: List }
@@ -69,7 +69,6 @@ components:
             - { value: standard, label: Standard }
             - { value: narrow, label: Narrow }
             - { value: wide, label: Wide }
-      - { name: eyebrow, label: Short heading, type: string }
       - { name: title, label: Section heading, type: string, required: true }
       - { name: text, label: Section text, type: text }
       - name: image
@@ -87,6 +86,11 @@ components:
           values:
             - { value: left, label: Left }
             - { value: right, label: Right }
+      - name: showCottagePreviewStrip
+        label: Show cottage preview photographs
+        description: Only applies to an Available cottage listing section.
+        type: boolean
+        default: false
       - name: items
         label: Cards / icon cards / feature strip / steps
         type: object
@@ -140,6 +144,15 @@ components:
             options: { media: images }
           - { name: alt, label: Image description, type: text }
           - { name: caption, label: Caption, type: string }
+          - name: category
+            label: Gallery category
+            type: select
+            options:
+              values:
+                - { value: cottages, label: Cottages }
+                - { value: interiors, label: Interiors }
+                - { value: gardens, label: Gardens }
+                - { value: guernsey, label: Guernsey }
       - { name: quote, label: Quotation, type: text }
       - { name: attribution, label: Quote attribution / supporting note, type: string }
       - { name: buttonLabel, label: Button label, type: string }
@@ -162,22 +175,21 @@ content:
       - { name: slug, label: Web address, type: string, required: true, pattern: "^[a-z0-9-]+$" }
       - name: available
         label: Available on website
-        description: Turn this on to show the cottage on the website. Turn it off to hide the cottage from listings, its cottage page and the sitemap.
+        description: Turn this on to show the cottage in listings, its cottage page and the sitemap.
         type: boolean
         default: true
         required: true
-      - { name: eyebrow, label: Short heading, type: string, required: true }
-      - { name: tagline, type: string, required: true }
-      - { name: summary, type: text, required: true }
+      - { name: tagline, label: Short description, type: string, required: true }
+      - { name: summary, label: Cottage summary, type: text, required: true }
       - { name: sleeps, label: Guests, type: number, required: true }
-      - { name: bedrooms, type: number, required: true }
-      - { name: beds, type: number, required: true }
-      - { name: bathrooms, type: number, required: true }
+      - { name: bedrooms, label: Bedrooms, type: number, required: true }
+      - { name: beds, label: Beds, type: number, required: true }
+      - { name: bathrooms, label: Bathrooms, type: number, required: true }
       - { name: dogFriendly, label: Dog friendly, type: boolean, required: true }
       - { name: airbnbUrl, label: Airbnb booking link, type: string }
       - name: heroMediaType
         label: Main media type
-        description: Choose a photograph or an autoplaying silent video for the cottage's main feature media.
+        description: Choose a photograph or an autoplaying silent video for the cottage hero.
         type: select
         default: image
         options:
@@ -186,12 +198,12 @@ content:
             - { value: video, label: Video }
       - name: heroImage
         label: Main image
-        description: Used as the main image, and as the fallback when video is selected.
+        description: Used as the main image and as the fallback when video is selected.
         type: image
         required: true
         options: { media: images }
       - { name: heroAlt, label: Main image description, type: text, required: true }
-      - { name: heroPan, label: Pan main image, description: Adds subtle lateral movement when the main media type is Image. Gallery photographs remain static., type: boolean, default: false }
+      - { name: heroPan, label: Pan main image, description: Adds subtle lateral movement when the main media type is Image., type: boolean, default: false }
       - name: heroVideo
         label: Main video
         description: Optional MP4 or WebM background video. It plays muted, loops and has no controls.
@@ -199,7 +211,7 @@ content:
         options: { media: videos, categories: [video] }
       - name: heroPoster
         label: Video fallback image
-        description: Optional still image shown while video loads and to visitors who prefer reduced motion. If omitted, Main image is used.
+        description: Optional still image shown while video loads and to visitors who prefer reduced motion.
         type: image
         options: { media: images }
       - name: gallery
@@ -207,28 +219,29 @@ content:
         type: object
         list: { collapsible: { collapsed: true, summary: "{caption}" } }
         fields:
-          - { name: image, type: image, required: true, options: { media: images } }
+          - { name: image, label: Image, type: image, required: true, options: { media: images } }
           - { name: alt, label: Image description, type: text, required: true }
-          - { name: caption, type: string, required: true }
+          - { name: caption, label: Caption, type: string, required: true }
       - { name: facilities, label: What is included, type: string, list: true }
       - name: highlights
+        label: Cottage highlights
         type: object
         list: { collapsible: { collapsed: true, summary: "{title}" } }
         fields:
-          - { name: title, type: string, required: true }
-          - { name: text, type: text, required: true }
+          - { name: title, label: Heading, type: string, required: true }
+          - { name: text, label: Text, type: text, required: true }
       - name: review
         label: Featured guest review
         type: object
         fields:
-          - { name: quote, type: text }
-          - { name: guest, type: string }
+          - { name: quote, label: Review text, type: text }
+          - { name: guest, label: Guest / attribution, type: string }
           - { name: sourceUrl, label: Airbnb review link, type: string }
-      - { name: seo, component: seo }
       - { name: body, label: Main description, type: rich-text, required: true, options: { media: images } }
+      - { name: seo, component: seo }
 
   - name: pages
-    label: Main pages
+    label: Core pages
     type: collection
     path: src/content/pages
     format: yaml-frontmatter
@@ -237,25 +250,24 @@ content:
       primary: seo.title
       fields: [seo.title, urlStub]
       sort: [seo.title]
-      search: [seo.title, urlStub, title, eyebrow]
+      search: [seo.title, urlStub, title]
     fields:
       - { name: title, label: Main heading, type: string, required: true }
-      - { name: urlStub, label: URL stub, type: string, required: true, readonly: true, pattern: "^/$|^/[a-z0-9-]+/$" }
-      - { name: eyebrow, label: Short heading, type: string, required: true }
-      - { name: intro, label: Introduction, type: text, required: true }
+      - { name: urlStub, label: URL, type: string, required: true, readonly: true, pattern: "^/$|^/[a-z0-9-]+/$" }
+      - { name: intro, label: Hero introduction, type: text, required: true }
       - name: heroMediaType
-        label: Main media type
-        description: Choose whether the page's principal feature media is an image or a silent looping video.
+        label: Hero media type
+        description: Choose whether the page hero uses an image or a silent looping video.
         type: select
         default: image
         options:
           values:
             - { value: image, label: Image }
             - { value: video, label: Video }
-      - { name: heroImage, label: Page main image, type: image, options: { media: images } }
-      - { name: heroAlt, label: Page main image description, type: text }
-      - { name: heroPan, label: Pan page main image, type: boolean, default: false }
-      - { name: heroVideo, label: Page main video, description: Optional MP4 or WebM. It autoplays muted, loops and is replaced by the fallback image for reduced-motion visitors., type: file, options: { media: videos, categories: [video] } }
+      - { name: heroImage, label: Hero image, type: image, options: { media: images } }
+      - { name: heroAlt, label: Hero image description, type: text }
+      - { name: heroPan, label: Pan hero image, type: boolean, default: false }
+      - { name: heroVideo, label: Hero video, description: Optional MP4 or WebM. It autoplays muted and loops., type: file, options: { media: videos, categories: [video] } }
       - { name: heroPoster, label: Video fallback image, type: image, options: { media: images } }
       - { name: heroPrimaryLabel, label: Hero primary button label, type: string }
       - { name: heroPrimaryUrl, label: Hero primary button URL, type: string }
@@ -265,7 +277,7 @@ content:
       - { name: seo, component: seo }
 
   - name: subpages
-    label: Sub pages
+    label: Additional pages
     type: collection
     path: src/content/subpages
     format: yaml-frontmatter
@@ -274,28 +286,27 @@ content:
       primary: title
       fields: [seo.title, slug, published]
       sort: [title]
-      search: [title, slug, seo.title, eyebrow]
+      search: [title, slug, seo.title]
     fields:
       - { name: title, label: Main heading, type: string, required: true }
       - { name: slug, label: URL slug, description: The page address without slashes, for example gardens creates /gardens/., type: string, required: true, pattern: "^[a-z0-9-]+$" }
       - { name: published, label: Published on website, description: Turn this off to remove the page from the public website and sitemap., type: boolean, default: true, required: true }
       - { name: showInNavigation, label: Show in main navigation, type: boolean, default: false }
       - { name: navigationLabel, label: Navigation label, description: Optional shorter label for the main menu. If blank, the main heading is used., type: string }
-      - { name: navigationOrder, label: Navigation order, description: Lower numbers appear earlier in the menu. Our Cottages is 20 and Explore Guernsey is 40., type: number }
-      - { name: eyebrow, label: Short heading, type: string, required: true }
-      - { name: intro, label: Introduction, type: text, required: true }
+      - { name: navigationOrder, label: Navigation order, description: Lower numbers appear earlier in the menu., type: number }
+      - { name: intro, label: Hero introduction, type: text, required: true }
       - name: heroMediaType
-        label: Main media type
+        label: Hero media type
         type: select
         default: image
         options:
           values:
             - { value: image, label: Image }
             - { value: video, label: Video }
-      - { name: heroImage, label: Page main image, type: image, options: { media: images } }
-      - { name: heroAlt, label: Main image description, type: text }
-      - { name: heroPan, label: Pan page main image, type: boolean, default: false }
-      - { name: heroVideo, label: Page main video, type: file, options: { media: videos, categories: [video] } }
+      - { name: heroImage, label: Hero image, type: image, options: { media: images } }
+      - { name: heroAlt, label: Hero image description, type: text }
+      - { name: heroPan, label: Pan hero image, type: boolean, default: false }
+      - { name: heroVideo, label: Hero video, type: file, options: { media: videos, categories: [video] } }
       - { name: heroPoster, label: Video fallback image, type: image, options: { media: images } }
       - { name: heroPrimaryLabel, label: Hero primary button label, type: string }
       - { name: heroPrimaryUrl, label: Hero primary button URL, type: string }
@@ -350,7 +361,6 @@ content:
           - { name: leadMax, label: Intro / lead text maximum (px), type: number, required: true }
           - { name: proseSize, label: Long-form text size (px), type: number, required: true }
           - { name: smallCardHeadingSize, label: Small card heading size (px), type: number, required: true }
-          - { name: eyebrowSize, label: Short heading / eyebrow size (px), type: number, required: true }
           - { name: buttonSize, label: Button text size (px), type: number, required: true }
           - { name: smallTextSize, label: Small text / captions size (px), type: number, required: true }
           - { name: quoteMin, label: Quote minimum (px), type: number, required: true }
@@ -362,30 +372,33 @@ content:
     path: src/data/site.json
     format: json
     fields:
-      - { name: name, type: string, required: true }
-      - { name: shortName, type: string, required: true }
-      - { name: url, type: string, required: true }
-      - { name: email, type: string, required: true }
-      - { name: telephoneDisplay, type: string, required: true }
-      - { name: telephoneHref, type: string, required: true }
+      - { name: name, label: Site name, type: string, required: true }
+      - { name: shortName, label: Short site name, type: string, required: true }
+      - { name: url, label: Website URL, type: string, required: true }
+      - { name: email, label: Email, type: string, required: true }
+      - { name: telephoneDisplay, label: Telephone display, type: string, required: true }
+      - { name: telephoneHref, label: Telephone link value, type: string, required: true }
       - name: address
+        label: Address
         type: object
         fields:
-          - { name: street, type: string }
-          - { name: locality, type: string }
-          - { name: island, type: string }
-          - { name: postcode, type: string }
-          - { name: country, type: string }
+          - { name: street, label: Street, type: string }
+          - { name: locality, label: Parish / locality, type: string }
+          - { name: island, label: Island, type: string }
+          - { name: postcode, label: Postcode, type: string }
+          - { name: country, label: Country, type: string }
       - name: coordinates
+        label: Map coordinates
         type: object
         fields:
-          - { name: latitude, type: number }
-          - { name: longitude, type: number }
+          - { name: latitude, label: Latitude, type: number }
+          - { name: longitude, label: Longitude, type: number }
       - name: airbnb
+        label: Airbnb links
         type: object
         fields:
-          - { name: geranium, type: string }
-          - { name: honeysuckle, type: string }
+          - { name: geranium, label: Geranium, type: string }
+          - { name: honeysuckle, label: Honeysuckle, type: string }
 
 settings:
   commit:
