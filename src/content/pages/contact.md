@@ -4,8 +4,8 @@ urlStub: /contact/
 eyebrow: Contact us
 intro: Whether you have a question before your stay or need help with an existing booking, please get in touch.
 heroMediaType: image
-heroImage: /src/assets/images/cottages/geranium/garden.jpg
-heroAlt: Geranium Cottage garden at Les Buttes
+heroImage: /src/assets/images/les-buttes-about-hero.jpg
+heroAlt: The historic Les Buttes farmhouse in St Pierre du Bois, Guernsey
 heroPan: false
 sections:
   - enabled: true
