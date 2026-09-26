@@ -48,24 +48,32 @@ sections:
         external: true
       - title: St Peter Port
         text: Explore independent shops, harbourside restaurants, Castle Cornet and old-town lanes.
+        image: /src/assets/images/explore-guernsey-poster.jpg
+        imageAlt: Guernsey coastline and island scenery
         icon: guernsey
         linkLabel: Explore St Peter Port
         linkUrl: https://www.visitguernsey.com/experiences/culture-heritage/
         external: true
       - title: Island history
         text: Discover prehistoric sites, fortifications and museums telling Guernsey’s story.
+        image: /src/assets/images/les-buttes-about-hero.jpg
+        imageAlt: Traditional Guernsey architecture at Les Buttes
         icon: history
         linkLabel: Discover Guernsey’s history
         linkUrl: https://www.visitguernsey.com/experiences/culture-heritage/
         external: true
       - title: Neighbouring islands
         text: Take a day trip to Herm, Sark or Alderney for another perspective on the Bailiwick.
+        image: /src/assets/images/petit-bot-001.jpg
+        imageAlt: Guernsey coastline looking out to sea
         icon: islands
         linkLabel: Explore the islands
         linkUrl: https://www.visitguernsey.com/islands/
         external: true
       - title: Local food
         text: Try seafood, island produce and rich dairy made from Guernsey cows.
+        image: /src/assets/images/garden-seating.png
+        imageAlt: Outdoor dining table in the Les Buttes garden
         icon: food
         linkLabel: Find places to eat
         linkUrl: https://www.visitguernsey.com/experiences/food-drink/
