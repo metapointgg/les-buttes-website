@@ -16,6 +16,12 @@
 
 .page-gallery .editorial-gallery-item figcaption{backdrop-filter:blur(2px)}
 
+@media(min-width:48rem) and (max-width:71.99rem){
+  .page-home .section-builder-feature-strip,.page-cottages .section-builder-feature-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(min-width:72rem){
+  .page-home .section-builder-feature-strip,.page-cottages .section-builder-feature-strip{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+}
 @media(max-width:47.99rem){
   .page-cottages-geranium .cottage-location-facts,.page-cottages-honeysuckle .cottage-location-facts{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
   .page-explore-guernsey .section-builder-card-grid-icons{grid-template-columns:1fr!important}
