@@ -8,8 +8,8 @@ navigationOrder: 50
 eyebrow: Gallery
 intro: Cottages, gardens and a little of the Guernsey landscape that surrounds them.
 heroMediaType: image
-heroImage: /src/assets/images/cottages/geranium/garden.jpg
-heroAlt: Geranium Cottage garden at Les Buttes Holiday Cottages
+heroImage: /src/assets/images/les-buttes-about-hero.jpg
+heroAlt: The historic Les Buttes farmhouse and surrounding grounds
 heroPan: false
 sections:
   - enabled: true
@@ -23,21 +23,21 @@ sections:
       - image: /src/assets/images/cottages/geranium/exterior.jpg
         alt: Geranium Cottage's granite exterior and flower-filled entrance
         caption: Geranium Cottage
+      - image: /src/assets/images/cottages/geranium/sitting-room.jpg
+        alt: Geranium Cottage sitting room
+        caption: Geranium sitting room
       - image: /src/assets/images/main-garden.jpg
         alt: The Main Garden at Les Buttes
         caption: The Main Garden
       - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
         alt: Honeysuckle Cottage at Les Buttes
         caption: Honeysuckle Cottage
-      - image: /src/assets/images/garden-seating.png
-        alt: Outdoor dining and seating among mature planting
-        caption: A place to slow down
-      - image: /src/assets/images/cottages/geranium/sitting-room.jpg
-        alt: Geranium Cottage sitting room
-        caption: Geranium sitting room
       - image: /src/assets/images/cottages/honeysuckle/kitchen.jpg
         alt: Honeysuckle Cottage kitchen
         caption: Honeysuckle kitchen
+      - image: /src/assets/images/garden-seating.png
+        alt: Outdoor dining and seating among mature planting
+        caption: A place to slow down
       - image: /src/assets/images/cottages/geranium/king-bedroom.jpg
         alt: Geranium Cottage double bedroom
         caption: Geranium double bedroom
