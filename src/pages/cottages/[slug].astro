@@ -43,14 +43,14 @@ const gardenCopy=isGeranium
 
 const findFacility=(pattern:RegExp)=>c.facilities.find(item=>pattern.test(item));
 type FacilityIcon='wifi'|'kitchen'|'bed'|'pin'|'garden';
-const facilityOverview:Array<{icon:FacilityIcon;title:string;text:string|undefined}>=[
+const facilityOverview=([
   {icon:'wifi',title:'Wi-Fi',text:findFacility(/wi-fi/i)},
   {icon:'kitchen',title:'Kitchen',text:findFacility(/fully equipped kitchen/i)},
   {icon:'kitchen',title:'Washing facilities',text:findFacility(/washing|dryer/i)},
   {icon:'bed',title:'Heating, linen & towels',text:findFacility(/heating.*linen.*towels/i)},
   {icon:'pin',title:'Parking',text:findFacility(/parking/i)},
   {icon:'garden',title:'Private garden',text:findFacility(/private.*garden/i)}
-].filter(item=>Boolean(item.text));
+] as Array<{icon:FacilityIcon;title:string;text:string|undefined}>).filter(item=>Boolean(item.text));
 
 const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.name,description:c.summary,url:new URL(`/cottages/${c.slug}/`,site.url).toString(),image:new URL('/social-card.svg',site.url).toString(),numberOfBedrooms:c.bedrooms||undefined,numberOfBathroomsTotal:c.bathrooms||undefined,occupancy:c.sleeps?{'@type':'QuantitativeValue',value:c.sleeps}:undefined};
 ---
