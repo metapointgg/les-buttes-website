@@ -10,27 +10,14 @@ heroVideo: /videos/explore-guernsey-web.mp4
 heroPoster: /src/assets/images/explore-guernsey-poster.jpg
 sections:
   - enabled: true
-    type: feature
-    theme: paper
-    width: wide
-    eyebrow: Island experiences
-    title: A little island with a lot to discover
-    text: |-
-      Guernsey may be compact, but it offers an extraordinary variety of coast, countryside, history and food.
-
-      From Les Buttes, quiet lanes lead towards the south-coast cliffs, while the broad sandy beaches of the west coast are within easy reach.
-    image: /src/assets/images/petit-bot-001.jpg
-    imageAlt: Petit Bot bay on Guernsey's south coast
-    imagePosition: left
-  - enabled: true
     type: iconCards
-    theme: cream
+    theme: paper
     width: wide
     eyebrow: Make a day of it
     title: Ideas for your stay
-    text: Opening times and transport can change, so check the linked visitor information before setting out.
+    text: From coast and countryside to history and food, Guernsey offers something for everyone.
     items:
-      - title: West-coast beaches
+      - title: Beaches
         text: Spend a day on broad sandy beaches such as Vazon, Cobo and L’Eree.
         image: /src/assets/images/explore-guernsey-poster.jpg
         imageAlt: Guernsey's coastline at golden hour
@@ -38,7 +25,7 @@ sections:
         linkLabel: Explore Guernsey’s beaches
         linkUrl: https://www.visitguernsey.com/experiences/beaches/
         external: true
-      - title: South-coast walks
+      - title: Coastal walks
         text: Follow dramatic cliff paths through wild headlands, hidden coves and sea views.
         image: /src/assets/images/petit-bot-001.jpg
         imageAlt: Petit Bot bay and the surrounding south-coast landscape
@@ -78,13 +65,6 @@ sections:
         linkLabel: Find places to eat
         linkUrl: https://www.visitguernsey.com/experiences/food-drink/
         external: true
-  - enabled: true
-    type: locationMap
-    theme: paper
-    width: wide
-    eyebrow: Your base
-    title: Les Buttes in St Pierre du Bois
-    text: Stay in the quieter south-west of Guernsey, with the rest of the island ready to explore from your cottage.
   - enabled: true
     type: cta
     title: A peaceful base for your island days
