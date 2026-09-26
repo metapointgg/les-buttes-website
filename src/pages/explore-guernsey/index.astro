@@ -1,6 +1,85 @@
 ---
-import{getEntry}from'astro:content';
-import ContentPageTemplate from'../../components/templates/ContentPageTemplate.astro';
-const page=await getEntry('pages','things-to-do');if(!page)throw new Error('Missing');
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import ResponsiveImage from '../../components/ResponsiveImage.astro';
+import Icon from '../../components/Icon.astro';
+
+const page=await getEntry('pages','things-to-do');
+if(!page) throw new Error('Missing');
+const sections:any[]=page.data.sections??[];
+const ideas:any=sections.find(section=>section.type==='iconCards'&&section.enabled!==false);
+const cta:any=sections.find(section=>section.type==='cta'&&section.enabled!==false);
 ---
-<ContentPageTemplate pageData={page.data}/>
+<BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
+  <PageIntro eyebrow={page.data.eyebrow} title={page.data.title} intro={page.data.intro} mediaType={page.data.heroMediaType} imageSrc={page.data.heroImage} imageAlt={page.data.heroAlt} pan={page.data.heroPan} videoSrc={page.data.heroVideo} posterSrc={page.data.heroPoster}/>
+
+  {ideas&&<section class="explore-reference-ideas">
+    <div class="wrap explore-reference-wrap">
+      <header class="explore-reference-heading">
+        {ideas.eyebrow&&<p class="eyebrow">{ideas.eyebrow}</p>}
+        <h2>{ideas.title}</h2>
+        {ideas.text&&<p>{ideas.text}</p>}
+      </header>
+      <div class="explore-reference-grid">
+        {ideas.items?.map((item:any)=><a class="explore-reference-card" href={item.linkUrl} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>
+          {item.image&&<div class="explore-reference-image"><ResponsiveImage src={item.image} alt={item.imageAlt??''} widths={[360,560,760,960]} sizes="(max-width:760px) 100vw, 33vw"/></div>}
+          <div class="explore-reference-card-copy">
+            <div>
+              <h3>{item.title}</h3>
+              {item.text&&<p>{item.text}</p>}
+            </div>
+            <span class="explore-reference-arrow" aria-hidden="true"><Icon name="arrow" size={18}/></span>
+          </div>
+        </a>)}
+      </div>
+    </div>
+  </section>}
+
+  {cta&&<section class="explore-reference-close">
+    <div class="explore-reference-close-image" aria-hidden="true"><ResponsiveImage src="/src/assets/images/main-garden.jpg" alt="" widths={[640,960,1280]} sizes="100vw"/></div>
+    <div class="explore-reference-close-overlay" aria-hidden="true"></div>
+    <div class="wrap explore-reference-close-inner">
+      <div>
+        <p class="eyebrow eyebrow-light">Make the most of your stay</p>
+        <h2>{cta.title}</h2>
+        {cta.text&&<p>{cta.text}</p>}
+      </div>
+      <a class="button button-light" href={cta.buttonUrl??'/cottages/'}>{cta.buttonLabel??'Explore our cottages'}<Icon name="arrow" size={18}/></a>
+    </div>
+  </section>}
+</BaseLayout>
+
+<style>
+:global(.page-explore-guernsey .page-intro-with-media){min-height:clamp(22rem,38vw,30rem)}
+:global(.page-explore-guernsey .page-intro-overlay){background:linear-gradient(90deg,rgba(5,25,20,.58) 0%,rgba(7,31,24,.34) 48%,rgba(7,31,24,.08) 80%)}
+:global(.page-explore-guernsey .page-intro-content){padding-block:clamp(3.3rem,6vw,5rem)}
+:global(.page-explore-guernsey .page-intro-content h1){max-width:11ch}
+.explore-reference-ideas{padding:clamp(3rem,6vw,5rem) 0;background:var(--paper)}
+.explore-reference-wrap{max-width:76rem}
+.explore-reference-heading{max-width:45rem;margin-bottom:clamp(1.8rem,3vw,2.6rem)}
+.explore-reference-heading h2{margin-bottom:.45rem}
+.explore-reference-heading>p:not(.eyebrow){margin:0;color:var(--soft);line-height:1.55}
+.explore-reference-grid{display:grid;gap:1rem}
+.explore-reference-card{display:flex;min-width:0;flex-direction:column;overflow:hidden;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:.45rem;text-decoration:none;transition:transform .2s,box-shadow .2s}
+.explore-reference-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px #17332a12}
+.explore-reference-image{overflow:hidden;aspect-ratio:16/8.8;background:var(--pale)}
+.explore-reference-image :global(picture),.explore-reference-image :global(img){width:100%;height:100%}
+.explore-reference-image :global(img){object-fit:cover;object-position:center;transition:transform .35s}
+.explore-reference-card:hover .explore-reference-image :global(img){transform:scale(1.02)}
+.explore-reference-card-copy{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:end;min-height:7.2rem;padding:1rem 1.05rem}
+.explore-reference-card-copy h3{margin:0 0 .25rem;font-size:clamp(1.25rem,2vw,1.6rem)}
+.explore-reference-card-copy p{display:-webkit-box;overflow:hidden;margin:0;color:var(--soft);font-size:.84rem;line-height:1.4;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.explore-reference-arrow{display:grid;width:2rem;height:2rem;place-items:center;color:var(--green)}
+.explore-reference-close{position:relative;isolation:isolate;overflow:hidden;color:#fff;background:var(--deep)}
+.explore-reference-close-image{position:absolute;inset:0;z-index:-2;opacity:.28}
+.explore-reference-close-image :global(picture),.explore-reference-close-image :global(img){width:100%;height:100%}
+.explore-reference-close-image :global(img){object-fit:cover;object-position:50% 70%}
+.explore-reference-close-overlay{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,29,24,.92),rgba(16,59,48,.78))}
+.explore-reference-close-inner{display:grid;gap:2rem;align-items:center;padding-block:clamp(2.5rem,5vw,4rem)}
+.explore-reference-close-inner h2{max-width:14ch;margin-bottom:.55rem;color:#fff}
+.explore-reference-close-inner p:not(.eyebrow){max-width:42rem;margin:0;color:#ffffffc7}
+@media(min-width:48rem){.explore-reference-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.explore-reference-close-inner{grid-template-columns:1fr auto}}
+@media(min-width:64rem){.explore-reference-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:47.99rem){.explore-reference-grid{grid-template-columns:1fr}.explore-reference-card-copy{min-height:0}.explore-reference-close-inner{padding-block:2.5rem}.explore-reference-close-inner .button{width:max-content}}
+</style>
