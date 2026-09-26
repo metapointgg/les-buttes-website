@@ -2,48 +2,65 @@
 import { getEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageIntro from '../../components/PageIntro.astro';
-import PageSections from '../../components/PageSections.astro';
+import ResponsiveImage from '../../components/ResponsiveImage.astro';
 
 const page=await getEntry('pages','about');
 if(!page) throw new Error('Missing');
 const sections:any[]=page.data.sections??[];
-const storySections=sections.filter(section=>section.type==='feature'&&section.enabled!==false);
-const timeline:any=sections.find(section=>section.type==='cards'&&section.enabled!==false&&section.items?.length);
-const closingSections=sections.filter(section=>['quote','cta'].includes(section.type)&&section.enabled!==false);
+const storySections=sections.filter(section=>section.type==='feature'&&section.enabled!==false).slice(0,3);
+const storyImages=[
+  '/src/assets/images/cottage-illustration.png',
+  '/src/assets/images/les-buttes-about-hero.jpg',
+  '/src/assets/images/cottages/geranium/garden.jpg'
+];
 ---
 <BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
   <PageIntro eyebrow={page.data.eyebrow} title={page.data.title} intro={page.data.intro} mediaType={page.data.heroMediaType} imageSrc={page.data.heroImage} imageAlt={page.data.heroAlt} pan={page.data.heroPan} videoSrc={page.data.heroVideo} posterSrc={page.data.heroPoster}/>
-  <PageSections sections={storySections}/>
 
-  {timeline&&<section class="section cream story-timeline-section">
-    <div class="wrap section-builder-wide">
-      <header class="section-heading story-timeline-heading">
-        <p class="eyebrow">Our story</p>
-        <h2>{timeline.title}</h2>
-      </header>
-      <ol class="story-timeline">
-        {timeline.items.map((item:any)=><li>
-          <span class="story-timeline-date">{item.kicker}</span>
-          <div>
-            <h3>{item.title}</h3>
-            {item.text&&<p>{item.text}</p>}
+  <section class="story-reference-section">
+    <div class="wrap story-reference-wrap">
+      <ol class="story-reference-timeline">
+        {storySections.map((section:any,index:number)=><li class="story-reference-row">
+          <span class="story-reference-marker" aria-hidden="true"></span>
+          <div class="story-reference-copy">
+            {section.eyebrow&&<p class="story-reference-kicker">{section.eyebrow}</p>}
+            <h2>{section.title}</h2>
+            {section.text&&<p>{section.text}</p>}
           </div>
+          <figure class:list={['story-reference-image',index===0&&'is-illustration']}>
+            <ResponsiveImage src={storyImages[index]} alt={section.imageAlt??''} widths={[480,720,960,1200]} sizes="(max-width:760px) 100vw, 48vw"/>
+          </figure>
         </li>)}
       </ol>
     </div>
-  </section>}
-
-  <PageSections sections={closingSections}/>
+  </section>
 </BaseLayout>
 
 <style>
-.story-timeline-heading{max-width:42rem}
-.story-timeline{position:relative;display:grid;gap:0;margin:2.6rem 0 0;padding:0;list-style:none}
-.story-timeline::before{content:"";position:absolute;top:0;bottom:0;left:.42rem;width:1px;background:var(--line)}
-.story-timeline li{position:relative;display:grid;grid-template-columns:minmax(7rem,9rem) 1fr;gap:1.3rem;padding:0 0 2.5rem 1.7rem}
-.story-timeline li::before{content:"";position:absolute;top:.45rem;left:0;width:.85rem;height:.85rem;background:var(--cream);border:2px solid var(--gold);border-radius:50%}
-.story-timeline-date{color:var(--gold);font:600 .8rem var(--body);letter-spacing:.09em;text-transform:uppercase}
-.story-timeline h3{margin:0 0 .45rem;font:500 clamp(1.55rem,2.5vw,2.2rem)/1.15 var(--display)}
-.story-timeline p{max-width:42rem;margin:0;color:var(--soft)}
-@media(min-width:52rem){.story-timeline{grid-template-columns:repeat(3,1fr);gap:2.5rem;padding-top:1.5rem}.story-timeline::before{top:1.9rem;right:0;bottom:auto;left:0;width:auto;height:1px}.story-timeline li{grid-template-columns:1fr;gap:.65rem;padding:2rem 1rem 0 0}.story-timeline li::before{top:0;left:0}.story-timeline-date{font-size:.76rem}}
+:global(.page-about .page-intro-with-media){min-height:clamp(24rem,42vw,32rem)}
+:global(.page-about .page-intro-overlay){background:linear-gradient(90deg,rgba(5,25,20,.66) 0%,rgba(7,31,24,.38) 52%,rgba(7,31,24,.08) 82%)}
+:global(.page-about .page-intro-content){padding-block:clamp(3.5rem,7vw,5.5rem)}
+:global(.page-about .page-intro-content h1){max-width:12ch}
+.story-reference-section{padding:clamp(3.5rem,7vw,6.5rem) 0;background:var(--paper)}
+.story-reference-wrap{max-width:74rem}
+.story-reference-timeline{position:relative;display:grid;gap:0;margin:0;padding:0;list-style:none}
+.story-reference-timeline::before{content:"";position:absolute;top:1.1rem;bottom:1.1rem;left:.62rem;width:1px;background:#c9a962}
+.story-reference-row{position:relative;display:grid;grid-template-columns:1.5rem minmax(0,.82fr) minmax(18rem,1.18fr);gap:clamp(1.5rem,4vw,4rem);align-items:center;padding:0 0 clamp(2.6rem,5vw,4.5rem)}
+.story-reference-row:last-child{padding-bottom:0}
+.story-reference-marker{position:relative;z-index:1;display:block;width:1.25rem;height:1.25rem;background:var(--paper);border:2px solid #c9a962;border-radius:50%}
+.story-reference-kicker{margin:0 0 .45rem;color:#946029;font-size:.76rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.story-reference-copy h2{max-width:14ch;margin:0 0 .75rem;font-size:clamp(2rem,3.7vw,3.6rem)}
+.story-reference-copy p:not(.story-reference-kicker){max-width:33rem;margin:0;color:var(--soft);line-height:1.58}
+.story-reference-image{overflow:hidden;margin:0;aspect-ratio:16/8.5;background:var(--cream);border-radius:.28rem}
+.story-reference-image :global(picture),.story-reference-image :global(img){width:100%;height:100%}
+.story-reference-image :global(img){object-fit:cover;object-position:center}
+.story-reference-image.is-illustration{padding:1rem 1.5rem;background:#f7f3e9}
+.story-reference-image.is-illustration :global(img){object-fit:contain}
+@media(max-width:47.99rem){
+  .story-reference-timeline::before{left:.5rem}
+  .story-reference-row{grid-template-columns:1.15rem 1fr;gap:1.1rem 1.25rem;padding-bottom:3rem}
+  .story-reference-marker{width:1rem;height:1rem}
+  .story-reference-copy{grid-column:2}
+  .story-reference-image{grid-column:2;aspect-ratio:16/10}
+}
 </style>
