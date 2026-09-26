@@ -18,10 +18,7 @@ sections:
     width: wide
     eyebrow: The Main Garden
     title: A peaceful space at the heart of Les Buttes
-    text: |-
-      The Main Garden is a large, peaceful lawn bordered by mature trees, shrubs and seasonal planting. It gives guests space to sit, read, play or simply enjoy being outdoors.
-
-      Quieter corners and seating areas sit around the garden, framed by old stone walls and the traditional buildings of Les Buttes.
+    text: The Main Garden is a large, peaceful lawn bordered by mature trees, shrubs and seasonal planting, with places to sit, read, play or simply enjoy being outdoors.
     image: /src/assets/images/garden-seating.png
     imageAlt: A sheltered garden seating and dining area surrounded by planting at Les Buttes
     imagePosition: right
@@ -31,7 +28,7 @@ sections:
     width: wide
     eyebrow: Within the Main Garden
     title: Quiet corners to discover
-    text: The Veg Patch and Sunken Garden each form a distinct part of the wider garden and give the grounds a different character through the seasons.
+    text: The Veg Patch and Sunken Garden each give the wider garden a different character through the seasons.
     items:
       - title: Veg Patch
         text: Our productive garden area is used for seasonal vegetables, herbs and soft fruit, with planting changing throughout the year.
