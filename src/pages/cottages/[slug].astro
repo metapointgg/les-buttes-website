@@ -59,7 +59,7 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
           <div class="facts-bar"><CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly}/></div>
           <div class="cottage-actions">
             {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">Check availability <Icon name="external" size={17}/></a>}
-            <a class="button button-outline" href="/contact/">Ask a question</a>
+            <a class="button button-outline" href="#gallery">View gallery</a>
           </div>
         </div>
       </div>
@@ -150,13 +150,18 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
           <p class="eyebrow eyebrow-light">Explore Guernsey</p>
           <h2>Your base in St Pierre du Bois</h2>
           <p>Return from beaches, cliff paths and island days to the peace of your cottage at Les Buttes.</p>
+          <div class="cottage-location-facts" aria-label="Location highlights">
+            <span><Icon name="pin" size={19}/>St Pierre du Bois</span>
+            <span><Icon name="beach" size={19}/>Beaches & cliff paths</span>
+            <span><Icon name="guernsey" size={19}/>Explore the island</span>
+          </div>
           <a class="button button-light" href="/explore-guernsey/">Explore Guernsey <Icon name="arrow" size={18}/></a>
         </div>
         <div class="cottage-location-image"><ResponsiveImage src="/src/assets/images/petit-bot-001.jpg" alt="Petit Bot bay on Guernsey's south coast" widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 48vw"/></div>
       </div>
     </section>
 
-    {c.gallery.length>0&&<section class="section paper"><div class="wrap"><header class="section-heading"><p class="eyebrow">More photographs</p><h2>Take a closer look at {c.name}</h2></header><Gallery items={c.gallery}/></div></section>}
+    {c.gallery.length>0&&<section class="section paper" id="gallery"><div class="wrap"><header class="section-heading"><p class="eyebrow">More photographs</p><h2>Take a closer look at {c.name}</h2></header><Gallery items={c.gallery}/></div></section>}
   </article>
   <Callout title={`Make ${c.name} your Guernsey base`} text="View current availability, prices and booking terms securely through Airbnb. If you have a question first, we are here to help." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'} secondaryHref="/contact/" secondaryLabel="Contact us"/>
 </BaseLayout>
