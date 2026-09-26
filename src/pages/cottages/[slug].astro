@@ -1,10 +1,8 @@
 ---
-import { getCollection, getEntry, render } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HeroMedia from '../../components/HeroMedia.astro';
 import ResponsiveImage from '../../components/ResponsiveImage.astro';
-import CottageStats from '../../components/CottageStats.astro';
-import Gallery from '../../components/Gallery.astro';
 import ReviewQuote from '../../components/ReviewQuote.astro';
 import Callout from '../../components/Callout.astro';
 import Icon from '../../components/Icon.astro';
@@ -17,151 +15,259 @@ export async function getStaticPaths(){
 const cottage=await getEntry('cottages',Astro.params.slug!);
 if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const c=cottage.data;
-const {Content}=await render(cottage);
-const storyImage=c.gallery.find(item=>/sitting|conservatory/i.test(item.caption)) ?? c.gallery[1] ?? c.gallery[0];
-const livingImages=c.gallery.filter(item=>/(sitting|conservatory|living)/i.test(item.caption)).slice(0,3);
-const kitchenImages=c.gallery.filter(item=>/(kitchen|dining|self-catering)/i.test(item.caption)).slice(0,3);
-const bedroomImages=c.gallery.filter(item=>/(bedroom|bathroom|shower)/i.test(item.caption)).slice(0,4);
+const isGeranium=c.slug==='geranium';
+
+const characterImage=isGeranium
+  ? c.gallery.find(item=>item.image.endsWith('/bathroom.jpg'))
+  : c.gallery.find(item=>item.image.includes('kitchen-detail'));
+const livingImage=c.gallery.find(item=>/(sitting|living)/i.test(item.caption));
+const kitchenImages=c.gallery.filter(item=>/(kitchen|dining|self-catering)/i.test(item.caption)&&item.image!==characterImage?.image).slice(0,2);
+const bedroomImages=c.gallery.filter(item=>/(bedroom|bathroom|shower)/i.test(item.caption)&&item.image!==characterImage?.image).slice(0,4);
 const gardenImage=c.gallery.find(item=>/(garden|outdoor)/i.test(item.caption));
-const livingHighlight=c.highlights.find(item=>/(living|indoor|cottage)/i.test(item.title)) ?? c.highlights[0];
-const sleepingHighlights=c.highlights.filter(item=>/(sleep|bed|bath|space for)/i.test(item.title));
-const gardenFacility=c.facilities.find(item=>/garden/i.test(item));
-type FacilityIcon='bed'|'bath'|'kitchen'|'living'|'garden'|'wifi';
-const bedroomLabel=`${c.bedrooms} ${c.bedrooms===1?'bedroom':'bedrooms'}`;
-const bathroomLabel=c.slug==='geranium'
-  ? 'One family bathroom and one shower room'
-  : `${c.bathrooms} ${c.bathrooms===1?'bathroom':'bathrooms'}`;
-const gardenLabel=c.facilities.some(item=>/enclosed garden/i.test(item))
-  ? 'Enclosed garden with outdoor seating'
-  : 'Private garden with outdoor space';
-const kitchenCopy=c.slug==='geranium'
-  ? 'A fully equipped kitchen with dining area keeps self-catering simple and practical.'
-  : 'A fully equipped kitchen and separate dining room give families and groups room to cook and eat together.';
-const facilityOverview:Array<{icon:FacilityIcon;title:string;text:string}>=[
-  {icon:'bed',title:`Sleeps ${c.sleeps}`,text:bedroomLabel},
-  {icon:'bath',title:'Bathrooms',text:bathroomLabel},
-  {icon:'kitchen',title:'Kitchen',text:'Fully equipped kitchen'},
-  {icon:'living',title:'Living space',text:'Comfortable lounge and dining area'},
-  {icon:'garden',title:'Private garden',text:gardenLabel},
-  {icon:'wifi',title:'Wi-Fi',text:'Complimentary Wi-Fi'}
-];
+
+const introCopy=isGeranium
+  ? 'Geranium is a detached cottage arranged over two floors, with traditional character and comfortable accommodation for up to four guests. Its bright interior leads naturally through to the conservatory and private garden.'
+  : 'Honeysuckle is a spacious converted barn for up to six guests, with generous rooms and plenty of space for families or groups to relax together. Two conservatories connect the interior with its private garden.';
+const livingCopy=isGeranium
+  ? 'The sitting room is a comfortable place to unwind, with the conservatory and garden close at hand.'
+  : 'A comfortable sitting room and generous ground-floor layout give families and groups room to relax together.';
+const kitchenCopy=isGeranium
+  ? 'The fully equipped kitchen includes a dining area, making everyday self-catering straightforward.'
+  : 'A fully equipped kitchen and separate dining room give families and groups practical space to cook and eat together.';
+const sleepingCopy=isGeranium
+  ? 'Upstairs there is one double bedroom and one twin bedroom, together with the family bathroom. A separate shower room is on the ground floor.'
+  : 'A ground-floor king-size bedroom is joined by two twin bedrooms upstairs. The cottage has two bathrooms, including a family bathroom and a shower room.';
+const gardenCopy=isGeranium
+  ? 'Geranium has its own private enclosed garden, reached from the conservatory and reserved for cottage guests.'
+  : 'Two conservatories open onto Honeysuckle’s private garden, giving the cottage its own outdoor space.';
+
+const findFacility=(pattern:RegExp)=>c.facilities.find(item=>pattern.test(item));
+type FacilityIcon='wifi'|'kitchen'|'bed'|'pin'|'garden';
+const facilityOverview:Array<{icon:FacilityIcon;title:string;text:string|undefined}>=[
+  {icon:'wifi',title:'Wi-Fi',text:findFacility(/wi-fi/i)},
+  {icon:'kitchen',title:'Kitchen',text:findFacility(/fully equipped kitchen/i)},
+  {icon:'kitchen',title:'Washing facilities',text:findFacility(/washing|dryer/i)},
+  {icon:'bed',title:'Heating, linen & towels',text:findFacility(/heating.*linen.*towels/i)},
+  {icon:'pin',title:'Parking',text:findFacility(/parking/i)},
+  {icon:'garden',title:'Private garden',text:findFacility(/private.*garden/i)}
+].filter(item=>Boolean(item.text));
+
 const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.name,description:c.summary,url:new URL(`/cottages/${c.slug}/`,site.url).toString(),image:new URL('/social-card.svg',site.url).toString(),numberOfBedrooms:c.bedrooms||undefined,numberOfBathroomsTotal:c.bathrooms||undefined,occupancy:c.sleeps?{'@type':'QuantitativeValue',value:c.sleeps}:undefined};
 ---
 <BaseLayout title={c.seo.title} description={c.seo.description} jsonLd={jsonLd}>
-  <article>
+  <article class="cottage-focused-page">
     <header class="cottage-editorial-hero">
       <HeroMedia mediaType={c.heroMediaType} imageSrc={c.heroImage} imageAlt={c.heroAlt} pan={c.heroPan} videoSrc={c.heroVideo} posterSrc={c.heroPoster} class="cottage-editorial-hero-media" widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high" decorative />
       <div class="wrap cottage-editorial-hero-inner">
         <div class="cottage-editorial-copy">
           <p class="eyebrow eyebrow-light">{c.eyebrow}</p>
           <h1>{c.name}</h1>
-          <p class="cottage-hero-summary">{c.tagline}. {c.summary}</p>
-          <div class="facts-bar"><CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={c.dogFriendly}/></div>
+          <p class="cottage-hero-summary">{c.tagline}</p>
+          <ul class="cottage-hero-facts" aria-label="Accommodation summary">
+            <li><Icon name="guests" size={18}/>Sleeps {c.sleeps}</li>
+            <li><Icon name="bed" size={18}/>{c.bedrooms} bedrooms</li>
+            <li><Icon name="bath" size={18}/>{c.bathrooms} bathrooms</li>
+            {c.dogFriendly&&<li class="cottage-dog-fact">● Dog friendly</li>}
+          </ul>
           <div class="cottage-actions">
             {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">Check availability <Icon name="external" size={17}/></a>}
-            <a class="button button-outline" href="#gallery">View gallery</a>
+            <button class="button button-outline" type="button" data-open-cottage-gallery>View gallery</button>
           </div>
         </div>
       </div>
     </header>
 
-    <section class="section paper">
+    <section class="section paper cottage-focused-section">
       <div class="wrap cottage-story-grid">
         <div class="cottage-story-copy">
           <p class="eyebrow">Overview</p>
           <h2>Character and comfort</h2>
-          <div class="prose"><Content/></div>
+          <p class="lede">{introCopy}</p>
         </div>
-        {storyImage&&<HeroMedia mediaType="image" imageSrc={storyImage.image} imageAlt={storyImage.alt} class="cottage-story-media" widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 42vw" />}
+        {characterImage&&<div class="cottage-story-media"><ResponsiveImage src={characterImage.image} alt={characterImage.alt} widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 44vw"/></div>}
       </div>
     </section>
 
-    {livingImages.length>0&&<section class="section cottage-detail-section">
-      <div class="wrap cottage-detail-grid">
-        <div class="cottage-detail-copy">
-          <p class="eyebrow">Living spaces</p>
+    {livingImage&&<section class="section cottage-focused-section">
+      <div class="wrap cottage-focused-split image-left">
+        <figure class="cottage-focused-primary-image"><ResponsiveImage src={livingImage.image} alt={livingImage.alt} widths={[640,960,1280]} sizes="(max-width: 768px) 100vw, 58vw"/></figure>
+        <div class="cottage-focused-copy">
+          <p class="eyebrow">Living space</p>
           <h2>Room to settle in</h2>
-          {livingHighlight&&<p class="lede">{livingHighlight.text}</p>}
-        </div>
-        <div class:list={['cottage-detail-media','cottage-detail-media-living',c.slug==='honeysuckle'&&'is-roomier']}>
-          {livingImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
+          <p>{livingCopy}</p>
         </div>
       </div>
     </section>}
 
-    {kitchenImages.length>0&&<section class="section paper cottage-detail-section">
-      <div class="wrap cottage-detail-grid image-left">
-        <div class="cottage-detail-media cottage-detail-media-kitchen">
-          {kitchenImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
-        </div>
-        <div class="cottage-detail-copy">
+    {kitchenImages.length>0&&<section class="section paper cottage-focused-section">
+      <div class="wrap cottage-focused-split">
+        <div class="cottage-focused-copy">
           <p class="eyebrow">Kitchen & dining</p>
           <h2>Made for easy self-catering</h2>
-          <p class="lede">{kitchenCopy}</p>
+          <p>{kitchenCopy}</p>
+        </div>
+        <div class:list={['cottage-focused-image-group',kitchenImages.length===1&&'single-image']}>
+          {kitchenImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 52vw"/></figure>)}
         </div>
       </div>
     </section>}
 
-    {bedroomImages.length>0&&<section class="section cottage-detail-section">
-      <div class="wrap cottage-detail-grid">
-        <div class="cottage-detail-copy">
+    {bedroomImages.length>0&&<section class="section cottage-focused-section" id="bedrooms">
+      <div class="wrap cottage-bedroom-layout">
+        <div class="cottage-focused-copy">
           <p class="eyebrow">Bedrooms & bathrooms</p>
           <h2>Space to sleep comfortably</h2>
-          {sleepingHighlights.map(item=><div class="cottage-detail-note"><strong>{item.title}</strong><p>{item.text}</p></div>)}
+          <p>{sleepingCopy}</p>
         </div>
-        <div class="cottage-detail-media cottage-detail-media-sleeping">
-          {bedroomImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[360,560,820,1100]} sizes="(max-width: 768px) 100vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
-        </div>
-      </div>
-    </section>}
-
-    {gardenImage&&<section class="section cottage-garden-section">
-      <div class="wrap cottage-garden-grid">
-        <div class="cottage-garden-image"><ResponsiveImage src={gardenImage.image} alt={gardenImage.alt} widths={[640,960,1280,1600]} sizes="(max-width: 768px) 100vw, 62vw"/></div>
-        <div class="cottage-garden-copy">
-          <p class="eyebrow eyebrow-light">Outside space</p>
-          <h2>A garden of your own</h2>
-          <p>{gardenFacility ?? c.summary}</p>
-          {c.highlights.find(item=>/outdoor|garden/i.test(item.title))&&<p>{c.highlights.find(item=>/outdoor|garden/i.test(item.title))?.text}</p>}
+        <div class="cottage-bedroom-gallery">
+          {bedroomImages.map((item,index)=><figure class:list={[index===0&&'is-primary']}><ResponsiveImage src={item.image} alt={item.alt} widths={[420,720,1100]} sizes={index===0?'(max-width: 768px) 100vw, 58vw':'(max-width: 768px) 50vw, 22vw'}/><figcaption>{item.caption}</figcaption></figure>)}
         </div>
       </div>
     </section>}
 
-    <section class="section cottage-facilities-section">
+    {gardenImage&&<section class="section paper cottage-garden-section cottage-focused-garden">
+      <div class="wrap cottage-focused-split image-left">
+        <figure class="cottage-focused-primary-image cottage-focused-garden-image"><ResponsiveImage src={gardenImage.image} alt={gardenImage.alt} widths={[640,960,1280,1600]} sizes="(max-width: 768px) 100vw, 60vw"/></figure>
+        <div class="cottage-focused-copy">
+          <p class="eyebrow">Outside space</p>
+          <h2>Your private garden</h2>
+          <p>{gardenCopy}</p>
+        </div>
+      </div>
+    </section>}
+
+    <section class="section cottage-facilities-section cottage-facilities-compact">
       <div class="wrap">
         <header class="section-heading cottage-facilities-heading">
           <p class="eyebrow">Facilities</p>
-          <h2>Everything you need for a comfortable stay</h2>
+          <h2>Everything you need</h2>
         </header>
         <ul class="cottage-facility-grid">
           {facilityOverview.map(item=><li>
-            <span class="cottage-facility-icon"><Icon name={item.icon} size={48}/></span>
+            <span class="cottage-facility-icon"><Icon name={item.icon} size={38}/></span>
             <div class="cottage-facility-copy"><h3>{item.title}</h3><p>{item.text}</p></div>
           </li>)}
         </ul>
       </div>
     </section>
 
-    {c.review&&<section class="section paper wrap"><ReviewQuote quote={c.review.quote} guest={c.review.guest} sourceUrl={c.review.sourceUrl}/></section>}
+    {c.review&&<section class="section paper cottage-review-section"><div class="wrap"><p class="eyebrow cottage-review-eyebrow">Airbnb guest review</p><ReviewQuote quote={c.review.quote} guest={c.review.guest} sourceUrl={c.review.sourceUrl}/></div></section>}
 
-    <section class="section green cottage-location-story">
-      <div class="wrap cottage-location-grid">
-        <div>
-          <p class="eyebrow eyebrow-light">Explore Guernsey</p>
-          <h2>Your base in St Pierre du Bois</h2>
-          <p>Return from beaches, cliff paths and island days to the peace of your cottage at Les Buttes.</p>
-          <div class="cottage-location-facts" aria-label="Location highlights">
-            <span><Icon name="pin" size={19}/>St Pierre du Bois</span>
-            <span><Icon name="beach" size={19}/>Beaches & cliff paths</span>
-            <span><Icon name="guernsey" size={19}/>Explore the island</span>
-          </div>
-          <a class="button button-light" href="/explore-guernsey/">Explore Guernsey <Icon name="arrow" size={18}/></a>
-        </div>
-        <div class="cottage-location-image"><ResponsiveImage src="/src/assets/images/petit-bot-001.jpg" alt="Petit Bot bay on Guernsey's south coast" widths={[480,768,1100]} sizes="(max-width: 768px) 100vw, 48vw"/></div>
-      </div>
-    </section>
-
-    {c.gallery.length>0&&<section class="section paper" id="gallery"><div class="wrap"><header class="section-heading"><p class="eyebrow">More photographs</p><h2>Take a closer look at {c.name}</h2></header><Gallery items={c.gallery}/></div></section>}
+    <Callout title={`Check availability for ${c.name}`} text="View current dates, prices and booking terms securely through Airbnb." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'}/>
   </article>
-  <Callout title={`Make ${c.name} your Guernsey base`} text="View current availability, prices and booking terms securely through Airbnb. If you have a question first, we are here to help." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'} secondaryHref="/contact/" secondaryLabel="Contact us"/>
+
+  <dialog id={`cottage-gallery-${c.slug}`} class="cottage-quick-gallery" data-cottage-gallery-dialog>
+    <form method="dialog"><button class="cottage-quick-gallery-close" aria-label="Close gallery">×</button></form>
+    <div class="cottage-quick-gallery-header"><p class="eyebrow eyebrow-light">{c.name}</p><h2>Gallery</h2></div>
+    <div class="cottage-quick-gallery-grid">
+      {c.gallery.map(item=><figure><ResponsiveImage src={item.image} alt={item.alt} widths={[480,768,1100]} sizes="(max-width: 768px) 92vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
+    </div>
+  </dialog>
 </BaseLayout>
+
+<script is:inline>
+(() => {
+  const trigger=document.querySelector('[data-open-cottage-gallery]');
+  const dialog=document.querySelector('[data-cottage-gallery-dialog]');
+  if(trigger instanceof HTMLButtonElement && dialog instanceof HTMLDialogElement){
+    trigger.addEventListener('click',()=>dialog.showModal());
+    dialog.addEventListener('click',event=>{if(event.target===dialog) dialog.close();});
+  }
+})();
+</script>
+
+<style is:global>
+.cottage-focused-page .cottage-editorial-hero{min-height:clamp(34rem,58vw,44rem)}
+.cottage-focused-page .cottage-editorial-copy{max-width:40rem}
+.cottage-focused-page .cottage-editorial-copy .cottage-hero-summary{max-width:31rem;margin-bottom:1rem}
+.cottage-hero-facts{display:flex;flex-wrap:wrap;gap:.65rem 1.15rem;margin:1rem 0 0;padding:1rem 0;border-block:1px solid rgba(255,255,255,.28);list-style:none}
+.cottage-hero-facts li{display:flex;align-items:center;gap:.4rem;color:#fff;font-size:.9rem;font-weight:600}
+.cottage-dog-fact{font-size:.82rem!important}
+.cottage-focused-page .cottage-actions{margin-top:1.25rem!important}
+.cottage-focused-page .cottage-actions button.button{font:700 .9rem var(--body);cursor:pointer}
+.cottage-focused-section{padding-block:clamp(2.8rem,5vw,4.4rem)!important}
+.cottage-focused-page .cottage-story-copy .lede{max-width:34rem;margin:0;color:var(--soft);font-size:1.06rem;line-height:1.68}
+.cottage-focused-page .cottage-story-media{min-height:22rem!important}
+.cottage-focused-split{display:grid;gap:clamp(1.8rem,4vw,3.75rem);align-items:center}
+.cottage-focused-copy{max-width:31rem}
+.cottage-focused-copy h2{max-width:13ch}
+.cottage-focused-copy p:not(.eyebrow){margin:0;color:var(--soft);font-size:1.04rem;line-height:1.68}
+.cottage-focused-primary-image,.cottage-focused-image-group figure,.cottage-bedroom-gallery figure{position:relative;overflow:hidden;margin:0;background:var(--pale);border-radius:.35rem}
+.cottage-focused-primary-image{aspect-ratio:16/10}
+.cottage-focused-primary-image picture,.cottage-focused-primary-image img,.cottage-focused-image-group picture,.cottage-focused-image-group img,.cottage-bedroom-gallery picture,.cottage-bedroom-gallery img{width:100%;height:100%}
+.cottage-focused-primary-image img,.cottage-focused-image-group img,.cottage-bedroom-gallery img{object-fit:cover}
+.cottage-focused-image-group{display:grid;grid-template-columns:1fr .42fr;gap:.55rem;min-height:23rem}
+.cottage-focused-image-group.single-image{grid-template-columns:1fr}
+.cottage-focused-image-group figure.is-primary{min-height:23rem}
+.cottage-focused-image-group figure:not(.is-primary){min-height:12rem}
+.cottage-bedroom-layout{display:grid;gap:2rem}
+.cottage-bedroom-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+.cottage-bedroom-gallery figure{min-height:12rem}
+.cottage-bedroom-gallery figure.is-primary{grid-column:1/-1;min-height:25rem}
+.cottage-bedroom-gallery figcaption{position:absolute;right:.55rem;bottom:.55rem;left:.55rem;padding:.42rem .58rem;color:#fff;background:linear-gradient(90deg,rgba(6,29,24,.68),rgba(6,29,24,.08));border-radius:.25rem;font-size:.72rem}
+.cottage-focused-garden{background:var(--paper)!important;color:var(--ink)!important}
+.cottage-focused-garden .eyebrow{color:#946029!important}
+.cottage-focused-garden .eyebrow:before{background:currentColor!important}
+.cottage-focused-garden .cottage-focused-copy p:not(.eyebrow){color:var(--soft)!important}
+.cottage-focused-garden-image{min-height:24rem}
+.cottage-facilities-compact{padding-block:clamp(2.7rem,4vw,3.7rem)!important}
+.cottage-facilities-compact .cottage-facilities-heading{margin-bottom:1.2rem!important}
+.cottage-facilities-compact .cottage-facilities-heading h2{font-size:clamp(2rem,3.2vw,2.8rem)}
+.cottage-facilities-compact .cottage-facility-grid{gap:0!important}
+.cottage-facilities-compact .cottage-facility-grid li{min-height:0!important;padding:1rem 1.2rem!important}
+.cottage-facilities-compact .cottage-facility-icon{width:2.75rem;height:2.75rem}
+.cottage-facilities-compact .cottage-facility-icon svg{width:2.35rem!important;height:2.35rem!important;stroke-width:1.7}
+.cottage-facilities-compact .cottage-facility-copy h3{font-size:1.05rem!important}
+.cottage-facilities-compact .cottage-facility-copy p{font-size:.82rem}
+.cottage-review-section{padding-block:clamp(2.1rem,3.4vw,3rem)!important}
+.cottage-review-eyebrow{justify-content:center;margin-bottom:.6rem}
+.cottage-review-section .review{max-width:42rem!important}
+.cottage-review-section .review blockquote{margin:.6rem 0!important;font-size:clamp(1.45rem,2.7vw,2.2rem)!important;line-height:1.25!important}
+.cottage-review-section .review figcaption{font-size:.82rem}
+.cottage-focused-page>.callout{margin-top:2.2rem!important;margin-bottom:clamp(2.5rem,5vw,4rem)!important;padding-block:clamp(3rem,5vw,4.5rem)!important}
+.cottage-focused-page>.callout h2{max-width:20ch}
+.cottage-quick-gallery{width:min(94vw,78rem);max-height:92vh;padding:0;border:0;background:var(--deep);box-shadow:0 30px 90px #0008}
+.cottage-quick-gallery::backdrop{background:#07110de8}
+.cottage-quick-gallery-header{padding:1.6rem 4rem .6rem;color:#fff}
+.cottage-quick-gallery-header h2{margin:0;color:#fff}
+.cottage-quick-gallery-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;padding:1rem 1.2rem 1.5rem}
+.cottage-quick-gallery-grid figure{position:relative;overflow:hidden;margin:0;aspect-ratio:4/3;background:#0b241d;border-radius:.25rem}
+.cottage-quick-gallery-grid picture,.cottage-quick-gallery-grid img{width:100%;height:100%}
+.cottage-quick-gallery-grid img{object-fit:cover}
+.cottage-quick-gallery-grid figcaption{position:absolute;right:.45rem;bottom:.45rem;left:.45rem;padding:.35rem .5rem;color:#fff;background:linear-gradient(90deg,#061d18b8,#061d1815);font-size:.72rem}
+.cottage-quick-gallery-close{position:sticky;z-index:3;top:.7rem;float:right;width:2.6rem;height:2.6rem;margin:.7rem .7rem 0 0;color:#fff;background:#0b231dcc;border:1px solid #ffffff66;border-radius:50%;font-size:1.5rem;cursor:pointer}
+@media(min-width:52rem){
+  .cottage-focused-split{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr)}
+  .cottage-focused-split.image-left{grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr)}
+  .cottage-focused-split.image-left .cottage-focused-copy{grid-column:2}.cottage-focused-split.image-left .cottage-focused-primary-image{grid-column:1;grid-row:1}
+  .cottage-bedroom-layout{grid-template-columns:minmax(16rem,.72fr) minmax(0,1.28fr);align-items:center;gap:clamp(2rem,5vw,4.5rem)}
+  .cottage-bedroom-gallery{grid-template-columns:1.45fr .72fr .72fr}
+  .cottage-bedroom-gallery figure.is-primary{grid-column:1;grid-row:1/3;min-height:29rem}
+  .cottage-bedroom-gallery figure:not(.is-primary){min-height:14rem}
+}
+@media(min-width:64rem){
+  .cottage-facilities-compact .cottage-facility-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;row-gap:0!important}
+  .cottage-facilities-compact .cottage-facility-grid li{min-height:6.5rem!important;padding:1rem 1.5rem!important}
+}
+@media(max-width:51.99rem){
+  .cottage-focused-primary-image{aspect-ratio:4/3}
+  .cottage-focused-image-group{grid-template-columns:1fr;min-height:0}
+  .cottage-focused-image-group figure.is-primary,.cottage-focused-image-group figure:not(.is-primary){min-height:18rem}
+  .cottage-bedroom-gallery figure.is-primary{min-height:20rem}
+  .cottage-quick-gallery-grid{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+  .cottage-focused-page .cottage-editorial-hero-inner{padding-bottom:2.6rem!important}
+  .cottage-hero-facts{gap:.55rem .85rem;padding:.8rem 0}
+  .cottage-hero-facts li{font-size:.79rem}
+  .cottage-focused-section{padding-block:2.35rem!important}
+  .cottage-focused-page .cottage-story-media{min-height:17rem!important}
+  .cottage-bedroom-gallery{gap:.4rem}
+  .cottage-bedroom-gallery figure{min-height:9.5rem}
+  .cottage-bedroom-gallery figure.is-primary{min-height:18rem}
+  .cottage-facilities-compact .cottage-facility-grid li{grid-template-columns:2.7rem minmax(0,1fr)!important;padding:.85rem 0!important}
+  .cottage-review-section{padding-block:1.9rem!important}
+  .cottage-focused-page>.callout{margin-block:1.8rem!important;padding:2.2rem 1.4rem!important}
+  .cottage-quick-gallery-header{padding-inline:1.2rem}
+}
+</style>
