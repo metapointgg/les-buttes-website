@@ -1,0 +1,22 @@
+/* Small follow-up rules for elements added while applying the detailed redlines. */
+.page-cottages .cottage-comparison-notes p::before{content:none!important}
+.page-cottages .cottage-comparison-notes p{border-left:3px solid rgba(180,123,58,.55)}
+
+.page-cottages-geranium .cottage-location-facts,.page-cottages-honeysuckle .cottage-location-facts{display:flex;flex-wrap:wrap;gap:.6rem 1rem;margin:1.35rem 0 1.5rem}
+.page-cottages-geranium .cottage-location-facts span,.page-cottages-honeysuckle .cottage-location-facts span{display:inline-flex;align-items:center;gap:.45rem;color:#ffffffd8;font-size:.8rem;font-weight:650}
+.page-cottages-geranium .cottage-location-facts svg,.page-cottages-honeysuckle .cottage-location-facts svg{color:var(--gold2);stroke-width:1.7}
+
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card{display:flex;flex-direction:column;height:100%}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card-image{flex:0 0 auto;overflow:hidden}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card-image picture,.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card-image img{width:100%;height:100%}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card-image img{object-fit:cover}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card-content{display:flex;flex:1;flex-direction:column}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card-content p{min-height:3.1em}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-pill{align-self:stretch;justify-content:space-between}
+
+.page-gallery .editorial-gallery-item figcaption{backdrop-filter:blur(2px)}
+
+@media(max-width:47.99rem){
+  .page-cottages-geranium .cottage-location-facts,.page-cottages-honeysuckle .cottage-location-facts{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+  .page-explore-guernsey .section-builder-card-grid-icons{grid-template-columns:1fr!important}
+}
