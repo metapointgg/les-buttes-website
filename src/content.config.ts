@@ -59,7 +59,7 @@ const pageSection = z.object({
 });
 
 const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/cottages' }), schema: z.object({
-  name:z.string(), slug:z.string(), eyebrow:z.string(), tagline:z.string(), summary:z.string(), available:z.boolean(),
+  name:z.string(), slug:z.string(), eyebrow:z.string().optional(), tagline:z.string(), summary:z.string(), available:z.boolean(),
   sleeps:z.number(), bedrooms:z.number(), beds:z.number(), bathrooms:z.number(), dogFriendly:z.boolean(), airbnbUrl:z.string().url().optional(),
   heroMediaType:z.enum(['image','video']).optional(), heroImage:z.string(), heroAlt:z.string(), heroPan:z.boolean().optional(), heroVideo:z.string().optional(), heroPoster:z.string().optional(),
   gallery:z.array(z.object({image:z.string(),alt:z.string(),caption:z.string()})), facilities:z.array(z.string()),
@@ -67,12 +67,12 @@ const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', bas
 })});
 
 const pages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }), schema: z.object({
-  title:z.string(), urlStub:z.string(), eyebrow:z.string(), intro:z.string(), ...heroFields,
+  title:z.string(), urlStub:z.string(), eyebrow:z.string().optional(), intro:z.string(), ...heroFields,
   sections:z.array(pageSection).optional(), seo
 }) });
 
 const subpages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/subpages' }), schema: z.object({
-  title:z.string(), slug:z.string(), eyebrow:z.string(), intro:z.string(), published:z.boolean(),
+  title:z.string(), slug:z.string(), eyebrow:z.string().optional(), intro:z.string(), published:z.boolean(),
   showInNavigation:z.boolean().optional(), navigationLabel:z.string().optional(), navigationOrder:z.number().optional(),
   ...heroFields,
   sections:z.array(pageSection), seo
