@@ -14,10 +14,7 @@ sections:
     width: wide
     eyebrow: Get in touch
     title: Speak to the family at Les Buttes
-    text: |-
-      For general questions, email or telephone us. If you already have a reservation, Airbnb messaging is usually the quickest way to contact us about your stay.
-
-      All reservations for Geranium and Honeysuckle are made securely through Airbnb, where you can check live availability, prices and booking terms.
+    text: For general questions, email or telephone us. If you already have a reservation, Airbnb messaging is usually the quickest way to contact us about your stay.
     image: /src/assets/images/les-buttes-about-hero.jpg
     imageAlt: The historic Les Buttes farmhouse in St Pierre du Bois
     imagePosition: right
