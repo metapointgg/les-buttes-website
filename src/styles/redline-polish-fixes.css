@@ -1,4 +1,7 @@
 /* Small follow-up rules for elements added while applying the detailed redlines. */
+/* The small uppercase eyebrow labels have been retired site-wide. */
+.eyebrow{display:none!important}
+
 .page-cottages .cottage-comparison-notes p::before{content:none!important}
 .page-cottages .cottage-comparison-notes p{border-left:3px solid rgba(180,123,58,.55)}
 
