@@ -40,4 +40,13 @@
   .page-cottages .cottage-decision-cues li{font-size:.9rem}
   .page-cottages-geranium .cottage-location-facts,.page-cottages-honeysuckle .cottage-location-facts{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
   .page-explore-guernsey .section-builder-card-grid-icons{grid-template-columns:1fr!important}
+
+  /* The desktop reference split must collapse fully on mobile. */
+  .page-home .home-sections .section:has(.section-builder-feature.image-right):not(.green) .section-builder-feature{grid-template-columns:minmax(0,1fr)!important}
+  .page-home .home-sections .section:has(.section-builder-feature.image-right):not(.green) .section-builder-feature-image{display:block!important;order:2;width:min(100%,17rem);margin-inline:auto;aspect-ratio:auto!important}
+  .page-home .home-sections .section:has(.section-builder-feature.image-right):not(.green) .section-builder-copy{order:1;width:100%;max-width:none!important}
+  .page-home .home-sections .section:has(.section-builder-feature.image-right):not(.green) .section-builder-copy h2{max-width:12ch!important}
+  .page-home .home-sections .section:has(.section-builder-feature.image-right):not(.green) .section-builder-copy>p:not(.eyebrow){max-width:none!important}
+  .page-home .section-builder-feature-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .page-home .home-sections .cottage-grid{grid-template-columns:1fr!important}
 }
