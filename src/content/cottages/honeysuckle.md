@@ -2,7 +2,6 @@
 name: Honeysuckle Cottage
 slug: honeysuckle
 available: true
-eyebrow: A spacious cottage for six
 tagline: Room to relax together
 summary: A three-bedroom converted barn with two bathrooms, two conservatories
   and private outdoor space.
@@ -18,25 +17,33 @@ heroAlt: Honeysuckle Cottage's private garden and conservatories
 heroPan: false
 sections:
   - title: Character and comfort
-    description: Honeysuckle is a spacious converted barn for up to six guests, with generous rooms and plenty of space for families or groups to relax together. Two conservatories connect the interior with its private garden.
+    description: Honeysuckle is a spacious converted barn for up to six guests, with
+      generous rooms and plenty of space for families or groups to relax
+      together. Two conservatories connect the interior with its private garden.
     images:
-      - image: /src/assets/images/cottages/honeysuckle/kitchen-detail.jpg
-        alt: The kitchen cooking area in Honeysuckle Cottage
-        caption: Cottage interior detail
+      - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
+        alt: The Exterior of Honeysuckle Cottage
   - title: Room to settle in
-    description: A comfortable sitting room and generous ground-floor layout give families and groups room to relax together.
+    description: A comfortable sitting room and generous ground-floor layout give
+      families and groups room to relax together.
     images:
       - image: /src/assets/images/cottages/honeysuckle/sitting-room.jpg
         alt: The comfortable sitting room in Honeysuckle Cottage
         caption: Sitting room
   - title: Made for easy self-catering
-    description: A fully equipped kitchen and separate dining room give families and groups practical space to cook and eat together.
+    description: A fully equipped kitchen and separate dining room give families and
+      groups practical space to cook and eat together.
     images:
       - image: /src/assets/images/cottages/honeysuckle/kitchen.jpg
         alt: Honeysuckle Cottage's fitted kitchen
+        caption: Dining area
+      - image: /src/assets/images/cottages/honeysuckle/kitchen-detail.jpg
+        alt: Honeysuckle kitchen
         caption: Fully equipped kitchen
   - title: Space to sleep comfortably
-    description: A ground-floor king-size bedroom is joined by two twin bedrooms upstairs. The cottage has two bathrooms, including a family bathroom and a shower room.
+    description: A ground-floor king-size bedroom is joined by two twin bedrooms
+      upstairs. The cottage has two bathrooms, including a family bathroom and a
+      shower room.
     images:
       - image: /src/assets/images/cottages/honeysuckle/king-bedroom.jpg
         alt: The king-size bedroom in Honeysuckle Cottage
@@ -51,11 +58,27 @@ sections:
         alt: The bathroom with bath and shower in Honeysuckle Cottage
         caption: Family bathroom
   - title: Your private garden
-    description: Two conservatories open onto Honeysuckle’s private garden, giving the cottage its own outdoor space.
+    description: Two conservatories open onto Honeysuckle’s private garden, giving
+      the cottage its own outdoor space.
     images:
       - image: /src/assets/images/cottages/honeysuckle/garden.jpg
         alt: Honeysuckle Cottage's lawned private garden
         caption: Private garden
+facilities:
+  - Fully equipped kitchen
+  - Separate dining room
+  - Two conservatories
+  - Private garden
+  - Free Wi-Fi
+  - Television
+  - Washing machine and dryer
+  - Parking for two cars
+  - Heating, linen and towels included
+review:
+  quote: Fantastic cottage for a family holiday. Lots of space, everything you
+    need and a wonderful peaceful location.
+  guest: Andy, Airbnb guest
+  sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
 gallery:
   - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
     alt: The traditional granite exterior of Honeysuckle Cottage
@@ -84,36 +107,8 @@ gallery:
   - image: /src/assets/images/cottages/honeysuckle/bathroom.jpg
     alt: The bathroom with bath and shower in Honeysuckle Cottage
     caption: Family bathroom
-facilities:
-  - Fully equipped kitchen
-  - Separate dining room
-  - Two conservatories
-  - Private garden
-  - Free Wi-Fi
-  - Television
-  - Washing machine and dryer
-  - Parking for two cars
-  - Heating, linen and towels included
-highlights:
-  - title: Space for six
-    text: Honeysuckle has a ground-floor king-size bedroom and two twin bedrooms
-      upstairs
-  - title: Two full bathrooms
-    text: The cottage has two bathrooms
-  - title: Indoor-outdoor living
-    text: Two conservatories open onto the private garden
-review:
-  quote: Fantastic cottage for a family holiday. Lots of space, everything you
-    need and a wonderful peaceful location.
-  guest: Andy, Airbnb guest
-  sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
 seo:
   title: Honeysuckle Cottage | Guernsey Holiday Cottage for Six
   description: Discover Honeysuckle, a spacious three-bedroom Guernsey holiday
     cottage for six with two bathrooms, conservatories and a private garden.
 ---
-Honeysuckle is a spacious converted barn created from two of the original farm cottages. It provides generous self-catering accommodation for up to six guests in the peaceful Les Buttes farmyard.
-
-Downstairs, the cottage has a king-size bedroom, a fitted kitchen, a separate dining room and a comfortable sitting room. Two conservatories open onto the private garden, giving the cottage plenty of space for families to spread out and spend time together.
-
-Upstairs are two twin bedrooms and two bathrooms. Wi-Fi, heating, linen and towels are included, while parking for two cars is available in the courtyard.
