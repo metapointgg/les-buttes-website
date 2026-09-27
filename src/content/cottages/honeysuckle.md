@@ -16,6 +16,8 @@ heroMediaType: image
 heroImage: /src/assets/images/cottages/honeysuckle/exterior.jpg
 heroAlt: Honeysuckle Cottage's private garden and conservatories
 heroPan: false
+characterImage: /src/assets/images/cottages/honeysuckle/kitchen-detail.jpg
+characterImageAlt: The kitchen cooking area in Honeysuckle Cottage
 gallery:
   - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
     alt: The traditional granite exterior of Honeysuckle Cottage
