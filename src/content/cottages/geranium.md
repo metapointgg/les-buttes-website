@@ -2,7 +2,6 @@
 name: Geranium Cottage
 slug: geranium
 available: true
-eyebrow: A charming cottage for four
 tagline: Character, comfort and a garden of your own
 summary: A detached two-bedroom cottage with a bright conservatory, two
   bathrooms and a private sheltered garden.
@@ -18,25 +17,30 @@ heroAlt: The traditional granite exterior of Geranium Cottage at Les Buttes
 heroPan: false
 sections:
   - title: Character and comfort
-    description: Geranium is a detached cottage arranged over two floors, with traditional character and comfortable accommodation for up to four guests. Its bright interior leads naturally through to the conservatory and private garden.
+    description: Geranium is a detached cottage arranged over two floors, with
+      traditional character and comfortable accommodation for up to four guests.
+      Its bright interior leads naturally through to the conservatory and
+      private garden.
     images:
-      - image: /src/assets/images/cottages/geranium/bathroom.jpg
-        alt: The upstairs bathroom in Geranium Cottage
-        caption: Upstairs bathroom
+      - image: /src/assets/images/cottages/geranium/exterior.jpg
+        alt: The exterior of Geranium Cottage
   - title: Room to settle in
-    description: The sitting room is a comfortable place to unwind, with the conservatory and garden close at hand.
+    description: The sitting room is a comfortable place to unwind, with the
+      conservatory and garden close at hand.
     images:
       - image: /src/assets/images/cottages/geranium/sitting-room.jpg
         alt: The comfortable sitting room in Geranium Cottage
         caption: Sitting room
   - title: Made for easy self-catering
-    description: The fully equipped kitchen includes a dining area, making everyday self-catering straightforward.
+    description: The fully equipped kitchen includes a dining area, making everyday
+      self-catering straightforward.
     images:
       - image: /src/assets/images/cottages/geranium/kitchen.jpg
         alt: Geranium Cottage's fitted kitchen and dining table
         caption: Kitchen and dining area
   - title: Space to sleep comfortably
-    description: Upstairs there is one double bedroom and one twin bedroom, together with the family bathroom. A separate shower room is on the ground floor.
+    description: Upstairs there is one double bedroom and one twin bedroom, together
+      with the family bathroom. A separate shower room is on the ground floor.
     images:
       - image: /src/assets/images/cottages/geranium/king-bedroom.jpg
         alt: The main double bedroom in Geranium Cottage
@@ -51,11 +55,25 @@ sections:
         alt: The ground-floor shower room in Geranium Cottage
         caption: Ground-floor shower room
   - title: Your private garden
-    description: Geranium has its own private enclosed garden, reached from the conservatory and reserved for cottage guests.
+    description: Geranium has its own private enclosed garden, reached from the
+      conservatory and reserved for cottage guests.
     images:
       - image: /src/assets/images/cottages/geranium/garden.jpg
         alt: Geranium Cottage's private garden and conservatory
         caption: Private enclosed garden
+facilities:
+  - Fully equipped kitchen
+  - Dishwasher and washing machine
+  - Conservatory
+  - Private enclosed garden
+  - Free Wi-Fi
+  - Television
+  - Parking beside the cottage
+  - Heating, linen and towels included
+review:
+  quote: We had a lovely stay at Geranium Cottage; it was cosy and comfortable.
+  guest: Debbie, Airbnb guest
+  sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
 gallery:
   - image: /src/assets/images/cottages/geranium/exterior.jpg
     alt: Geranium Cottage's granite exterior and flower-filled entrance
@@ -81,35 +99,9 @@ gallery:
   - image: /src/assets/images/cottages/geranium/shower-room.jpg
     alt: The ground-floor shower room in Geranium Cottage
     caption: Ground-floor shower room
-facilities:
-  - Fully equipped kitchen
-  - Dishwasher and washing machine
-  - Conservatory
-  - Private enclosed garden
-  - Free Wi-Fi
-  - Television
-  - Parking beside the cottage
-  - Heating, linen and towels included
-highlights:
-  - title: Easy cottage living
-    text: The ground floor brings the kitchen, dining area and sitting room
-      together, with doors leading through to the conservatory and garden.
-  - title: Flexible sleeping
-    text: Upstairs there is one double bedroom and one twin bedroom
-  - title: Two bathrooms
-    text: A ground-floor shower room complements the upstairs bathroom
-review:
-  quote: We had a lovely stay at Geranium Cottage; it was cosy and comfortable.
-  guest: Debbie, Airbnb guest
-  sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
 seo:
   title: Geranium Cottage | Guernsey Holiday Cottage for Four
   description: Stay at Geranium Cottage, a charming two-bedroom self-catering
     cottage with two bathrooms and a private garden in St Pierre du Bois,
     Guernsey.
 ---
-Geranium is a charming detached cottage arranged over two floors. Its traditional granite exterior opens into a comfortable, practical home from home for up to four guests.
-
-The fully equipped kitchen includes a dining area and leads through to the sitting room. From there, the conservatory opens onto Geranium’s own private, sheltered garden — a peaceful place for morning coffee or an evening meal.
-
-The cottage has a double bedroom and a twin bedroom upstairs, together with an upstairs bathroom. A second shower room is located on the ground floor. Heating, Wi-Fi, linen and towels are included, and parking is available beside the cottage.
