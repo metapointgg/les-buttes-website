@@ -75,7 +75,7 @@ sections:
     text: Geranium and Honeysuckle now offer comfortable self-catering accommodation
       with their own character and private outdoor space. Les Buttes remains
       family run, with the next generation continuing the welcome begun in 1981.
-    image: /src/assets/images/cottages/geranium/garden.jpg
+    image: /src/assets/images/cottages/honeysuckle/exterior.jpg
     imageAlt: Geranium Cottage garden and outdoor seating at Les Buttes
     imagePosition: right
     showCottagePreviewStrip: false
