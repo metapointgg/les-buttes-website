@@ -1,74 +1,77 @@
 ---
-import site from '../data/site.json';
+import footer from '../data/footer.json';
 import Icon from './Icon.astro';
-import logoHeader from '../assets/images/logo-header.png';
+import ResponsiveImage from './ResponsiveImage.astro';
+
 const year=new Date().getFullYear();
+type FooterIcon='arrow'|'bed'|'bath'|'guests'|'phone'|'mail'|'pin'|'external'|'menu'|'beach'|'walk'|'guernsey'|'history'|'islands'|'food'|'kitchen'|'living'|'garden'|'wifi';
+const allowedIcons=new Set<FooterIcon>(['arrow','bed','bath','guests','phone','mail','pin','external','menu','beach','walk','guernsey','history','islands','food','kitchen','living','garden','wifi']);
+const columns=footer.columns??[];
 ---
 <footer class="site-footer">
-  <div class="wrap footer-grid">
-    <div class="footer-intro">
-      <p class="eyebrow eyebrow-light">A warm Guernsey welcome</p>
-      <h2>Slow down. Settle in. Make yourself at home.</h2>
-      <p>Family-run self-catering cottages in peaceful St Pierre du Bois.</p>
-    </div>
+  <div class:list={['wrap','footer-grid',!footer.intro?.enabled&&'without-intro']}>
+    {footer.intro?.enabled&&<div class="footer-intro">
+      {footer.intro.label&&<p class="eyebrow eyebrow-light">{footer.intro.label}</p>}
+      {footer.intro.heading&&<h2>{footer.intro.heading}</h2>}
+      {footer.intro.text&&<p>{footer.intro.text}</p>}
+    </div>}
 
-    <a class="footer-brand" href="/" aria-label="Les Buttes Holiday Cottages — home">
-      <img src={logoHeader.src} width={logoHeader.width} height={logoHeader.height} alt="" loading="lazy" />
-    </a>
+    {footer.logo?.enabled&&footer.logo.image&&<a class="footer-brand" href="/" aria-label="Les Buttes Holiday Cottages — home">
+      <ResponsiveImage src={footer.logo.image} alt={footer.logo.alt??''} widths={[220,360,480]} sizes="17rem" />
+    </a>}
 
-    <div class="footer-column footer-visit">
-      <h3>Visit</h3>
-      <address>{site.address.street}<br/>{site.address.locality}<br/>{site.address.island} {site.address.postcode}</address>
-      <a class="footer-link" href="/find-us/"><Icon name="pin" size={18}/>Directions</a>
-    </div>
-
-    <div class="footer-column footer-contact">
-      <h3>Contact</h3>
-      <a class="footer-link" href={`tel:${site.telephoneHref}`}><Icon name="phone" size={18}/>{site.telephoneDisplay}</a>
-      <a class="footer-link" href={`mailto:${site.email}`}><Icon name="mail" size={18}/>{site.email}</a>
-    </div>
-
-    <div class="footer-column footer-explore">
-      <h3>Explore</h3>
-      <a href="/cottages/">Our cottages</a>
-      <a href="/gardens/">Gardens</a>
-      <a href="/explore-guernsey/">Explore Guernsey</a>
-      <a href="/gallery/">Gallery</a>
-      <a href="/about/">Our story</a>
-      <a href="/privacy/">Privacy</a>
+    <div class="footer-columns">
+      {columns.map(column=><div class="footer-column">
+        {column.title&&<h3>{column.title}</h3>}
+        {(column.items??[]).map(item=>{
+          const icon=allowedIcons.has(item.icon as FooterIcon)?item.icon as FooterIcon:undefined;
+          const url=item.url?.trim();
+          return url
+            ? <a class:list={['footer-item',icon&&'footer-link']} href={url} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>
+                {icon&&<Icon name={icon} size={18}/>}<span>{item.label}</span>
+              </a>
+            : <span class:list={['footer-item','footer-text',icon&&'footer-link']}>
+                {icon&&<Icon name={icon} size={18}/>}<span>{item.label}</span>
+              </span>;
+        })}
+      </div>)}
     </div>
   </div>
 
   <div class="wrap footer-bottom">
-    <p>© {year} {site.name}</p>
-    <p>Bookings are made securely through Airbnb.</p>
+    <p>© {year} {footer.bottom?.copyrightName}</p>
+    {footer.bottom?.note&&<p>{footer.bottom.note}</p>}
   </div>
 </footer>
 
 <style>
 .site-footer{margin-top:clamp(4rem,10vw,8rem);padding-top:clamp(3.5rem,7vw,5rem);color:#fff;background:var(--deep)}
-.site-footer .footer-grid{display:grid;grid-template-areas:"intro" "brand" "visit" "contact" "explore";gap:2.25rem;padding-bottom:clamp(2.5rem,5vw,4rem)}
+body .site-footer .footer-grid{display:grid;grid-template-areas:"intro" "brand" "columns";grid-template-columns:minmax(0,1fr);gap:2.25rem;padding-bottom:clamp(2.5rem,5vw,4rem)}
 .footer-intro{grid-area:intro;max-width:29rem}
 .footer-intro h2{max-width:14ch;margin-bottom:2rem;font-size:clamp(2.6rem,5vw,4.1rem)}
 .footer-intro>p:last-child{max-width:27rem;margin:0;color:#ffffffc4}
 .footer-brand{grid-area:brand;display:block!important;width:min(100%,17rem)!important;margin:0!important;padding:.4rem .55rem;background:#f7f3e9;border-radius:.55rem;line-height:0;align-self:start}
-.footer-brand img{display:block;width:100%;height:auto}
+.footer-brand picture,.footer-brand img{display:block;width:100%;height:auto}
+.footer-columns{grid-area:columns;display:grid;grid-template-columns:minmax(0,1fr);gap:1.8rem 2.25rem;min-width:0}
+.footer-column{min-width:0}
 .footer-column h3{margin:0 0 .8rem;font:700 .82rem var(--body);letter-spacing:.08em;text-transform:uppercase}
-.footer-column address{margin:0 0 .8rem;color:#ffffffc4;line-height:1.8}
-.site-footer .footer-column>a{margin:.65rem 0;color:#ffffffe2}
-.footer-link{display:flex!important;align-items:center;gap:.55rem}
-.footer-visit{grid-area:visit}.footer-contact{grid-area:contact}.footer-explore{grid-area:explore}
+.footer-item{display:block;margin:.65rem 0;color:#ffffffe2;text-decoration:none;line-height:1.65}
+a.footer-item:hover{text-decoration:underline;text-underline-offset:.2em}
+.footer-link{display:flex!important;align-items:flex-start;gap:.55rem}
+.footer-link svg{flex:0 0 auto;margin-top:.2rem}
+.footer-text>span,.footer-item>span{white-space:pre-line}
 .site-footer .footer-bottom{display:flex;flex-direction:column;gap:.45rem;margin-top:0;padding-block:1.35rem;color:#ffffff8c;border-top:1px solid #ffffff24;font-size:.78rem}
 .site-footer .footer-bottom p{margin:0}
 @media(min-width:40rem) and (max-width:63.99rem){
-  .site-footer .footer-grid{grid-template-areas:"intro intro" "brand brand" "visit contact" "explore explore";grid-template-columns:1fr 1fr}
-  .footer-explore{display:grid;grid-template-columns:repeat(3,max-content);column-gap:1.5rem;align-items:start}
-  .footer-explore h3{grid-column:1/-1}
+  body .site-footer .footer-grid{grid-template-areas:"intro intro" "brand brand" "columns columns";grid-template-columns:1fr 1fr}
+  .footer-columns{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(min-width:64rem){
-  .site-footer .footer-grid{grid-template-areas:"intro . . brand" "intro visit contact explore";grid-template-columns:minmax(22rem,2.25fr) minmax(10rem,.9fr) minmax(15rem,1.25fr) minmax(9rem,.8fr);grid-template-rows:auto 1fr;column-gap:clamp(2.5rem,5vw,6rem);row-gap:1.25rem;align-items:start}
+  body .site-footer .footer-grid{grid-template-areas:"intro brand" "intro columns";grid-template-columns:minmax(22rem,1.1fr) minmax(0,1.9fr);grid-template-rows:auto 1fr;column-gap:clamp(3rem,6vw,7rem);row-gap:1.25rem;align-items:start}
+  body .site-footer .footer-grid.without-intro{grid-template-areas:"brand" "columns";grid-template-columns:minmax(0,1fr)}
   .footer-brand{justify-self:end}
   .footer-intro{align-self:start}
+  .footer-columns{grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:2rem clamp(2rem,4vw,4.5rem)}
   .site-footer .footer-bottom{flex-direction:row;justify-content:space-between;align-items:center}
 }
 </style>
