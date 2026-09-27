@@ -92,7 +92,7 @@ const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', bas
 
 const pages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }), schema: z.object({
   title:z.string(), urlStub:z.string(), eyebrow:z.string().optional(), intro:z.string(), ...heroFields,
-  sections:z.array(pageSection).optional(), seo
+  reviews:z.array(reviewItem).optional(), sections:z.array(pageSection).optional(), seo
 }) });
 
 const subpages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/subpages' }), schema: z.object({
