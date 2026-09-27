@@ -43,6 +43,17 @@ sections:
     theme: paper
     width: wide
     title: Our Cottages
+reviews:
+  - stars: 5
+    comment: We had a lovely stay at Geranium Cottage; it was cosy and comfortable.
+    userDetails: Debbie, Airbnb guest · Geranium Cottage
+    sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
+    sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: Fantastic cottage for a family holiday. Lots of space, everything you need and a wonderful peaceful location.
+    userDetails: Andy, Airbnb guest · Honeysuckle Cottage
+    sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
+    sourceLabel: Read reviews on Airbnb
 seo:
   title: Les Buttes | Guernsey Holiday Cottages & Self Catering
   description: Family-run self-catering holiday cottages in peaceful St Pierre du Bois, Guernsey. Discover Geranium and Honeysuckle and book securely through Airbnb.
