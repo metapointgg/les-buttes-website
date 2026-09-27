@@ -5,7 +5,6 @@ published: true
 showInNavigation: true
 navigationLabel: Gallery
 navigationOrder: 50
-eyebrow: Gallery
 intro: Cottages, gardens and a little of the Guernsey landscape that surrounds them.
 heroMediaType: image
 heroImage: /src/assets/images/les-buttes-about-hero.jpg
@@ -16,9 +15,10 @@ sections:
     type: gallery
     theme: paper
     width: wide
-    eyebrow: Les Buttes
     title: Cottages, gardens and island life
     text: A selection of real photographs from Les Buttes and around Guernsey.
+    imagePosition: left
+    showCottagePreviewStrip: false
     galleryImages:
       - image: /src/assets/images/cottages/geranium/exterior.jpg
         alt: Geranium Cottage's granite exterior and flower-filled entrance
@@ -32,12 +32,9 @@ sections:
       - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
         alt: Honeysuckle Cottage at Les Buttes
         caption: Honeysuckle Cottage
-      - image: /src/assets/images/cottages/honeysuckle/kitchen.jpg
+      - image: /src/assets/images/cottages/honeysuckle/kitchen-detail.jpg
         alt: Honeysuckle Cottage kitchen
         caption: Honeysuckle kitchen
-      - image: /src/assets/images/garden-seating.png
-        alt: Outdoor dining and seating among mature planting
-        caption: A place to slow down
       - image: /src/assets/images/cottages/geranium/king-bedroom.jpg
         alt: Geranium Cottage double bedroom
         caption: Geranium double bedroom
@@ -56,13 +53,23 @@ sections:
       - image: /src/assets/images/petit-bot-001.jpg
         alt: Petit Bot bay on Guernsey
         caption: Guernsey coast
+    buttonExternal: false
+    secondaryButtonExternal: false
   - enabled: true
     type: cta
+    theme: auto
+    width: standard
     title: Picture yourself here?
-    text: Explore Geranium and Honeysuckle, then check current availability through Airbnb.
+    text: Explore Geranium and Honeysuckle, then check current availability through
+      Airbnb.
+    imagePosition: left
+    showCottagePreviewStrip: false
     buttonLabel: Explore our cottages
     buttonUrl: /cottages/
+    buttonExternal: false
+    secondaryButtonExternal: false
 seo:
   title: Les Buttes Gallery | Guernsey Holiday Cottages
-  description: Browse photographs of Geranium and Honeysuckle cottages, the gardens at Les Buttes and the surrounding Guernsey landscape.
+  description: Browse photographs of Geranium and Honeysuckle cottages, the
+    gardens at Les Buttes and the surrounding Guernsey landscape.
 ---
