@@ -484,6 +484,7 @@ content:
           - { name: honeysuckle, label: Honeysuckle, type: string }
 
 settings:
+  cache: true
   commit:
     templates:
       create: "content: add {filename}"
