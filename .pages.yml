@@ -335,6 +335,59 @@ content:
       - { name: sections, component: pageSections }
       - { name: seo, component: seo }
 
+  - name: footer
+    label: Footer
+    type: file
+    path: src/data/footer.json
+    format: json
+    fields:
+      - name: intro
+        label: Brand message
+        type: object
+        fields:
+          - { name: enabled, label: Show brand message, type: boolean, default: true }
+          - { name: label, label: Small heading, type: string }
+          - { name: heading, label: Main heading, type: string }
+          - { name: text, label: Supporting text, type: text }
+      - name: logo
+        label: Footer logo
+        type: object
+        fields:
+          - { name: enabled, label: Show logo, type: boolean, default: true }
+          - { name: image, label: Logo image, type: image, options: { media: images } }
+          - { name: alt, label: Logo description, type: string }
+      - name: columns
+        label: Footer columns
+        description: Add, remove or reorder footer columns and the items within them.
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{title}" } }
+        fields:
+          - { name: title, label: Column heading, type: string, required: true }
+          - name: items
+            label: Items
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{label}" } }
+            fields:
+              - { name: label, label: Text, description: For plain text such as an address, line breaks are preserved., type: text, required: true }
+              - { name: url, label: Link URL, description: Leave blank to show this as plain text. Internal paths, mailto: and tel: links are supported., type: string }
+              - name: icon
+                label: Icon
+                type: select
+                options:
+                  values:
+                    - { value: pin, label: Location }
+                    - { value: phone, label: Phone }
+                    - { value: mail, label: Email }
+                    - { value: external, label: External link }
+                    - { value: arrow, label: Arrow }
+              - { name: external, label: Open in new tab, type: boolean, default: false }
+      - name: bottom
+        label: Bottom line
+        type: object
+        fields:
+          - { name: copyrightName, label: Copyright name, type: string }
+          - { name: note, label: Right-hand note, type: string }
+
   - name: design
     label: Design settings
     type: file
