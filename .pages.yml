@@ -214,6 +214,12 @@ content:
         description: Optional still image shown while video loads and to visitors who prefer reduced motion.
         type: image
         options: { media: images }
+      - name: characterImage
+        label: Character and comfort image
+        description: Photograph displayed beside the opening Character and comfort section on the cottage page.
+        type: image
+        options: { media: images }
+      - { name: characterImageAlt, label: Character and comfort image description, type: text }
       - name: gallery
         label: Photo gallery
         type: object
