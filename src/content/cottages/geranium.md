@@ -70,10 +70,12 @@ facilities:
   - Television
   - Parking beside the cottage
   - Heating, linen and towels included
-review:
-  quote: We had a lovely stay at Geranium Cottage; it was cosy and comfortable.
-  guest: Debbie, Airbnb guest
-  sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
+reviews:
+  - stars: 5
+    comment: We had a lovely stay at Geranium Cottage; it was cosy and comfortable.
+    userDetails: Debbie, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
+    sourceLabel: Read reviews on Airbnb
 gallery:
   - image: /src/assets/images/cottages/geranium/exterior.jpg
     alt: Geranium Cottage's granite exterior and flower-filled entrance
