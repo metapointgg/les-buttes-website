@@ -5,19 +5,28 @@ import ResponsiveImage from './ResponsiveImage.astro';
 
 const year=new Date().getFullYear();
 type FooterIcon='arrow'|'bed'|'bath'|'guests'|'phone'|'mail'|'pin'|'external'|'menu'|'beach'|'walk'|'guernsey'|'history'|'islands'|'food'|'kitchen'|'living'|'garden'|'wifi';
+type FooterItem={label:string;url?:string;icon?:string;external?:boolean};
+type FooterColumn={title:string;items?:FooterItem[]};
+type FooterData={
+  intro?:{enabled?:boolean;label?:string;heading?:string;text?:string};
+  logo?:{enabled?:boolean;image?:string;alt?:string};
+  columns?:FooterColumn[];
+  bottom?:{copyrightName?:string;note?:string};
+};
+const footerData=footer as FooterData;
 const allowedIcons=new Set<FooterIcon>(['arrow','bed','bath','guests','phone','mail','pin','external','menu','beach','walk','guernsey','history','islands','food','kitchen','living','garden','wifi']);
-const columns=footer.columns??[];
+const columns=footerData.columns??[];
 ---
 <footer class="site-footer">
-  <div class:list={['wrap','footer-grid',!footer.intro?.enabled&&'without-intro']}>
-    {footer.intro?.enabled&&<div class="footer-intro">
-      {footer.intro.label&&<p class="eyebrow eyebrow-light">{footer.intro.label}</p>}
-      {footer.intro.heading&&<h2>{footer.intro.heading}</h2>}
-      {footer.intro.text&&<p>{footer.intro.text}</p>}
+  <div class:list={['wrap','footer-grid',!footerData.intro?.enabled&&'without-intro']}>
+    {footerData.intro?.enabled&&<div class="footer-intro">
+      {footerData.intro.label&&<p class="eyebrow eyebrow-light">{footerData.intro.label}</p>}
+      {footerData.intro.heading&&<h2>{footerData.intro.heading}</h2>}
+      {footerData.intro.text&&<p>{footerData.intro.text}</p>}
     </div>}
 
-    {footer.logo?.enabled&&footer.logo.image&&<a class="footer-brand" href="/" aria-label="Les Buttes Holiday Cottages — home">
-      <ResponsiveImage src={footer.logo.image} alt={footer.logo.alt??''} widths={[220,360,480]} sizes="17rem" />
+    {footerData.logo?.enabled&&footerData.logo.image&&<a class="footer-brand" href="/" aria-label="Les Buttes Holiday Cottages — home">
+      <ResponsiveImage src={footerData.logo.image} alt={footerData.logo.alt??''} widths={[220,360,480]} sizes="17rem" />
     </a>}
 
     <div class="footer-columns">
@@ -39,8 +48,8 @@ const columns=footer.columns??[];
   </div>
 
   <div class="wrap footer-bottom">
-    <p>© {year} {footer.bottom?.copyrightName}</p>
-    {footer.bottom?.note&&<p>{footer.bottom.note}</p>}
+    <p>© {year} {footerData.bottom?.copyrightName}</p>
+    {footerData.bottom?.note&&<p>{footerData.bottom.note}</p>}
   </div>
 </footer>
 
@@ -62,9 +71,20 @@ a.footer-item:hover{text-decoration:underline;text-underline-offset:.2em}
 .footer-text>span,.footer-item>span{white-space:pre-line}
 .site-footer .footer-bottom{display:flex;flex-direction:column;gap:.45rem;margin-top:0;padding-block:1.35rem;color:#ffffff8c;border-top:1px solid #ffffff24;font-size:.78rem}
 .site-footer .footer-bottom p{margin:0}
+
+/* Internal pages intentionally use the compact footer introduced during the redline pass. */
+body:not(.page-home) .site-footer .footer-grid{grid-template-areas:"brand" "columns"!important;grid-template-columns:minmax(0,1fr)!important;gap:1.5rem!important;padding-bottom:2rem!important}
+body:not(.page-home) .site-footer .footer-brand{justify-self:start!important;width:13rem!important}
+body:not(.page-home) .site-footer .footer-columns{grid-template-columns:minmax(0,1fr);gap:1.25rem 2rem}
+body:not(.page-home) .site-footer .footer-column h3{margin-bottom:.45rem!important}
+body:not(.page-home) .site-footer .footer-item{margin:.4rem 0!important}
+body:not(.page-home) .site-footer .footer-bottom{padding-block:1rem!important}
+
 @media(min-width:40rem) and (max-width:63.99rem){
   body .site-footer .footer-grid{grid-template-areas:"intro intro" "brand brand" "columns columns";grid-template-columns:1fr 1fr}
   .footer-columns{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body:not(.page-home) .site-footer .footer-grid{grid-template-areas:"brand brand" "columns columns"!important;grid-template-columns:1fr 1fr!important}
+  body:not(.page-home) .site-footer .footer-columns{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(min-width:64rem){
   body .site-footer .footer-grid{grid-template-areas:"intro brand" "intro columns";grid-template-columns:minmax(22rem,1.1fr) minmax(0,1.9fr);grid-template-rows:auto 1fr;column-gap:clamp(3rem,6vw,7rem);row-gap:1.25rem;align-items:start}
@@ -73,5 +93,7 @@ a.footer-item:hover{text-decoration:underline;text-underline-offset:.2em}
   .footer-intro{align-self:start}
   .footer-columns{grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:2rem clamp(2rem,4vw,4.5rem)}
   .site-footer .footer-bottom{flex-direction:row;justify-content:space-between;align-items:center}
+  body:not(.page-home) .site-footer .footer-grid{grid-template-areas:"brand columns"!important;grid-template-columns:minmax(11rem,.42fr) minmax(0,1.58fr)!important;column-gap:clamp(2.5rem,5vw,5rem)!important;align-items:start}
+  body:not(.page-home) .site-footer .footer-columns{grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:1.5rem clamp(2rem,4vw,4rem)}
 }
 </style>
