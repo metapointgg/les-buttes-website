@@ -69,6 +69,7 @@ components:
             - { value: standard, label: Standard }
             - { value: narrow, label: Narrow }
             - { value: wide, label: Wide }
+      - { name: eyebrow, label: Small heading / timeline date, description: On the Our Story page this is the date or period shown above each timeline heading., type: string }
       - { name: title, label: Section heading, type: string, required: true }
       - { name: text, label: Section text, type: text }
       - name: image
