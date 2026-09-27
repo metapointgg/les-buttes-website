@@ -1,0 +1,120 @@
+---
+interface ReviewItem {
+  stars:number;
+  comment:string;
+  userDetails:string;
+  sourceUrl?:string;
+  sourceLabel?:string;
+}
+interface Props {
+  reviews?:ReviewItem[];
+  title?:string;
+  autoRotate?:boolean;
+  ariaLabel?:string;
+}
+const {
+  reviews = [],
+  title,
+  autoRotate = false,
+  ariaLabel = 'Guest reviews'
+} = Astro.props;
+const visibleReviews = reviews.filter(review => review?.comment && review?.userDetails);
+const starsFor = (value:number) => {
+  const stars = Math.max(1, Math.min(5, Math.round(value || 5)));
+  return `${'★'.repeat(stars)}${'☆'.repeat(5-stars)}`;
+};
+---
+{visibleReviews.length > 0 && <section class="reviews-carousel-section" aria-label={ariaLabel}>
+  <div class="wrap reviews-carousel-wrap">
+    {title && <header class="reviews-carousel-heading"><h2>{title}</h2></header>}
+    <div class="reviews-carousel" data-review-carousel data-auto-rotate={autoRotate ? 'true' : 'false'}>
+      <button class="reviews-carousel-control reviews-carousel-prev" type="button" data-review-prev aria-label="Previous reviews">‹</button>
+      <div class="reviews-carousel-viewport" data-review-viewport tabindex="0" aria-roledescription="carousel">
+        <div class="reviews-carousel-track">
+          {visibleReviews.map((review) => <article class="review-carousel-card">
+            <div class="review-carousel-stars" aria-label={`${Math.max(1,Math.min(5,Math.round(review.stars || 5)))} out of 5 stars`}>{starsFor(review.stars)}</div>
+            <blockquote>“{review.comment}”</blockquote>
+            <p class="review-carousel-user">
+              <span>{review.userDetails}</span>
+              {review.sourceUrl && <><span aria-hidden="true"> · </span><a href={review.sourceUrl} target="_blank" rel="noopener">{review.sourceLabel || 'Read reviews on Airbnb'}</a></>}
+            </p>
+          </article>)}
+        </div>
+      </div>
+      <button class="reviews-carousel-control reviews-carousel-next" type="button" data-review-next aria-label="Next reviews">›</button>
+    </div>
+  </div>
+</section>}
+
+<script is:inline>
+(() => {
+  const initialise = (root) => {
+    if (!(root instanceof HTMLElement) || root.dataset.initialised === 'true') return;
+    root.dataset.initialised = 'true';
+    const viewport = root.querySelector('[data-review-viewport]');
+    const cards = [...root.querySelectorAll('.review-carousel-card')];
+    const previous = root.querySelector('[data-review-prev]');
+    const next = root.querySelector('[data-review-next]');
+    if (!(viewport instanceof HTMLElement) || cards.length === 0) return;
+
+    let index = 0;
+    let timer;
+    const perView = () => window.matchMedia('(min-width: 48rem)').matches ? 3 : 1;
+    const maximumIndex = () => Math.max(0, cards.length - perView());
+    const updateControls = () => {
+      const hide = cards.length <= perView();
+      if (previous instanceof HTMLButtonElement) {
+        previous.hidden = hide;
+        previous.disabled = index <= 0;
+      }
+      if (next instanceof HTMLButtonElement) {
+        next.hidden = hide;
+        next.disabled = index >= maximumIndex();
+      }
+    };
+    const show = (target, smooth = true) => {
+      index = Math.max(0, Math.min(target, maximumIndex()));
+      const card = cards[index];
+      if (card instanceof HTMLElement) viewport.scrollTo({left:card.offsetLeft,behavior:smooth?'smooth':'auto'});
+      updateControls();
+    };
+    const stop = () => { if (timer) window.clearInterval(timer); timer = undefined; };
+    const start = () => {
+      stop();
+      if (root.dataset.autoRotate !== 'true' || cards.length <= perView() || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      timer = window.setInterval(() => show(index >= maximumIndex() ? 0 : index + 1), 6500);
+    };
+
+    previous?.addEventListener('click', () => { show(index - 1); start(); });
+    next?.addEventListener('click', () => { show(index + 1); start(); });
+    root.addEventListener('mouseenter', stop);
+    root.addEventListener('mouseleave', start);
+    root.addEventListener('focusin', stop);
+    root.addEventListener('focusout', start);
+    window.addEventListener('resize', () => { show(index, false); start(); }, {passive:true});
+    updateControls();
+    start();
+  };
+  document.querySelectorAll('[data-review-carousel]').forEach(initialise);
+})();
+</script>
+
+<style>
+.reviews-carousel-section{padding-block:clamp(3rem,6vw,5rem);background:var(--paper)}
+.reviews-carousel-heading{margin-bottom:1.5rem;text-align:center}
+.reviews-carousel-heading h2{margin:0}
+.reviews-carousel{position:relative}
+.reviews-carousel-viewport{overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x mandatory;scrollbar-width:none}
+.reviews-carousel-viewport::-webkit-scrollbar{display:none}
+.reviews-carousel-track{display:flex;gap:1rem}
+.review-carousel-card{flex:0 0 100%;scroll-snap-align:start;display:flex;min-height:15rem;flex-direction:column;justify-content:center;margin:0;padding:clamp(1.6rem,3vw,2.5rem);text-align:center;background:var(--cream);border:1px solid var(--line);border-radius:.75rem}
+.review-carousel-stars{margin-bottom:1rem;color:var(--gold);font-size:1rem;letter-spacing:.12em}
+.review-carousel-card blockquote{max-width:28ch;margin:0 auto 1.25rem;font:500 clamp(1.35rem,2.2vw,1.8rem)/1.3 var(--display);color:var(--ink)}
+.review-carousel-user{margin:0;color:var(--soft);font-size:.82rem;line-height:1.5}
+.review-carousel-user a{color:var(--green);text-underline-offset:.18em}
+.reviews-carousel-control{position:absolute;z-index:2;top:50%;display:grid;width:2.6rem;height:2.6rem;place-items:center;transform:translateY(-50%);color:var(--green);background:#fff;border:1px solid var(--line);border-radius:50%;box-shadow:0 8px 24px #183d311f;font-size:1.65rem;line-height:1;cursor:pointer}
+.reviews-carousel-control:disabled{opacity:.35;cursor:default}
+.reviews-carousel-prev{left:-1.3rem}.reviews-carousel-next{right:-1.3rem}
+@media(min-width:48rem){.review-carousel-card{flex-basis:calc((100% - 2rem)/3)}}
+@media(max-width:52rem){.reviews-carousel-prev{left:.5rem}.reviews-carousel-next{right:.5rem}.reviews-carousel-control{top:auto;bottom:.7rem;transform:none}.review-carousel-card{padding-bottom:4rem}}
+</style>
