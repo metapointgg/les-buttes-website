@@ -70,7 +70,7 @@ const pageSection = z.object({
 
 const cottageSectionImage = z.object({
   image: z.string(),
-  alt: z.string().optional(),
+  alt: z.string().min(1),
   caption: z.string().optional()
 });
 
