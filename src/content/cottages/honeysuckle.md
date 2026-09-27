@@ -74,11 +74,12 @@ facilities:
   - Washing machine and dryer
   - Parking for two cars
   - Heating, linen and towels included
-review:
-  quote: Fantastic cottage for a family holiday. Lots of space, everything you
-    need and a wonderful peaceful location.
-  guest: Andy, Airbnb guest
-  sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
+reviews:
+  - stars: 5
+    comment: Fantastic cottage for a family holiday. Lots of space, everything you need and a wonderful peaceful location.
+    userDetails: Andy, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
+    sourceLabel: Read reviews on Airbnb
 gallery:
   - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
     alt: The traditional granite exterior of Honeysuckle Cottage
