@@ -14,7 +14,7 @@ sections:
     width: wide
     eyebrow: Medieval origins
     title: A name rooted in parish history
-    text: A butte was a strip of land used for target practice. Butts originated in the medieval period as places for archery and were later used for shooting practice by parish militia. In St Pierre du Bois, the butts lay to the east of the parish church; the name survives in Les Buttes today.
+    text: The name Les Buttes refers to a strip of land used for target practice. Butts originated in the medieval period as places for archery and were later used for shooting practice by parish militia. In St Pierre du Bois, the butts lay to the east of the parish church; the name survives in Les Buttes today.
     imagePosition: right
   - enabled: true
     type: feature
@@ -34,17 +34,20 @@ sections:
     eyebrow: "1787"
     title: Les Buttes on the Duke of Richmond map
     text: The Duke of Richmond's 1787 map shows Les Buttes to the east of St Peter's Church, set within the old pattern of lanes, fields and buildings around St Pierre du Bois.
+    image: /src/assets/images/history/les-buttes-1787-map.jpg
+    imageAlt: Detail from the 1787 Duke of Richmond map showing Les Buttes near St Peter's Church in St Pierre du Bois
+    imageCaption: Les Buttes on the Duke of Richmond map, 1787
     imagePosition: right
   - enabled: true
     type: feature
     theme: cream
     width: wide
-    eyebrow: 1981 onwards
+    eyebrow: Early 1980s
     title: Restoration and a new chapter
     text: Martin Ozanne began the renovation of Les Buttes in the early 1980s, restoring the old farm buildings and beginning their transformation into the family home and self-catering cottages. The Ozanne family began welcoming holiday guests in 1981, starting a tradition that has continued for more than four decades.
-    image: /src/assets/images/les-buttes-about-hero.jpg
-    imageAlt: The restored Les Buttes farmhouse in St Pierre du Bois
-    imageCaption: Les Buttes after restoration
+    image: /src/assets/images/history/les-buttes-early-1980s.jpg
+    imageAlt: Les Buttes in the early 1980s as renovation work was beginning
+    imageCaption: Les Buttes at the start of Martin Ozanne's renovation work, early 1980s
     imagePosition: right
   - enabled: true
     type: feature
