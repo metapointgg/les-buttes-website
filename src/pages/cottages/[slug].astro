@@ -17,9 +17,12 @@ if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const c=cottage.data;
 const isGeranium=c.slug==='geranium';
 
-const characterImage=isGeranium
+const fallbackCharacterImage=isGeranium
   ? c.gallery.find(item=>item.image.endsWith('/bathroom.jpg'))
   : c.gallery.find(item=>item.image.includes('kitchen-detail'));
+const characterImage=c.characterImage
+  ? {image:c.characterImage,alt:c.characterImageAlt??`${c.name} interior`}
+  : fallbackCharacterImage;
 const livingImage=c.gallery.find(item=>/(sitting|living)/i.test(item.caption));
 const kitchenImages=c.gallery.filter(item=>/(kitchen|dining|self-catering)/i.test(item.caption)&&item.image!==characterImage?.image).slice(0,2);
 const bedroomImages=c.gallery.filter(item=>/(bedroom|bathroom|shower)/i.test(item.caption)&&item.image!==characterImage?.image).slice(0,4);
