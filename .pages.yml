@@ -185,7 +185,7 @@ components:
             summary: "{caption}"
         fields:
           - { name: image, label: Image, type: image, required: true, options: { media: images } }
-          - { name: alt, label: Image description, type: text }
+          - { name: alt, label: Image description, type: text, required: true }
           - { name: caption, label: Optional caption, type: string }
 
   reviewList:
