@@ -16,8 +16,46 @@ heroMediaType: image
 heroImage: /src/assets/images/cottages/geranium/exterior.jpg
 heroAlt: The traditional granite exterior of Geranium Cottage at Les Buttes
 heroPan: false
-characterImage: /src/assets/images/cottages/geranium/bathroom.jpg
-characterImageAlt: The upstairs bathroom in Geranium Cottage
+sections:
+  - title: Character and comfort
+    description: Geranium is a detached cottage arranged over two floors, with traditional character and comfortable accommodation for up to four guests. Its bright interior leads naturally through to the conservatory and private garden.
+    images:
+      - image: /src/assets/images/cottages/geranium/bathroom.jpg
+        alt: The upstairs bathroom in Geranium Cottage
+        caption: Upstairs bathroom
+  - title: Room to settle in
+    description: The sitting room is a comfortable place to unwind, with the conservatory and garden close at hand.
+    images:
+      - image: /src/assets/images/cottages/geranium/sitting-room.jpg
+        alt: The comfortable sitting room in Geranium Cottage
+        caption: Sitting room
+  - title: Made for easy self-catering
+    description: The fully equipped kitchen includes a dining area, making everyday self-catering straightforward.
+    images:
+      - image: /src/assets/images/cottages/geranium/kitchen.jpg
+        alt: Geranium Cottage's fitted kitchen and dining table
+        caption: Kitchen and dining area
+  - title: Space to sleep comfortably
+    description: Upstairs there is one double bedroom and one twin bedroom, together with the family bathroom. A separate shower room is on the ground floor.
+    images:
+      - image: /src/assets/images/cottages/geranium/king-bedroom.jpg
+        alt: The main double bedroom in Geranium Cottage
+        caption: Double bedroom
+      - image: /src/assets/images/cottages/geranium/twin-bedroom.jpg
+        alt: The twin bedroom in Geranium Cottage
+        caption: Twin bedroom
+      - image: /src/assets/images/cottages/geranium/bathroom.jpg
+        alt: The upstairs bathroom in Geranium Cottage
+        caption: Upstairs bathroom
+      - image: /src/assets/images/cottages/geranium/shower-room.jpg
+        alt: The ground-floor shower room in Geranium Cottage
+        caption: Ground-floor shower room
+  - title: Your private garden
+    description: Geranium has its own private enclosed garden, reached from the conservatory and reserved for cottage guests.
+    images:
+      - image: /src/assets/images/cottages/geranium/garden.jpg
+        alt: Geranium Cottage's private garden and conservatory
+        caption: Private enclosed garden
 gallery:
   - image: /src/assets/images/cottages/geranium/exterior.jpg
     alt: Geranium Cottage's granite exterior and flower-filled entrance
