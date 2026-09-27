@@ -7,7 +7,7 @@ import ResponsiveImage from '../../components/ResponsiveImage.astro';
 const page=await getEntry('pages','about');
 if(!page) throw new Error('Missing');
 const sections:any[]=page.data.sections??[];
-const storySections=sections.filter(section=>section.type==='feature'&&section.enabled!==false).slice(0,3);
+const storySections=sections.filter(section=>section.type==='feature'&&section.enabled!==false);
 ---
 <BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
   <PageIntro eyebrow={page.data.eyebrow} title={page.data.title} intro={page.data.intro} mediaType={page.data.heroMediaType} imageSrc={page.data.heroImage} imageAlt={page.data.heroAlt} pan={page.data.heroPan} videoSrc={page.data.heroVideo} posterSrc={page.data.heroPoster}/>
@@ -15,15 +15,18 @@ const storySections=sections.filter(section=>section.type==='feature'&&section.e
   <section class="story-reference-section">
     <div class="wrap story-reference-wrap">
       <ol class="story-reference-timeline">
-        {storySections.map((section:any,index:number)=><li class="story-reference-row">
+        {storySections.map((section:any)=><li class:list={['story-reference-row',section.image&&'has-image']}>
           <span class="story-reference-marker" aria-hidden="true"></span>
           <div class="story-reference-copy">
             {section.eyebrow&&<p class="story-reference-kicker">{section.eyebrow}</p>}
             <h2>{section.title}</h2>
             {section.text&&<p>{section.text}</p>}
           </div>
-          {section.image&&<figure class:list={['story-reference-image',index===0&&'is-illustration']}>
-            <ResponsiveImage src={section.image} alt={section.imageAlt??''} widths={[480,720,960,1200]} sizes="(max-width:760px) 100vw, 48vw"/>
+          {section.image&&<figure class="story-reference-image">
+            <div class:list={['story-reference-media',section.image.includes('cottage-illustration')&&'is-illustration']}>
+              <ResponsiveImage src={section.image} alt={section.imageAlt??''} widths={[480,720,960,1200]} sizes="(max-width:760px) 100vw, 48vw"/>
+            </div>
+            {section.imageCaption&&<figcaption>{section.imageCaption}</figcaption>}
           </figure>}
         </li>)}
       </ol>
@@ -40,22 +43,27 @@ const storySections=sections.filter(section=>section.type==='feature'&&section.e
 .story-reference-wrap{max-width:74rem}
 .story-reference-timeline{position:relative;display:grid;gap:0;margin:0;padding:0;list-style:none}
 .story-reference-timeline::before{content:"";position:absolute;top:1.1rem;bottom:1.1rem;left:.62rem;width:1px;background:#c9a962}
-.story-reference-row{position:relative;display:grid;grid-template-columns:1.5rem minmax(0,.82fr) minmax(18rem,1.18fr);gap:clamp(1.5rem,4vw,4rem);align-items:center;padding:0 0 clamp(2.6rem,5vw,4.5rem)}
+.story-reference-row{position:relative;display:grid;grid-template-columns:1.5rem minmax(0,1fr);gap:clamp(1.5rem,4vw,4rem);align-items:center;padding:0 0 clamp(2.6rem,5vw,4.5rem)}
+.story-reference-row.has-image{grid-template-columns:1.5rem minmax(0,.82fr) minmax(18rem,1.18fr)}
 .story-reference-row:last-child{padding-bottom:0}
 .story-reference-marker{position:relative;z-index:1;display:block;width:1.25rem;height:1.25rem;background:var(--paper);border:2px solid #c9a962;border-radius:50%}
+.story-reference-copy{max-width:44rem}
 .story-reference-kicker{margin:0 0 .45rem;color:#946029;font-size:.76rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
 .story-reference-copy h2{max-width:14ch;margin:0 0 .75rem;font-size:clamp(2rem,3.7vw,3.6rem)}
 .story-reference-copy p:not(.story-reference-kicker){max-width:33rem;margin:0;color:var(--soft);line-height:1.58}
-.story-reference-image{overflow:hidden;margin:0;aspect-ratio:16/8.5;background:var(--cream);border-radius:.28rem}
-.story-reference-image :global(picture),.story-reference-image :global(img){width:100%;height:100%}
-.story-reference-image :global(img){object-fit:cover;object-position:center}
-.story-reference-image.is-illustration{padding:1rem 1.5rem;background:#f7f3e9}
-.story-reference-image.is-illustration :global(img){object-fit:contain}
+.story-reference-image{min-width:0;margin:0}
+.story-reference-media{overflow:hidden;aspect-ratio:16/8.5;background:var(--cream);border-radius:.28rem}
+.story-reference-media :global(picture),.story-reference-media :global(img){width:100%;height:100%}
+.story-reference-media :global(img){object-fit:cover;object-position:center}
+.story-reference-media.is-illustration{padding:1rem 1.5rem;background:#f7f3e9}
+.story-reference-media.is-illustration :global(img){object-fit:contain}
+.story-reference-image figcaption{margin-top:.55rem;color:var(--soft);font-size:.78rem;line-height:1.45}
 @media(max-width:47.99rem){
   .story-reference-timeline::before{left:.5rem}
-  .story-reference-row{grid-template-columns:1.15rem 1fr;gap:1.1rem 1.25rem;padding-bottom:3rem}
+  .story-reference-row,.story-reference-row.has-image{grid-template-columns:1.15rem 1fr;gap:1.1rem 1.25rem;padding-bottom:3rem}
   .story-reference-marker{width:1rem;height:1rem}
   .story-reference-copy{grid-column:2}
-  .story-reference-image{grid-column:2;aspect-ratio:16/10}
+  .story-reference-image{grid-column:2}
+  .story-reference-media{aspect-ratio:16/10}
 }
 </style>
