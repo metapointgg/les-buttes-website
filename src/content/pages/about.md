@@ -34,9 +34,6 @@ sections:
     eyebrow: "1787"
     title: Les Buttes on the Duke of Richmond map
     text: The Duke of Richmond's 1787 map shows Les Buttes to the east of St Peter's Church, set within the old pattern of lanes, fields and buildings around St Pierre du Bois.
-    image: /src/assets/images/history/les-buttes-1787-map.jpg
-    imageAlt: Detail from the 1787 Duke of Richmond map showing Les Buttes near St Peter's Church in St Pierre du Bois
-    imageCaption: Les Buttes on the Duke of Richmond map, 1787
     imagePosition: right
   - enabled: true
     type: feature
