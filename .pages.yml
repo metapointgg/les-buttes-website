@@ -188,6 +188,21 @@ components:
           - { name: alt, label: Image description, type: text }
           - { name: caption, label: Optional caption, type: string }
 
+  reviewList:
+    type: object
+    label: Guest reviews
+    description: Add, remove and reorder guest reviews. Up to three reviews are shown at once on larger screens; additional reviews can be browsed in the carousel.
+    list:
+      collapsible:
+        collapsed: true
+        summary: "{userDetails}"
+    fields:
+      - { name: stars, label: Number of stars, type: number, required: true, default: 5 }
+      - { name: comment, label: Review comment, type: text, required: true }
+      - { name: userDetails, label: Guest details, description: For example Debbie, Airbnb guest., type: string, required: true }
+      - { name: sourceUrl, label: Reviews page link, description: Link to the relevant Airbnb reviews page., type: string }
+      - { name: sourceLabel, label: Link text, type: string, default: Read reviews on Airbnb }
+
 content:
   - name: cottages
     label: Cottages
@@ -242,13 +257,7 @@ content:
         options: { media: images }
       - { name: sections, component: cottageSections }
       - { name: facilities, label: What is included, type: string, list: true }
-      - name: review
-        label: Featured guest review
-        type: object
-        fields:
-          - { name: quote, label: Review text, type: text }
-          - { name: guest, label: Guest / attribution, type: string }
-          - { name: sourceUrl, label: Airbnb review link, type: string }
+      - { name: reviews, component: reviewList }
       - name: gallery
         label: View gallery photographs
         description: Images opened from the View gallery button in the cottage hero.
@@ -294,6 +303,7 @@ content:
       - { name: heroSecondaryLabel, label: Hero secondary button label, type: string }
       - { name: heroSecondaryUrl, label: Hero secondary button URL, type: string }
       - { name: sections, component: pageSections }
+      - { name: reviews, component: reviewList }
       - { name: seo, component: seo }
 
   - name: subpages
