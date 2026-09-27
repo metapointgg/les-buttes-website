@@ -15,6 +15,14 @@ const heroFields = {
   heroSecondaryUrl: z.string().optional()
 };
 
+const reviewItem = z.object({
+  stars: z.number().min(1).max(5),
+  comment: z.string(),
+  userDetails: z.string(),
+  sourceUrl: z.string().url().optional(),
+  sourceLabel: z.string().optional()
+});
+
 const sectionItem = z.object({
   kicker: z.string().optional(),
   title: z.string(),
@@ -29,7 +37,7 @@ const sectionItem = z.object({
 
 const pageSection = z.object({
   enabled: z.boolean().optional(),
-  type: z.enum(['text','feature','image','cards','iconCards','featureStrip','list','gallery','quote','splitQuote','cottageListing','cta','map','notice','steps','locationMap']),
+  type: z.enum(['text','feature','image','cards','iconCards','featureStrip','list','gallery','quote','splitQuote','cottageListing','cta','map','notice','steps','locationMap','reviews']),
   theme: z.enum(['auto','cream','paper','green']).optional(),
   width: z.enum(['narrow','standard','wide']).optional(),
   eyebrow: z.string().optional(),
@@ -40,6 +48,8 @@ const pageSection = z.object({
   imageCaption: z.string().optional(),
   imagePosition: z.enum(['left','right']).optional(),
   showCottagePreviewStrip: z.boolean().optional(),
+  autoRotate: z.boolean().optional(),
+  reviews: z.array(reviewItem).optional(),
   items: z.array(sectionItem).optional(),
   listItems: z.array(z.string()).optional(),
   galleryImages: z.array(z.object({
@@ -75,6 +85,7 @@ const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', bas
   sleeps:z.number(), bedrooms:z.number(), beds:z.number(), bathrooms:z.number(), dogFriendly:z.boolean(), airbnbUrl:z.string().url().optional(),
   heroMediaType:z.enum(['image','video']).optional(), heroImage:z.string(), heroAlt:z.string(), heroPan:z.boolean().optional(), heroVideo:z.string().optional(), heroPoster:z.string().optional(),
   sections:z.array(cottageSection).optional(),
+  reviews:z.array(reviewItem).optional(),
   gallery:z.array(z.object({image:z.string(),alt:z.string(),caption:z.string()})), facilities:z.array(z.string()),
   highlights:z.array(z.object({title:z.string(),text:z.string()})).optional(), review:z.object({quote:z.string(),guest:z.string(),sourceUrl:z.string().url()}).optional(), seo
 })});
