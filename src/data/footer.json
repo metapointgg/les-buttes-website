@@ -1,0 +1,84 @@
+{
+  "intro": {
+    "enabled": true,
+    "label": "A warm Guernsey welcome",
+    "heading": "Slow down. Settle in. Make yourself at home.",
+    "text": "Family-run self-catering cottages in peaceful St Pierre du Bois."
+  },
+  "logo": {
+    "enabled": true,
+    "image": "/src/assets/images/logo-header.png",
+    "alt": "Les Buttes Holiday Cottages"
+  },
+  "columns": [
+    {
+      "title": "Visit",
+      "items": [
+        {
+          "label": "Rue des Raies\nSt Pierre du Bois\nGuernsey GY7 9SF",
+          "url": "",
+          "icon": ""
+        },
+        {
+          "label": "Directions",
+          "url": "/find-us/",
+          "icon": "pin"
+        }
+      ]
+    },
+    {
+      "title": "Contact",
+      "items": [
+        {
+          "label": "+44 (0)1481 266363",
+          "url": "tel:+441481266363",
+          "icon": "phone"
+        },
+        {
+          "label": "info@lesbuttes.com",
+          "url": "mailto:info@lesbuttes.com",
+          "icon": "mail"
+        }
+      ]
+    },
+    {
+      "title": "Explore",
+      "items": [
+        {
+          "label": "Our cottages",
+          "url": "/cottages/",
+          "icon": ""
+        },
+        {
+          "label": "Gardens",
+          "url": "/gardens/",
+          "icon": ""
+        },
+        {
+          "label": "Explore Guernsey",
+          "url": "/explore-guernsey/",
+          "icon": ""
+        },
+        {
+          "label": "Gallery",
+          "url": "/gallery/",
+          "icon": ""
+        },
+        {
+          "label": "Our story",
+          "url": "/about/",
+          "icon": ""
+        },
+        {
+          "label": "Privacy",
+          "url": "/privacy/",
+          "icon": ""
+        }
+      ]
+    }
+  ],
+  "bottom": {
+    "copyrightName": "Les Buttes Holiday Cottages",
+    "note": "Bookings are made securely through Airbnb."
+  }
+}
