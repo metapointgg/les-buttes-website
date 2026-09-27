@@ -2,7 +2,7 @@
 title: A family welcome since 1981
 urlStub: /about/
 eyebrow: About Les Buttes
-intro: Traditional granite buildings, quiet lanes and more than four decades of welcoming visitors to this corner of Guernsey.
+intro: A historic Guernsey farmstead with roots stretching back centuries, restored by the Ozanne family and welcoming self-catering guests since 1981.
 heroMediaType: image
 heroImage: /src/assets/images/les-buttes-about-hero.jpg
 heroAlt: The historic Les Buttes farmhouse in St Pierre du Bois, Guernsey
@@ -12,21 +12,39 @@ sections:
     type: feature
     theme: paper
     width: wide
-    eyebrow: Origins
-    title: A 16th-century Guernsey farmstead
-    text: Les Buttes is a family-owned, restored 16th-century farm in the rural parish of St Pierre du Bois. Its traditional barns and outbuildings sit around the old farmyard and have been adapted over time into individual holiday cottages.
-    image: /src/assets/images/cottage-illustration.png
-    imageAlt: Illustration of the historic Les Buttes farmhouse
+    eyebrow: Medieval origins
+    title: A name rooted in parish history
+    text: A butte was a strip of land used for target practice. Butts originated in the medieval period as places for archery and were later used for shooting practice by parish militia. In St Pierre du Bois, the butts lay to the east of the parish church; the name survives in Les Buttes today.
     imagePosition: right
   - enabled: true
     type: feature
     theme: cream
     width: wide
-    eyebrow: Since 1981
-    title: Welcoming self-catering guests
-    text: The Ozanne family began welcoming self-catering guests in 1981. What started as a small family enterprise became part of everyday life at Les Buttes, with generations of visitors returning to enjoy the cottages and the island.
+    eyebrow: c. 1625–1700
+    title: The farmhouse takes shape
+    text: The main house is thought to date from around 1625–1700 and forms part of the historic group at Les Raies, to the south-east of St Peter's Church. The group also includes two outbuildings that pre-date 1787.
+    image: /src/assets/images/cottage-illustration.png
+    imageAlt: Illustration of the historic Les Buttes farmhouse
+    imageCaption: The historic farmhouse at Les Buttes
+    imagePosition: right
+  - enabled: true
+    type: feature
+    theme: paper
+    width: wide
+    eyebrow: "1787"
+    title: Les Buttes on the Duke of Richmond map
+    text: The Duke of Richmond's 1787 map shows Les Buttes to the east of St Peter's Church, set within the old pattern of lanes, fields and buildings around St Pierre du Bois.
+    imagePosition: right
+  - enabled: true
+    type: feature
+    theme: cream
+    width: wide
+    eyebrow: 1981 onwards
+    title: Restoration and a new chapter
+    text: Martin Ozanne began the renovation of Les Buttes in the early 1980s, restoring the old farm buildings and beginning their transformation into the family home and self-catering cottages. The Ozanne family began welcoming holiday guests in 1981, starting a tradition that has continued for more than four decades.
     image: /src/assets/images/les-buttes-about-hero.jpg
-    imageAlt: The Les Buttes farmhouse in St Pierre du Bois
+    imageAlt: The restored Les Buttes farmhouse in St Pierre du Bois
+    imageCaption: Les Buttes after restoration
     imagePosition: right
   - enabled: true
     type: feature
@@ -34,11 +52,11 @@ sections:
     width: wide
     eyebrow: Today
     title: Characterful cottages, a personal welcome
-    text: Geranium and Honeysuckle now offer comfortable accommodation with their own character and private outdoor space. The approach remains personal, practical and straightforward.
+    text: Geranium and Honeysuckle now offer comfortable self-catering accommodation with their own character and private outdoor space. Les Buttes remains family run, with the next generation continuing the welcome begun in 1981.
     image: /src/assets/images/cottages/geranium/garden.jpg
     imageAlt: Geranium Cottage garden and outdoor seating at Les Buttes
     imagePosition: right
 seo:
   title: About Les Buttes Holiday Cottages, Guernsey
-  description: Learn about the family-run Les Buttes Holiday Cottages, set around a restored 16th-century farm in St Pierre du Bois, Guernsey.
+  description: Discover the history of Les Buttes, a historic Guernsey farmstead in St Pierre du Bois, restored by the Ozanne family and welcoming self-catering guests since 1981.
 ---
