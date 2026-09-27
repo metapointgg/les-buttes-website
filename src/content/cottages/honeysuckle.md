@@ -16,8 +16,46 @@ heroMediaType: image
 heroImage: /src/assets/images/cottages/honeysuckle/exterior.jpg
 heroAlt: Honeysuckle Cottage's private garden and conservatories
 heroPan: false
-characterImage: /src/assets/images/cottages/honeysuckle/kitchen-detail.jpg
-characterImageAlt: The kitchen cooking area in Honeysuckle Cottage
+sections:
+  - title: Character and comfort
+    description: Honeysuckle is a spacious converted barn for up to six guests, with generous rooms and plenty of space for families or groups to relax together. Two conservatories connect the interior with its private garden.
+    images:
+      - image: /src/assets/images/cottages/honeysuckle/kitchen-detail.jpg
+        alt: The kitchen cooking area in Honeysuckle Cottage
+        caption: Cottage interior detail
+  - title: Room to settle in
+    description: A comfortable sitting room and generous ground-floor layout give families and groups room to relax together.
+    images:
+      - image: /src/assets/images/cottages/honeysuckle/sitting-room.jpg
+        alt: The comfortable sitting room in Honeysuckle Cottage
+        caption: Sitting room
+  - title: Made for easy self-catering
+    description: A fully equipped kitchen and separate dining room give families and groups practical space to cook and eat together.
+    images:
+      - image: /src/assets/images/cottages/honeysuckle/kitchen.jpg
+        alt: Honeysuckle Cottage's fitted kitchen
+        caption: Fully equipped kitchen
+  - title: Space to sleep comfortably
+    description: A ground-floor king-size bedroom is joined by two twin bedrooms upstairs. The cottage has two bathrooms, including a family bathroom and a shower room.
+    images:
+      - image: /src/assets/images/cottages/honeysuckle/king-bedroom.jpg
+        alt: The king-size bedroom in Honeysuckle Cottage
+        caption: Ground-floor king-size bedroom
+      - image: /src/assets/images/cottages/honeysuckle/twin-bedroom.jpg
+        alt: A twin bedroom in Honeysuckle Cottage
+        caption: One of two twin bedrooms
+      - image: /src/assets/images/cottages/honeysuckle/shower-room.jpg
+        alt: A modern shower room in Honeysuckle Cottage
+        caption: Shower room
+      - image: /src/assets/images/cottages/honeysuckle/bathroom.jpg
+        alt: The bathroom with bath and shower in Honeysuckle Cottage
+        caption: Family bathroom
+  - title: Your private garden
+    description: Two conservatories open onto Honeysuckle’s private garden, giving the cottage its own outdoor space.
+    images:
+      - image: /src/assets/images/cottages/honeysuckle/garden.jpg
+        alt: Honeysuckle Cottage's lawned private garden
+        caption: Private garden
 gallery:
   - image: /src/assets/images/cottages/honeysuckle/exterior.jpg
     alt: The traditional granite exterior of Honeysuckle Cottage
