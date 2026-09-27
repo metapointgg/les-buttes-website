@@ -3,6 +3,7 @@ import { getEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroMedia from '../components/HeroMedia.astro';
 import PageSections from '../components/PageSections.astro';
+import ReviewsCarousel from '../components/ReviewsCarousel.astro';
 import Icon from '../components/Icon.astro';
 
 const page = await getEntry('pages','home');
@@ -26,7 +27,6 @@ if (!page) throw new Error('Missing home');
     />
     <div class="wrap home-hero-inner">
       <div class="home-hero-copy">
-        <p class="eyebrow eyebrow-light">{page.data.eyebrow}</p>
         <h1>{page.data.title}</h1>
         <p class="lede">{page.data.intro}</p>
         <div class="hero-actions">
@@ -43,4 +43,5 @@ if (!page) throw new Error('Missing home');
   <div class="home-sections">
     <PageSections sections={page.data.sections}/>
   </div>
+  <ReviewsCarousel reviews={page.data.reviews ?? []} title="Guest reviews" autoRotate={true}/>
 </BaseLayout>
