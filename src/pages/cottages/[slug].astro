@@ -3,7 +3,7 @@ import { getCollection, getEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HeroMedia from '../../components/HeroMedia.astro';
 import ResponsiveImage from '../../components/ResponsiveImage.astro';
-import ReviewQuote from '../../components/ReviewQuote.astro';
+import ReviewsCarousel from '../../components/ReviewsCarousel.astro';
 import Callout from '../../components/Callout.astro';
 import Icon from '../../components/Icon.astro';
 import site from '../../data/site.json';
@@ -16,6 +16,11 @@ const cottage=await getEntry('cottages',Astro.params.slug!);
 if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const c=cottage.data;
 const contentSections=c.sections??[];
+const cottageReviews=c.reviews?.length
+  ? c.reviews
+  : c.review
+    ? [{stars:5,comment:c.review.quote,userDetails:c.review.guest,sourceUrl:c.review.sourceUrl,sourceLabel:'Read reviews on Airbnb'}]
+    : [];
 
 const findFacility=(pattern:RegExp)=>c.facilities.find(item=>pattern.test(item));
 type FacilityIcon='wifi'|'kitchen'|'bed'|'pin'|'garden';
@@ -86,7 +91,7 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
       </div>
     </section>
 
-    {c.review&&<section class="section paper cottage-review-section"><div class="wrap"><ReviewQuote quote={c.review.quote} guest={c.review.guest} sourceUrl={c.review.sourceUrl}/></div></section>}
+    <ReviewsCarousel reviews={cottageReviews} title="Guest reviews" autoRotate={false}/>
 
     <Callout title={`Check availability for ${c.name}`} text="View current dates, prices and booking terms securely through Airbnb." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'}/>
   </article>
@@ -146,10 +151,6 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
 .cottage-facilities-compact .cottage-facility-icon svg{width:2.35rem!important;height:2.35rem!important;stroke-width:1.7}
 .cottage-facilities-compact .cottage-facility-copy h3{font-size:1.05rem!important}
 .cottage-facilities-compact .cottage-facility-copy p{font-size:.82rem}
-.cottage-review-section{padding-block:clamp(2.1rem,3.4vw,3rem)!important}
-.cottage-review-section .review{max-width:42rem!important}
-.cottage-review-section .review blockquote{margin:.6rem 0!important;font-size:clamp(1.45rem,2.7vw,2.2rem)!important;line-height:1.25!important}
-.cottage-review-section .review figcaption{font-size:.82rem}
 .cottage-focused-page>.callout{margin-top:2.2rem!important;margin-bottom:clamp(2.5rem,5vw,4rem)!important;padding-block:clamp(3rem,5vw,4.5rem)!important}
 .cottage-focused-page>.callout h2{max-width:20ch}
 
