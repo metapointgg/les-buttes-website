@@ -17,12 +17,14 @@
         {
           "label": "Rue des Raies\nSt Pierre du Bois\nGuernsey GY7 9SF",
           "url": "",
-          "icon": ""
+          "icon": "",
+          "external": false
         },
         {
           "label": "Directions",
           "url": "/find-us/",
-          "icon": "pin"
+          "icon": "pin",
+          "external": false
         }
       ]
     },
@@ -32,12 +34,14 @@
         {
           "label": "+44 (0)1481 266363",
           "url": "tel:+441481266363",
-          "icon": "phone"
+          "icon": "phone",
+          "external": false
         },
         {
           "label": "info@lesbuttes.com",
           "url": "mailto:info@lesbuttes.com",
-          "icon": "mail"
+          "icon": "mail",
+          "external": false
         }
       ]
     },
@@ -47,32 +51,38 @@
         {
           "label": "Our cottages",
           "url": "/cottages/",
-          "icon": ""
+          "icon": "",
+          "external": false
         },
         {
           "label": "Gardens",
           "url": "/gardens/",
-          "icon": ""
+          "icon": "",
+          "external": false
         },
         {
           "label": "Explore Guernsey",
           "url": "/explore-guernsey/",
-          "icon": ""
+          "icon": "",
+          "external": false
         },
         {
           "label": "Gallery",
           "url": "/gallery/",
-          "icon": ""
+          "icon": "",
+          "external": false
         },
         {
           "label": "Our story",
           "url": "/about/",
-          "icon": ""
+          "icon": "",
+          "external": false
         },
         {
           "label": "Privacy",
           "url": "/privacy/",
-          "icon": ""
+          "icon": "",
+          "external": false
         }
       ]
     }
