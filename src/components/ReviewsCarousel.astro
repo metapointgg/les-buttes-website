@@ -23,11 +23,12 @@ const starsFor = (value:number) => {
   const stars = Math.max(1, Math.min(5, Math.round(value || 5)));
   return `${'★'.repeat(stars)}${'☆'.repeat(5-stars)}`;
 };
+const countClass=`review-count-${Math.min(visibleReviews.length,3)}`;
 ---
 {visibleReviews.length > 0 && <section class="reviews-carousel-section" aria-label={ariaLabel}>
   <div class="wrap reviews-carousel-wrap">
     {title && <header class="reviews-carousel-heading"><h2>{title}</h2></header>}
-    <div class="reviews-carousel" data-review-carousel data-auto-rotate={autoRotate ? 'true' : 'false'}>
+    <div class:list={['reviews-carousel',countClass]} data-review-carousel data-auto-rotate={autoRotate ? 'true' : 'false'}>
       <button class="reviews-carousel-control reviews-carousel-prev" type="button" data-review-prev aria-label="Previous reviews">‹</button>
       <div class="reviews-carousel-viewport" data-review-viewport tabindex="0" aria-roledescription="carousel">
         <div class="reviews-carousel-track">
@@ -115,6 +116,11 @@ const starsFor = (value:number) => {
 .reviews-carousel-control{position:absolute;z-index:2;top:50%;display:grid;width:2.6rem;height:2.6rem;place-items:center;transform:translateY(-50%);color:var(--green);background:#fff;border:1px solid var(--line);border-radius:50%;box-shadow:0 8px 24px #183d311f;font-size:1.65rem;line-height:1;cursor:pointer}
 .reviews-carousel-control:disabled{opacity:.35;cursor:default}
 .reviews-carousel-prev{left:-1.3rem}.reviews-carousel-next{right:-1.3rem}
-@media(min-width:48rem){.review-carousel-card{flex-basis:calc((100% - 2rem)/3)}}
+@media(min-width:48rem){
+  .review-carousel-card{flex-basis:calc((100% - 2rem)/3)}
+  .review-count-1 .reviews-carousel-track,.review-count-2 .reviews-carousel-track{justify-content:center}
+  .review-count-1 .review-carousel-card{flex-basis:min(100%,58rem);min-height:13rem;background:transparent;border:0}
+  .review-count-2 .review-carousel-card{flex-basis:calc((100% - 1rem)/2)}
+}
 @media(max-width:52rem){.reviews-carousel-prev{left:.5rem}.reviews-carousel-next{right:.5rem}.reviews-carousel-control{top:auto;bottom:.7rem;transform:none}.review-carousel-card{padding-bottom:4rem}}
 </style>
