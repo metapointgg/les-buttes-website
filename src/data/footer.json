@@ -46,6 +46,23 @@
       ]
     },
     {
+      "title": "Follow",
+      "items": [
+        {
+          "label": "Facebook",
+          "url": "https://www.facebook.com/holidaycottagesonguernsey",
+          "icon": "external",
+          "external": true
+        },
+        {
+          "label": "Instagram @les_buttes_guernsey",
+          "url": "https://www.instagram.com/les_buttes_guernsey/",
+          "icon": "external",
+          "external": true
+        }
+      ]
+    },
+    {
       "title": "Explore",
       "items": [
         {
