@@ -162,6 +162,32 @@ components:
       - { name: secondaryButtonUrl, label: Secondary button URL, type: string }
       - { name: secondaryButtonExternal, label: Open secondary button in new tab, type: boolean, default: false }
 
+  cottageSections:
+    type: object
+    label: Cottage page sections
+    description: Add, remove and reorder the main content sections on the cottage page. Each section has text on the left and one to four images in a grid on the right.
+    list:
+      collapsible:
+        collapsed: true
+        summary: "{title}"
+    fields:
+      - { name: title, label: Title, type: string, required: true }
+      - { name: description, label: Description, type: text, required: true }
+      - name: images
+        label: Images
+        description: Add between one and four images. One image is shown large; multiple images are arranged as a grid.
+        type: object
+        list:
+          min: 1
+          max: 4
+          collapsible:
+            collapsed: true
+            summary: "{caption}"
+        fields:
+          - { name: image, label: Image, type: image, required: true, options: { media: images } }
+          - { name: alt, label: Image description, type: text }
+          - { name: caption, label: Optional caption, type: string }
+
 content:
   - name: cottages
     label: Cottages
@@ -214,28 +240,8 @@ content:
         description: Optional still image shown while video loads and to visitors who prefer reduced motion.
         type: image
         options: { media: images }
-      - name: characterImage
-        label: Character and comfort image
-        description: Photograph displayed beside the opening Character and comfort section on the cottage page.
-        type: image
-        options: { media: images }
-      - { name: characterImageAlt, label: Character and comfort image description, type: text }
-      - name: gallery
-        label: Photo gallery
-        type: object
-        list: { collapsible: { collapsed: true, summary: "{caption}" } }
-        fields:
-          - { name: image, label: Image, type: image, required: true, options: { media: images } }
-          - { name: alt, label: Image description, type: text, required: true }
-          - { name: caption, label: Caption, type: string, required: true }
+      - { name: sections, component: cottageSections }
       - { name: facilities, label: What is included, type: string, list: true }
-      - name: highlights
-        label: Cottage highlights
-        type: object
-        list: { collapsible: { collapsed: true, summary: "{title}" } }
-        fields:
-          - { name: title, label: Heading, type: string, required: true }
-          - { name: text, label: Text, type: text, required: true }
       - name: review
         label: Featured guest review
         type: object
@@ -243,7 +249,15 @@ content:
           - { name: quote, label: Review text, type: text }
           - { name: guest, label: Guest / attribution, type: string }
           - { name: sourceUrl, label: Airbnb review link, type: string }
-      - { name: body, label: Main description, type: rich-text, required: true, options: { media: images } }
+      - name: gallery
+        label: View gallery photographs
+        description: Images opened from the View gallery button in the cottage hero.
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{caption}" } }
+        fields:
+          - { name: image, label: Image, type: image, required: true, options: { media: images } }
+          - { name: alt, label: Image description, type: text, required: true }
+          - { name: caption, label: Caption, type: string, required: true }
       - { name: seo, component: seo }
 
   - name: pages
