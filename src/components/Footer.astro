@@ -91,9 +91,13 @@ body:not(.page-home) .site-footer .footer-bottom{padding-block:1rem!important}
   body .site-footer .footer-grid.without-intro{grid-template-areas:"brand" "columns";grid-template-columns:minmax(0,1fr)}
   .footer-brand{justify-self:end}
   .footer-intro{align-self:start}
-  .footer-columns{grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:2rem clamp(2rem,4vw,4.5rem)}
+  .footer-columns{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem 2rem}
   .site-footer .footer-bottom{flex-direction:row;justify-content:space-between;align-items:center}
   body:not(.page-home) .site-footer .footer-grid{grid-template-areas:"brand columns"!important;grid-template-columns:minmax(11rem,.42fr) minmax(0,1.58fr)!important;column-gap:clamp(2.5rem,5vw,5rem)!important;align-items:start}
-  body:not(.page-home) .site-footer .footer-columns{grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:1.5rem clamp(2rem,4vw,4rem)}
+  body:not(.page-home) .site-footer .footer-columns{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem 2rem}
+}
+@media(min-width:72rem){
+  .footer-columns{grid-template-columns:repeat(4,minmax(0,1fr));gap:1.5rem 1.35rem}
+  body:not(.page-home) .site-footer .footer-columns{grid-template-columns:repeat(4,minmax(0,1fr));gap:1.5rem 1.35rem}
 }
 </style>
