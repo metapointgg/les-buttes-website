@@ -16,6 +16,8 @@ heroMediaType: image
 heroImage: /src/assets/images/cottages/geranium/exterior.jpg
 heroAlt: The traditional granite exterior of Geranium Cottage at Les Buttes
 heroPan: false
+characterImage: /src/assets/images/cottages/geranium/bathroom.jpg
+characterImageAlt: The upstairs bathroom in Geranium Cottage
 gallery:
   - image: /src/assets/images/cottages/geranium/exterior.jpg
     alt: Geranium Cottage's granite exterior and flower-filled entrance
