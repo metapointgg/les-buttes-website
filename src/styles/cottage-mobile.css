@@ -1,0 +1,246 @@
+/* Mobile-width guardrails for the Geranium and Honeysuckle detail pages.
+   These rules deliberately sit last in the stylesheet stack so older editorial
+   layers cannot leave desktop proportions active on narrow viewports. */
+
+@media(max-width:51.99rem){
+  body.page-cottages-geranium,
+  body.page-cottages-honeysuckle{
+    min-width:0;
+    overflow-x:hidden;
+  }
+
+  .page-cottages-geranium #main-content,
+  .page-cottages-honeysuckle #main-content,
+  .page-cottages-geranium .cottage-focused-page,
+  .page-cottages-honeysuckle .cottage-focused-page,
+  .page-cottages-geranium .cottage-focused-page>*,
+  .page-cottages-honeysuckle .cottage-focused-page>*{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+  }
+
+  .page-cottages-geranium .cottage-focused-page .wrap,
+  .page-cottages-honeysuckle .cottage-focused-page .wrap{
+    width:min(calc(100% - 1.5rem),var(--wrap));
+    max-width:100%;
+  }
+
+  .page-cottages-geranium .cottage-editorial-hero,
+  .page-cottages-honeysuckle .cottage-editorial-hero{
+    min-height:34rem!important;
+  }
+
+  .page-cottages-geranium .cottage-editorial-hero-inner,
+  .page-cottages-honeysuckle .cottage-editorial-hero-inner{
+    width:min(calc(100% - 1.5rem),var(--wrap));
+    min-width:0;
+    padding-top:3rem!important;
+    padding-bottom:2.5rem!important;
+  }
+
+  .page-cottages-geranium .cottage-editorial-copy,
+  .page-cottages-honeysuckle .cottage-editorial-copy{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0;
+    margin-left:0!important;
+  }
+
+  .page-cottages-geranium .cottage-editorial-copy h1,
+  .page-cottages-honeysuckle .cottage-editorial-copy h1{
+    max-width:10ch!important;
+    font-size:clamp(2.6rem,13vw,4.1rem);
+  }
+
+  .page-cottages-geranium .cottage-editorial-copy .cottage-hero-summary,
+  .page-cottages-honeysuckle .cottage-editorial-copy .cottage-hero-summary{
+    width:100%;
+    max-width:29rem;
+    font-size:1rem;
+    line-height:1.5;
+  }
+
+  .page-cottages-geranium .cottage-hero-facts,
+  .page-cottages-honeysuckle .cottage-hero-facts{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    width:100%;
+    gap:.65rem .8rem;
+  }
+
+  .page-cottages-geranium .cottage-hero-facts li,
+  .page-cottages-honeysuckle .cottage-hero-facts li{
+    min-width:0;
+    font-size:.82rem;
+    line-height:1.3;
+  }
+
+  .page-cottages-geranium .cottage-actions,
+  .page-cottages-honeysuckle .cottage-actions{
+    width:100%;
+    gap:.65rem!important;
+  }
+
+  .page-cottages-geranium .cottage-story-grid,
+  .page-cottages-honeysuckle .cottage-story-grid,
+  .page-cottages-geranium .cottage-focused-split,
+  .page-cottages-honeysuckle .cottage-focused-split,
+  .page-cottages-geranium .cottage-bedroom-layout,
+  .page-cottages-honeysuckle .cottage-bedroom-layout{
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%;
+    min-width:0;
+    gap:1.5rem!important;
+  }
+
+  .page-cottages-geranium .cottage-focused-split.image-left .cottage-focused-copy,
+  .page-cottages-honeysuckle .cottage-focused-split.image-left .cottage-focused-copy,
+  .page-cottages-geranium .cottage-focused-split.image-left .cottage-focused-primary-image,
+  .page-cottages-honeysuckle .cottage-focused-split.image-left .cottage-focused-primary-image{
+    grid-column:auto!important;
+    grid-row:auto!important;
+  }
+
+  .page-cottages-geranium .cottage-story-copy,
+  .page-cottages-honeysuckle .cottage-story-copy,
+  .page-cottages-geranium .cottage-focused-copy,
+  .page-cottages-honeysuckle .cottage-focused-copy{
+    width:100%;
+    max-width:none!important;
+    min-width:0;
+  }
+
+  .page-cottages-geranium .cottage-story-copy .lede,
+  .page-cottages-honeysuckle .cottage-story-copy .lede,
+  .page-cottages-geranium .cottage-focused-copy p,
+  .page-cottages-honeysuckle .cottage-focused-copy p{
+    max-width:none!important;
+  }
+
+  .page-cottages-geranium .cottage-story-media,
+  .page-cottages-honeysuckle .cottage-story-media,
+  .page-cottages-geranium .cottage-focused-primary-image,
+  .page-cottages-honeysuckle .cottage-focused-primary-image,
+  .page-cottages-geranium .cottage-focused-image-group,
+  .page-cottages-honeysuckle .cottage-focused-image-group,
+  .page-cottages-geranium .cottage-bedroom-gallery,
+  .page-cottages-honeysuckle .cottage-bedroom-gallery{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+  }
+
+  .page-cottages-geranium .cottage-story-media,
+  .page-cottages-honeysuckle .cottage-story-media{
+    min-height:0!important;
+    aspect-ratio:4/3;
+  }
+
+  .page-cottages-geranium .cottage-focused-primary-image,
+  .page-cottages-honeysuckle .cottage-focused-primary-image{
+    min-height:0!important;
+    aspect-ratio:4/3!important;
+  }
+
+  .page-cottages-geranium .cottage-focused-image-group,
+  .page-cottages-honeysuckle .cottage-focused-image-group{
+    grid-template-columns:minmax(0,1fr)!important;
+    min-height:0!important;
+  }
+
+  .page-cottages-geranium .cottage-focused-image-group figure,
+  .page-cottages-honeysuckle .cottage-focused-image-group figure{
+    width:100%;
+    min-height:0!important;
+    aspect-ratio:4/3;
+  }
+
+  .page-cottages-geranium .cottage-bedroom-gallery,
+  .page-cottages-honeysuckle .cottage-bedroom-gallery{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:.45rem!important;
+  }
+
+  .page-cottages-geranium .cottage-bedroom-gallery figure,
+  .page-cottages-honeysuckle .cottage-bedroom-gallery figure{
+    min-width:0;
+    min-height:0!important;
+    aspect-ratio:4/3;
+  }
+
+  .page-cottages-geranium .cottage-bedroom-gallery figure.is-primary,
+  .page-cottages-honeysuckle .cottage-bedroom-gallery figure.is-primary{
+    grid-column:1/-1!important;
+    grid-row:auto!important;
+    min-height:0!important;
+    aspect-ratio:4/3;
+  }
+
+  .page-cottages-geranium .cottage-focused-garden-image,
+  .page-cottages-honeysuckle .cottage-focused-garden-image{
+    min-height:0!important;
+  }
+
+  .page-cottages-geranium .cottage-facility-grid,
+  .page-cottages-honeysuckle .cottage-facility-grid{
+    width:100%;
+    min-width:0;
+  }
+
+  .page-cottages-geranium .cottage-facility-grid li,
+  .page-cottages-honeysuckle .cottage-facility-grid li{
+    grid-template-columns:2.75rem minmax(0,1fr)!important;
+    width:100%;
+    min-width:0;
+    padding:.9rem 0!important;
+  }
+
+  .page-cottages-geranium .cottage-facility-copy,
+  .page-cottages-honeysuckle .cottage-facility-copy{
+    min-width:0;
+  }
+
+  .page-cottages-geranium .cottage-focused-page>.callout,
+  .page-cottages-honeysuckle .cottage-focused-page>.callout{
+    width:min(calc(100% - 1.5rem),var(--wrap));
+    max-width:100%;
+    margin-inline:auto!important;
+    padding:2.4rem 1.35rem!important;
+  }
+
+  .page-cottages-geranium .cottage-quick-gallery,
+  .page-cottages-honeysuckle .cottage-quick-gallery{
+    width:calc(100vw - 1rem);
+    max-width:calc(100vw - 1rem);
+  }
+
+  .page-cottages-geranium .cottage-quick-gallery-grid,
+  .page-cottages-honeysuckle .cottage-quick-gallery-grid{
+    grid-template-columns:minmax(0,1fr)!important;
+    padding:.8rem;
+  }
+}
+
+@media(max-width:30rem){
+  .page-cottages-geranium .cottage-actions,
+  .page-cottages-honeysuckle .cottage-actions{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr);
+  }
+
+  .page-cottages-geranium .cottage-actions .button,
+  .page-cottages-honeysuckle .cottage-actions .button{
+    width:100%;
+  }
+
+  .page-cottages-geranium .cottage-editorial-hero-media img,
+  .page-cottages-honeysuckle .cottage-editorial-hero-media img{
+    object-position:62% 50%!important;
+  }
+
+  .page-cottages-geranium .cottage-focused-section,
+  .page-cottages-honeysuckle .cottage-focused-section{
+    padding-block:2.15rem!important;
+  }
+}
