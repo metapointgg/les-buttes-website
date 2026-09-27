@@ -60,6 +60,7 @@ const countClass=`review-count-${Math.min(visibleReviews.length,3)}`;
 
     let index = 0;
     let timer;
+    const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const perView = () => window.matchMedia('(min-width: 48rem)').matches ? 3 : 1;
     const maximumIndex = () => Math.max(0, cards.length - perView());
     const updateControls = () => {
@@ -76,13 +77,13 @@ const countClass=`review-count-${Math.min(visibleReviews.length,3)}`;
     const show = (target, smooth = true) => {
       index = Math.max(0, Math.min(target, maximumIndex()));
       const card = cards[index];
-      if (card instanceof HTMLElement) viewport.scrollTo({left:card.offsetLeft,behavior:smooth?'smooth':'auto'});
+      if (card instanceof HTMLElement) viewport.scrollTo({left:card.offsetLeft,behavior:smooth && !reduceMotion()?'smooth':'auto'});
       updateControls();
     };
     const stop = () => { if (timer) window.clearInterval(timer); timer = undefined; };
     const start = () => {
       stop();
-      if (root.dataset.autoRotate !== 'true' || cards.length <= perView() || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (root.dataset.autoRotate !== 'true' || cards.length <= perView() || reduceMotion()) return;
       timer = window.setInterval(() => show(index >= maximumIndex() ? 0 : index + 1), 6500);
     };
 
@@ -123,4 +124,5 @@ const countClass=`review-count-${Math.min(visibleReviews.length,3)}`;
   .review-count-2 .review-carousel-card{flex-basis:calc((100% - 1rem)/2)}
 }
 @media(max-width:52rem){.reviews-carousel-prev{left:.5rem}.reviews-carousel-next{right:.5rem}.reviews-carousel-control{top:auto;bottom:.7rem;transform:none}.review-carousel-card{padding-bottom:4rem}}
+@media(prefers-reduced-motion:reduce){.reviews-carousel-viewport{scroll-behavior:auto}}
 </style>
