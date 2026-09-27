@@ -43,5 +43,5 @@ if (!page) throw new Error('Missing home');
   <div class="home-sections">
     <PageSections sections={page.data.sections}/>
   </div>
-  <ReviewsCarousel reviews={page.data.reviews ?? []} title="Guest reviews" autoRotate={true}/>
+  <ReviewsCarousel reviews={page.data.reviews ?? []} autoRotate={true}/>
 </BaseLayout>
