@@ -1,0 +1,150 @@
+---
+import newsletter from '../data/newsletter.json';
+const enabled = newsletter.enabled !== false;
+---
+{enabled && (
+  <dialog class="newsletter-dialog" data-newsletter-dialog aria-labelledby="newsletter-heading">
+    <button class="newsletter-close" type="button" data-newsletter-close aria-label="Close mailing list form">×</button>
+    <div class="newsletter-dialog-inner">
+      <p class="newsletter-kicker">Les Buttes mailing list</p>
+      <h2 id="newsletter-heading">{newsletter.modalHeading}</h2>
+      <p class="newsletter-intro">{newsletter.modalText}</p>
+
+      <form class="newsletter-form" data-newsletter-form data-endpoint={newsletter.endpoint} novalidate>
+        <div class="newsletter-fields">
+          <label>
+            <span>First name <small>(optional)</small></span>
+            <input type="text" name="firstName" autocomplete="given-name" maxlength="80" />
+          </label>
+          <label>
+            <span>Email address</span>
+            <input type="email" name="email" autocomplete="email" maxlength="320" required />
+          </label>
+        </div>
+
+        <label class="newsletter-consent">
+          <input type="checkbox" name="consent" required />
+          <span>{newsletter.consentText}</span>
+        </label>
+
+        <div class="newsletter-honeypot" aria-hidden="true">
+          <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+        </div>
+
+        <button class="button newsletter-submit" type="submit">{newsletter.buttonLabel}</button>
+        <p class="newsletter-privacy">{newsletter.privacyText}</p>
+        <p class="newsletter-status" data-newsletter-status role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="newsletter-success" data-newsletter-success hidden>
+        <h3>{newsletter.successHeading}</h3>
+        <p>{newsletter.successText}</p>
+        <button class="button button-secondary" type="button" data-newsletter-close>Close</button>
+      </div>
+    </div>
+  </dialog>
+)}
+
+<script is:inline>
+(() => {
+  const dialog = document.querySelector('[data-newsletter-dialog]');
+  if (!(dialog instanceof HTMLDialogElement)) return;
+
+  const form = dialog.querySelector('[data-newsletter-form]');
+  const success = dialog.querySelector('[data-newsletter-success]');
+  const status = dialog.querySelector('[data-newsletter-status]');
+  const openers = document.querySelectorAll('a[href="#mailing-list"], [data-newsletter-open]');
+  const closers = dialog.querySelectorAll('[data-newsletter-close]');
+
+  const open = (event) => {
+    event?.preventDefault();
+    if (!dialog.open) dialog.showModal();
+    const email = dialog.querySelector('input[name="email"]');
+    if (email instanceof HTMLInputElement) window.setTimeout(() => email.focus(), 30);
+  };
+
+  openers.forEach(opener => opener.addEventListener('click', open));
+  closers.forEach(closer => closer.addEventListener('click', () => dialog.close()));
+  dialog.addEventListener('click', event => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  if (!(form instanceof HTMLFormElement) || !(status instanceof HTMLElement)) return;
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    status.textContent = '';
+
+    if (!form.reportValidity()) return;
+
+    const endpoint = form.dataset.endpoint?.trim();
+    if (!endpoint) {
+      status.textContent = 'Mailing list sign-up is being connected. Please try again shortly.';
+      return;
+    }
+
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit instanceof HTMLButtonElement) {
+      submit.disabled = true;
+      submit.dataset.originalText = submit.textContent ?? '';
+      submit.textContent = 'Joining…';
+    }
+
+    const data = new FormData(form);
+    const payload = {
+      firstName: String(data.get('firstName') ?? '').trim(),
+      email: String(data.get('email') ?? '').trim(),
+      consent: data.get('consent') === 'on',
+      website: String(data.get('website') ?? ''),
+      source: window.location.pathname
+    };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('Subscription request failed');
+
+      form.hidden = true;
+      if (success instanceof HTMLElement) success.hidden = false;
+    } catch {
+      status.textContent = 'We couldn’t add you just now. Please try again in a moment.';
+    } finally {
+      if (submit instanceof HTMLButtonElement) {
+        submit.disabled = false;
+        submit.textContent = submit.dataset.originalText || 'Join our mailing list';
+      }
+    }
+  });
+})();
+</script>
+
+<style>
+.newsletter-dialog{width:min(92vw,38rem);padding:0;color:var(--ink);background:var(--paper);border:0;border-radius:.8rem;box-shadow:0 28px 90px #0b231d55}
+.newsletter-dialog::backdrop{background:#07110db8;backdrop-filter:blur(2px)}
+.newsletter-dialog-inner{padding:clamp(1.7rem,5vw,3rem)}
+.newsletter-close{position:absolute;top:.75rem;right:.8rem;display:grid;width:2.35rem;height:2.35rem;place-items:center;color:var(--green);background:transparent;border:1px solid var(--line);border-radius:50%;font-size:1.45rem;line-height:1;cursor:pointer}
+.newsletter-kicker{margin:0 0 .55rem;color:var(--green);font-size:.75rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.newsletter-dialog h2{max-width:13ch;margin:0 2.5rem .9rem 0;font-size:clamp(2rem,6vw,3rem)}
+.newsletter-intro{max-width:34rem;margin:0 0 1.5rem;color:var(--soft);line-height:1.65}
+.newsletter-fields{display:grid;grid-template-columns:1fr 1.25fr;gap:.9rem}
+.newsletter-form label>span:first-child{display:block;margin-bottom:.38rem;color:var(--ink);font-size:.82rem;font-weight:700}
+.newsletter-form label small{color:var(--soft);font-weight:500}
+.newsletter-form input[type="text"],.newsletter-form input[type="email"]{width:100%;min-height:2.9rem;padding:.72rem .8rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:.35rem;font:inherit}
+.newsletter-form input:focus{outline:2px solid #c9a96288;outline-offset:2px;border-color:var(--gold)}
+.newsletter-consent{display:grid;grid-template-columns:auto 1fr;gap:.65rem;align-items:start;margin:1.15rem 0 .95rem;color:var(--soft);font-size:.82rem;line-height:1.5;cursor:pointer}
+.newsletter-consent input{width:1rem;height:1rem;margin-top:.17rem;accent-color:var(--green)}
+.newsletter-consent span{margin:0!important;font-size:inherit!important;font-weight:500!important}
+.newsletter-submit{margin-top:.1rem}
+.newsletter-submit:disabled{opacity:.65;cursor:wait}
+.newsletter-privacy,.newsletter-status{margin:.7rem 0 0;color:var(--soft);font-size:.75rem;line-height:1.45}
+.newsletter-status:not(:empty){color:var(--green);font-weight:650}
+.newsletter-honeypot{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important}
+.newsletter-success{text-align:center;padding:.8rem 0 .2rem}
+.newsletter-success h3{margin:0 0 .7rem;font-size:clamp(1.8rem,5vw,2.5rem)}
+.newsletter-success p{max-width:30rem;margin:0 auto 1.4rem;color:var(--soft);line-height:1.65}
+@media(max-width:36rem){.newsletter-fields{grid-template-columns:1fr}.newsletter-dialog-inner{padding:1.6rem 1.25rem 1.35rem}.newsletter-dialog h2{font-size:2rem}}
+@media(prefers-reduced-motion:reduce){.newsletter-dialog::backdrop{backdrop-filter:none}}
+</style>
