@@ -45,6 +45,7 @@ const comparisonCues = c.slug === 'geranium'
     )}
     <div class="card-actions">
       <a class="button button-secondary cottage-card-button" href={`/cottages/${c.slug}/`}>{showPreviewStrip ? `View ${c.name}` : 'View cottage'}<Icon name="arrow" size={18}/></a>
+      {showPreviewStrip && c.airbnbUrl && <a class="button cottage-card-button cottage-card-book-button" href={c.airbnbUrl} target="_blank" rel="noopener">Book<Icon name="external" size={18}/></a>}
     </div>
   </div>
   {showPreviewStrip && previewImages.length > 0 && (
@@ -53,3 +54,24 @@ const comparisonCues = c.slug === 'geranium'
     </div>
   )}
 </article>
+
+<style>
+:global(.page-cottages) .cottage-card-comparison .card-actions{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.65rem;
+}
+:global(.page-cottages) .cottage-card-comparison .cottage-card-button{
+  width:100%!important;
+  min-width:0;
+}
+:global(.page-cottages) .cottage-card-comparison .cottage-card-book-button{
+  color:var(--green)!important;
+  background:transparent!important;
+  border:1px solid var(--green)!important;
+}
+:global(.page-cottages) .cottage-card-comparison .cottage-card-book-button:hover{
+  color:#fff!important;
+  background:var(--green)!important;
+}
+</style>
