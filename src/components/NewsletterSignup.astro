@@ -32,7 +32,7 @@ const enabled = newsletter.enabled !== false;
         </div>
 
         <button class="button newsletter-submit" type="submit">{newsletter.buttonLabel}</button>
-        <p class="newsletter-privacy">{newsletter.privacyText}</p>
+        <p class="newsletter-privacy">{newsletter.privacyText} <a href="/privacy/">Read our privacy information.</a></p>
         <p class="newsletter-status" data-newsletter-status role="status" aria-live="polite"></p>
       </form>
 
@@ -140,6 +140,7 @@ const enabled = newsletter.enabled !== false;
 .newsletter-submit{margin-top:.1rem}
 .newsletter-submit:disabled{opacity:.65;cursor:wait}
 .newsletter-privacy,.newsletter-status{margin:.7rem 0 0;color:var(--soft);font-size:.75rem;line-height:1.45}
+.newsletter-privacy a{color:inherit;text-underline-offset:.15em}
 .newsletter-status:not(:empty){color:var(--green);font-weight:650}
 .newsletter-honeypot{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important}
 .newsletter-success{text-align:center;padding:.8rem 0 .2rem}
