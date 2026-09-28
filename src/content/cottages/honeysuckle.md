@@ -76,8 +76,55 @@ facilities:
   - Heating, linen and towels included
 reviews:
   - stars: 5
-    comment: Fantastic cottage for a family holiday. Lots of space, everything you need and a wonderful peaceful location.
+    comment: Fantastic cottage for a family holiday. Lots of space, everything you
+      need and a wonderful peaceful location.
     userDetails: Andy, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
+    sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: >-
+      We had a lovely week staying at the Honeysuckle Cottage.  It was true to
+      the description and was very homely and had everything we needed for a
+      relaxing holiday.
+
+      Kate provided the support required and was easy to get hold of if
+      necessary.
+
+      We enjoyed many coastal walks and visited many places on the island.
+    userDetails: Sue, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
+    sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: We loved our stay here. The cottages are in a very beautiful quiet
+      location. The Ozanne were welcoming and responsive. The planes go right
+      overhead but they are just little and we enjoyed tracking them while we
+      sat in the sunroom. The kitchen is well stocked, there is a Morrisons and
+      pub within a five minute walk. The west coast beaches are stunning.
+    userDetails: Catherine, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
+    sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: >-
+      Fantastic cottage for a family holiday. Lots of space, everything you need
+      and a wonderful peaceful location but still very handily located.
+      Beautiful beach just a few minutes drive or a leisurely stroll away and a
+      Morrisons convenience store just a couple of minutes walk. Hosts were
+      super friendly.
+
+      We would definitely stay here again! Thank you for a great break.
+    userDetails: Andy, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
+    sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: We are delighted with our stay with the Ozanne family, who are very
+      welcoming and offer a charming cottage. Thank you to them!
+    userDetails: Marc, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
+    sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: We had a lovely week exploring the quieter parishes. Very roomy
+      accommodation which was great value.
+    userDetails: Caroline, Airbnb guest
     sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
     sourceLabel: Read reviews on Airbnb
 gallery:
