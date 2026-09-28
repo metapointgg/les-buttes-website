@@ -44,7 +44,11 @@ const comparisonCues = c.slug === 'geranium'
       </ul>
     )}
     <div class="card-actions">
-      <a class="button button-secondary cottage-card-button" href={`/cottages/${c.slug}/`}>{showPreviewStrip ? `View ${c.name}` : 'View cottage'}<Icon name="arrow" size={18}/></a>
+      <a class="button button-secondary cottage-card-button cottage-card-view-button" href={`/cottages/${c.slug}/`}>
+        <span class="cottage-card-view-label-desktop">{showPreviewStrip ? `View ${c.name}` : 'View cottage'}</span>
+        <span class="cottage-card-view-label-mobile">View cottage</span>
+        <Icon name="arrow" size={18}/>
+      </a>
       {showPreviewStrip && c.airbnbUrl && <a class="button cottage-card-button cottage-card-book-button" href={c.airbnbUrl} target="_blank" rel="noopener">Book<Icon name="external" size={18}/></a>}
     </div>
   </div>
@@ -65,6 +69,7 @@ const comparisonCues = c.slug === 'geranium'
   width:100%!important;
   min-width:0;
 }
+.cottage-card-view-label-mobile{display:none}
 :global(.page-cottages) .cottage-card-comparison .cottage-card-book-button{
   color:var(--green)!important;
   background:transparent!important;
@@ -73,5 +78,27 @@ const comparisonCues = c.slug === 'geranium'
 :global(.page-cottages) .cottage-card-comparison .cottage-card-book-button:hover{
   color:#fff!important;
   background:var(--green)!important;
+}
+@media(max-width:47.99rem){
+  :global(.page-cottages) .cottage-card-comparison .card-actions{
+    gap:.55rem;
+  }
+  :global(.page-cottages) .cottage-card-comparison .cottage-card-button{
+    min-height:2.8rem!important;
+    height:2.8rem;
+    padding:.55rem .7rem!important;
+    justify-content:center;
+    gap:.35rem;
+    white-space:nowrap;
+    font-size:.78rem!important;
+    line-height:1!important;
+  }
+  .cottage-card-view-label-desktop{display:none}
+  .cottage-card-view-label-mobile{display:inline}
+  :global(.page-cottages) .cottage-card-comparison .cottage-card-button :global(svg){
+    width:15px;
+    height:15px;
+    flex:0 0 auto;
+  }
 }
 </style>
