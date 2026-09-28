@@ -95,6 +95,20 @@ reviews:
     userDetails: Edward, Airbnb guest
     sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
     sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: >-
+      The Ozanne family are really welcoming and so knowledgeable. We was
+      greeted by Michael who was a font of knowledge. Kate was very helpful when
+      we had any questions via the air b&b app. 
+
+      The cottage was like a home from home and very close to a local Morrisons
+      and a pub and to the main bus routes.
+
+      We would recommend Les Buttes cottages a fabulous place to say and would
+      like to say a big Thank you them for their hospitality
+    userDetails: Teresa, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
+    sourceLabel: Read reviews on Airbnb
 gallery:
   - image: /src/assets/images/cottages/geranium/exterior.jpg
     alt: Geranium Cottage's granite exterior and flower-filled entrance
