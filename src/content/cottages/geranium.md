@@ -76,6 +76,25 @@ reviews:
     userDetails: Debbie, Airbnb guest
     sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
     sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: Superb stay from start to finish. Excellent communication,  clear
+      instructions and friendly hosts. I cannot recommend this stay highly
+      enough.  Best we have stayed at in Guernsey and always good to be back.
+      Will be returning in the future. Superb.
+    userDetails: Ray, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
+    sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: Just wonderful.
+    userDetails: Charles, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
+    sourceLabel: Read reviews on Airbnb
+  - stars: 5
+    comment: What a great stay, absolutely beautiful part of the island and a lovely
+      cottage!
+    userDetails: Edward, Airbnb guest
+    sourceUrl: https://www.airbnb.com/rooms/17564897/reviews
+    sourceLabel: Read reviews on Airbnb
 gallery:
   - image: /src/assets/images/cottages/geranium/exterior.jpg
     alt: Geranium Cottage's granite exterior and flower-filled entrance
