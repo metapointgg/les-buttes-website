@@ -51,7 +51,6 @@ Resources:
 
   MailingListFunction:
     Type: AWS::Lambda::Function
-    DependsOn: MailingList
     Properties:
       FunctionName: les-buttes-newsletter-signup
       Description: Captures website mailing-list opt-ins into Amazon SES.
