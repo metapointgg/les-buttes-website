@@ -42,10 +42,10 @@ sections:
         text: Payment and booking terms are handled securely through Airbnb.
   - enabled: true
     type: cta
-    title: Need help choosing?
-    text: Tell us who is travelling and what matters most to you. We’ll be happy to help you decide which cottage suits your stay.
-    buttonLabel: Contact Les Buttes
-    buttonUrl: /contact/
+    title: Planning a Guernsey holiday?
+    text: Join our occasional mailing list for news from Les Buttes, new season dates and special availability.
+    buttonLabel: Join our mailing list
+    buttonUrl: '#mailing-list'
 seo:
   title: Our Guernsey Holiday Cottages | Les Buttes
   description: Compare Geranium and Honeysuckle self-catering cottages at Les Buttes in St Pierre du Bois, Guernsey.

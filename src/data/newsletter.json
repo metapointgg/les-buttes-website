@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "ctaHeading": "Planning a Guernsey holiday?",
+  "ctaText": "Join our occasional mailing list for news from Les Buttes, new season dates and special availability.",
+  "buttonLabel": "Join our mailing list",
+  "modalHeading": "Stay in touch with Les Buttes",
+  "modalText": "We’ll only email occasionally, with useful news from Les Buttes, new season dates and special availability.",
+  "consentText": "Yes, I’d like to receive occasional emails from Les Buttes about news, new season dates and special availability.",
+  "privacyText": "You can unsubscribe at any time.",
+  "successHeading": "You’re on the list",
+  "successText": "Thank you. We’ll be in touch occasionally with news and availability from Les Buttes.",
+  "endpoint": "https://pm3pvll5tvvzcpkoaou4oecfiy0woyxx.lambda-url.eu-west-2.on.aws/"
+}
