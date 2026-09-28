@@ -1,0 +1,177 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Les Buttes mailing list capture using Lambda Function URL and Amazon SES contact lists.
+
+Parameters:
+  ContactListName:
+    Type: String
+    Default: LesButtesMailingList
+    AllowedPattern: '^[a-zA-Z0-9_-]{1,64}$'
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Default: 'https://www.lesbuttes.com,https://lesbuttes.com,https://dlcz0zbfk8xnp.cloudfront.net'
+
+Resources:
+  MailingList:
+    Type: AWS::SES::ContactList
+    Properties:
+      ContactListName: !Ref ContactListName
+      Description: Website mailing list for Les Buttes Holiday Cottages.
+      Topics:
+        - TopicName: HolidayNews
+          DisplayName: Les Buttes holiday news
+          Description: Occasional news, new season dates and special availability from Les Buttes Holiday Cottages.
+          DefaultSubscriptionStatus: OPT_OUT
+      Tags:
+        - Key: Project
+          Value: LesButtes
+
+  MailingListFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: les-buttes-newsletter-lambda
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ManageLesButtesMailingListContacts
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:CreateContact
+                  - ses:UpdateContact
+                Resource: '*'
+
+  MailingListFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: MailingList
+    Properties:
+      FunctionName: les-buttes-newsletter-signup
+      Description: Captures website mailing-list opt-ins into Amazon SES.
+      Runtime: nodejs22.x
+      Architectures: [arm64]
+      Handler: index.handler
+      MemorySize: 128
+      Timeout: 8
+      Role: !GetAtt MailingListFunctionRole.Arn
+      Environment:
+        Variables:
+          CONTACT_LIST_NAME: !Ref MailingList
+          TOPIC_NAME: HolidayNews
+          ALLOWED_ORIGINS: !Join [',', !Ref AllowedOrigins]
+      Code:
+        ZipFile: |
+          const { SESv2Client, CreateContactCommand, UpdateContactCommand } = require('@aws-sdk/client-sesv2');
+
+          const client = new SESv2Client({});
+          const contactList = process.env.CONTACT_LIST_NAME;
+          const topicName = process.env.TOPIC_NAME || 'HolidayNews';
+          const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS || '')
+            .split(',').map(value => value.trim()).filter(Boolean));
+
+          const response = (statusCode, body) => ({
+            statusCode,
+            headers: { 'content-type': 'application/json; charset=utf-8' },
+            body: JSON.stringify(body)
+          });
+
+          exports.handler = async (event) => {
+            const method = event?.requestContext?.http?.method || '';
+            if (method === 'OPTIONS') return response(204, {});
+            if (method !== 'POST') return response(405, { ok: false });
+
+            const origin = event?.headers?.origin || event?.headers?.Origin || '';
+            if (allowedOrigins.size && !allowedOrigins.has(origin)) {
+              return response(403, { ok: false });
+            }
+
+            let body;
+            try {
+              body = JSON.parse(event.body || '{}');
+            } catch {
+              return response(400, { ok: false, message: 'Invalid request.' });
+            }
+
+            // Honeypot: silently accept obvious bot submissions without storing them.
+            if (String(body.website || '').trim()) return response(200, { ok: true });
+
+            const email = String(body.email || '').trim().toLowerCase();
+            const firstName = String(body.firstName || '').trim().slice(0, 80);
+            const source = String(body.source || '').trim().slice(0, 160);
+            const consent = body.consent === true;
+            const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 320;
+
+            if (!validEmail || !consent) {
+              return response(400, { ok: false, message: 'Email and consent are required.' });
+            }
+
+            const attributes = JSON.stringify({
+              firstName,
+              source: source || 'website',
+              consent: 'website-mailing-list',
+              consentTimestamp: new Date().toISOString()
+            });
+
+            const contact = {
+              ContactListName: contactList,
+              EmailAddress: email,
+              AttributesData: attributes,
+              UnsubscribeAll: false,
+              TopicPreferences: [{
+                TopicName: topicName,
+                SubscriptionStatus: 'OPT_IN'
+              }]
+            };
+
+            try {
+              await client.send(new CreateContactCommand(contact));
+            } catch (error) {
+              if (error?.name !== 'AlreadyExistsException') throw error;
+              await client.send(new UpdateContactCommand(contact));
+            }
+
+            return response(200, { ok: true });
+          };
+
+  MailingListFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt MailingListFunction.Arn
+      AuthType: NONE
+      InvokeMode: BUFFERED
+      Cors:
+        AllowOrigins: !Ref AllowedOrigins
+        AllowMethods: [POST]
+        AllowHeaders: [content-type]
+        MaxAge: 3600
+
+  MailingListInvokeUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MailingListFunction
+      Action: lambda:InvokeFunctionUrl
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  MailingListInvokeFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MailingListFunction
+      Action: lambda:InvokeFunction
+      Principal: '*'
+      InvokedViaFunctionUrl: true
+
+Outputs:
+  FunctionUrl:
+    Description: Paste this URL into src/data/newsletter.json endpoint.
+    Value: !GetAtt MailingListFunctionUrl.FunctionUrl
+  ContactList:
+    Description: SES contact list used by the website.
+    Value: !Ref MailingList
