@@ -4,7 +4,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroMedia from '../components/HeroMedia.astro';
 import PageSections from '../components/PageSections.astro';
 import ReviewsCarousel from '../components/ReviewsCarousel.astro';
+import Callout from '../components/Callout.astro';
 import Icon from '../components/Icon.astro';
+import newsletter from '../data/newsletter.json';
 
 const page = await getEntry('pages','home');
 if (!page) throw new Error('Missing home');
@@ -48,4 +50,12 @@ if (!page) throw new Error('Missing home');
     autoRotate={page.data.reviewAutoRotate ?? true}
     rotateIntervalSeconds={page.data.reviewIntervalSeconds ?? 6.5}
   />
+  {newsletter.enabled !== false && (
+    <Callout
+      title={newsletter.ctaHeading}
+      text={newsletter.ctaText}
+      href="#mailing-list"
+      label={newsletter.buttonLabel}
+    />
+  )}
 </BaseLayout>
