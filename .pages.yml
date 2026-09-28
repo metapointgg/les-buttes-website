@@ -259,6 +259,8 @@ content:
       - { name: sections, component: cottageSections }
       - { name: facilities, label: What is included, type: string, list: true }
       - { name: reviews, component: reviewList }
+      - { name: reviewAutoRotate, label: Rotate reviews automatically, description: Turn this on to advance the cottage review carousel automatically., type: boolean, default: false }
+      - { name: reviewIntervalSeconds, label: Seconds between reviews, description: Used when automatic rotation is enabled. The website supports values from 2 to 60 seconds., type: number, default: 6.5 }
       - name: gallery
         label: View gallery photographs
         description: Images opened from the View gallery button in the cottage hero.
@@ -305,6 +307,8 @@ content:
       - { name: heroSecondaryUrl, label: Hero secondary button URL, type: string }
       - { name: sections, component: pageSections }
       - { name: reviews, component: reviewList }
+      - { name: reviewAutoRotate, label: Rotate reviews automatically, description: Turn this on to advance the homepage review carousel automatically., type: boolean, default: true }
+      - { name: reviewIntervalSeconds, label: Seconds between reviews, description: Used when automatic rotation is enabled. The website supports values from 2 to 60 seconds., type: number, default: 6.5 }
       - { name: seo, component: seo }
 
   - name: subpages
