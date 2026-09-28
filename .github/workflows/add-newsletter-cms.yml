@@ -1,0 +1,56 @@
+name: Add newsletter CMS settings
+
+on:
+  push:
+    branches: [newsletter-signup]
+    paths:
+      - .github/workflows/add-newsletter-cms.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: newsletter-signup
+      - name: Add Mailing list item to Pages CMS
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('.pages.yml')
+          text = path.read_text()
+          if '\n  - name: newsletter\n' not in text:
+              marker = '  - name: design\n'
+              block = '''  - name: newsletter
+    label: Mailing list
+    type: file
+    path: src/data/newsletter.json
+    format: json
+    fields:
+      - { name: enabled, label: Enable mailing list sign-up, type: boolean, default: true }
+      - { name: ctaHeading, label: Home page heading, type: string, required: true }
+      - { name: ctaText, label: Home page text, type: text, required: true }
+      - { name: buttonLabel, label: Sign-up button label, type: string, required: true }
+      - { name: modalHeading, label: Pop-up heading, type: string, required: true }
+      - { name: modalText, label: Pop-up introduction, type: text, required: true }
+      - { name: consentText, label: Consent text, type: text, required: true }
+      - { name: privacyText, label: Privacy / unsubscribe note, type: text, required: true }
+      - { name: successHeading, label: Success heading, type: string, required: true }
+      - { name: successText, label: Success message, type: text, required: true }
+      - { name: endpoint, label: Signup API endpoint, description: Technical setting. This is the AWS Lambda Function URL used to store sign-ups., type: string }
+
+'''
+              if marker not in text:
+                  raise SystemExit('Could not find Design settings marker in .pages.yml')
+              path.write_text(text.replace(marker, block + marker, 1))
+      - name: Commit CMS configuration
+        run: |
+          git config user.name "Les Buttes Website Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add .pages.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "cms: add mailing list settings"
+          git push origin HEAD:newsletter-signup
