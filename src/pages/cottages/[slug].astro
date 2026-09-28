@@ -91,7 +91,12 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
       </div>
     </section>
 
-    <ReviewsCarousel reviews={cottageReviews} title="Guest reviews" autoRotate={false}/>
+    <ReviewsCarousel
+      reviews={cottageReviews}
+      title="Guest reviews"
+      autoRotate={c.reviewAutoRotate ?? false}
+      rotateIntervalSeconds={c.reviewIntervalSeconds ?? 6.5}
+    />
 
     <Callout title={`Check availability for ${c.name}`} text="View current dates, prices and booking terms securely through Airbnb." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'}/>
   </article>
