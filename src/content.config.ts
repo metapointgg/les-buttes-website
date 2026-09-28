@@ -86,13 +86,14 @@ const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', bas
   heroMediaType:z.enum(['image','video']).optional(), heroImage:z.string(), heroAlt:z.string(), heroPan:z.boolean().optional(), heroVideo:z.string().optional(), heroPoster:z.string().optional(),
   sections:z.array(cottageSection).optional(),
   reviews:z.array(reviewItem).optional(),
+  reviewAutoRotate:z.boolean().optional(), reviewIntervalSeconds:z.number().optional(),
   gallery:z.array(z.object({image:z.string(),alt:z.string(),caption:z.string()})), facilities:z.array(z.string()),
   highlights:z.array(z.object({title:z.string(),text:z.string()})).optional(), review:z.object({quote:z.string(),guest:z.string(),sourceUrl:z.string().url()}).optional(), seo
 })});
 
 const pages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }), schema: z.object({
   title:z.string(), urlStub:z.string(), eyebrow:z.string().optional(), intro:z.string(), ...heroFields,
-  reviews:z.array(reviewItem).optional(), sections:z.array(pageSection).optional(), seo
+  reviews:z.array(reviewItem).optional(), reviewAutoRotate:z.boolean().optional(), reviewIntervalSeconds:z.number().optional(), sections:z.array(pageSection).optional(), seo
 }) });
 
 const subpages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/subpages' }), schema: z.object({
