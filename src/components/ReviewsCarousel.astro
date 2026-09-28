@@ -10,12 +10,14 @@ interface Props {
   reviews?:ReviewItem[];
   title?:string;
   autoRotate?:boolean;
+  rotateIntervalSeconds?:number;
   ariaLabel?:string;
 }
 const {
   reviews = [],
   title,
   autoRotate = false,
+  rotateIntervalSeconds = 6.5,
   ariaLabel = 'Guest reviews'
 } = Astro.props;
 const visibleReviews = reviews.filter(review => review?.comment && review?.userDetails);
@@ -30,12 +32,13 @@ const densityClassFor = (comment:string) => {
   if(length>160) return 'review-comment-medium';
   return 'review-comment-short';
 };
+const rotationDelay=Math.round(Math.max(2,Math.min(60,Number(rotateIntervalSeconds)||6.5))*1000);
 const countClass=`review-count-${Math.min(visibleReviews.length,3)}`;
 ---
 {visibleReviews.length > 0 && <section class="reviews-carousel-section" aria-label={ariaLabel}>
   <div class="wrap reviews-carousel-wrap">
     {title && <header class="reviews-carousel-heading"><h2>{title}</h2></header>}
-    <div class:list={['reviews-carousel',countClass]} data-review-carousel data-auto-rotate={autoRotate ? 'true' : 'false'}>
+    <div class:list={['reviews-carousel',countClass]} data-review-carousel data-auto-rotate={autoRotate ? 'true' : 'false'} data-rotate-interval={rotationDelay}>
       <button class="reviews-carousel-control reviews-carousel-prev" type="button" data-review-prev aria-label="Previous reviews">‹</button>
       <div class="reviews-carousel-viewport" data-review-viewport tabindex="0" aria-roledescription="carousel">
         <div class="reviews-carousel-track">
@@ -70,6 +73,10 @@ const countClass=`review-count-${Math.min(visibleReviews.length,3)}`;
     const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const perView = () => window.matchMedia('(min-width: 48rem)').matches ? 3 : 1;
     const maximumIndex = () => Math.max(0, cards.length - perView());
+    const rotationDelay = () => {
+      const configured=Number.parseInt(root.dataset.rotateInterval || '6500',10);
+      return Number.isFinite(configured) ? Math.max(2000,Math.min(60000,configured)) : 6500;
+    };
     const updateControls = () => {
       const hide = cards.length <= perView();
       if (previous instanceof HTMLButtonElement) {
@@ -91,7 +98,7 @@ const countClass=`review-count-${Math.min(visibleReviews.length,3)}`;
     const start = () => {
       stop();
       if (root.dataset.autoRotate !== 'true' || cards.length <= perView() || reduceMotion()) return;
-      timer = window.setInterval(() => show(index >= maximumIndex() ? 0 : index + 1), 6500);
+      timer = window.setInterval(() => show(index >= maximumIndex() ? 0 : index + 1), rotationDelay());
     };
 
     previous?.addEventListener('click', () => { show(index - 1); start(); });
