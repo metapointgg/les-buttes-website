@@ -102,6 +102,8 @@ reviews:
     userDetails: Sue, Airbnb guest · Honeysuckle Cottage
     sourceUrl: https://www.airbnb.com/rooms/15695088/reviews
     sourceLabel: Read reviews on Airbnb
+reviewAutoRotate: true
+reviewIntervalSeconds: 15
 seo:
   title: Les Buttes | Guernsey Holiday Cottages & Self Catering
   description: Family-run self-catering holiday cottages in peaceful St Pierre du
