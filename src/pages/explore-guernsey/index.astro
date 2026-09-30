@@ -45,7 +45,10 @@ const cta:any=sections.find(section=>section.type==='cta'&&section.enabled!==fal
         <h2>{cta.title}</h2>
         {cta.text&&<p>{cta.text}</p>}
       </div>
-      <a class="button button-light" href={cta.buttonUrl??'/cottages/'}>{cta.buttonLabel??'Explore our cottages'}<Icon name="arrow" size={18}/></a>
+      <div class="explore-reference-close-actions">
+        <a class="button button-light" href={cta.buttonUrl??'/cottages/'}>{cta.buttonLabel??'Explore our cottages'}<Icon name="arrow" size={18}/></a>
+        {cta.secondaryButtonLabel&&cta.secondaryButtonUrl&&<a class="button button-outline" href={cta.secondaryButtonUrl}>{cta.secondaryButtonLabel}<Icon name="arrow" size={18}/></a>}
+      </div>
     </div>
   </section>}
 </BaseLayout>
@@ -79,7 +82,8 @@ const cta:any=sections.find(section=>section.type==='cta'&&section.enabled!==fal
 .explore-reference-close-inner{display:grid;gap:2rem;align-items:center;padding-block:clamp(2.5rem,5vw,4rem)}
 .explore-reference-close-inner h2{max-width:14ch;margin-bottom:.55rem;color:#fff}
 .explore-reference-close-inner p:not(.eyebrow){max-width:42rem;margin:0;color:#ffffffc7}
+.explore-reference-close-actions{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center}
 @media(min-width:48rem){.explore-reference-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.explore-reference-close-inner{grid-template-columns:1fr auto}}
 @media(min-width:64rem){.explore-reference-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:47.99rem){.explore-reference-grid{grid-template-columns:1fr}.explore-reference-card-copy{min-height:0}.explore-reference-close-inner{padding-block:2.5rem}.explore-reference-close-inner .button{width:max-content}}
+@media(max-width:47.99rem){.explore-reference-grid{grid-template-columns:1fr}.explore-reference-card-copy{min-height:0}.explore-reference-close-inner{padding-block:2.5rem}.explore-reference-close-actions .button{width:max-content}}
 </style>
