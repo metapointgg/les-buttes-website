@@ -85,6 +85,8 @@ sections:
     buttonLabel: Explore our cottages
     buttonUrl: /cottages/
     buttonExternal: false
+    secondaryButtonLabel: Plan your Guernsey holiday
+    secondaryButtonUrl: /guernsey-holidays/
     secondaryButtonExternal: false
 seo:
   title: Things to Do in Guernsey | Les Buttes Holiday Cottages
