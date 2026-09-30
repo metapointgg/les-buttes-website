@@ -1,8 +1,8 @@
 ---
-title: Find the cottage that feels right for you
+title: Self-catering holiday cottages in Guernsey
 urlStub: /cottages/
 eyebrow: Our cottages
-intro: Choose charming Geranium for up to four guests or spacious Honeysuckle for a family or group of up to six.
+intro: Choose charming Geranium for up to four guests or spacious Honeysuckle for a family or group of up to six, both offering a relaxed self-catering base in St Pierre du Bois.
 heroMediaType: image
 heroImage: /src/assets/images/cottages/geranium/exterior.jpg
 heroAlt: Geranium Cottage at Les Buttes surrounded by planting
@@ -41,12 +41,23 @@ sections:
       - title: Payment & terms
         text: Payment and booking terms are handled securely through Airbnb.
   - enabled: true
+    type: text
+    theme: cream
+    width: narrow
+    eyebrow: Planning your stay
+    title: Make Les Buttes your base for a Guernsey holiday
+    text: >-
+      If you are still deciding how to shape your trip, our Guernsey Holidays guide brings together ideas for beaches, coastal walks, history, neighbouring islands and time to slow down, all from a self-catering base at Les Buttes.
+    buttonLabel: Plan your Guernsey holiday
+    buttonUrl: /guernsey-holidays/
+    buttonExternal: false
+  - enabled: true
     type: cta
     title: Planning a Guernsey holiday?
     text: Join our occasional mailing list for news from Les Buttes, new season dates and special availability.
     buttonLabel: Join our mailing list
     buttonUrl: '#mailing-list'
 seo:
-  title: Our Guernsey Holiday Cottages | Les Buttes
-  description: Compare Geranium and Honeysuckle self-catering cottages at Les Buttes in St Pierre du Bois, Guernsey.
+  title: Self-Catering Cottages in Guernsey | Les Buttes
+  description: Compare Geranium and Honeysuckle self-catering holiday cottages at Les Buttes in St Pierre du Bois, Guernsey, sleeping up to four or six guests.
 ---
