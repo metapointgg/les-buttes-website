@@ -60,6 +60,21 @@ sections:
         linkUrl: https://www.buses.gg/
         external: true
   - enabled: true
+    type: cards
+    theme: paper
+    width: wide
+    eyebrow: FAQs
+    title: Frequently asked questions about getting to Les Buttes
+    items:
+      - title: How far is Les Buttes from Guernsey Airport?
+        text: Guernsey Airport is approximately two miles from Les Buttes.
+      - title: Can I reach Les Buttes by bus?
+        text: Yes. Bus stops are within walking distance of Les Buttes. Check the current Guernsey bus timetable before you travel.
+      - title: Is parking available at Les Buttes?
+        text: Yes. Parking is available at both Geranium and Honeysuckle cottages.
+      - title: Are there special directions for the final approach?
+        text: Yes. Guernsey's rural lanes can be narrow, so we recommend saving or screenshotting the final directions on this page and following the signed approach from St Pierre du Bois.
+  - enabled: true
     type: cta
     title: Let us help with your arrival
     text: If you would like to confirm the final approach or have an accessibility question, contact us before you travel.

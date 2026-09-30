@@ -122,6 +122,25 @@ sections:
       - title: A base for families and groups
         text: Separate bedrooms, living space and self-catering facilities make a cottage practical for families, couples travelling together and small groups.
   - enabled: true
+    type: cards
+    theme: cream
+    width: wide
+    eyebrow: FAQs
+    title: Frequently asked questions about Guernsey holidays at Les Buttes
+    items:
+      - title: What kind of accommodation does Les Buttes offer?
+        text: Les Buttes offers two bookable self-catering holiday cottages in St Pierre du Bois, Guernsey — Geranium Cottage and Honeysuckle Cottage.
+      - title: How many guests can stay at Les Buttes?
+        text: Geranium Cottage sleeps up to four guests in two bedrooms, while Honeysuckle Cottage sleeps up to six guests in three bedrooms.
+      - title: Where is Les Buttes in Guernsey?
+        text: Les Buttes is in rural St Pierre du Bois in the south-west of Guernsey, with village amenities, beaches and coastal scenery within easy reach.
+      - title: Is there a dog-friendly cottage at Les Buttes?
+        text: Yes. Geranium Cottage is the dog-friendly option at Les Buttes and has its own private enclosed garden.
+      - title: Can I visit the neighbouring islands during a Guernsey holiday?
+        text: Yes. Herm, Sark and Alderney can be considered as part of a Guernsey stay, subject to the transport services and schedules operating during your visit.
+      - title: Do the cottages have self-catering facilities?
+        text: Yes. Both Geranium and Honeysuckle have fully equipped kitchens and their own living space, so you can plan meals and days around your own schedule.
+  - enabled: true
     type: feature
     theme: green
     width: wide

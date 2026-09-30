@@ -16,6 +16,10 @@
     "latitude": 49.4351233819604,
     "longitude": -2.626559951281771
   },
+  "sameAs": [
+    "https://www.facebook.com/holidaycottagesonguernsey",
+    "https://www.instagram.com/les_buttes_guernsey/"
+  ],
   "airbnb": {
     "geranium": "https://www.airbnb.com/rooms/17564897",
     "honeysuckle": "https://www.airbnb.com/rooms/15695088"

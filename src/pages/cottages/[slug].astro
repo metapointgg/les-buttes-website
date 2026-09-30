@@ -7,6 +7,7 @@ import ReviewsCarousel from '../../components/ReviewsCarousel.astro';
 import Callout from '../../components/Callout.astro';
 import Icon from '../../components/Icon.astro';
 import site from '../../data/site.json';
+import { getImage as getImageMetadata } from '../../lib/images';
 
 export async function getStaticPaths(){
   return (await getCollection('cottages')).filter(c=>c.data.available).map(c=>({params:{slug:c.data.slug}}));
@@ -33,9 +34,86 @@ const facilityOverview=([
   {icon:'garden',title:'Private garden',text:findFacility(/private.*garden/i)}
 ] as Array<{icon:FacilityIcon;title:string;text:string|undefined}>).filter(item=>Boolean(item.text));
 
-const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.name,description:c.summary,url:new URL(`/cottages/${c.slug}/`,site.url).toString(),image:new URL('/social-card.svg',site.url).toString(),numberOfBedrooms:c.bedrooms||undefined,numberOfBathroomsTotal:c.bathrooms||undefined,occupancy:c.sleeps?{'@type':'QuantitativeValue',value:c.sleeps}:undefined};
+const privateGarden=findFacility(/private.*garden/i);
+const parking=findFacility(/parking/i);
+const faqItems=[
+  {
+    question:`How many guests can ${c.name} accommodate?`,
+    answer:`${c.name} sleeps up to ${c.sleeps} guests in ${c.bedrooms} bedrooms.`
+  },
+  {
+    question:`How many bathrooms does ${c.name} have?`,
+    answer:`${c.name} has ${c.bathrooms} bathrooms.`
+  },
+  ...(privateGarden?[{
+    question:`Does ${c.name} have a private garden?`,
+    answer:`Yes. ${c.name} has its own ${privateGarden.toLowerCase()}.`
+  }]:[]),
+  ...(parking?[{
+    question:`Is parking available at ${c.name}?`,
+    answer:`Yes. ${parking}.`
+  }]:[]),
+  {
+    question:`Is ${c.name} dog friendly?`,
+    answer:c.dogFriendly
+      ? `Yes. ${c.name} is dog friendly.`
+      : `${c.name} is not listed as dog friendly. Geranium Cottage is the dog-friendly cottage at Les Buttes.`
+  }
+];
+
+const propertyUrl=new URL(`/cottages/${c.slug}/`,site.url).toString();
+const imageUrls=c.gallery.map(item=>new URL(getImageMetadata(item.image).src,site.url).toString());
+const facilitiesText=c.facilities.join(' ');
+const amenityFeature=[
+  {'@type':'LocationFeatureSpecification',name:'wifi',value:/wi-fi/i.test(facilitiesText)},
+  {'@type':'LocationFeatureSpecification',name:'tv',value:/television/i.test(facilitiesText)},
+  {'@type':'LocationFeatureSpecification',name:'washerDryer',value:/washing machine|dryer/i.test(facilitiesText)},
+  {'@type':'LocationFeatureSpecification',name:'petsAllowed',value:c.dogFriendly}
+];
+const vacationRentalJsonLd={
+  '@context':'https://schema.org',
+  '@type':'VacationRental',
+  '@id':`${propertyUrl}#vacation-rental`,
+  identifier:`les-buttes-${c.slug}`,
+  additionalType:'Cottage',
+  name:c.name,
+  description:c.summary,
+  url:propertyUrl,
+  image:imageUrls,
+  latitude:site.coordinates.latitude,
+  longitude:site.coordinates.longitude,
+  address:{
+    '@type':'PostalAddress',
+    streetAddress:site.address.street,
+    addressLocality:site.address.locality,
+    addressRegion:site.address.island,
+    postalCode:site.address.postcode,
+    addressCountry:site.address.country
+  },
+  brand:{'@type':'Brand',name:site.name},
+  provider:{'@id':`${site.url}/#business`},
+  sameAs:c.airbnbUrl,
+  containsPlace:{
+    '@type':'Accommodation',
+    additionalType:'EntirePlace',
+    occupancy:{'@type':'QuantitativeValue',value:c.sleeps},
+    numberOfBedrooms:c.bedrooms,
+    numberOfBathroomsTotal:c.bathrooms,
+    petsAllowed:c.dogFriendly,
+    amenityFeature
+  }
+};
+const faqJsonLd={
+  '@context':'https://schema.org',
+  '@type':'FAQPage',
+  mainEntity:faqItems.map(item=>({
+    '@type':'Question',
+    name:item.question,
+    acceptedAnswer:{'@type':'Answer',text:item.answer}
+  }))
+};
 ---
-<BaseLayout title={c.seo.title} description={c.seo.description} jsonLd={jsonLd}>
+<BaseLayout title={c.seo.title} description={c.seo.description} jsonLd={[vacationRentalJsonLd,faqJsonLd]}>
   <article class="cottage-focused-page">
     <header class="cottage-editorial-hero">
       <HeroMedia mediaType={c.heroMediaType} imageSrc={c.heroImage} imageAlt={c.heroAlt} pan={c.heroPan} videoSrc={c.heroVideo} posterSrc={c.heroPoster} class="cottage-editorial-hero-media" widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high" decorative />
@@ -88,6 +166,21 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
             <div class="cottage-facility-copy"><h3>{item.title}</h3><p>{item.text}</p></div>
           </li>)}
         </ul>
+      </div>
+    </section>
+
+    <section class="section paper cottage-faq-section" aria-labelledby={`faq-${c.slug}`}>
+      <div class="wrap cottage-faq-wrap">
+        <header class="section-heading cottage-faq-heading">
+          <p class="eyebrow">Frequently asked questions</p>
+          <h2 id={`faq-${c.slug}`}>Planning your stay at {c.name}</h2>
+        </header>
+        <div class="cottage-faq-list">
+          {faqItems.map(item=><details>
+            <summary>{item.question}</summary>
+            <p>{item.answer}</p>
+          </details>)}
+        </div>
       </div>
     </section>
 
@@ -156,6 +249,18 @@ const jsonLd={'@context':'https://schema.org','@type':'VacationRental',name:c.na
 .cottage-facilities-compact .cottage-facility-icon svg{width:2.35rem!important;height:2.35rem!important;stroke-width:1.7}
 .cottage-facilities-compact .cottage-facility-copy h3{font-size:1.05rem!important}
 .cottage-facilities-compact .cottage-facility-copy p{font-size:.82rem}
+
+.cottage-faq-wrap{max-width:62rem}
+.cottage-faq-heading{margin-bottom:1.5rem!important}
+.cottage-faq-heading h2{max-width:20ch}
+.cottage-faq-list{border-top:1px solid rgba(31,59,46,.16)}
+.cottage-faq-list details{border-bottom:1px solid rgba(31,59,46,.16)}
+.cottage-faq-list summary{position:relative;padding:1.15rem 2.4rem 1.15rem 0;color:var(--deep);font-weight:700;cursor:pointer;list-style:none}
+.cottage-faq-list summary::-webkit-details-marker{display:none}
+.cottage-faq-list summary::after{content:'+';position:absolute;right:.25rem;top:50%;transform:translateY(-50%);font-size:1.35rem;font-weight:400}
+.cottage-faq-list details[open] summary::after{content:'–'}
+.cottage-faq-list p{max-width:48rem;margin:0;padding:0 2.4rem 1.2rem 0;color:var(--soft);line-height:1.65}
+
 .cottage-focused-page>.callout{margin-top:2.2rem!important;margin-bottom:clamp(2.5rem,5vw,4rem)!important;padding-block:clamp(3rem,5vw,4.5rem)!important}
 .cottage-focused-page>.callout h2{max-width:20ch}
 
