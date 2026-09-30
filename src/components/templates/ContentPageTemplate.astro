@@ -6,8 +6,21 @@ import PageSections from '../PageSections.astro';
 interface Props { pageData:any }
 const {pageData:p}=Astro.props;
 const hasHero=Boolean(p.heroImage||p.heroVideo);
+const faqItems=(p.sections??[])
+  .filter((section:any)=>section.enabled!==false&&section.type==='cards'&&/frequently asked questions/i.test(section.title??''))
+  .flatMap((section:any)=>section.items??[])
+  .filter((item:any)=>item.title&&item.text);
+const faqJsonLd=faqItems.length?{
+  '@context':'https://schema.org',
+  '@type':'FAQPage',
+  mainEntity:faqItems.map((item:any)=>({
+    '@type':'Question',
+    name:item.title,
+    acceptedAnswer:{'@type':'Answer',text:item.text}
+  }))
+}:undefined;
 ---
-<BaseLayout title={p.seo.title} description={p.seo.description}>
+<BaseLayout title={p.seo.title} description={p.seo.description} jsonLd={faqJsonLd}>
   {hasHero ? (
     <PageIntro
       eyebrow={p.eyebrow}
