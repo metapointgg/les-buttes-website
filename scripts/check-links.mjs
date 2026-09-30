@@ -38,9 +38,14 @@ const html = files.filter((file) => extname(file) === '.html');
 for (const file of html) {
   const source = readFileSync(file, 'utf8');
   const name = relative(root, file);
+  const isGoogleVerification = /^google[a-z0-9_-]+\.html$/i.test(name);
 
-  if ((source.match(/<h1[\s>]/g) || []).length !== 1) failures.push(`${name}: invalid h1 count`);
-  if ((source.match(/<link rel="canonical"/g) || []).length !== 1) failures.push(`${name}: invalid canonical count`);
+  // Google Search Console verification files are intentionally plain text with
+  // an .html extension, so they should not be held to normal page SEO checks.
+  if (!isGoogleVerification) {
+    if ((source.match(/<h1[\s>]/g) || []).length !== 1) failures.push(`${name}: invalid h1 count`);
+    if ((source.match(/<link rel="canonical"/g) || []).length !== 1) failures.push(`${name}: invalid canonical count`);
+  }
 
   for (const match of source.matchAll(/(?:href|src)="([^"]+)"/g)) {
     const fileTarget = target(match[1]);
