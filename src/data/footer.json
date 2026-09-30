@@ -72,6 +72,12 @@
           "external": false
         },
         {
+          "label": "Guernsey holidays",
+          "url": "/guernsey-holidays/",
+          "icon": "",
+          "external": false
+        },
+        {
           "label": "Gardens",
           "url": "/gardens/",
           "icon": "",
