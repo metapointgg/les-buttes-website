@@ -1,8 +1,10 @@
 ---
+import { getCollection } from 'astro:content';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import NewsletterSignup from '../components/NewsletterSignup.astro';
 import DesignTokens from '../components/DesignTokens.astro';
+import { getImage } from '../lib/images';
 import '../styles/global.css';
 import '../styles/editorial.css';
 import '../styles/refinement.css';
@@ -15,6 +17,27 @@ interface Props { title:string; description:string; canonical?:string; jsonLd?:R
 const {title,description,canonical=new URL(Astro.url.pathname,site.url).toString(),jsonLd,noindex=false}=Astro.props;
 const pathKey=Astro.url.pathname==='/'?'home':Astro.url.pathname.replace(/^\/+|\/+$/g,'').replace(/\//g,'-')||'home';
 const pageClass=`page-${pathKey}`;
+
+const [pages,subpages,cottages]=await Promise.all([
+  getCollection('pages'),
+  getCollection('subpages'),
+  getCollection('cottages')
+]);
+const currentPath=Astro.url.pathname;
+const pageEntry=pages.find(entry=>entry.data.urlStub===currentPath);
+const subpageEntry=subpages.find(entry=>`/${entry.data.slug}/`===currentPath);
+const cottageSlug=currentPath.match(/^\/cottages\/([^/]+)\/$/)?.[1];
+const cottageEntry=cottageSlug?cottages.find(entry=>entry.data.slug===cottageSlug):undefined;
+const currentEntry=pageEntry??subpageEntry??cottageEntry;
+const selectedImage=currentEntry?.data.seo.image??currentEntry?.data.heroImage??currentEntry?.data.heroPoster??'/social-card.svg';
+const homeEntry=pages.find(entry=>entry.data.urlStub==='/');
+const homeImage=homeEntry?.data.seo.image??homeEntry?.data.heroImage??homeEntry?.data.heroPoster??'/social-card.svg';
+const absoluteImage=(value:string)=>value.startsWith('/src/assets/images/')
+  ? new URL(getImage(value).src,`${site.url}/`).toString()
+  : new URL(value,`${site.url}/`).toString();
+const socialImage=absoluteImage(selectedImage);
+const businessImage=absoluteImage(homeImage);
+
 const businessId=`${site.url}/#business`;
 const localBusiness={
   '@context':'https://schema.org',
@@ -25,7 +48,7 @@ const localBusiness={
   description:'Family-run self-catering holiday cottages in peaceful St Pierre du Bois, Guernsey.',
   email:site.email,
   telephone:site.telephoneHref,
-  image:`${site.url}/social-card.svg`,
+  image:businessImage,
   sameAs:site.sameAs,
   address:{
     '@type':'PostalAddress',
@@ -37,7 +60,16 @@ const localBusiness={
   },
   geo:{'@type':'GeoCoordinates',latitude:site.coordinates.latitude,longitude:site.coordinates.longitude}
 };
+const webPage={
+  '@context':'https://schema.org',
+  '@type':'WebPage',
+  '@id':`${canonical}#webpage`,
+  url:canonical,
+  name:title,
+  description,
+  primaryImageOfPage:{'@type':'ImageObject',url:socialImage,contentUrl:socialImage}
+};
 const pageJsonLd=jsonLd?(Array.isArray(jsonLd)?jsonLd:[jsonLd]):[];
-const structuredData=[localBusiness,...pageJsonLd];
+const structuredData=[localBusiness,webPage,...pageJsonLd];
 ---
-<!doctype html><html lang="en-GB"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width"/><meta name="theme-color" content="#194c3d"/><title>{title}</title><meta name="description" content={description}/><link rel="canonical" href={canonical}/>{noindex&&<meta name="robots" content="noindex,follow"/>}<meta property="og:type" content="website"/><meta property="og:site_name" content={site.name}/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:url" content={canonical}/><meta property="og:image" content={`${site.url}/social-card.svg`}/><meta property="og:image:alt" content="Les Buttes Holiday Cottages, Guernsey"/><meta name="twitter:card" content="summary_large_image"/><link rel="icon" href="/favicon.png" type="image/png"/><link rel="apple-touch-icon" href="/favicon.png"/><DesignTokens/><script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script></head><body class={pageClass}><a class="skip-link" href="#main-content">Skip to content</a><Header/><main id="main-content"><slot/></main><Footer/><NewsletterSignup/></body></html>
+<!doctype html><html lang="en-GB"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width"/><meta name="theme-color" content="#194c3d"/><title>{title}</title><meta name="description" content={description}/><link rel="canonical" href={canonical}/><meta name="robots" content={noindex?'noindex,follow,max-image-preview:large':'max-image-preview:large'}/><meta property="og:type" content="website"/><meta property="og:site_name" content={site.name}/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:url" content={canonical}/><meta property="og:image" content={socialImage}/><meta property="og:image:alt" content="Les Buttes Holiday Cottages, Guernsey"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:image" content={socialImage}/><link rel="icon" href="/favicon.png" type="image/png"/><link rel="apple-touch-icon" href="/favicon.png"/><DesignTokens/><script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script></head><body class={pageClass}><a class="skip-link" href="#main-content">Skip to content</a><Header/><main id="main-content"><slot/></main><Footer/><NewsletterSignup/></body></html>

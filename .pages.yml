@@ -20,6 +20,11 @@ components:
     fields:
       - { name: title, label: Page title, type: string, required: true }
       - { name: description, label: Search description, type: text, required: true }
+      - name: image
+        label: Search / social image
+        description: Preferred image for Google search thumbnails and social sharing. If blank, the page hero image is used.
+        type: image
+        options: { media: images }
 
   pageSections:
     type: object
