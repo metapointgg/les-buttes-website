@@ -1,5 +1,6 @@
 ---
 import ResponsiveImage from './ResponsiveImage.astro';
+import { getImage } from '../lib/images';
 
 interface Props {
   mediaType?: 'image' | 'video';
@@ -34,6 +35,11 @@ const {
 const useVideo = mediaType === 'video' && Boolean(videoSrc);
 const fallbackImage = posterSrc || imageSrc;
 const videoType = videoSrc?.toLowerCase().endsWith('.webm') ? 'video/webm' : 'video/mp4';
+const resolveImageUrl = (src?: string) => {
+  if (!src) return undefined;
+  return src.startsWith('/src/assets/images/') ? getImage(src).src : src;
+};
+const posterUrl = useVideo ? resolveImageUrl(fallbackImage) : undefined;
 ---
 <div class:list={['hero-media', className, !useVideo && pan && 'image-pan']} data-media-type={useVideo ? 'video' : 'image'}>
   {fallbackImage && (
@@ -55,6 +61,7 @@ const videoType = videoSrc?.toLowerCase().endsWith('.webm') ? 'video/webm' : 'vi
       loop
       playsinline
       preload="metadata"
+      poster={posterUrl}
       disablepictureinpicture
       aria-hidden="true"
       tabindex="-1"
