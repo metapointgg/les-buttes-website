@@ -64,8 +64,20 @@ const faqItems=[
 const propertyUrl=new URL(`/cottages/${c.slug}/`,site.url).toString();
 const imageUrls=c.gallery.map(item=>new URL(getImageMetadata(item.image).src,site.url).toString());
 const facilitiesText=c.facilities.join(' ');
+const bedDetailsByCottage:Record<string,Array<Record<string,unknown>>>={
+  honeysuckle:[
+    {'@type':'BedDetails',numberOfBeds:1,typeOfBed:'King'},
+    {'@type':'BedDetails',numberOfBeds:4,typeOfBed:'Single'}
+  ],
+  geranium:[
+    {'@type':'BedDetails',numberOfBeds:1,typeOfBed:'Double'},
+    {'@type':'BedDetails',numberOfBeds:2,typeOfBed:'Single'}
+  ]
+};
+const bedDetails=bedDetailsByCottage[c.slug]??[];
 const amenityFeature=[
   {'@type':'LocationFeatureSpecification',name:'wifi',value:/wi-fi/i.test(facilitiesText)},
+  ...(/free wi-fi/i.test(facilitiesText)?[{'@type':'LocationFeatureSpecification',name:'internetType',value:'Free'}]:[]),
   {'@type':'LocationFeatureSpecification',name:'tv',value:/television/i.test(facilitiesText)},
   {'@type':'LocationFeatureSpecification',name:'washerDryer',value:/washing machine|dryer/i.test(facilitiesText)},
   {'@type':'LocationFeatureSpecification',name:'petsAllowed',value:c.dogFriendly}
@@ -97,6 +109,7 @@ const vacationRentalJsonLd={
     '@type':'Accommodation',
     additionalType:'EntirePlace',
     occupancy:{'@type':'QuantitativeValue',value:c.sleeps},
+    ...(bedDetails.length?{bed:bedDetails}:{}),
     numberOfBedrooms:c.bedrooms,
     numberOfBathroomsTotal:c.bathrooms,
     petsAllowed:c.dogFriendly,
@@ -125,6 +138,7 @@ const faqJsonLd={
             <li><Icon name="guests" size={18}/>Sleeps {c.sleeps}</li>
             <li><Icon name="bed" size={18}/>{c.bedrooms} bedrooms</li>
             <li><Icon name="bath" size={18}/>{c.bathrooms} bathrooms</li>
+            {c.season&&<li>Season {c.season}</li>}
             {c.dogFriendly&&<li class="cottage-dog-fact">● Dog friendly</li>}
           </ul>
           <div class="cottage-actions">

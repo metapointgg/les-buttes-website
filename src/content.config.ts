@@ -89,7 +89,7 @@ const cottageSection = z.object({
 
 const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/cottages' }), schema: z.object({
   name:z.string(), slug:z.string(), eyebrow:z.string().optional(), tagline:z.string(), summary:z.string(), available:z.boolean(),
-  sleeps:z.number(), bedrooms:z.number(), beds:z.number(), bathrooms:z.number(), dogFriendly:z.boolean(), airbnbUrl:z.string().url().optional(),
+  sleeps:z.number(), bedrooms:z.number(), beds:z.number(), bathrooms:z.number(), season:z.string().optional(), dogFriendly:z.boolean(), airbnbUrl:z.string().url().optional(),
   heroMediaType:z.enum(['image','video']).optional(), heroImage:z.string(), heroAlt:z.string(), heroPan:z.boolean().optional(), heroVideo:z.string().optional(), heroPoster:z.string().optional(),
   sections:z.array(cottageSection).optional(),
   reviews:z.array(reviewItem).optional(),
