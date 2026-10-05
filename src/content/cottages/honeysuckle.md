@@ -9,6 +9,7 @@ sleeps: 6
 bedrooms: 3
 beds: 5
 bathrooms: 2
+season: April–October
 dogFriendly: false
 airbnbUrl: https://www.airbnb.com/rooms/15695088
 heroMediaType: image

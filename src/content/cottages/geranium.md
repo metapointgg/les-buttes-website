@@ -9,6 +9,7 @@ sleeps: 4
 bedrooms: 2
 beds: 3
 bathrooms: 2
+season: April–October
 dogFriendly: true
 airbnbUrl: https://www.airbnb.com/rooms/17564897
 heroMediaType: image

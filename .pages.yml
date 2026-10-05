@@ -235,6 +235,7 @@ content:
       - { name: bedrooms, label: Bedrooms, type: number, required: true }
       - { name: beds, label: Beds, type: number, required: true }
       - { name: bathrooms, label: Bathrooms, type: number, required: true }
+      - { name: season, label: Visitor season, description: Short operating season shown as a property fact., type: string }
       - { name: dogFriendly, label: Dog friendly, type: boolean, required: true }
       - { name: airbnbUrl, label: Airbnb booking link, type: string }
       - name: heroMediaType
