@@ -1,0 +1,93 @@
+name: patch subtle vacation rental data
+
+on:
+  push:
+    branches: [agent/subtle-vacation-rental-data]
+    paths:
+      - .github/workflows/patch-subtle-vacation-rental.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/subtle-vacation-rental-data
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Apply subtle cottage metadata changes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if new in text:
+                  return
+              if old not in text:
+                  raise SystemExit(f'Insertion point not found in {path}')
+              p.write_text(text.replace(old, new, 1))
+
+          for path in ['src/content/cottages/honeysuckle.md', 'src/content/cottages/geranium.md']:
+              replace_once(path, 'bathrooms: 2\ndogFriendly:', 'bathrooms: 2\nseason: April–October\ndogFriendly:')
+
+          replace_once(
+              'src/content.config.ts',
+              'sleeps:z.number(), bedrooms:z.number(), beds:z.number(), bathrooms:z.number(), dogFriendly:z.boolean(), airbnbUrl:z.string().url().optional(),',
+              'sleeps:z.number(), bedrooms:z.number(), beds:z.number(), bathrooms:z.number(), season:z.string().optional(), dogFriendly:z.boolean(), airbnbUrl:z.string().url().optional(),'
+          )
+
+          replace_once(
+              '.pages.yml',
+              '      - { name: bathrooms, label: Bathrooms, type: number, required: true }\n      - { name: dogFriendly, label: Dog friendly, type: boolean, required: true }',
+              '      - { name: bathrooms, label: Bathrooms, type: number, required: true }\n      - { name: season, label: Visitor season, description: Short operating season shown as a property fact., type: string }\n      - { name: dogFriendly, label: Dog friendly, type: boolean, required: true }'
+          )
+
+          route = Path('src/pages/cottages/[slug].astro')
+          text = route.read_text()
+
+          old = "const facilitiesText=c.facilities.join(' ');\nconst amenityFeature=["
+          new = """const facilitiesText=c.facilities.join(' ');\nconst bedDetailsByCottage:Record<string,Array<Record<string,unknown>>>={\n  honeysuckle:[\n    {'@type':'BedDetails',numberOfBeds:1,typeOfBed:'King'},\n    {'@type':'BedDetails',numberOfBeds:4,typeOfBed:'Single'}\n  ],\n  geranium:[\n    {'@type':'BedDetails',numberOfBeds:1,typeOfBed:'Double'},\n    {'@type':'BedDetails',numberOfBeds:2,typeOfBed:'Single'}\n  ]\n};\nconst bedDetails=bedDetailsByCottage[c.slug]??[];\nconst amenityFeature=["""
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('Bed-detail insertion point not found')
+              text = text.replace(old, new, 1)
+
+          old = "  {'@type':'LocationFeatureSpecification',name:'wifi',value:/wi-fi/i.test(facilitiesText)},\n  {'@type':'LocationFeatureSpecification',name:'tv',value:/television/i.test(facilitiesText)},"
+          new = "  {'@type':'LocationFeatureSpecification',name:'wifi',value:/wi-fi/i.test(facilitiesText)},\n  ...(/free wi-fi/i.test(facilitiesText)?[{'@type':'LocationFeatureSpecification',name:'internetType',value:'Free'}]:[]),\n  {'@type':'LocationFeatureSpecification',name:'tv',value:/television/i.test(facilitiesText)},"
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('Internet amenity insertion point not found')
+              text = text.replace(old, new, 1)
+
+          old = "    occupancy:{'@type':'QuantitativeValue',value:c.sleeps},\n    numberOfBedrooms:c.bedrooms,"
+          new = "    occupancy:{'@type':'QuantitativeValue',value:c.sleeps},\n    ...(bedDetails.length?{bed:bedDetails}:{}),\n    numberOfBedrooms:c.bedrooms,"
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('VacationRental bed insertion point not found')
+              text = text.replace(old, new, 1)
+
+          old = "            <li><Icon name=\"bath\" size={18}/>{c.bathrooms} bathrooms</li>\n            {c.dogFriendly&&<li class=\"cottage-dog-fact\">● Dog friendly</li>}"
+          new = "            <li><Icon name=\"bath\" size={18}/>{c.bathrooms} bathrooms</li>\n            {c.season&&<li>Season {c.season}</li>}\n            {c.dogFriendly&&<li class=\"cottage-dog-fact\">● Dog friendly</li>}"
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('Season fact insertion point not found')
+              text = text.replace(old, new, 1)
+
+          route.write_text(text)
+          PY
+      - run: npm ci
+      - run: npm test
+      - name: Commit changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/content/cottages/honeysuckle.md src/content/cottages/geranium.md src/content.config.ts src/pages/cottages/'[slug].astro' .pages.yml
+          git commit -m 'feat: refine cottage vacation rental metadata'
+          git push origin HEAD:agent/subtle-vacation-rental-data
