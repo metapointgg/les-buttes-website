@@ -20,11 +20,14 @@ components:
     fields:
       - { name: title, label: Page title, type: string, required: true }
       - { name: description, label: Search description, type: text, required: true }
+      - { name: socialTitle, label: Social sharing title, description: Optional. If blank, the page title is used for Facebook, WhatsApp and X., type: string }
+      - { name: socialDescription, label: Social sharing description, description: Optional. If blank, the search description is used for social previews., type: text }
       - name: image
-        label: Search / social image
-        description: Preferred image for Google search thumbnails and social sharing. If blank, the page hero image is used.
+        label: Social sharing image
+        description: Optional page-specific image for Facebook, WhatsApp and X. If blank, the default Les Buttes farmhouse social image is used.
         type: image
         options: { media: images }
+      - { name: imageAlt, label: Social image description, description: Optional accessible description for the social sharing image., type: text }
 
   pageSections:
     type: object
