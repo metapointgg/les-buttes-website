@@ -1,7 +1,14 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
-const seo = z.object({ title: z.string(), description: z.string(), image: z.string().optional() });
+const seo = z.object({
+  title: z.string(),
+  description: z.string(),
+  socialTitle: z.string().optional(),
+  socialDescription: z.string().optional(),
+  image: z.string().optional(),
+  imageAlt: z.string().optional()
+});
 const heroFields = {
   heroMediaType: z.enum(['image','video']).optional(),
   heroImage: z.string().optional(),
