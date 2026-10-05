@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/generate-social-image.mjs",
     "dev": "astro dev",
+    "prebuild": "node scripts/generate-social-image.mjs",
     "build": "astro check && astro build",
     "preview": "astro preview",
     "check": "astro check",

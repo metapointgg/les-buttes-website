@@ -2,6 +2,7 @@ node_modules/
 dist/
 .astro/
 .DS_Store
+public/social/les-buttes-social.jpg
 infra/.terraform/
 infra/*.tfstate*
 infra/terraform.tfvars
