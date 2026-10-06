@@ -493,6 +493,11 @@ content:
       - { name: email, label: Email, type: string, required: true }
       - { name: telephoneDisplay, label: Telephone display, type: string, required: true }
       - { name: telephoneHref, label: Telephone link value, type: string, required: true }
+      - name: analytics
+        label: Analytics
+        type: object
+        fields:
+          - { name: googleAnalyticsId, label: Google Analytics Measurement ID, description: GA4 Measurement ID, for example G-XXXXXXXXXX., type: string, pattern: "^G-[A-Z0-9]+$" }
       - name: address
         label: Address
         type: object

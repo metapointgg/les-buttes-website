@@ -23,5 +23,8 @@
   "airbnb": {
     "geranium": "https://www.airbnb.com/rooms/17564897",
     "honeysuckle": "https://www.airbnb.com/rooms/15695088"
+  },
+  "analytics": {
+    "googleAnalyticsId": "G-X7FCEV679L"
   }
 }

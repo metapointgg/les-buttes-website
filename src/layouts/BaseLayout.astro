@@ -34,6 +34,8 @@ const {
 const pathKey=Astro.url.pathname==='/'?'home':Astro.url.pathname.replace(/^\/+|\/+$/g,'').replace(/\//g,'-')||'home';
 const pageClass=`page-${pathKey}`;
 
+const googleAnalyticsId=site.analytics?.googleAnalyticsId?.trim();
+
 const [pages,subpages,cottages]=await Promise.all([
   getCollection('pages'),
   getCollection('subpages'),
@@ -114,6 +116,15 @@ const structuredData=[localBusiness,webPage,...pageJsonLd];
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width"/>
     <meta name="theme-color" content="#194c3d"/>
+    {googleAnalyticsId && (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}></script>
+        <script is:inline set:html={`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${googleAnalyticsId}');`}></script>
+      </>
+    )}
     <title>{title}</title>
     <meta name="description" content={description}/>
     <link rel="canonical" href={canonical}/>
