@@ -49,6 +49,74 @@ const cottageSlug=currentPath.match(/^\/cottages\/([^/]+)\/$/)?.[1];
 const cottageEntry=cottageSlug?cottages.find(entry=>entry.data.slug===cottageSlug):undefined;
 const currentEntry=pageEntry??subpageEntry??cottageEntry;
 
+const analyticsContentGroup=cottageEntry?'Cottage':pageEntry?'Core page':subpageEntry?'Additional page':noindex?'Utility':'Other';
+const airbnbTrackingMap=Object.fromEntries(
+  cottages.flatMap((entry):[string,string][]=>entry.data.airbnbUrl
+    ? [[new URL(entry.data.airbnbUrl).pathname.replace(/\/$/,''),entry.data.name]]
+    : [])
+);
+const analyticsTrackingScript=`(() => {
+  const airbnbListings=${JSON.stringify(airbnbTrackingMap)};
+
+  const send=(eventName,params)=>{
+    if(typeof window.gtag!=='function') return;
+    window.gtag('event',eventName,params);
+  };
+
+  const normaliseText=value=>(value??'').replace(/\\s+/g,' ').trim().slice(0,120);
+
+  const linkLocation=link=>{
+    if(link.closest('.cottage-actions')) return 'cottage_hero';
+    if(link.closest('.cottage-card')) return 'cottage_card';
+    if(link.closest('.callout')) return 'callout';
+    if(link.closest('header')) return 'header';
+    if(link.closest('footer')) return 'footer';
+    return 'content';
+  };
+
+  document.addEventListener('click',event=>{
+    const target=event.target;
+    if(!(target instanceof Element)) return;
+
+    const link=target.closest('a[href]');
+    if(!(link instanceof HTMLAnchorElement)) return;
+
+    const href=(link.getAttribute('href')??'').trim();
+    if(!href) return;
+
+    const common={
+      page_path:window.location.pathname,
+      link_text:normaliseText(link.textContent),
+      link_location:linkLocation(link)
+    };
+
+    if(href.startsWith('mailto:')){
+      send('enquiry_click',{...common,enquiry_type:'email'});
+      return;
+    }
+
+    if(href.startsWith('tel:')){
+      send('enquiry_click',{...common,enquiry_type:'phone'});
+      return;
+    }
+
+    let url;
+    try{
+      url=new URL(link.href,window.location.href);
+    }catch{
+      return;
+    }
+
+    if(url.hostname==='airbnb.com'||url.hostname.endsWith('.airbnb.com')){
+      const listingPath=url.pathname.replace(/\\/$/,'');
+      send('airbnb_click',{
+        ...common,
+        cottage:airbnbListings[listingPath]??'Unknown'
+      });
+    }
+  },{capture:true});
+})();`;
+
 const socialBaseUrl=new URL(site.url);
 socialBaseUrl.hostname=`www.${socialBaseUrl.hostname.replace(/^www\./,'')}`;
 const socialUrl=new URL(currentPath,socialBaseUrl).toString();
@@ -122,6 +190,7 @@ const structuredData=[localBusiness,webPage,...pageJsonLd];
         <script is:inline set:html={`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
+gtag('set', {'content_group': '${analyticsContentGroup}'});
 gtag('config', '${googleAnalyticsId}');`}></script>
       </>
     )}
@@ -160,5 +229,6 @@ gtag('config', '${googleAnalyticsId}');`}></script>
     <main id="main-content"><slot/></main>
     <Footer/>
     <NewsletterSignup/>
+    {googleAnalyticsId && <script is:inline set:html={analyticsTrackingScript}></script>}
   </body>
 </html>
