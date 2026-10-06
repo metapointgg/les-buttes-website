@@ -42,6 +42,16 @@ sections:
         text: Payment and booking terms are handled securely through Airbnb.
   - enabled: true
     type: text
+    theme: paper
+    width: narrow
+    eyebrow: Coming to Guernsey for a wedding?
+    title: Guernsey wedding guest accommodation
+    text: Geranium and Honeysuckle can provide a flexible self-catering base for family and friends attending a wedding in Guernsey, with space for up to ten guests across both cottages when both are available.
+    buttonLabel: Wedding guest accommodation
+    buttonUrl: /guernsey-wedding-guest-accommodation/
+    buttonExternal: false
+  - enabled: true
+    type: text
     theme: cream
     width: narrow
     eyebrow: Planning your stay
