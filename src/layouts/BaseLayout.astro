@@ -51,7 +51,7 @@ const currentEntry=pageEntry??subpageEntry??cottageEntry;
 
 const analyticsContentGroup=cottageEntry?'Cottage':pageEntry?'Core page':subpageEntry?'Additional page':noindex?'Utility':'Other';
 const airbnbTrackingMap=Object.fromEntries(
-  cottages.flatMap(entry=>entry.data.airbnbUrl
+  cottages.flatMap((entry):[string,string][]=>entry.data.airbnbUrl
     ? [[new URL(entry.data.airbnbUrl).pathname.replace(/\/$/,''),entry.data.name]]
     : [])
 );
