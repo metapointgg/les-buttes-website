@@ -17,6 +17,7 @@ const cottage=await getEntry('cottages',Astro.params.slug!);
 if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const c=cottage.data;
 const contentSections=c.sections??[];
+const galleryIndexForImage=(image:string)=>c.gallery.findIndex(item=>item.image===image);
 const cottageReviews=c.reviews?.length
   ? c.reviews
   : c.review
@@ -159,10 +160,22 @@ const faqJsonLd={
               <p>{section.description}</p>
             </div>
             <div class:list={['cottage-template-images',`count-${images.length}`]}>
-              {images.map((item,imageIndex)=><figure class:list={[imageIndex===0&&'is-primary']}>
-                <ResponsiveImage src={item.image} alt={item.alt??section.title} widths={[420,640,900,1200]} sizes="(max-width: 768px) 100vw, 52vw"/>
-                {item.caption&&images.length>1&&<figcaption>{item.caption}</figcaption>}
-              </figure>)}
+              {images.map((item,imageIndex)=>{
+                const galleryIndex=galleryIndexForImage(item.image);
+                const imageLabel=item.caption??item.alt??section.title;
+                return <figure class:list={[imageIndex===0&&'is-primary']}>
+                  <button
+                    class="cottage-template-image-button"
+                    type="button"
+                    data-open-cottage-gallery
+                    data-gallery-index={galleryIndex>=0?galleryIndex:0}
+                    aria-label={`Open ${imageLabel} in the ${c.name} gallery`}
+                  >
+                    <ResponsiveImage src={item.image} alt={item.alt??section.title} widths={[420,640,900,1200]} sizes="(max-width: 768px) 100vw, 52vw"/>
+                  </button>
+                  {item.caption&&images.length>1&&<figcaption>{item.caption}</figcaption>}
+                </figure>;
+              })}
             </div>
           </div>
         </section>;
@@ -209,22 +222,91 @@ const faqJsonLd={
   </article>
 
   <dialog id={`cottage-gallery-${c.slug}`} class="cottage-quick-gallery" data-cottage-gallery-dialog>
-    <form method="dialog"><button class="cottage-quick-gallery-close" aria-label="Close gallery">×</button></form>
-    <div class="cottage-quick-gallery-header"><h2>{c.name} gallery</h2></div>
-    <div class="cottage-quick-gallery-grid">
-      {c.gallery.map(item=><figure><ResponsiveImage src={item.image} alt={item.alt} widths={[480,768,1100]} sizes="(max-width: 768px) 92vw, 42vw"/><figcaption>{item.caption}</figcaption></figure>)}
+    <button class="cottage-quick-gallery-close" type="button" data-gallery-close aria-label="Close gallery">×</button>
+    <div class="cottage-quick-gallery-header">
+      <h2>{c.name} gallery</h2>
+      <span class="cottage-quick-gallery-counter" data-gallery-counter aria-live="polite"></span>
+    </div>
+    <div class="cottage-quick-gallery-stage" id="gallery">
+      <button class="cottage-quick-gallery-nav cottage-quick-gallery-prev" type="button" data-gallery-prev aria-label="Previous photograph">‹</button>
+      <div class="cottage-quick-gallery-slides">
+        {c.gallery.map((item,index)=><figure data-gallery-slide data-gallery-index={index} hidden={index!==0}>
+          <ResponsiveImage src={item.image} alt={item.alt} widths={[960,1280,1600,2000]} sizes="100vw"/>
+          <figcaption>{item.caption}</figcaption>
+        </figure>)}
+      </div>
+      <button class="cottage-quick-gallery-nav cottage-quick-gallery-next" type="button" data-gallery-next aria-label="Next photograph">›</button>
+    </div>
+    <div class="cottage-quick-gallery-thumbs" aria-label="Choose a photograph">
+      {c.gallery.map((item,index)=><button type="button" data-gallery-thumb data-gallery-index={index} aria-label={`View ${item.caption}`}>
+        <ResponsiveImage src={item.image} alt="" widths={[120,180,240]} sizes="7rem"/>
+      </button>)}
     </div>
   </dialog>
 </BaseLayout>
 
 <script is:inline>
 (() => {
-  const trigger=document.querySelector('[data-open-cottage-gallery]');
   const dialog=document.querySelector('[data-cottage-gallery-dialog]');
-  if(trigger instanceof HTMLButtonElement && dialog instanceof HTMLDialogElement){
-    trigger.addEventListener('click',()=>dialog.showModal());
-    dialog.addEventListener('click',event=>{if(event.target===dialog) dialog.close();});
-  }
+  if(!(dialog instanceof HTMLDialogElement)) return;
+
+  const slides=Array.from(dialog.querySelectorAll('[data-gallery-slide]'));
+  const thumbs=Array.from(dialog.querySelectorAll('[data-gallery-thumb]'));
+  const counter=dialog.querySelector('[data-gallery-counter]');
+  let activeIndex=0;
+
+  const showSlide=index=>{
+    if(!slides.length) return;
+    activeIndex=(index+slides.length)%slides.length;
+    slides.forEach((slide,slideIndex)=>{
+      if(!(slide instanceof HTMLElement)) return;
+      slide.hidden=slideIndex!==activeIndex;
+    });
+    thumbs.forEach((thumb,thumbIndex)=>{
+      if(!(thumb instanceof HTMLElement)) return;
+      thumb.toggleAttribute('aria-current',thumbIndex===activeIndex);
+    });
+    if(counter) counter.textContent=`${activeIndex+1} / ${slides.length}`;
+  };
+
+  const openGallery=index=>{
+    showSlide(Number.isFinite(index)?index:0);
+    if(!dialog.open) dialog.showModal();
+  };
+
+  document.querySelectorAll('[data-open-cottage-gallery]').forEach(trigger=>{
+    trigger.addEventListener('click',()=>{
+      const index=Number.parseInt(trigger.getAttribute('data-gallery-index')??'0',10);
+      openGallery(Number.isNaN(index)?0:index);
+    });
+  });
+
+  dialog.querySelector('[data-gallery-prev]')?.addEventListener('click',()=>showSlide(activeIndex-1));
+  dialog.querySelector('[data-gallery-next]')?.addEventListener('click',()=>showSlide(activeIndex+1));
+  dialog.querySelector('[data-gallery-close]')?.addEventListener('click',()=>dialog.close());
+
+  thumbs.forEach(thumb=>{
+    thumb.addEventListener('click',()=>{
+      const index=Number.parseInt(thumb.getAttribute('data-gallery-index')??'0',10);
+      showSlide(Number.isNaN(index)?0:index);
+    });
+  });
+
+  dialog.addEventListener('click',event=>{if(event.target===dialog) dialog.close();});
+  dialog.addEventListener('keydown',event=>{
+    if(event.key==='ArrowLeft'){event.preventDefault();showSlide(activeIndex-1);}
+    if(event.key==='ArrowRight'){event.preventDefault();showSlide(activeIndex+1);}
+  });
+  dialog.addEventListener('close',()=>{
+    const url=new URL(window.location.href);
+    if(url.searchParams.has('gallery')){
+      url.searchParams.delete('gallery');
+      history.replaceState(null,'',url.pathname+url.search+url.hash.replace('#gallery',''));
+    }
+  });
+
+  const requestedIndex=Number.parseInt(new URLSearchParams(window.location.search).get('gallery')??'',10);
+  if(!Number.isNaN(requestedIndex)) openGallery(requestedIndex);
 })();
 </script>
 
@@ -245,8 +327,11 @@ const faqJsonLd={
 .cottage-template-copy p{margin:0;color:var(--soft);font-size:1.04rem;line-height:1.68}
 .cottage-template-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;min-width:0}
 .cottage-template-images figure{position:relative;overflow:hidden;margin:0;min-width:0;aspect-ratio:4/3;background:var(--pale);border-radius:.35rem}
+.cottage-template-image-button{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+.cottage-template-image-button:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
 .cottage-template-images picture,.cottage-template-images img{display:block;width:100%;height:100%}
-.cottage-template-images img{object-fit:cover}
+.cottage-template-images img{object-fit:cover;transition:transform .2s ease}
+.cottage-template-image-button:hover img{transform:scale(1.015)}
 .cottage-template-images.count-1{grid-template-columns:minmax(0,1fr)}
 .cottage-template-images.count-1 figure{aspect-ratio:16/10}
 .cottage-template-images.count-2 figure{aspect-ratio:4/3}
@@ -278,16 +363,26 @@ const faqJsonLd={
 .cottage-focused-page>.callout{margin-top:2.2rem!important;margin-bottom:clamp(2.5rem,5vw,4rem)!important;padding-block:clamp(3rem,5vw,4.5rem)!important}
 .cottage-focused-page>.callout h2{max-width:20ch}
 
-.cottage-quick-gallery{width:min(94vw,78rem);max-height:92vh;padding:0;border:0;background:var(--deep);box-shadow:0 30px 90px #0008}
-.cottage-quick-gallery::backdrop{background:#07110de8}
-.cottage-quick-gallery-header{padding:1.6rem 4rem .6rem;color:#fff}
-.cottage-quick-gallery-header h2{margin:0;color:#fff}
-.cottage-quick-gallery-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;padding:1rem 1.2rem 1.5rem}
-.cottage-quick-gallery-grid figure{position:relative;overflow:hidden;margin:0;aspect-ratio:4/3;background:#0b241d;border-radius:.25rem}
-.cottage-quick-gallery-grid picture,.cottage-quick-gallery-grid img{width:100%;height:100%}
-.cottage-quick-gallery-grid img{object-fit:cover}
-.cottage-quick-gallery-grid figcaption{position:absolute;right:.45rem;bottom:.45rem;left:.45rem;padding:.35rem .5rem;color:#fff;background:linear-gradient(90deg,#061d18b8,#061d1815);font-size:.72rem}
-.cottage-quick-gallery-close{position:sticky;z-index:3;top:.7rem;float:right;width:2.6rem;height:2.6rem;margin:.7rem .7rem 0 0;color:#fff;background:#0b231dcc;border:1px solid #ffffff66;border-radius:50%;font-size:1.5rem;cursor:pointer}
+.cottage-quick-gallery{width:100vw!important;max-width:none!important;height:100dvh;max-height:none!important;margin:0;padding:0;border:0;background:#07110d;box-shadow:none}
+.cottage-quick-gallery::backdrop{background:#07110df5}
+.cottage-quick-gallery-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4.25rem;padding:0 5rem 0 1.25rem;color:#fff;border-bottom:1px solid #ffffff1f}
+.cottage-quick-gallery-header h2{overflow:hidden;margin:0;color:#fff;font-size:clamp(1.25rem,2vw,1.7rem);text-overflow:ellipsis;white-space:nowrap}
+.cottage-quick-gallery-counter{flex:0 0 auto;color:#ffffffb8;font-size:.85rem}
+.cottage-quick-gallery-stage{position:relative;display:grid;height:calc(100dvh - 10rem);place-items:center}
+.cottage-quick-gallery-slides{width:100%;height:100%}
+.cottage-quick-gallery-slides figure{display:grid;width:100%;height:100%;margin:0;grid-template-rows:minmax(0,1fr) auto;place-items:center}
+.cottage-quick-gallery-slides figure[hidden]{display:none}
+.cottage-quick-gallery-slides picture{display:grid;width:100%;height:100%;place-items:center}
+.cottage-quick-gallery-slides img{display:block;width:100%;height:100%;max-height:calc(100dvh - 13rem);object-fit:contain}
+.cottage-quick-gallery-slides figcaption{width:100%;margin:0;padding:.65rem 4.5rem;color:#fff;text-align:center;font-size:.85rem}
+.cottage-quick-gallery-close{position:fixed;z-index:5;top:.75rem;right:.85rem;display:grid;width:2.75rem;height:2.75rem;padding:0;place-items:center;color:#fff;background:#0b231dcc;border:1px solid #ffffff66;border-radius:50%;font-size:1.7rem;line-height:1;cursor:pointer}
+.cottage-quick-gallery-nav{position:fixed;z-index:4;top:50%;display:grid;width:3rem;height:4rem;padding:0;place-items:center;transform:translateY(-50%);color:#fff;background:#07110db8;border:1px solid #ffffff38;border-radius:.35rem;font-size:2.25rem;cursor:pointer}
+.cottage-quick-gallery-prev{left:1rem}.cottage-quick-gallery-next{right:1rem}
+.cottage-quick-gallery-thumbs{display:flex;height:5.75rem;gap:.4rem;overflow-x:auto;padding:.45rem 1rem;background:#0b1b16;border-top:1px solid #ffffff1f}
+.cottage-quick-gallery-thumbs button{flex:0 0 6.5rem;overflow:hidden;padding:0;border:2px solid transparent;border-radius:.3rem;background:#122a22;cursor:pointer;opacity:.7}
+.cottage-quick-gallery-thumbs button[aria-current]{border-color:#d7ba75;opacity:1}
+.cottage-quick-gallery-thumbs picture,.cottage-quick-gallery-thumbs img{display:block;width:100%;height:100%}
+.cottage-quick-gallery-thumbs img{object-fit:cover}
 
 @media(min-width:64rem){
   .cottage-facilities-compact .cottage-facility-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;row-gap:0!important}
@@ -295,6 +390,14 @@ const faqJsonLd={
 }
 
 @media(max-width:51.99rem){
+  .cottage-quick-gallery-header{height:3.8rem;padding-left:1rem;padding-right:4.3rem}
+  .cottage-quick-gallery-stage{height:calc(100dvh - 9rem)}
+  .cottage-quick-gallery-slides img{max-height:calc(100dvh - 12rem)}
+  .cottage-quick-gallery-slides figcaption{padding:.55rem 3.4rem;font-size:.78rem}
+  .cottage-quick-gallery-nav{width:2.6rem;height:3.5rem;font-size:1.9rem}
+  .cottage-quick-gallery-prev{left:.4rem}.cottage-quick-gallery-next{right:.4rem}
+  .cottage-quick-gallery-thumbs{height:5.2rem;padding-inline:.55rem}
+  .cottage-quick-gallery-thumbs button{flex-basis:5.5rem}
   .cottage-template-grid{grid-template-columns:minmax(0,1fr);gap:1.45rem}
   .cottage-template-copy{max-width:none}
   .cottage-template-images{width:100%;max-width:100%;min-width:0}

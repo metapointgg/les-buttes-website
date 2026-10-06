@@ -10,7 +10,7 @@ interface Props {
 }
 const { cottage, showPreviewStrip = false } = Astro.props;
 const c = cottage.data;
-const previewImages = c.gallery.filter(item => item.image !== c.heroImage).slice(0,3);
+const previewImages = c.gallery.map((item,galleryIndex)=>({...item,galleryIndex})).filter(item => item.image !== c.heroImage).slice(0,3);
 const outdoorSpace = c.facilities.find(item => /garden|outdoor/i.test(item));
 const comparisonCues = c.slug === 'geranium'
   ? [
@@ -53,8 +53,16 @@ const comparisonCues = c.slug === 'geranium'
     </div>
   </div>
   {showPreviewStrip && previewImages.length > 0 && (
-    <div class="cottage-preview-strip" aria-hidden="true">
-      {previewImages.map(item => <ResponsiveImage src={item.image} alt="" widths={[220,320,420]} sizes="(max-width:760px) 33vw, 15vw" />)}
+    <div class="cottage-preview-strip" aria-label={`${c.name} gallery previews`}>
+      {previewImages.map(item => (
+        <a
+          class="cottage-preview-link"
+          href={`/cottages/${c.slug}/?gallery=${item.galleryIndex}#gallery`}
+          aria-label={`Open ${item.caption} in the ${c.name} gallery`}
+        >
+          <ResponsiveImage src={item.image} alt={item.alt} widths={[220,320,420]} sizes="(max-width:760px) 33vw, 15vw" />
+        </a>
+      ))}
     </div>
   )}
 </article>
@@ -70,6 +78,10 @@ const comparisonCues = c.slug === 'geranium'
   min-width:0;
 }
 .cottage-card-view-label-mobile{display:none}
+.cottage-preview-link{display:block;overflow:hidden;border-radius:.2rem;line-height:0;cursor:zoom-in}
+.cottage-preview-link img{transition:transform .2s ease}
+.cottage-preview-link:hover img{transform:scale(1.025)}
+.cottage-preview-link:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 :global(.page-cottages) .cottage-card-comparison .cottage-card-book-button{
   color:var(--green)!important;
   background:transparent!important;
