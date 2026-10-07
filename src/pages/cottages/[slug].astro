@@ -64,7 +64,9 @@ const faqItems=[
   }]:[]),
   ...(privateGarden?[{
     question:`Does ${c.name} have a private garden?`,
-    answer:`Yes. ${details?.outdoorSpace??c.name+' has its own '+privateGarden.toLowerCase()}.`
+    answer:details?.outdoorSpace
+      ? `Yes. ${c.name} has ${details.outdoorSpace.toLowerCase()}.`
+      : `Yes. ${c.name} has its own ${privateGarden.toLowerCase()}.`
   }]:[]),
   ...(parking?[{
     question:`Is parking available at ${c.name}?`,
@@ -95,6 +97,7 @@ const amenityFeature=[
   {'@type':'LocationFeatureSpecification',name:'tv',value:/television/i.test(facilitiesText)},
   {'@type':'LocationFeatureSpecification',name:'washerDryer',value:/washing machine|dryer/i.test(facilitiesText)},
   ...(/travel cot|crib/i.test(familyEquipmentText)?[{'@type':'LocationFeatureSpecification',name:'crib',value:true}]:[]),
+  ...(details?.familyEquipment?.length?[{'@type':'LocationFeatureSpecification',name:'childFriendly',value:true}]:[]),
   {'@type':'LocationFeatureSpecification',name:'petsAllowed',value:c.dogFriendly}
 ];
 const vacationRentalJsonLd={
@@ -169,7 +172,7 @@ const faqJsonLd={
         <div class="wrap">
           <header class="section-heading cottage-details-heading">
             <p class="eyebrow">At a glance</p>
-            <h2 id={`cottage-details-${c.slug}`}>${c.name} details</h2>
+            <h2 id={`cottage-details-${c.slug}`}>{c.name} details</h2>
           </header>
 
           <dl class="cottage-details-grid">
