@@ -171,47 +171,6 @@ components:
       - { name: secondaryButtonUrl, label: Secondary button URL, type: string }
       - { name: secondaryButtonExternal, label: Open secondary button in new tab, type: boolean, default: false }
 
-  cottageDetails:
-    type: object
-    label: Cottage details
-    description: Factual property information shown in the At a glance section and reused in structured data for search engines.
-    fields:
-      - { name: location, label: Location summary, type: text, required: true }
-      - { name: bedroomLayout, label: Bedroom layout, description: For example One double bedroom and two twin bedrooms., type: string, required: true }
-      - { name: bathroomLayout, label: Bathroom layout, type: string, required: true }
-      - { name: livingSpace, label: Living space, type: text, required: true }
-      - { name: parking, label: Parking, type: string, required: true }
-      - { name: outdoorSpace, label: Outdoor space, type: string, required: true }
-      - name: bedTypes
-        label: Bed types for structured data
-        description: Keep this consistent with the bedroom layout. Counts are individual beds, not bedrooms.
-        type: object
-        list: { collapsible: { collapsed: true, summary: "{type} × {count}" } }
-        fields:
-          - name: type
-            label: Bed type
-            type: select
-            required: true
-            options:
-              values:
-                - { value: Double, label: Double }
-                - { value: Single, label: Single }
-                - { value: King, label: King }
-                - { value: Queen, label: Queen }
-                - { value: Full, label: Full }
-                - { value: SemiDouble, label: Semi-double }
-                - { value: CaliforniaKing, label: California king }
-          - { name: count, label: Number of beds, type: number, required: true }
-      - name: floorLayout
-        label: Layout by floor
-        type: object
-        list: { collapsible: { collapsed: true, summary: "{floor}" } }
-        fields:
-          - { name: floor, label: Floor / level, type: string, required: true }
-          - { name: rooms, label: Rooms and spaces, type: string, list: true }
-      - { name: familyEquipment, label: Family equipment, description: Optional items available for families, including items available on request., type: string, list: true }
-      - { name: nearby, label: Nearby, description: Short factual points about nearby amenities and surroundings., type: string, list: true }
-
   cottageSections:
     type: object
     label: Cottage page sections
@@ -306,7 +265,6 @@ content:
         description: Optional still image shown while video loads and to visitors who prefer reduced motion.
         type: image
         options: { media: images }
-      - { name: details, component: cottageDetails }
       - { name: sections, component: cottageSections }
       - { name: facilities, label: What is included, type: string, list: true }
       - { name: reviews, component: reviewList }
