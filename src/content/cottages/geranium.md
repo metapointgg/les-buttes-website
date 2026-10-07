@@ -19,13 +19,13 @@ heroPan: false
 details:
   location: St Pierre du Bois in south-west Guernsey, close to west-coast beaches,
     cliff paths, quiet country lanes and village amenities.
-  bedroomLayout: One double bedroom and one twin bedroom
+  bedroomLayout: One king-size bedroom and one twin bedroom
   bathroomLayout: One family bathroom upstairs and one shower room downstairs
   livingSpace: Fully equipped kitchen with dining area, sitting room and conservatory
-  parking: Parking beside the cottage
+  parking: Reserved parking beside the cottage for two cars
   outdoorSpace: Private enclosed garden
   bedTypes:
-    - type: Double
+    - type: King
       count: 1
     - type: Single
       count: 2
@@ -38,9 +38,13 @@ details:
         - Shower room
     - floor: Upstairs
       rooms:
-        - Double bedroom
+        - King-size bedroom
         - Twin bedroom
         - Family bathroom
+  familyEquipment:
+    - Travel cot available on request
+    - Toddler bed available on request
+    - Stairgate available on request
   nearby:
     - Village shop, pub and bus stops within walking distance
     - West-coast beaches within easy reach
@@ -69,12 +73,12 @@ sections:
         alt: Geranium Cottage's fitted kitchen and dining table
         caption: Kitchen and dining area
   - title: Space to sleep comfortably
-    description: Upstairs there is one double bedroom and one twin bedroom, together
+    description: Upstairs there is one king-size bedroom and one twin bedroom, together
       with the family bathroom. A separate shower room is on the ground floor.
     images:
       - image: /src/assets/images/cottages/geranium/king-bedroom.jpg
-        alt: The main double bedroom in Geranium Cottage
-        caption: Double bedroom
+        alt: The king-size bedroom in Geranium Cottage
+        caption: King-size bedroom
       - image: /src/assets/images/cottages/geranium/twin-bedroom.jpg
         alt: The twin bedroom in Geranium Cottage
         caption: Twin bedroom
@@ -98,7 +102,10 @@ facilities:
   - Private enclosed garden
   - Free Wi-Fi
   - Television
-  - Parking beside the cottage
+  - Reserved parking beside the cottage for two cars
+  - Travel cot available on request
+  - Toddler bed available on request
+  - Stairgate available on request
   - Heating, linen and towels included
 reviews:
   - stars: 5
@@ -153,8 +160,8 @@ gallery:
     alt: The comfortable sitting room in Geranium Cottage
     caption: A cosy sitting room
   - image: /src/assets/images/cottages/geranium/king-bedroom.jpg
-    alt: The main double bedroom in Geranium Cottage
-    caption: Double bedroom
+    alt: The king-size bedroom in Geranium Cottage
+    caption: King-size bedroom
   - image: /src/assets/images/cottages/geranium/twin-bedroom.jpg
     alt: The twin bedroom in Geranium Cottage
     caption: Twin bedroom
