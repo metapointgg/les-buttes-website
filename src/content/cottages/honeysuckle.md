@@ -16,40 +16,6 @@ heroMediaType: image
 heroImage: /src/assets/images/cottages/honeysuckle/exterior.jpg
 heroAlt: Honeysuckle Cottage's private garden and conservatories
 heroPan: false
-details:
-  location: St Pierre du Bois in south-west Guernsey, close to west-coast beaches,
-    cliff paths, quiet country lanes and village amenities.
-  bedroomLayout: One double bedroom and two twin bedrooms
-  bathroomLayout: Two full bathrooms upstairs
-  livingSpace: Fully equipped kitchen, separate dining room, sitting room and two conservatories
-  parking: Parking for two cars
-  outdoorSpace: Private garden with an additional adjacent garden area
-  bedTypes:
-    - type: Double
-      count: 1
-    - type: Single
-      count: 4
-  floorLayout:
-    - floor: Downstairs
-      rooms:
-        - Twin bedroom
-        - Fully equipped kitchen
-        - Separate dining room
-        - Sitting room
-        - Two conservatories
-    - floor: Upstairs
-      rooms:
-        - Double bedroom
-        - Twin bedroom
-        - Two full bathrooms
-  familyEquipment:
-    - Travel cot available on request
-    - Toddler bed available on request
-    - Stairgate available on request
-  nearby:
-    - Village shop, pub and bus stops within walking distance
-    - West-coast beaches within easy reach
-    - Cliff paths and quiet country lanes nearby
 sections:
   - title: Character and comfort
     description: Honeysuckle is a spacious converted barn for up to six guests, with
@@ -76,21 +42,22 @@ sections:
         alt: Honeysuckle kitchen
         caption: Fully equipped kitchen
   - title: Space to sleep comfortably
-    description: Honeysuckle has a twin bedroom downstairs. Upstairs are one double
-      bedroom and a second twin bedroom, together with two full bathrooms.
+    description: A ground-floor king-size bedroom is joined by two twin bedrooms
+      upstairs. The cottage has two bathrooms, including a family bathroom and a
+      shower room.
     images:
       - image: /src/assets/images/cottages/honeysuckle/king-bedroom.jpg
-        alt: The upstairs double bedroom in Honeysuckle Cottage
-        caption: Upstairs double bedroom
+        alt: The king-size bedroom in Honeysuckle Cottage
+        caption: Ground-floor king-size bedroom
       - image: /src/assets/images/cottages/honeysuckle/twin-bedroom.jpg
         alt: A twin bedroom in Honeysuckle Cottage
-        caption: Twin bedroom
+        caption: One of two twin bedrooms
       - image: /src/assets/images/cottages/honeysuckle/shower-room.jpg
-        alt: One of the two upstairs bathrooms in Honeysuckle Cottage
-        caption: Upstairs shower room
+        alt: A modern shower room in Honeysuckle Cottage
+        caption: Shower room
       - image: /src/assets/images/cottages/honeysuckle/bathroom.jpg
-        alt: The upstairs bathroom with bath and shower in Honeysuckle Cottage
-        caption: Upstairs family bathroom
+        alt: The bathroom with bath and shower in Honeysuckle Cottage
+        caption: Family bathroom
   - title: Your private garden
     description: Two conservatories open onto Honeysuckle’s private garden, giving
       the cottage its own outdoor space.
@@ -102,14 +69,11 @@ facilities:
   - Fully equipped kitchen
   - Separate dining room
   - Two conservatories
-  - Private garden and additional adjacent garden area
+  - Private garden
   - Free Wi-Fi
   - Television
   - Washing machine and dryer
   - Parking for two cars
-  - Travel cot available on request
-  - Toddler bed available on request
-  - Stairgate available on request
   - Heating, linen and towels included
 reviews:
   - stars: 5
@@ -181,17 +145,17 @@ gallery:
     alt: The comfortable sitting room in Honeysuckle Cottage
     caption: Sitting room
   - image: /src/assets/images/cottages/honeysuckle/king-bedroom.jpg
-    alt: The upstairs double bedroom in Honeysuckle Cottage
-    caption: Upstairs double bedroom
+    alt: The king-size bedroom in Honeysuckle Cottage
+    caption: Ground-floor king-size bedroom
   - image: /src/assets/images/cottages/honeysuckle/twin-bedroom.jpg
     alt: A twin bedroom in Honeysuckle Cottage
-    caption: Twin bedroom
+    caption: One of two twin bedrooms
   - image: /src/assets/images/cottages/honeysuckle/shower-room.jpg
-    alt: One of the two upstairs bathrooms in Honeysuckle Cottage
-    caption: Upstairs shower room
+    alt: A modern shower room in Honeysuckle Cottage
+    caption: Shower room
   - image: /src/assets/images/cottages/honeysuckle/bathroom.jpg
-    alt: The upstairs bathroom with bath and shower in Honeysuckle Cottage
-    caption: Upstairs family bathroom
+    alt: The bathroom with bath and shower in Honeysuckle Cottage
+    caption: Family bathroom
 seo:
   title: Honeysuckle Cottage | Guernsey Holiday Cottage for Six
   description: Discover Honeysuckle, a spacious three-bedroom Guernsey holiday
