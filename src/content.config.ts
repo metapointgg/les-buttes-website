@@ -87,10 +87,30 @@ const cottageSection = z.object({
   images: z.array(cottageSectionImage).min(1).max(4)
 });
 
+const cottageDetails = z.object({
+  location: z.string(),
+  bedroomLayout: z.string(),
+  bathroomLayout: z.string(),
+  livingSpace: z.string(),
+  parking: z.string(),
+  outdoorSpace: z.string(),
+  bedTypes: z.array(z.object({
+    type: z.enum(['CaliforniaKing','King','Queen','Full','Double','SemiDouble','Single']),
+    count: z.number().int().positive()
+  })).min(1),
+  floorLayout: z.array(z.object({
+    floor: z.string(),
+    rooms: z.array(z.string()).min(1)
+  })).optional(),
+  familyEquipment: z.array(z.string()).optional(),
+  nearby: z.array(z.string()).optional()
+}).optional();
+
 const cottages = defineCollection({ loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/cottages' }), schema: z.object({
   name:z.string(), slug:z.string(), eyebrow:z.string().optional(), tagline:z.string(), summary:z.string(), available:z.boolean(),
   sleeps:z.number(), bedrooms:z.number(), beds:z.number(), bathrooms:z.number(), season:z.string().optional(), dogFriendly:z.boolean(), airbnbUrl:z.string().url().optional(),
   heroMediaType:z.enum(['image','video']).optional(), heroImage:z.string(), heroAlt:z.string(), heroPan:z.boolean().optional(), heroVideo:z.string().optional(), heroPoster:z.string().optional(),
+  details:cottageDetails,
   sections:z.array(cottageSection).optional(),
   reviews:z.array(reviewItem).optional(),
   reviewAutoRotate:z.boolean().optional(), reviewIntervalSeconds:z.number().optional(),

@@ -16,6 +16,7 @@ export async function getStaticPaths(){
 const cottage=await getEntry('cottages',Astro.params.slug!);
 if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const c=cottage.data;
+const details=c.details;
 const contentSections=c.sections??[];
 const galleryIndexForImage=(image:string)=>c.gallery.findIndex(item=>item.image===image);
 const cottageReviews=c.reviews?.length
@@ -37,22 +38,39 @@ const facilityOverview=([
 
 const privateGarden=findFacility(/private.*garden/i);
 const parking=findFacility(/parking/i);
+const floorLayoutAnswer=details?.floorLayout?.map(level=>`${level.floor}: ${level.rooms.join(', ')}.`).join(' ');
 const faqItems=[
   {
     question:`How many guests can ${c.name} accommodate?`,
     answer:`${c.name} sleeps up to ${c.sleeps} guests in ${c.bedrooms} bedrooms.`
   },
+  ...(details?[{
+    question:`What is the bedroom and room layout at ${c.name}?`,
+    answer:`${c.name} has ${details.bedroomLayout.toLowerCase()}. ${floorLayoutAnswer??''}`.trim()
+  }]:[]),
   {
     question:`How many bathrooms does ${c.name} have?`,
-    answer:`${c.name} has ${c.bathrooms} bathrooms.`
+    answer:details?.bathroomLayout
+      ? `${c.name} has ${c.bathrooms} bathrooms: ${details.bathroomLayout.toLowerCase()}.`
+      : `${c.name} has ${c.bathrooms} bathrooms.`
   },
+  ...(details?[{
+    question:`Where is ${c.name} in Guernsey?`,
+    answer:`${c.name} is at Les Buttes Holiday Cottages, ${details.location}`
+  }]:[]),
+  ...(details?.familyEquipment?.length?[{
+    question:`What family equipment is available at ${c.name}?`,
+    answer:`${details.familyEquipment.join(', ')}.`
+  }]:[]),
   ...(privateGarden?[{
     question:`Does ${c.name} have a private garden?`,
-    answer:`Yes. ${c.name} has its own ${privateGarden.toLowerCase()}.`
+    answer:details?.outdoorSpace
+      ? `Yes. ${c.name} has ${details.outdoorSpace.toLowerCase()}.`
+      : `Yes. ${c.name} has its own ${privateGarden.toLowerCase()}.`
   }]:[]),
   ...(parking?[{
     question:`Is parking available at ${c.name}?`,
-    answer:`Yes. ${parking}.`
+    answer:`Yes. ${details?.parking??parking}.`
   }]:[]),
   {
     question:`Is ${c.name} dog friendly?`,
@@ -65,22 +83,21 @@ const faqItems=[
 const propertyUrl=new URL(`/cottages/${c.slug}/`,site.url).toString();
 const imageUrls=c.gallery.map(item=>new URL(getImageMetadata(item.image).src,site.url).toString());
 const facilitiesText=c.facilities.join(' ');
-const bedDetailsByCottage:Record<string,Array<Record<string,unknown>>>={
-  honeysuckle:[
-    {'@type':'BedDetails',numberOfBeds:1,typeOfBed:'King'},
-    {'@type':'BedDetails',numberOfBeds:4,typeOfBed:'Single'}
-  ],
-  geranium:[
-    {'@type':'BedDetails',numberOfBeds:1,typeOfBed:'Double'},
-    {'@type':'BedDetails',numberOfBeds:2,typeOfBed:'Single'}
-  ]
-};
-const bedDetails=bedDetailsByCottage[c.slug]??[];
+const familyEquipmentText=(details?.familyEquipment??[]).join(' ');
+const bedDetails=(details?.bedTypes??[]).map(item=>({
+  '@type':'BedDetails',
+  numberOfBeds:item.count,
+  typeOfBed:item.type
+}));
 const amenityFeature=[
   {'@type':'LocationFeatureSpecification',name:'wifi',value:/wi-fi/i.test(facilitiesText)},
   ...(/free wi-fi/i.test(facilitiesText)?[{'@type':'LocationFeatureSpecification',name:'internetType',value:'Free'}]:[]),
+  {'@type':'LocationFeatureSpecification',name:'kitchen',value:/fully equipped kitchen/i.test(facilitiesText)},
+  {'@type':'LocationFeatureSpecification',name:'heating',value:/heating/i.test(facilitiesText)},
   {'@type':'LocationFeatureSpecification',name:'tv',value:/television/i.test(facilitiesText)},
   {'@type':'LocationFeatureSpecification',name:'washerDryer',value:/washing machine|dryer/i.test(facilitiesText)},
+  ...(/travel cot|crib/i.test(familyEquipmentText)?[{'@type':'LocationFeatureSpecification',name:'crib',value:true}]:[]),
+  ...(details?.familyEquipment?.length?[{'@type':'LocationFeatureSpecification',name:'childFriendly',value:true}]:[]),
   {'@type':'LocationFeatureSpecification',name:'petsAllowed',value:c.dogFriendly}
 ];
 const vacationRentalJsonLd={
@@ -149,6 +166,50 @@ const faqJsonLd={
         </div>
       </div>
     </header>
+
+    {details && (
+      <section class="section-tight cottage-details-section paper" aria-labelledby={`cottage-details-${c.slug}`}>
+        <div class="wrap">
+          <header class="section-heading cottage-details-heading">
+            <p class="eyebrow">At a glance</p>
+            <h2 id={`cottage-details-${c.slug}`}>{c.name} details</h2>
+          </header>
+
+          <dl class="cottage-details-grid">
+            <div><dt>Location</dt><dd>{details.location}</dd></div>
+            <div><dt>Sleeps</dt><dd>{c.sleeps} guests</dd></div>
+            <div><dt>Bedrooms</dt><dd>{c.bedrooms} · {details.bedroomLayout}</dd></div>
+            <div><dt>Bathrooms</dt><dd>{c.bathrooms} · {details.bathroomLayout}</dd></div>
+            <div><dt>Parking</dt><dd>{details.parking}</dd></div>
+            <div><dt>Outdoor space</dt><dd>{details.outdoorSpace}</dd></div>
+          </dl>
+
+          <div class="cottage-details-support">
+            {details.floorLayout?.length ? <article>
+              <h3>Layout</h3>
+              <div class="cottage-floor-layout">
+                {details.floorLayout.map(level=><div>
+                  <strong>{level.floor}</strong>
+                  <span>{level.rooms.join(' · ')}</span>
+                </div>)}
+              </div>
+            </article> : null}
+            <article>
+              <h3>Living space</h3>
+              <p>{details.livingSpace}</p>
+            </article>
+            {details.familyEquipment?.length ? <article>
+              <h3>Family equipment</h3>
+              <ul>{details.familyEquipment.map(item=><li>{item}</li>)}</ul>
+            </article> : null}
+            {details.nearby?.length ? <article>
+              <h3>Nearby</h3>
+              <ul>{details.nearby.map(item=><li>{item}</li>)}</ul>
+            </article> : null}
+          </div>
+        </div>
+      </section>
+    )}
 
     <div class="cottage-content-sections">
       {contentSections.map((section,index)=>{
@@ -320,6 +381,25 @@ const faqJsonLd={
 .cottage-focused-page .cottage-actions{margin-top:1.25rem!important}
 .cottage-focused-page .cottage-actions button.button{font:700 .9rem var(--body);cursor:pointer}
 
+.cottage-details-section{padding-block:clamp(2.4rem,4vw,3.5rem)!important;border-bottom:1px solid var(--line)}
+.cottage-details-heading{margin-bottom:1.4rem!important}
+.cottage-details-heading h2{font-size:clamp(2rem,3vw,2.7rem)}
+.cottage-details-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:0;border:1px solid var(--line);border-radius:.75rem;background:var(--cream);overflow:hidden}
+.cottage-details-grid>div{min-width:0;padding:1.05rem 1.2rem;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cottage-details-grid>div:nth-child(3n){border-right:0}
+.cottage-details-grid>div:nth-last-child(-n+3){border-bottom:0}
+.cottage-details-grid dt{margin:0 0 .28rem;color:var(--green);font-size:.76rem;font-weight:750;letter-spacing:.055em;text-transform:uppercase}
+.cottage-details-grid dd{margin:0;color:var(--ink);font-size:.93rem;line-height:1.5}
+.cottage-details-support{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1rem}
+.cottage-details-support article{padding:1.25rem 1.35rem;background:var(--paper);border:1px solid var(--line);border-radius:.75rem}
+.cottage-details-support h3{margin:0 0 .7rem;font:700 1rem var(--body);letter-spacing:0}
+.cottage-details-support p,.cottage-details-support li,.cottage-floor-layout span{color:var(--soft);font-size:.9rem;line-height:1.55}
+.cottage-details-support p{margin:0}
+.cottage-details-support ul{display:grid;gap:.35rem;margin:0;padding-left:1.1rem}
+.cottage-floor-layout{display:grid;gap:.65rem}
+.cottage-floor-layout>div{display:grid;gap:.18rem}
+.cottage-floor-layout strong{color:var(--ink);font-size:.87rem}
+
 .cottage-template-section{padding-block:clamp(2.8rem,5vw,4.5rem)!important}
 .cottage-template-grid{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:clamp(2rem,5vw,5.2rem);align-items:center;min-width:0}
 .cottage-template-copy{max-width:34rem;min-width:0}
@@ -390,6 +470,11 @@ const faqJsonLd={
 }
 
 @media(max-width:51.99rem){
+  .cottage-details-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cottage-details-grid>div{border-right:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important}
+  .cottage-details-grid>div:nth-child(2n){border-right:0!important}
+  .cottage-details-grid>div:nth-last-child(-n+2){border-bottom:0!important}
+  .cottage-details-support{grid-template-columns:minmax(0,1fr)}
   .cottage-quick-gallery-header{height:3.8rem;padding-left:1rem;padding-right:4.3rem}
   .cottage-quick-gallery-stage{height:calc(100dvh - 9rem)}
   .cottage-quick-gallery-slides img{max-height:calc(100dvh - 12rem)}
@@ -407,6 +492,9 @@ const faqJsonLd={
 }
 
 @media(max-width:30rem){
+  .cottage-details-grid{grid-template-columns:minmax(0,1fr)}
+  .cottage-details-grid>div{border-right:0!important;border-bottom:1px solid var(--line)!important}
+  .cottage-details-grid>div:last-child{border-bottom:0!important}
   .cottage-template-section{padding-block:2.15rem!important}
   .cottage-template-images{gap:.4rem}
   .cottage-template-images.count-2,.cottage-template-images.count-3,.cottage-template-images.count-4{grid-template-columns:repeat(2,minmax(0,1fr))}
