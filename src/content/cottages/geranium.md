@@ -16,6 +16,35 @@ heroMediaType: image
 heroImage: /src/assets/images/cottages/geranium/exterior.jpg
 heroAlt: The traditional granite exterior of Geranium Cottage at Les Buttes
 heroPan: false
+details:
+  location: St Pierre du Bois in south-west Guernsey, close to west-coast beaches,
+    cliff paths, quiet country lanes and village amenities.
+  bedroomLayout: One double bedroom and one twin bedroom
+  bathroomLayout: One family bathroom upstairs and one shower room downstairs
+  livingSpace: Fully equipped kitchen with dining area, sitting room and conservatory
+  parking: Parking beside the cottage
+  outdoorSpace: Private enclosed garden
+  bedTypes:
+    - type: Double
+      count: 1
+    - type: Single
+      count: 2
+  floorLayout:
+    - floor: Downstairs
+      rooms:
+        - Fully equipped kitchen and dining area
+        - Sitting room
+        - Conservatory
+        - Shower room
+    - floor: Upstairs
+      rooms:
+        - Double bedroom
+        - Twin bedroom
+        - Family bathroom
+  nearby:
+    - Village shop, pub and bus stops within walking distance
+    - West-coast beaches within easy reach
+    - Cliff paths and quiet country lanes nearby
 sections:
   - title: Character and comfort
     description: Geranium is a detached cottage arranged over two floors, with
