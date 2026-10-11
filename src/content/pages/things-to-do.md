@@ -34,7 +34,7 @@ sections:
         imageAlt: Petit Bot bay and the surrounding south-coast landscape
         icon: walk
         linkLabel: Plan a walk
-        linkUrl: https://www.visitguernsey.com/experiences/walking/
+        linkUrl: https://www.visitguernsey.com/experiences/hiking/
         external: true
       - title: St Peter Port
         text: Explore independent shops, harbourside restaurants, Castle Cornet and
@@ -43,7 +43,7 @@ sections:
         imageAlt: Guernsey coastline and island scenery
         icon: guernsey
         linkLabel: Explore St Peter Port
-        linkUrl: https://www.visitguernsey.com/experiences/culture-heritage/
+        linkUrl: https://www.visitguernsey.com/experiences/st-peter-port/
         external: true
       - title: Island history
         text: Discover prehistoric sites, fortifications and museums telling Guernsey’s
@@ -52,7 +52,7 @@ sections:
         imageAlt: Traditional Guernsey architecture at Les Buttes
         icon: history
         linkLabel: Discover Guernsey’s history
-        linkUrl: https://www.visitguernsey.com/experiences/culture-heritage/
+        linkUrl: https://www.visitguernsey.com/experiences/history/
         external: true
       - title: Neighbouring islands
         text: Take a day trip to Herm, Sark or Alderney for another perspective on the
@@ -61,7 +61,7 @@ sections:
         imageAlt: Guernsey coastline looking out to sea
         icon: islands
         linkLabel: Explore the islands
-        linkUrl: https://www.visitguernsey.com/islands/
+        linkUrl: https://www.visitguernsey.com/experiences/island-hopping/
         external: true
       - title: Local food
         text: Try seafood, island produce and rich dairy made from Guernsey cows.
@@ -88,6 +88,8 @@ sections:
     secondaryButtonLabel: Plan your Guernsey holiday
     secondaryButtonUrl: /guernsey-holidays/
     secondaryButtonExternal: false
+reviewAutoRotate: true
+reviewIntervalSeconds: 6.5
 seo:
   title: Things to Do in Guernsey | Les Buttes Holiday Cottages
   description: Explore Guernsey beaches, cliff walks, historic sites, St Peter
