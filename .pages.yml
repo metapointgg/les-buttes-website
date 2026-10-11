@@ -123,6 +123,7 @@ components:
                 - { value: walk, label: Walking }
                 - { value: guernsey, label: Guernsey }
                 - { value: history, label: History }
+                - { value: heart, label: Heart }
                 - { value: islands, label: Islands }
                 - { value: food, label: Food }
                 - { value: pin, label: Location }
@@ -181,7 +182,8 @@ components:
                 options:
                   values:
                     - { value: guests, label: People / organisation }
-                    - { value: history, label: Heritage / why it matters }
+                    - { value: history, label: Heritage / history }
+                    - { value: heart, label: Heart / why it matters }
                     - { value: garden, label: Garden / how we support }
                     - { value: pin, label: Location }
           - name: image

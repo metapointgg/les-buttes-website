@@ -106,7 +106,7 @@ sections:
               better services and funds research into treatments and ways to
               stop the condition.
           - heading: Why is the MS Society important to Les Buttes
-            icon: history
+            icon: heart
             text: >-
               Josephine lived with multiple sclerosis, so this cause is deeply
               personal to our family. We know first-hand how MS affects not
@@ -143,7 +143,7 @@ sections:
               that helps prepare them for release and life back in the
               community.
           - heading: Why is CLIP important to Les Buttes
-            icon: history
+            icon: heart
             text: >-
               This cause has a very personal connection for our family. Martin
               believed strongly in second chances. Through his building firm he
@@ -186,7 +186,7 @@ sections:
               work, with Crew members learning to grow, care for and sell
               plants while developing skills in a real working environment.
           - heading: Why is GROW important to Les Buttes
-            icon: history
+            icon: heart
             text: >-
               Our father, Martin, was Education Minister and secured the funding
               needed for the construction of Le Murier and Le Rondin schools.
@@ -223,7 +223,7 @@ sections:
               Bailiwick of Guernsey, as well as support for their families and
               carers.
           - heading: Why is Les Bourgs Hospice important to Les Buttes
-            icon: history
+            icon: heart
             text: >-
               The Hospice provided Mum, Josephine, with invaluable respite care
               and supported Dad, Martin, while he cared for her. The compassion
@@ -263,7 +263,7 @@ sections:
               Access Defibrillators, making life-saving equipment available in
               the community when it is needed.
           - heading: Why is the Cardiac Action Group important to Les Buttes
-            icon: history
+            icon: heart
             text: >-
               Martin lived with a heart condition for much of his life, so
               heart health is another cause with a strong personal connection
