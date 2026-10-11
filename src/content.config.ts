@@ -36,7 +36,7 @@ const sectionItem = z.object({
   text: z.string().optional(),
   image: z.string().optional(),
   imageAlt: z.string().optional(),
-  icon: z.enum(['arrow','bed','bath','guests','phone','mail','pin','external','menu','beach','walk','guernsey','history','islands','food','kitchen','living','garden','wifi']).optional(),
+  icon: z.enum(['arrow','bed','bath','guests','phone','mail','pin','external','menu','beach','walk','guernsey','history','heart','islands','food','kitchen','living','garden','wifi']).optional(),
   linkLabel: z.string().optional(),
   linkUrl: z.string().optional(),
   external: z.boolean().optional()
@@ -56,7 +56,7 @@ const detailCardItem = z.object({
   detailSections: z.array(z.object({
     heading: z.string(),
     text: z.string(),
-    icon: z.enum(['guests','history','garden','pin']).optional()
+    icon: z.enum(['guests','history','heart','garden','pin']).optional()
   })).optional(),
   date: z.string().optional(),
   location: z.string().optional(),
