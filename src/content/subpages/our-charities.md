@@ -38,33 +38,6 @@ sections:
     showCottagePreviewStrip: false
     buttonExternal: false
     secondaryButtonExternal: false
-  - enabled: true
-    type: cards
-    theme: cream
-    width: wide
-    eyebrow: Events
-    title: Fundraising events
-    text: From time to time we will take on fundraising challenges for causes that
-      mean something to our family. You can see what is coming up, find out why
-      we are doing it and support us if you would like to.
-    image: /src/assets/images/hackney-half-750x500jpeg.webp
-    imagePosition: left
-    showCottagePreviewStrip: false
-    buttonExternal: false
-    secondaryButtonExternal: false
-  - enabled: true
-    type: cards
-    theme: paper
-    width: wide
-    eyebrow: Causes
-    title: Causes we support
-    text: These organisations connect directly with our family's experience and the
-      values we want Les Buttes to carry forward. Select a cause to read more
-      about why it matters to us.
-    imagePosition: left
-    showCottagePreviewStrip: false
-    buttonExternal: false
-    secondaryButtonExternal: false
   - enabled: false
     type: text
     theme: green
