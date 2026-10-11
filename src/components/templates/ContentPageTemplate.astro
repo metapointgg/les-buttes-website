@@ -2,10 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageIntro from '../PageIntro.astro';
 import PageSections from '../PageSections.astro';
+import CharitySections from '../CharitySections.astro';
 
 interface Props { pageData:any }
 const {pageData:p}=Astro.props;
 const hasHero=Boolean(p.heroImage||p.heroVideo);
+const isCharitiesPage=p.slug==='our-charities';
+const charityIntroSections=isCharitiesPage?(p.sections??[]).slice(0,1):[];
+const charityRemainingSections=isCharitiesPage?(p.sections??[]).slice(1):[];
 const faqItems=(p.sections??[])
   .filter((section:any)=>section.enabled!==false&&section.type==='cards'&&/frequently asked questions/i.test(section.title??''))
   .flatMap((section:any)=>section.items??[])
@@ -43,5 +47,11 @@ const faqJsonLd=faqItems.length?{
   ) : (
     <div class="wrap"><PageIntro eyebrow={p.eyebrow} title={p.title} intro={p.intro}/></div>
   )}
-  <PageSections sections={p.sections}/>
+  {isCharitiesPage ? (
+    <>
+      <PageSections sections={charityIntroSections}/>
+      <CharitySections/>
+      <PageSections sections={charityRemainingSections}/>
+    </>
+  ) : <PageSections sections={p.sections}/>} 
 </BaseLayout>
