@@ -200,7 +200,7 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
                     }
                   </div>}
                   <div class="section-builder-detail-dialog-copy">
-                    {section.detailCardVariant === 'cause' ? <>
+                    {section.detailCardVariant === 'cause' && <div class="section-builder-cause-content">
                       <div class="section-builder-cause-header">
                         <div class="section-builder-cause-heading">
                           <p class="eyebrow">Cause we support</p>
@@ -215,27 +215,27 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
                         </div>}
                       </div>
 
-                      {item.detailSections?.length
-                        ? <div class="section-builder-cause-sections">
-                            {item.detailSections.map((detail:any)=><section class="section-builder-cause-detail">
-                              <span class="section-builder-cause-detail-icon"><Icon name={detail.icon ?? 'guests'} size={24}/></span>
-                              <div>
-                                <h3>{resolve(detail.heading)}</h3>
-                                {paragraphs(detail.text).map(text => <p>{text}</p>)}
-                              </div>
-                            </section>)}
+                      {item.detailSections?.length && <div class="section-builder-cause-sections">
+                        {item.detailSections.map((detail:any)=><section class="section-builder-cause-detail">
+                          <span class="section-builder-cause-detail-icon"><Icon name={detail.icon ?? 'guests'} size={24}/></span>
+                          <div>
+                            <h3>{resolve(detail.heading)}</h3>
+                            {paragraphs(detail.text).map(text => <p>{text}</p>)}
                           </div>
-                        : item.detailText && <div class="prose">{paragraphs(item.detailText).map(text => <p>{text}</p>)}</div>
-                      }
-                    </> : <>
+                        </section>)}
+                      </div>}
+                      {!item.detailSections?.length && item.detailText && <div class="prose">{paragraphs(item.detailText).map(text => <p>{text}</p>)}</div>}
+                    </div>}
+
+                    {section.detailCardVariant !== 'cause' && <div class="section-builder-event-content">
                       <p class="eyebrow">Fundraising event</p>
                       <h2 id={`${dialogId}-title`}>{resolve(item.title)}</h2>
                       {(item.date || item.location) && <div class="section-builder-event-meta dialog-meta">
                         {item.date && <span><strong>Date</strong>{resolve(item.date)}</span>}
                         {item.location && <span><strong>Location</strong>{resolve(item.location)}</span>}
                       </div>}
-                      {item.detailText && <div class="prose">{paragraphs(item.detailText).map(text => <p>{text}</p>)}</div>
-                    </>}
+                      {item.detailText && <div class="prose">{paragraphs(item.detailText).map(text => <p>{text}</p>)}</div>}
+                    </div>}
 
                     {(item.actionLabel && item.actionUrl) || (item.secondaryActionLabel && item.secondaryActionUrl) ? <div class="section-builder-detail-actions">
                       {item.actionLabel && item.actionUrl && <a class="button" href={resolve(item.actionUrl)} {...externalAttrs(item.actionExternal)}>{resolve(item.actionLabel)}<Icon name={item.actionExternal?'external':'arrow'} size={18}/></a>}
