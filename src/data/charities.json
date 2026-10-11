@@ -192,5 +192,34 @@
         "secondaryActionExternal": true
       }
     ]
+  },
+  "legacy": {
+    "eyebrow": "Why these causes matter to us",
+    "title": "A legacy of community, care and second chances",
+    "intro": "Martin and Josephine built Les Buttes, raised their family here and were deeply rooted in Guernsey life. Their experiences shaped the causes we support today — from health and care to giving people a second chance.",
+    "quote": "Mum and Dad were at the heart of the community. Their home was an open door for anyone who needed support. They believed in the importance of doing the right thing and in always giving people a second chance.",
+    "quoteAttribution": "The Les Buttes family",
+    "cards": [
+      {
+        "title": "Our parents",
+        "text": "Martin and Josephine built Les Buttes and were deeply rooted in Guernsey life.",
+        "icon": "home"
+      },
+      {
+        "title": "Health",
+        "text": "Josephine lived with multiple sclerosis, while Martin had a heart condition for much of his life.",
+        "icon": "heart"
+      },
+      {
+        "title": "Care",
+        "text": "Les Bourgs Hospice provided Mum with invaluable respite care and support, giving Dad vital help as her carer.",
+        "icon": "guests"
+      },
+      {
+        "title": "Second chances",
+        "text": "Martin believed strongly in giving people another chance and supported rehabilitation and life after prison.",
+        "icon": "garden"
+      }
+    ]
   }
 }

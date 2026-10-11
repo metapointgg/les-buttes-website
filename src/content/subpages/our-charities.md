@@ -13,31 +13,6 @@ heroImage: /src/assets/images/history/mum-and-dad-bench.jpg
 heroAlt: Martin and Josephine Ozanne together in the garden at Les Buttes
 heroPan: false
 sections:
-  - enabled: true
-    type: text
-    theme: paper
-    width: narrow
-    eyebrow: Why these causes matter to us
-    title: A legacy of community, care and second chances
-    text: >-
-      Martin and Josephine restored Les Buttes, raised their family here and
-      were deeply rooted in Guernsey life. Mum lived with multiple sclerosis,
-      while Dad lived with a heart condition for much of his life. Les Bourgs
-      Hospice provided Mum with invaluable respite care and, in doing so, gave
-      Dad vital support as her carer.
-
-      Dad also believed strongly in giving people another chance. Through his
-      building firm he supported people returning to the community after prison,
-      including by offering employment, and his work as a prison inspector kept
-      him closely connected with rehabilitation and life after release.
-
-      The causes on this page are therefore personal to us. They reflect people
-      and organisations whose work connects directly with our family's
-      experience and with the values we want Les Buttes to carry forward.
-    imagePosition: left
-    showCottagePreviewStrip: false
-    buttonExternal: false
-    secondaryButtonExternal: false
   - enabled: false
     type: text
     theme: green
