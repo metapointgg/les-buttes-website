@@ -1,5 +1,6 @@
 ---
 import PageSections from './PageSections.astro';
+import CharityLegacy from './CharityLegacy.astro';
 import charityData from '../data/charities.json';
 
 const events = {
@@ -26,4 +27,5 @@ const causes = {
   detailItems: (charityData.causes.items ?? []).filter((item:any)=>item.enabled !== false)
 };
 ---
+<CharityLegacy />
 <PageSections sections={[events,causes]} />
