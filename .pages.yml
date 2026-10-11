@@ -420,6 +420,101 @@ content:
       - { name: sections, component: pageSections }
       - { name: seo, component: seo }
 
+  - name: charities
+    label: Our charities
+    type: file
+    path: src/data/charities.json
+    format: json
+    fields:
+      - name: events
+        label: Fundraising events
+        type: object
+        fields:
+          - { name: eyebrow, label: Small heading, type: string, default: Events }
+          - { name: title, label: Section heading, type: string, required: true }
+          - { name: text, label: Section introduction, type: text }
+          - name: items
+            label: Event cards
+            description: Add, remove and reorder fundraising events.
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{title}" } }
+            fields:
+              - { name: enabled, label: Show event, type: boolean, default: true }
+              - { name: title, label: Event title, type: string, required: true }
+              - { name: summary, label: Card summary, type: text, required: true }
+              - { name: detailText, label: Pop-up details, type: text, required: true }
+              - name: image
+                label: Event image
+                type: image
+                options: { media: images }
+              - { name: imageUrl, label: Temporary external image URL, type: string }
+              - { name: imageAlt, label: Image description, type: text }
+              - { name: date, label: Event date, type: string }
+              - { name: location, label: Event location, type: string }
+              - { name: actionLabel, label: Primary button label, type: string }
+              - { name: actionUrl, label: Primary button URL, type: string }
+              - { name: actionExternal, label: Open primary link in new tab, type: boolean, default: true }
+              - { name: secondaryActionLabel, label: Secondary link label, type: string }
+              - { name: secondaryActionUrl, label: Secondary link URL, type: string }
+              - { name: secondaryActionExternal, label: Open secondary link in new tab, type: boolean, default: true }
+
+      - name: causes
+        label: Causes we support
+        type: object
+        fields:
+          - { name: eyebrow, label: Small heading, type: string, default: Causes }
+          - { name: title, label: Section heading, type: string, required: true }
+          - { name: text, label: Section introduction, type: text }
+          - name: items
+            label: Charity cards
+            description: Add, remove, reorder or amend the charities shown in Causes we support.
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{title}" } }
+            fields:
+              - { name: enabled, label: Show charity, type: boolean, default: true }
+              - { name: title, label: Charity name, type: string, required: true }
+              - { name: summary, label: Card summary, description: Short text shown on the card before the pop-up opens., type: text, required: true }
+              - { name: tagline, label: Pop-up strapline, type: text }
+              - name: image
+                label: Card / pop-up image
+                description: Preferred image. This takes priority over the temporary external image URL.
+                type: image
+                options: { media: images }
+              - { name: imageUrl, label: Temporary external image URL, type: string }
+              - { name: imageAlt, label: Image description, type: text }
+              - name: logo
+                label: Charity logo
+                description: Optional authorised logo file.
+                type: image
+                options: { media: images }
+              - { name: logoUrl, label: Temporary external logo URL, type: string }
+              - { name: logoAlt, label: Logo description, type: text }
+              - name: detailSections
+                label: Pop-up sections
+                description: Add, remove or reorder the Who / Why / How sections shown in the charity pop-up.
+                type: object
+                list: { collapsible: { collapsed: true, summary: "{heading}" } }
+                fields:
+                  - { name: heading, label: Section heading, type: string, required: true }
+                  - { name: text, label: Section text, type: text, required: true }
+                  - name: icon
+                    label: Icon
+                    type: select
+                    default: guests
+                    options:
+                      values:
+                        - { value: guests, label: People / organisation }
+                        - { value: heart, label: Heart / why it matters }
+                        - { value: garden, label: Garden / how we support }
+                        - { value: history, label: Heritage / history }
+                        - { value: pin, label: Location }
+              - { name: actionLabel, label: Primary button label, type: string }
+              - { name: actionUrl, label: Primary button URL, type: string }
+              - { name: actionExternal, label: Open primary link in new tab, type: boolean, default: true }
+              - { name: secondaryActionLabel, label: Secondary link label, type: string }
+              - { name: secondaryActionUrl, label: Secondary link URL, type: string }
+              - { name: secondaryActionExternal, label: Open secondary link in new tab, type: boolean, default: true }
+
   - name: footer
     label: Footer
     type: file
