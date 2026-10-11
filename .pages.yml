@@ -157,7 +157,33 @@ components:
         fields:
           - { name: title, label: Title, type: string, required: true }
           - { name: summary, label: Card summary, description: Keep this short. The longer story belongs in Details., type: text, required: true }
-          - { name: detailText, label: Details, description: Full text shown in the pop-up / mobile detail view., type: text, required: true }
+          - { name: detailText, label: Details, description: Optional fallback long text shown in the pop-up / mobile detail view., type: text }
+          - { name: tagline, label: Modal strapline, description: Optional short line shown beneath the charity name in the pop-up., type: text }
+          - name: logo
+            label: Charity logo
+            description: Optional logo shown in the pop-up header.
+            type: image
+            options: { media: images }
+          - { name: logoUrl, label: Temporary external logo URL, description: Optional temporary logo from the charity's official website. A local Charity logo takes priority., type: string }
+          - { name: logoAlt, label: Charity logo description, type: text }
+          - name: detailSections
+            label: Structured modal sections
+            description: Optional. Use these for the clearer Who / Why / How structure shown in charity pop-ups.
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{heading}" } }
+            fields:
+              - { name: heading, label: Section heading, type: string, required: true }
+              - { name: text, label: Section text, type: text, required: true }
+              - name: icon
+                label: Section icon
+                type: select
+                default: guests
+                options:
+                  values:
+                    - { value: guests, label: People / organisation }
+                    - { value: history, label: Heritage / why it matters }
+                    - { value: garden, label: Garden / how we support }
+                    - { value: pin, label: Location }
           - name: image
             label: Card image
             description: Preferred. Upload or select an image from the Les Buttes media library.
@@ -166,7 +192,6 @@ components:
           - { name: imageUrl, label: Temporary external image URL, description: Optional temporary image from an official charity website. A local Card image takes priority., type: string }
           - { name: imageAlt, label: Image description, type: text }
           - { name: date, label: Event date, description: Event cards only., type: string }
-          - { name: time, label: Event time, description: Event cards only. Use 'To be confirmed' if an exact time is not yet published., type: string }
           - { name: location, label: Event location, description: Event cards only., type: string }
           - { name: actionLabel, label: Primary action label, type: string }
           - { name: actionUrl, label: Primary action URL, type: string }
