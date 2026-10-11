@@ -36,7 +36,7 @@ sections:
       experience and with the values we want Les Buttes to carry forward.
 
   - enabled: true
-    type: detailCards
+    type: cards
     detailCardVariant: event
     theme: cream
     width: wide
@@ -74,7 +74,7 @@ sections:
         secondaryActionExternal: true
 
   - enabled: true
-    type: detailCards
+    type: cards
     detailCardVariant: cause
     theme: paper
     width: wide

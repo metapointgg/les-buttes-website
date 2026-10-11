@@ -63,7 +63,7 @@ const detailCardItem = z.object({
 
 const pageSection = z.object({
   enabled: z.boolean().optional(),
-  type: z.enum(['text','feature','image','cards','iconCards','detailCards','featureStrip','list','gallery','quote','splitQuote','cottageListing','cta','map','notice','steps','locationMap','reviews']),
+  type: z.enum(['text','feature','image','cards','iconCards','featureStrip','list','gallery','quote','splitQuote','cottageListing','cta','map','notice','steps','locationMap','reviews']),
   theme: z.enum(['auto','cream','paper','green']).optional(),
   width: z.enum(['narrow','standard','wide']).optional(),
   eyebrow: z.string().optional(),

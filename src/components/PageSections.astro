@@ -157,7 +157,7 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
     </section>
   );
 
-  if(section.type === 'detailCards') return (
+  if(section.type === 'cards' && section.detailItems?.length) return (
     <section class:list={['section',theme,'section-builder-detail-section',section.detailCardVariant === 'event' && 'is-events']}>
       <div class:list={['wrap',width]}>
         <header class="section-heading">
