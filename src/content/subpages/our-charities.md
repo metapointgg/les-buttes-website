@@ -125,6 +125,30 @@ sections:
         actionUrl: https://www.clip.org.gg/
         actionExternal: true
 
+      - title: GROW Limited
+        summary: Supporting adults with learning disabilities through meaningful work, training and horticulture — with GROW's flowers becoming part of the Les Buttes gardens.
+        detailText: >-
+          GROW Limited has supported adults with learning disabilities and
+          difficulties in Guernsey since 1984, helping people build confidence,
+          life skills and independence through occupational training and
+          mentoring. Horticulture remains at the heart of its work, with Crew
+          members learning to grow, care for and sell plants while developing
+          skills in a real working environment.
+
+          We are delighted that GROW will also be supplying the hanging baskets
+          and window boxes around Les Buttes. Their planting will bring colour
+          to the cottages and gardens for our guests to enjoy, while giving us
+          another practical way to support an organisation whose work is rooted
+          in inclusion, purpose and the Guernsey community.
+
+          We will replace this temporary image with photographs of the baskets
+          and window boxes at Les Buttes once they are in place.
+        imageUrl: https://www.grow.gg/media/jq3plxz1/premises-banner.png?format=webp&height=600&rnd=133722104265800000&width=800
+        imageAlt: GROW Limited's vinery and horticulture site in Guernsey
+        actionLabel: Visit GROW
+        actionUrl: https://grow.gg/
+        actionExternal: true
+
       - title: Les Bourgs Hospice
         summary: Compassionate hospice and respite care for people across the Bailiwick, with support for their families and carers.
         detailText: >-
@@ -177,7 +201,7 @@ sections:
 
 seo:
   title: Our Charities | Les Buttes Holiday Cottages, Guernsey
-  description: How the Ozanne family supports MS charities, CLIP Guernsey, Les
-    Bourgs Hospice and the Cardiac Action Group, plus current fundraising
+  description: How the Ozanne family supports MS charities, CLIP Guernsey, GROW,
+    Les Bourgs Hospice and the Cardiac Action Group, plus current fundraising
     events.
 ---
