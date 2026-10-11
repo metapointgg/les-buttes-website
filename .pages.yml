@@ -47,7 +47,6 @@ components:
             - { value: image, label: Single image }
             - { value: cards, label: Cards }
             - { value: iconCards, label: Icon cards }
-            - { value: detailCards, label: Detail cards / modal cards }
             - { value: featureStrip, label: Feature strip }
             - { value: splitQuote, label: Split text and quote }
             - { value: cottageListing, label: Available cottage listing }
@@ -143,7 +142,7 @@ components:
           - { name: external, label: Open link in new tab, type: boolean, default: false }
       - name: detailCardVariant
         label: Detail card style
-        description: Used by Detail cards / modal cards sections.
+        description: Optional. Turns a standard Cards section into event or cause cards with a detail pop-up.
         type: select
         default: cause
         options:
@@ -151,8 +150,8 @@ components:
             - { value: event, label: Event cards }
             - { value: cause, label: Cause cards }
       - name: detailItems
-        label: Event / cause cards
-        description: Compact cards that open a larger detail panel when selected.
+        label: Event / cause detail cards
+        description: Optional content for a Cards section. When populated, these compact cards open a larger detail panel when selected.
         type: object
         list: { collapsible: { collapsed: true, summary: "{title}" } }
         fields:
