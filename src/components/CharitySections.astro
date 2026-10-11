@@ -1,0 +1,29 @@
+---
+import PageSections from './PageSections.astro';
+import charityData from '../data/charities.json';
+
+const events = {
+  enabled: true,
+  type: 'cards',
+  detailCardVariant: 'event',
+  theme: 'cream',
+  width: 'wide',
+  eyebrow: charityData.events.eyebrow,
+  title: charityData.events.title,
+  text: charityData.events.text,
+  detailItems: (charityData.events.items ?? []).filter((item:any)=>item.enabled !== false)
+};
+
+const causes = {
+  enabled: true,
+  type: 'cards',
+  detailCardVariant: 'cause',
+  theme: 'paper',
+  width: 'wide',
+  eyebrow: charityData.causes.eyebrow,
+  title: charityData.causes.title,
+  text: charityData.causes.text,
+  detailItems: (charityData.causes.items ?? []).filter((item:any)=>item.enabled !== false)
+};
+---
+<PageSections sections={[events,causes]} />
