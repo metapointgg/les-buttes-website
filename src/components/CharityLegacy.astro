@@ -1,5 +1,4 @@
 ---
-import Icon from './Icon.astro';
 import charityData from '../data/charities.json';
 
 const legacy=charityData.legacy;
@@ -20,16 +19,6 @@ const legacy=charityData.legacy;
           {legacy.quoteAttribution && <p>{legacy.quoteAttribution}</p>}
         </aside>
       </div>
-
-      {legacy.cards?.length > 0 && (
-        <div class="charity-legacy-cards">
-          {legacy.cards.map((card:any)=><article class="charity-legacy-card">
-            <span class="charity-legacy-icon"><Icon name={card.icon ?? 'heart'} size={25}/></span>
-            <h3>{card.title}</h3>
-            <p>{card.text}</p>
-          </article>)}
-        </div>
-      )}
     </div>
   </section>
 )}
@@ -47,18 +36,11 @@ const legacy=charityData.legacy;
 .charity-legacy-quote blockquote{margin:.35rem 0 1.5rem;color:var(--ink);font:italic 500 clamp(1.25rem,2vw,1.75rem)/1.42 var(--display)}
 .charity-legacy-quote>p{display:flex;align-items:center;gap:.8rem;margin:0;color:var(--green);font-size:.72rem;font-weight:750;letter-spacing:.2em;text-transform:uppercase}
 .charity-legacy-quote>p::before{content:"";width:2.7rem;height:1px;background:var(--line)}
-.charity-legacy-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:clamp(2.2rem,5vw,3.8rem)}
-.charity-legacy-card{padding:1.4rem 1.45rem 1.55rem;border:1px solid var(--line);border-radius:.6rem;background:rgba(255,255,255,.25)}
-.charity-legacy-icon{display:grid;width:3.7rem;height:3.7rem;margin-bottom:1rem;place-items:center;color:var(--green);background:#e9efe3;border-radius:50%}
-.charity-legacy-card h3{margin:0 0 .55rem;font:600 clamp(1.35rem,2vw,1.75rem)/1.15 var(--display);letter-spacing:-.015em}
-.charity-legacy-card p{margin:0;color:var(--soft);font-size:.95rem;line-height:1.55}
 @media(min-width:64rem){
   .charity-legacy-top{grid-template-columns:minmax(0,1.18fr) minmax(20rem,.82fr)}
-  .charity-legacy-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media(max-width:35rem){
   .charity-legacy-section{padding-top:3rem;padding-bottom:3.5rem}
   .charity-legacy-copy h2{font-size:clamp(2.35rem,12vw,3.2rem)}
-  .charity-legacy-cards{grid-template-columns:1fr}
 }
 </style>
