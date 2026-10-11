@@ -47,6 +47,7 @@ components:
             - { value: image, label: Single image }
             - { value: cards, label: Cards }
             - { value: iconCards, label: Icon cards }
+            - { value: detailCards, label: Detail cards / modal cards }
             - { value: featureStrip, label: Feature strip }
             - { value: splitQuote, label: Split text and quote }
             - { value: cottageListing, label: Available cottage listing }
@@ -140,6 +141,40 @@ components:
           - { name: linkLabel, label: Link label, type: string }
           - { name: linkUrl, label: Link URL, type: string }
           - { name: external, label: Open link in new tab, type: boolean, default: false }
+      - name: detailCardVariant
+        label: Detail card style
+        description: Used by Detail cards / modal cards sections.
+        type: select
+        default: cause
+        options:
+          values:
+            - { value: event, label: Event cards }
+            - { value: cause, label: Cause cards }
+      - name: detailItems
+        label: Event / cause cards
+        description: Compact cards that open a larger detail panel when selected.
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{title}" } }
+        fields:
+          - { name: title, label: Title, type: string, required: true }
+          - { name: summary, label: Card summary, description: Keep this short. The longer story belongs in Details., type: text, required: true }
+          - { name: detailText, label: Details, description: Full text shown in the pop-up / mobile detail view., type: text, required: true }
+          - name: image
+            label: Card image
+            description: Preferred. Upload or select an image from the Les Buttes media library.
+            type: image
+            options: { media: images }
+          - { name: imageUrl, label: Temporary external image URL, description: Optional temporary image from an official charity website. A local Card image takes priority., type: string }
+          - { name: imageAlt, label: Image description, type: text }
+          - { name: date, label: Event date, description: Event cards only., type: string }
+          - { name: time, label: Event time, description: Event cards only. Use 'To be confirmed' if an exact time is not yet published., type: string }
+          - { name: location, label: Event location, description: Event cards only., type: string }
+          - { name: actionLabel, label: Primary action label, type: string }
+          - { name: actionUrl, label: Primary action URL, type: string }
+          - { name: actionExternal, label: Open primary action in new tab, type: boolean, default: true }
+          - { name: secondaryActionLabel, label: Secondary action label, type: string }
+          - { name: secondaryActionUrl, label: Secondary action URL, type: string }
+          - { name: secondaryActionExternal, label: Open secondary action in new tab, type: boolean, default: true }
       - { name: listItems, label: List items, type: string, list: true }
       - name: galleryImages
         label: Gallery images
