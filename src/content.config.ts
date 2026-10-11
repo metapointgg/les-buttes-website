@@ -45,12 +45,20 @@ const sectionItem = z.object({
 const detailCardItem = z.object({
   title: z.string(),
   summary: z.string(),
-  detailText: z.string(),
+  detailText: z.string().optional(),
+  tagline: z.string().optional(),
   image: z.string().optional(),
   imageUrl: z.string().url().optional(),
   imageAlt: z.string().optional(),
+  logo: z.string().optional(),
+  logoUrl: z.string().url().optional(),
+  logoAlt: z.string().optional(),
+  detailSections: z.array(z.object({
+    heading: z.string(),
+    text: z.string(),
+    icon: z.enum(['guests','history','garden','pin']).optional()
+  })).optional(),
   date: z.string().optional(),
-  time: z.string().optional(),
   location: z.string().optional(),
   actionLabel: z.string().optional(),
   actionUrl: z.string().optional(),
