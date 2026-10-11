@@ -42,9 +42,28 @@ const sectionItem = z.object({
   external: z.boolean().optional()
 });
 
+const detailCardItem = z.object({
+  title: z.string(),
+  summary: z.string(),
+  detailText: z.string(),
+  image: z.string().optional(),
+  imageUrl: z.string().url().optional(),
+  imageAlt: z.string().optional(),
+  date: z.string().optional(),
+  time: z.string().optional(),
+  location: z.string().optional(),
+  actionLabel: z.string().optional(),
+  actionUrl: z.string().optional(),
+  actionExternal: z.boolean().optional(),
+  secondaryActionLabel: z.string().optional(),
+  secondaryActionUrl: z.string().optional(),
+  secondaryActionExternal: z.boolean().optional()
+});
+
+
 const pageSection = z.object({
   enabled: z.boolean().optional(),
-  type: z.enum(['text','feature','image','cards','iconCards','featureStrip','list','gallery','quote','splitQuote','cottageListing','cta','map','notice','steps','locationMap','reviews']),
+  type: z.enum(['text','feature','image','cards','iconCards','detailCards','featureStrip','list','gallery','quote','splitQuote','cottageListing','cta','map','notice','steps','locationMap','reviews']),
   theme: z.enum(['auto','cream','paper','green']).optional(),
   width: z.enum(['narrow','standard','wide']).optional(),
   eyebrow: z.string().optional(),
@@ -58,6 +77,8 @@ const pageSection = z.object({
   autoRotate: z.boolean().optional(),
   reviews: z.array(reviewItem).optional(),
   items: z.array(sectionItem).optional(),
+  detailCardVariant: z.enum(['event','cause']).optional(),
+  detailItems: z.array(detailCardItem).optional(),
   listItems: z.array(z.string()).optional(),
   galleryImages: z.array(z.object({
     image:z.string(),
