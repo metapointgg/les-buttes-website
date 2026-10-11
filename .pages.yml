@@ -366,6 +366,35 @@ content:
     path: src/data/charities.json
     format: json
     fields:
+      - name: legacy
+        label: Legacy introduction
+        type: object
+        fields:
+          - { name: eyebrow, label: Small heading, type: string, default: Why these causes matter to us }
+          - { name: title, label: Main heading, type: string, required: true }
+          - { name: intro, label: Short introduction, type: text, required: true }
+          - { name: quote, label: Family quote, type: text, required: true }
+          - { name: quoteAttribution, label: Quote attribution, type: string, default: The Les Buttes family }
+          - name: cards
+            label: Legacy summary cards
+            description: Add, remove or reorder the short cards beneath the legacy introduction.
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{title}" } }
+            fields:
+              - { name: title, label: Card heading, type: string, required: true }
+              - { name: text, label: Card text, type: text, required: true }
+              - name: icon
+                label: Icon
+                type: select
+                default: heart
+                options:
+                  values:
+                    - { value: home, label: Home }
+                    - { value: heart, label: Heart }
+                    - { value: guests, label: People / care }
+                    - { value: garden, label: Leaf / second chances }
+                    - { value: history, label: Heritage }
+                    - { value: pin, label: Location }
       - name: events
         label: Fundraising events
         type: object
