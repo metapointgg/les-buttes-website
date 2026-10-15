@@ -55,3 +55,26 @@
     text-wrap: pretty;
   }
 }
+
+/* Hero TITLE typography (separate from the introductory lede).
+   The original 9–13ch limits made relatively short titles span three lines. */
+@media (min-width: 64rem) {
+  .page-home .home-hero-copy {
+    width: min(100%, 56rem) !important;
+  }
+  .page-home .home-hero-copy h1,
+  .page-intro-content h1,
+  .page-cottages .page-intro-content h1 {
+    max-width: 25ch !important;
+    text-wrap: balance;
+  }
+  .page-intro-content {
+    max-width: 58rem;
+  }
+  .cottage-editorial-copy h1,
+  .page-cottages-geranium .cottage-editorial-copy h1,
+  .page-cottages-honeysuckle .cottage-editorial-copy h1 {
+    max-width: 25ch !important;
+    text-wrap: balance;
+  }
+}
