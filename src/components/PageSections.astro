@@ -271,12 +271,12 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
             {item.text && <p>{resolve(item.text)}</p>}
             {item.linkLabel && item.linkUrl && (
               section.type === 'iconCards'
-                ? <a class="section-builder-pill" href={resolve(item.linkUrl)} {...externalAttrs(item.external)}><span>{resolve(item.linkLabel)}</span>{(item.icon || item.external) && <span class="section-builder-pill-icon"><Icon name={item.icon ?? 'external'} size={19}/></span>}</a>
+                ? <a class="section-builder-pill" href={resolve(item.linkUrl)} {...externalAttrs(item.external)}><span>{resolve(item.linkLabel)}</span>{(item.external || (item.icon && item.icon !== 'arrow')) && <span class="section-builder-pill-icon"><Icon name={item.external ? 'external' : item.icon} size={19}/></span>}</a>
                 : <a class="text-link" href={resolve(item.linkUrl)} {...externalAttrs(item.external)}>{resolve(item.linkLabel)}<Icon name={item.external?'external':'arrow'} size={17}/></a>
             )}
           </div>
         </article>)}</div>}
-        {section.buttonLabel && section.buttonUrl && <div class="section-builder-section-action"><a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}<Icon name={section.buttonExternal?'external':'arrow'} size={18}/></a></div>}
+        {section.buttonLabel && section.buttonUrl && <div class="section-builder-section-action"><a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}{section.buttonExternal && <Icon name="external" size={18}/>} </a></div>}
       </div>
     </section>
   );
@@ -358,7 +358,7 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
         {section.eyebrow && <p class={eyebrowClass}>{resolve(section.eyebrow)}</p>}
         <h2>{resolve(section.title)}</h2>
         <div class="prose">{paragraphs(section.text).map(text => <p>{text}</p>)}</div>
-        {section.buttonLabel && section.buttonUrl && <a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}<Icon name={section.buttonExternal?'external':'arrow'} size={18}/></a>}
+        {section.buttonLabel && section.buttonUrl && <a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}{section.buttonExternal && <Icon name="external" size={18}/>} </a>}
       </div>
     </section>
   );
