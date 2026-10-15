@@ -14,7 +14,7 @@ sections:
     width: wide
     eyebrow: Get in touch
     title: Speak to the family at Les Buttes
-    text: For general questions, email or telephone us. If you already have a reservation, Airbnb messaging is usually the quickest way to contact us about your stay.
+    text: For general questions, email us. If you already have a reservation, Airbnb messaging is usually the quickest way to contact us about your stay.
     image: /src/assets/images/les-buttes-about-hero.jpg
     imageAlt: The historic Les Buttes farmhouse in St Pierre du Bois
     imagePosition: right
@@ -29,11 +29,6 @@ sections:
         icon: mail
         linkLabel: "{{email}}"
         linkUrl: "mailto:{{email}}"
-      - title: Call us
-        text: Speak to us directly if you would prefer to talk.
-        icon: phone
-        linkLabel: "{{telephoneDisplay}}"
-        linkUrl: "tel:{{telephoneHref}}"
       - title: Find Les Buttes
         text: St Pierre du Bois, Guernsey.
         icon: pin
