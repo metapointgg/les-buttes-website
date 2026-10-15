@@ -32,12 +32,6 @@
       "title": "Contact",
       "items": [
         {
-          "label": "+44 (0)1481 266363",
-          "url": "tel:+441481266363",
-          "icon": "phone",
-          "external": false
-        },
-        {
           "label": "info@lesbuttes.com",
           "url": "mailto:info@lesbuttes.com",
           "icon": "mail",
