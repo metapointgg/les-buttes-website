@@ -1,0 +1,57 @@
+/* Desktop heading balance. Keep CMS wording and mobile wrapping intact. */
+@media (min-width: 64rem) {
+  /* Hero introductions are the supporting text, not the main hero title. */
+  .page-intro-content .lede {
+    max-width: 56ch !important;
+    text-wrap: balance;
+  }
+  .page-home .home-hero-copy .lede {
+    max-width: 46ch !important;
+    text-wrap: balance;
+  }
+
+  /* Remove historic narrow character limits that split section headings
+     unnecessarily across three or more lines. */
+  .section-heading h2,
+  .home-sections .section-heading h2,
+  .page-home .home-sections .section:has(.section-builder-card-grid-icons) .section-heading h2,
+  .cottage-facilities-heading h2 {
+    max-width: 27ch !important;
+    text-wrap: balance;
+  }
+  .section-builder-copy h2,
+  .page-about .section-builder-copy h2,
+  .home-sections .section.green .section-builder-copy h2 {
+    max-width: 27ch !important;
+    text-wrap: balance;
+  }
+
+  /* The homepage's first feature has a deliberate CMS line break.
+     Honour it on desktop, while widening the copy area so the second
+     sentence does not wrap into a third line. */
+  .page-home .home-sections .section:first-child .section-builder-copy h2 {
+    max-width: none !important;
+    white-space: pre-line !important;
+    text-wrap: auto;
+  }
+
+  /* Retain the existing one-line booking-panel heading. */
+  .page-home #main-content > .callout h2 {
+    white-space: nowrap !important;
+  }
+
+  /* Footer statement: quieter than the main page and section headings. */
+  .page-home .site-footer .footer-intro h2 {
+    font-size: clamp(1.85rem, 2.35vw, 2.3rem) !important;
+    line-height: 1.12 !important;
+  }
+}
+
+/* At tablet and phone widths let available space determine wrapping. */
+@media (max-width: 63.99rem) {
+  .section-heading h2,
+  .section-builder-copy h2,
+  .page-intro-content .lede {
+    text-wrap: pretty;
+  }
+}
