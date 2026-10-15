@@ -2,7 +2,6 @@
 import type { CollectionEntry } from 'astro:content';
 import ResponsiveImage from './ResponsiveImage.astro';
 import CottageStats from './CottageStats.astro';
-import Icon from './Icon.astro';
 
 interface Props {
   cottage: CollectionEntry<'cottages'>;
@@ -48,7 +47,7 @@ const comparisonCues = c.slug === 'geranium'
         <span class="cottage-card-view-label-desktop">{showPreviewStrip ? `View ${c.name}` : 'View cottage'}</span>
         <span class="cottage-card-view-label-mobile">View cottage</span>
       </a>
-      {showPreviewStrip && c.airbnbUrl && <a class="button cottage-card-button cottage-card-book-button" href={c.airbnbUrl} target="_blank" rel="noopener">Book<Icon name="external" size={18}/></a>}
+      {showPreviewStrip && c.airbnbUrl && <a class="button cottage-card-button cottage-card-book-button" href={c.airbnbUrl} target="_blank" rel="noopener">Book</a>}
     </div>
   </div>
   {showPreviewStrip && previewImages.length > 0 && (
@@ -106,10 +105,5 @@ const comparisonCues = c.slug === 'geranium'
   }
   .cottage-card-view-label-desktop{display:none}
   .cottage-card-view-label-mobile{display:inline}
-  :global(.page-cottages) .cottage-card-comparison .cottage-card-button :global(svg){
-    width:15px;
-    height:15px;
-    flex:0 0 auto;
-  }
 }
 </style>
