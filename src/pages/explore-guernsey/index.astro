@@ -46,8 +46,8 @@ const cta:any=sections.find(section=>section.type==='cta'&&section.enabled!==fal
         {cta.text&&<p>{cta.text}</p>}
       </div>
       <div class="explore-reference-close-actions">
-        <a class="button button-light" href={cta.buttonUrl??'/cottages/'}>{cta.buttonLabel??'Explore our cottages'}<Icon name="arrow" size={18}/></a>
-        {cta.secondaryButtonLabel&&cta.secondaryButtonUrl&&<a class="button button-outline" href={cta.secondaryButtonUrl}>{cta.secondaryButtonLabel}<Icon name="arrow" size={18}/></a>}
+        <a class="button button-light" href={cta.buttonUrl??'/cottages/'}>{cta.buttonLabel??'Explore our cottages'}</a>
+        {cta.secondaryButtonLabel&&cta.secondaryButtonUrl&&<a class="button button-outline" href={cta.secondaryButtonUrl}>{cta.secondaryButtonLabel}</a>}
       </div>
     </div>
   </section>}

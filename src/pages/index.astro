@@ -5,7 +5,6 @@ import HeroMedia from '../components/HeroMedia.astro';
 import PageSections from '../components/PageSections.astro';
 import ReviewsCarousel from '../components/ReviewsCarousel.astro';
 import Callout from '../components/Callout.astro';
-import Icon from '../components/Icon.astro';
 import newsletter from '../data/newsletter.json';
 
 const page = await getEntry('pages','home');
@@ -33,7 +32,7 @@ if (!page) throw new Error('Missing home');
         <p class="lede">{page.data.intro}</p>
         <div class="hero-actions">
           {page.data.heroPrimaryLabel && page.data.heroPrimaryUrl && (
-            <a class="button button-light" href={page.data.heroPrimaryUrl}>{page.data.heroPrimaryLabel}<Icon name="arrow" size={17}/></a>
+            <a class="button button-light" href={page.data.heroPrimaryUrl}>{page.data.heroPrimaryLabel}</a>
           )}
           {page.data.heroSecondaryLabel && page.data.heroSecondaryUrl && (
             <a class="button button-outline" href={page.data.heroSecondaryUrl}>{page.data.heroSecondaryLabel}</a>

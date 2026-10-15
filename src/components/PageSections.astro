@@ -138,7 +138,7 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
           {section.eyebrow && <p class={eyebrowClass}>{resolve(section.eyebrow)}</p>}
           <h2>{resolve(section.title)}</h2>
           {paragraphs(section.text).map(text => <p>{text}</p>)}
-          {section.buttonLabel && section.buttonUrl && <a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}<Icon name={section.buttonExternal?'external':'arrow'} size={18}/></a>}
+          {section.buttonLabel && section.buttonUrl && <a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}{section.buttonExternal && <Icon name="external" size={18}/>} </a>}
         </div>
       </div>
     </section>
@@ -188,7 +188,7 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
                     </div>}
                     <h3>{resolve(item.title)}</h3>
                     <p>{resolve(item.summary)}</p>
-                    <span class="section-builder-detail-more">Read more <Icon name="arrow" size={17}/></span>
+                    <span class="section-builder-detail-more">Read more</span>
                   </div>
                 </button>
               </article>
@@ -241,7 +241,7 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
                     </div>}
 
                     {(item.actionLabel && item.actionUrl) || (item.secondaryActionLabel && item.secondaryActionUrl) ? <div class="section-builder-detail-actions">
-                      {item.actionLabel && item.actionUrl && <a class="button" href={resolve(item.actionUrl)} {...externalAttrs(item.actionExternal)}>{resolve(item.actionLabel)}<Icon name={item.actionExternal?'external':'arrow'} size={18}/></a>}
+                      {item.actionLabel && item.actionUrl && <a class="button" href={resolve(item.actionUrl)} {...externalAttrs(item.actionExternal)}>{resolve(item.actionLabel)}{item.actionExternal && <Icon name="external" size={18}/>} </a>}
                       {item.secondaryActionLabel && item.secondaryActionUrl && <a class="text-link" href={resolve(item.secondaryActionUrl)} {...externalAttrs(item.secondaryActionExternal)}>{resolve(item.secondaryActionLabel)}<Icon name={item.secondaryActionExternal?'external':'arrow'} size={17}/></a>}
                     </div> : null}
                   </div>
@@ -271,12 +271,12 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
             {item.text && <p>{resolve(item.text)}</p>}
             {item.linkLabel && item.linkUrl && (
               section.type === 'iconCards'
-                ? <a class="section-builder-pill" href={resolve(item.linkUrl)} {...externalAttrs(item.external)}><span>{resolve(item.linkLabel)}</span><span class="section-builder-pill-icon"><Icon name={item.icon ?? (item.external?'external':'arrow')} size={19}/></span></a>
+                ? <a class="section-builder-pill" href={resolve(item.linkUrl)} {...externalAttrs(item.external)}><span>{resolve(item.linkLabel)}</span>{(item.external || (item.icon && item.icon !== 'arrow')) && <span class="section-builder-pill-icon"><Icon name={item.external ? 'external' : item.icon} size={19}/></span>}</a>
                 : <a class="text-link" href={resolve(item.linkUrl)} {...externalAttrs(item.external)}>{resolve(item.linkLabel)}<Icon name={item.external?'external':'arrow'} size={17}/></a>
             )}
           </div>
         </article>)}</div>}
-        {section.buttonLabel && section.buttonUrl && <div class="section-builder-section-action"><a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}<Icon name={section.buttonExternal?'external':'arrow'} size={18}/></a></div>}
+        {section.buttonLabel && section.buttonUrl && <div class="section-builder-section-action"><a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}{section.buttonExternal && <Icon name="external" size={18}/>} </a></div>}
       </div>
     </section>
   );
@@ -358,7 +358,7 @@ const externalAttrs = (external?:boolean) => external ? {target:'_blank',rel:'no
         {section.eyebrow && <p class={eyebrowClass}>{resolve(section.eyebrow)}</p>}
         <h2>{resolve(section.title)}</h2>
         <div class="prose">{paragraphs(section.text).map(text => <p>{text}</p>)}</div>
-        {section.buttonLabel && section.buttonUrl && <a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}<Icon name={section.buttonExternal?'external':'arrow'} size={18}/></a>}
+        {section.buttonLabel && section.buttonUrl && <a class:list={['button',theme === 'green' && 'button-light']} href={resolve(section.buttonUrl)} {...externalAttrs(section.buttonExternal)}>{resolve(section.buttonLabel)}{section.buttonExternal && <Icon name="external" size={18}/>} </a>}
       </div>
     </section>
   );
