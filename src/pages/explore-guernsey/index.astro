@@ -3,7 +3,6 @@ import { getEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageIntro from '../../components/PageIntro.astro';
 import ResponsiveImage from '../../components/ResponsiveImage.astro';
-import Icon from '../../components/Icon.astro';
 
 const page=await getEntry('pages','things-to-do');
 if(!page) throw new Error('Missing');
