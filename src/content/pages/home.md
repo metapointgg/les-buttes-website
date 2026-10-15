@@ -15,7 +15,9 @@ sections:
     type: feature
     theme: paper
     width: wide
-    title: Historic cottages. A warmer way to experience Guernsey.
+    title: |-
+      Historic cottages.
+      A warmer way to experience Guernsey.
     text: Two beautifully restored cottages on a 16th-century Guernsey farm,
       surrounded by mature gardens, quiet lanes and the island's coastline.
     image: /src/assets/images/cottage-illustration.png
