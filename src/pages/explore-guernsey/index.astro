@@ -29,7 +29,6 @@ const cta:any=sections.find(section=>section.type==='cta'&&section.enabled!==fal
               <h3>{item.title}</h3>
               {item.text&&<p>{item.text}</p>}
             </div>
-            <span class="explore-reference-arrow" aria-hidden="true"><Icon name="arrow" size={18}/></span>
           </div>
         </a>)}
       </div>
@@ -70,10 +69,9 @@ const cta:any=sections.find(section=>section.type==='cta'&&section.enabled!==fal
 .explore-reference-image :global(picture),.explore-reference-image :global(img){width:100%;height:100%}
 .explore-reference-image :global(img){object-fit:cover;object-position:center;transition:transform .35s}
 .explore-reference-card:hover .explore-reference-image :global(img){transform:scale(1.02)}
-.explore-reference-card-copy{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:end;min-height:7.2rem;padding:1rem 1.05rem}
+.explore-reference-card-copy{display:block;min-height:7.2rem;padding:1rem 1.05rem}
 .explore-reference-card-copy h3{margin:0 0 .25rem;font-size:clamp(1.25rem,2vw,1.6rem)}
 .explore-reference-card-copy p{display:-webkit-box;overflow:hidden;margin:0;color:var(--soft);font-size:.84rem;line-height:1.4;-webkit-box-orient:vertical;-webkit-line-clamp:2}
-.explore-reference-arrow{display:grid;width:2rem;height:2rem;place-items:center;color:var(--green)}
 .explore-reference-close{position:relative;isolation:isolate;overflow:hidden;color:#fff;background:var(--deep)}
 .explore-reference-close-image{position:absolute;inset:0;z-index:-2;opacity:.28}
 .explore-reference-close-image :global(picture),.explore-reference-close-image :global(img){width:100%;height:100%}
