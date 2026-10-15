@@ -12,6 +12,7 @@
 .home-sections .section:first-child .section-builder-feature{gap:clamp(2rem,5vw,4.5rem)!important}
 .home-sections .section:first-child .section-builder-copy{max-width:45rem!important}
 .home-sections .section:first-child .section-builder-copy h2{max-width:17ch}
+.page-home .home-sections .section:first-child .section-builder-copy h2{white-space:pre-line}
 .home-sections .section:first-child .section-builder-feature-image{aspect-ratio:auto!important;overflow:visible!important;background:transparent!important;border-radius:0!important;box-shadow:none!important}
 .home-sections .section:first-child .section-builder-feature-image picture,
 .home-sections .section:first-child .section-builder-feature-image img{position:static!important;width:100%!important;height:auto!important;max-height:13rem;object-fit:contain!important;opacity:.82}
@@ -66,6 +67,14 @@
 .home-sections .callout p:not(.eyebrow){max-width:38rem}
 .home-sections .callout-actions{align-items:center}
 
+@media(min-width:64rem){
+  .page-home .home-sections .section:first-child .section-builder-feature{grid-template-columns:1.32fr .68fr!important}
+  .page-home .home-sections .section:first-child .section-builder-copy{max-width:52rem!important}
+  .page-home .home-sections .section:first-child .section-builder-copy h2{max-width:none!important;font-size:clamp(2.2rem,3.2vw,2.8rem)!important;line-height:1.06}
+  .page-home #main-content>.callout h2{max-width:none!important;white-space:nowrap;font-size:clamp(2.15rem,3.2vw,2.8rem)!important}
+  .page-home .site-footer .footer-intro h2{max-width:17ch!important;font-size:clamp(2.15rem,3.4vw,3rem)!important;line-height:1.08}
+}
+
 @media(min-width:48rem){
   .home-sections .section:first-child .section-builder-feature{grid-template-columns:1.15fr .85fr!important}
   .home-sections .section-builder-feature-strip{grid-template-columns:repeat(3,minmax(0,1fr))!important}
@@ -80,6 +89,7 @@
 }
 
 @media(max-width:47.99rem){
+  .page-home .home-sections .section:first-child .section-builder-copy h2{white-space:normal}
   .home-hero{min-height:35rem!important}
   .home-hero-inner{padding-block:3.25rem!important}
   .home-hero-copy h1{max-width:9.5ch!important}
