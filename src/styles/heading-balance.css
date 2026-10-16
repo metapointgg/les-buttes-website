@@ -99,3 +99,21 @@
     margin-left: 0;
   }
 }
+
+/* Match the reference /cottages/ hero height across image-led page heroes.
+   Use a minimum height so lengthy content can still expand without clipping. */
+.home-hero,
+.page-intro-with-media,
+.cottage-editorial-hero {
+  min-height: clamp(28rem, 50vw, 38rem) !important;
+}
+
+/* Match the cottage detail page's existing safe mobile minimum across
+   all hero types. Content may expand beyond this where necessary. */
+@media (max-width: 47.99rem) {
+  .home-hero,
+  .page-intro-with-media,
+  .cottage-editorial-hero {
+    min-height: 34rem !important;
+  }
+}
