@@ -117,3 +117,12 @@
     min-height: 34rem !important;
   }
 }
+
+/* Homepage hero uses the same left edge as the following page sections.
+   The old redline margin (3.7vw) was retained because the earlier
+   desktop override lacked !important. */
+@media (min-width: 48rem) {
+  .page-home .home-hero-inner .home-hero-copy {
+    margin-left: 0 !important;
+  }
+}
