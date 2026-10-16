@@ -27,7 +27,7 @@ const comparisonCues = c.slug === 'geranium'
 ---
 <article class:list={["cottage-card",showPreviewStrip && "cottage-card-comparison"]}>
   <a class="card-image" href={`/cottages/${c.slug}/`} aria-label={`View ${c.name}`} tabindex="-1">
-    <ResponsiveImage src={c.heroImage} alt="" widths={[480,720,960]} sizes="(max-width:760px) 100vw,50vw"/>
+    <ResponsiveImage src={c.heroImage} alt="" widths={[480,720,960]} sizes="(max-width:760px) 100vw,50vw" quality={60}/>
   </a>
   <div class="card-body">
     <h2><a href={`/cottages/${c.slug}/`}>{c.name}</a></h2>
