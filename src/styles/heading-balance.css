@@ -126,3 +126,11 @@
     margin-left: 0 !important;
   }
 }
+
+/* Home CMS sections use .section-builder-wide (--wrap: 88rem).
+   Give the hero the same container so their left edges genuinely align. */
+@media (min-width: 48rem) {
+  .page-home .home-hero-inner {
+    --wrap: 88rem;
+  }
+}
