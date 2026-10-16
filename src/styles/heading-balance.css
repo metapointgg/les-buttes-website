@@ -78,3 +78,24 @@
     text-wrap: balance;
   }
 }
+
+/* Align hero titles and introductory copy with the shared .wrap used
+   for page sections and the site header. Avoid centring a narrower
+   hero content box or adding page-specific horizontal offsets. */
+@media (min-width: 64rem) {
+  .page-intro-with-media .page-intro-content {
+    width: min(calc(100% - 4rem), var(--wrap));
+    max-width: none;
+    margin-inline: auto;
+  }
+  .page-cottages .page-intro-content {
+    padding-left: 0;
+  }
+  .page-home .home-hero-copy {
+    margin-left: 0;
+  }
+  .page-cottages-geranium .cottage-editorial-copy,
+  .page-cottages-honeysuckle .cottage-editorial-copy {
+    margin-left: 0;
+  }
+}
