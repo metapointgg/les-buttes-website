@@ -37,8 +37,9 @@ const columns=footerData.columns??[];
         {(column.items??[]).map(item=>{
           const icon=allowedIcons.has(item.icon as FooterIcon)?item.icon as FooterIcon:undefined;
           const url=item.url?.trim();
+          const href=url?localPath(url,language):undefined;
           return url
-            ? <a class:list={['footer-item',icon&&'footer-link']} href={url} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>
+            ? <a class:list={['footer-item',icon&&'footer-link']} href={href} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>
                 {icon&&<Icon name={icon} size={18}/>}<span>{item.label}</span>
               </a>
             : <span class:list={['footer-item','footer-text',icon&&'footer-link']}>
