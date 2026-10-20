@@ -36,6 +36,8 @@ sections:
     imageAlt: Illustration of the historic Les Buttes farmhouse
     imagePosition: right
     showCottagePreviewStrip: false
+    buttonLabelNl: "Lees ons verhaal"
+    buttonLabelFr: "Découvrez notre histoire"
     buttonLabel: Read our story
     buttonUrl: /about/
     buttonExternal: false
