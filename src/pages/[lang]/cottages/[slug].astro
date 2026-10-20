@@ -44,6 +44,15 @@ const facilityOverview=([
   {icon:'garden',title:'Private garden',text:findFacility(/private.*garden/i)}
 ] as Array<{icon:FacilityIcon;title:string;text:string|undefined}>).filter(item=>Boolean(item.text));
 
+const amenityLabels={
+ nl:{Kitchen:'Keuken','Washing facilities':'Wasvoorzieningen','Heating, linen & towels':'Verwarming, beddengoed en handdoeken',Parking:'Parkeren','Private garden':'Privétuin'},
+ fr:{Kitchen:'Cuisine','Washing facilities':'Équipements de lavage','Heating, linen & towels':'Chauffage, draps et serviettes',Parking:'Stationnement','Private garden':'Jardin privé'}
+}[lang];
+const amenityDescriptions={
+ nl:{'Free Wi-Fi':'Gratis wifi','Fully equipped kitchen':'Volledig uitgeruste keuken','Dishwasher and washing machine':'Vaatwasser en wasmachine','Washing machine and dryer':'Wasmachine en droger','Heating, linen and towels included':'Verwarming, beddengoed en handdoeken inbegrepen','Parking beside the cottage':'Parkeren naast het vakantiehuis','Parking for two cars':'Parkeergelegenheid voor twee auto’s','Private enclosed garden':'Omheinde privétuin','Private garden':'Privétuin'},
+ fr:{'Free Wi-Fi':'Wi-Fi gratuit','Fully equipped kitchen':'Cuisine entièrement équipée','Dishwasher and washing machine':'Lave-vaisselle et lave-linge','Washing machine and dryer':'Lave-linge et sèche-linge','Heating, linen and towels included':'Chauffage, draps et serviettes inclus','Parking beside the cottage':'Stationnement à côté du gîte','Parking for two cars':'Stationnement pour deux voitures','Private enclosed garden':'Jardin privé clos','Private garden':'Jardin privé'}
+}[lang];
+
 const privateGarden=findFacility(/private.*garden/i);
 const parking=findFacility(/parking/i);
 const faqItems=lang==='nl' ? [
@@ -188,7 +197,7 @@ const faqJsonLd={
         <ul class="cottage-facility-grid">
           {facilityOverview.map(item=><li>
             <span class="cottage-facility-icon"><Icon name={item.icon} size={38}/></span>
-            <div class="cottage-facility-copy"><h3>{item.title}</h3><p>{item.text}</p></div>
+            <div class="cottage-facility-copy"><h3>{amenityLabels[item.title as keyof typeof amenityLabels]??item.title}</h3><p>{amenityDescriptions[item.text as keyof typeof amenityDescriptions]??item.text}</p></div>
           </li>)}
         </ul>
       </div>
@@ -216,7 +225,7 @@ const faqJsonLd={
       rotateIntervalSeconds={c.reviewIntervalSeconds ?? 6.5}
     />
 
-    <Callout title={`Check availability for ${c.name}`} text="View current dates, prices and booking terms securely through Airbnb." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'}/>
+    <Callout title={lang==='nl'?`Bekijk beschikbaarheid voor ${c.name}`:`Voir les disponibilités de ${c.name}`} text={lang==='nl'?'Bekijk actuele data, prijzen en boekingsvoorwaarden veilig via Airbnb.':'Consultez les dates disponibles, les tarifs et les conditions de réservation en toute sécurité sur Airbnb.'} href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?labels.book:(lang==='nl'?'Contact opnemen':'Nous contacter')}/>
   </article>
 
   <dialog id={`cottage-gallery-${c.slug}`} class="cottage-quick-gallery" data-cottage-gallery-dialog>
