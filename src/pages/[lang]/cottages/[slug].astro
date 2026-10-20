@@ -46,29 +46,18 @@ const facilityOverview=([
 
 const privateGarden=findFacility(/private.*garden/i);
 const parking=findFacility(/parking/i);
-const faqItems=[
-  {
-    question:`How many guests can ${c.name} accommodate?`,
-    answer:`${c.name} sleeps up to ${c.sleeps} guests in ${c.bedrooms} {labels.bedrooms}.`
-  },
-  {
-    question:`How many bathrooms does ${c.name} have?`,
-    answer:`${c.name} has ${c.bathrooms} {labels.bathrooms}.`
-  },
-  ...(privateGarden?[{
-    question:`Does ${c.name} have a private garden?`,
-    answer:`Yes. ${c.name} has its own ${privateGarden.toLowerCase()}.`
-  }]:[]),
-  ...(parking?[{
-    question:`Is parking available at ${c.name}?`,
-    answer:`Yes. ${parking}.`
-  }]:[]),
-  {
-    question:`Is ${c.name} dog friendly?`,
-    answer:c.dogFriendly
-      ? `Yes. ${c.name} is dog friendly.`
-      : `${c.name} is not listed as dog friendly. Geranium Cottage is the dog-friendly cottage at Les Buttes.`
-  }
+const faqItems=lang==='nl' ? [
+  {question:`Hoeveel gasten kunnen in ${c.name} verblijven?`,answer:`${c.name} biedt plaats aan maximaal ${c.sleeps} gasten in ${c.bedrooms} slaapkamers.`},
+  {question:`Hoeveel badkamers heeft ${c.name}?`,answer:`${c.name} heeft ${c.bathrooms} badkamers.`},
+  ...(privateGarden?[{question:`Heeft ${c.name} een privétuin?`,answer:`Ja. ${c.name} beschikt over een eigen privétuin.`}]:[]),
+  ...(parking?[{question:`Is er parkeergelegenheid bij ${c.name}?`,answer:`Ja, er is parkeergelegenheid bij het vakantiehuis.`}]:[]),
+  {question:`Zijn honden toegestaan in ${c.name}?`,answer:c.dogFriendly?`Ja, honden zijn welkom in ${c.name}.`:`Nee, ${c.name} wordt niet als hondvriendelijk aangeboden. Geranium Cottage is het hondvriendelijke vakantiehuis bij Les Buttes.`}
+] : [
+  {question:`Combien de personnes peuvent séjourner à ${c.name} ?`,answer:`${c.name} accueille jusqu'à ${c.sleeps} personnes dans ${c.bedrooms} chambres.`},
+  {question:`Combien de salles de bains comprend ${c.name} ?`,answer:`${c.name} comprend ${c.bathrooms} salles de bains.`},
+  ...(privateGarden?[{question:`${c.name} dispose-t-il d'un jardin privé ?`,answer:`Oui, ${c.name} dispose de son propre jardin privé.`}]:[]),
+  ...(parking?[{question:`Y a-t-il un parking à ${c.name} ?`,answer:`Oui, une place de stationnement est disponible près du gîte.`}]:[]),
+  {question:`Les chiens sont-ils acceptés à ${c.name} ?`,answer:c.dogFriendly?`Oui, les chiens sont acceptés à ${c.name}.`:`Non, ${c.name} n'est pas proposé comme hébergement acceptant les chiens. Geranium Cottage accueille les chiens aux Buttes.`}
 ];
 
 const propertyUrl=new URL(localPath(`/cottages/${c.slug}/`,lang),site.url).toString();
