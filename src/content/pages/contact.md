@@ -20,6 +20,8 @@ sections:
     titleNl: "Neem contact op met de familie van Les Buttes"
     titleFr: "Contactez la famille des Buttes"
     title: Speak to the family at Les Buttes
+    textNl: "Voor algemene vragen kunt u ons e-mailen. Heeft u al een reservering, dan is een bericht via Airbnb meestal de snelste manier om contact op te nemen."
+    textFr: "Pour toute question générale, envoyez-nous un courriel. Si vous avez déjà une réservation, la messagerie Airbnb est généralement le moyen le plus rapide de nous joindre."
     text: For general questions, email us. If you already have a reservation, Airbnb messaging is usually the quickest way to contact us about your stay.
     image: /src/assets/images/les-buttes-about-hero.jpg
     imageAlt: The historic Les Buttes farmhouse in St Pierre du Bois
