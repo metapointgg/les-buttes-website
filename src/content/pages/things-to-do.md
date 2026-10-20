@@ -8,11 +8,17 @@ heroAlt: Guernsey coastline and island scenery
 heroPan: false
 heroVideo: /videos/explore-guernsey-web.mp4
 heroPoster: /src/assets/images/explore-guernsey-poster.jpg
+titleNl: "Ontdek Guernsey in uw eigen tempo"
+titleFr: "Découvrez Guernesey à votre rythme"
+introNl: "Zandstranden, indrukwekkende klifpaden, een boeiende geschiedenis en heerlijke lokale gerechten liggen allemaal binnen handbereik van Les Buttes."
+introFr: "Plages de sable, sentiers côtiers spectaculaires, histoire fascinante et excellente cuisine locale : tout est facilement accessible depuis Les Buttes."
 sections:
   - enabled: true
     type: iconCards
     theme: paper
     width: wide
+    titleNl: "Ideeën voor uw verblijf"
+    titleFr: "Des idées pour votre séjour"
     title: Ideas for your stay
     text: From coast and countryside to history and food, Guernsey offers something
       for everyone.
@@ -77,6 +83,8 @@ sections:
     type: cta
     theme: auto
     width: standard
+    titleNl: "Een rustige uitvalsbasis voor uw eilandavonturen"
+    titleFr: "Un havre de paix pour vos journées sur l'île"
     title: A peaceful base for your island days
     text: Return from the coast, town or neighbouring islands to your own cottage
       and garden at Les Buttes.
@@ -91,6 +99,10 @@ sections:
 reviewAutoRotate: true
 reviewIntervalSeconds: 6.5
 seo:
+  titleNl: "Wat te doen op Guernsey | Les Buttes Holiday Cottages"
+  titleFr: "Que faire à Guernesey | Gîtes Les Buttes"
+  descriptionNl: "Ontdek de stranden, klifwandelingen, historische bezienswaardigheden, St Peter Port en andere activiteiten op Guernsey vanuit Les Buttes."
+  descriptionFr: "Découvrez les plages, les sentiers côtiers, les sites historiques, Saint-Pierre-Port et les activités de Guernesey depuis les gîtes Les Buttes."
   title: Things to Do in Guernsey | Les Buttes Holiday Cottages
   description: Explore Guernsey beaches, cliff walks, historic sites, St Peter
     Port and island experiences from Les Buttes Holiday Cottages.
