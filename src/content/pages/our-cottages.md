@@ -40,6 +40,8 @@ sections:
     titleNl: "Eenvoudig en veilig boeken via Airbnb"
     titleFr: "Réservation simple et sécurisée via Airbnb"
     title: Simple, secure booking through Airbnb
+    textNl: "Verwarming en elektriciteit zijn inbegrepen in de prijs van uw verblijf."
+    textFr: "Le chauffage et l'électricité sont compris dans le prix de votre séjour."
     text: Availability, current pricing, payment and booking terms are handled through Airbnb.
     items:
       - title: Live availability
