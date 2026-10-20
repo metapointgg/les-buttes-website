@@ -18,7 +18,7 @@ export async function getStaticPaths(){
 
 const cottage=await getEntry('cottages',Astro.params.slug!);
 if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
-const lang=Astro.params.lang as SiteLanguage;
+const lang=Astro.params.lang as 'nl'|'fr';
 const c=localizedText(cottage.data,lang) as typeof cottage.data;
 const labels={
   nl:{summary:'Overzicht accommodatie',sleeps:'Geschikt voor',bedrooms:'slaapkamers',bathrooms:'badkamers',season:'Seizoen',dog:'Honden welkom',book:'Beschikbaarheid bekijken',gallery:'Bekijk foto’s',need:'Alles wat u nodig heeft',faq:'Veelgestelde vragen',planning:'Uw verblijf bij',close:'Galerij sluiten',prev:'Vorige foto',next:'Volgende foto',choose:'Kies een foto',view:'Bekijk'},
