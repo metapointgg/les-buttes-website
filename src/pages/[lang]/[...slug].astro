@@ -4,6 +4,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import HeroMedia from '../../components/HeroMedia.astro';
 import PageIntro from '../../components/PageIntro.astro';
 import PageSections from '../../components/PageSections.astro';
+import ReviewsCarousel from '../../components/ReviewsCarousel.astro';
+import Callout from '../../components/Callout.astro';
+import newsletter from '../../data/newsletter.json';
 import ContentPageTemplate from '../../components/templates/ContentPageTemplate.astro';
 import { localizedText, localPath } from '../../lib/i18n';
 import type { SiteLanguage } from '../../lib/i18n';
@@ -38,6 +41,8 @@ const isSub=Boolean(p.slug);
     </div>
   </section>
   <div class="home-sections"><PageSections sections={p.sections}/></div>
+  <ReviewsCarousel reviews={p.reviews??[]} autoRotate={p.reviewAutoRotate??true} rotateIntervalSeconds={p.reviewIntervalSeconds??6.5}/>
+  {newsletter.enabled!==false&&<Callout title={localizedText(newsletter,lang).ctaHeading} text={localizedText(newsletter,lang).ctaText} href="#mailing-list" label={localizedText(newsletter,lang).buttonLabel}/>}
 </BaseLayout>
 ) : isSub ? (
   <ContentPageTemplate pageData={p}/>
