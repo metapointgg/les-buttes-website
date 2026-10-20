@@ -28,6 +28,8 @@ sections:
     title: |-
       Historic cottages.
       A warmer way to experience Guernsey.
+    textNl: "Twee prachtig gerestaureerde vakantiehuisjes op een Guernsey-boerderij uit de 16e eeuw, omringd door volgroeide tuinen, rustige weggetjes en de kust van het eiland."
+    textFr: "Deux gîtes magnifiquement restaurés dans une ferme guernesiaise du XVIe siècle, entourés de jardins arborés, de chemins tranquilles et du littoral de l'île."
     text: Two beautifully restored cottages on a 16th-century Guernsey farm,
       surrounded by mature gardens, quiet lanes and the island's coastline.
     image: /src/assets/images/cottage-illustration.png
