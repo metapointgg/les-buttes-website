@@ -1,0 +1,22 @@
+---
+interface Props { language:'en'|'nl'|'fr' }
+const {language}=Astro.props;
+---
+<svg class="locale-flag-svg" viewBox="0 0 60 40" width="30" height="20" role="presentation" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+{language==='nl' ? <>
+  <rect width="60" height="40" fill="#fff"/>
+  <rect width="60" height="13.34" fill="#ae1c28"/>
+  <rect y="26.66" width="60" height="13.34" fill="#21468b"/>
+</> : language==='fr' ? <>
+  <rect width="60" height="40" fill="#fff"/>
+  <rect width="20" height="40" fill="#002395"/>
+  <rect x="40" width="20" height="40" fill="#ed2939"/>
+</> : <>
+  <rect width="60" height="40" fill="#012169"/>
+  <path d="M0 0 60 40 M60 0 0 40" stroke="#fff" stroke-width="9"/>
+  <path d="M0 0 60 40 M60 0 0 40" stroke="#c8102e" stroke-width="3.5"/>
+  <path d="M30 0 V40 M0 20 H60" stroke="#fff" stroke-width="13"/>
+  <path d="M30 0 V40 M0 20 H60" stroke="#c8102e" stroke-width="7"/>
+</>}
+</svg>
+<style>.locale-flag-svg{display:block;flex:none;overflow:hidden;border-radius:2px;box-shadow:0 0 0 1px #0002}</style>
