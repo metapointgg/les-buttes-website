@@ -1,10 +1,16 @@
 ---
+titleNl: "Een kijkje bij Les Buttes"
+titleFr: "Un aperçu de la vie aux Buttes"
 title: A glimpse of life at Les Buttes
 slug: gallery
 published: true
 showInNavigation: true
+navigationLabelNl: "Fotogalerij"
+navigationLabelFr: "Galerie photos"
 navigationLabel: Gallery
 navigationOrder: 50
+introNl: "Vakantiehuisjes, tuinen en een glimp van het landschap van Guernsey eromheen."
+introFr: "Les gîtes, les jardins et quelques paysages de Guernesey aux alentours."
 intro: Cottages, gardens and a little of the Guernsey landscape that surrounds them.
 heroMediaType: image
 heroImage: /src/assets/images/les-buttes-about-hero.jpg
@@ -15,7 +21,11 @@ sections:
     type: gallery
     theme: paper
     width: wide
+    titleNl: "Vakantiehuisjes, tuinen en eilandleven"
+    titleFr: "Gîtes, jardins et vie insulaire"
     title: Cottages, gardens and island life
+    textNl: "Een selectie van echte foto's van Les Buttes en Guernsey."
+    textFr: "Une sélection de photographies authentiques des Buttes et de Guernesey."
     text: A selection of real photographs from Les Buttes and around Guernsey.
     imagePosition: left
     showCottagePreviewStrip: false
@@ -59,11 +69,17 @@ sections:
     type: cta
     theme: auto
     width: standard
+    titleNl: "Ziet u zichzelf hier al?"
+    titleFr: "Vous vous imaginez ici ?"
     title: Picture yourself here?
+    textNl: "Ontdek Geranium en Honeysuckle en bekijk vervolgens de actuele beschikbaarheid via Airbnb."
+    textFr: "Découvrez Geranium et Honeysuckle, puis consultez les disponibilités sur Airbnb."
     text: Explore Geranium and Honeysuckle, then check current availability through
       Airbnb.
     imagePosition: left
     showCottagePreviewStrip: false
+    buttonLabelNl: "Ontdek onze vakantiehuisjes"
+    buttonLabelFr: "Découvrir nos gîtes"
     buttonLabel: Explore our cottages
     buttonUrl: /cottages/
     buttonExternal: false
