@@ -12,7 +12,8 @@ import type {SiteLanguage} from '../../../lib/i18n';
 import { getImage as getImageMetadata } from '../../../lib/images';
 
 export async function getStaticPaths(){
-  return (['nl','fr'] as const).flatMap(lang=>(await getCollection('cottages')).filter(c=>c.data.available).map(c=>({params:{lang,slug:c.data.slug}})));
+  const cottages=(await getCollection('cottages')).filter(c=>c.data.available);
+  return (['nl','fr'] as const).flatMap(lang=>cottages.map(c=>({params:{lang,slug:c.data.slug}})));
 }
 
 const cottage=await getEntry('cottages',Astro.params.slug!);
