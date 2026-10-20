@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import Icon from './Icon.astro';
 import logoHeader from '../assets/images/logo-header.png';
-import { languageFromPath, localPath, languageNames, languages, localizedText, unprefixPath } from '../lib/i18n';
+import { languageFromPath, localPath, localizedText, unprefixPath } from '../lib/i18n';
 
 const path=Astro.url.pathname;
 const language=languageFromPath(path);
@@ -30,7 +30,14 @@ const current=(href:string)=>href==='/'?basePath==='/':basePath.startsWith(href)
       {nav.map(item=><a href={localPath(item.href,language)} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
     </nav>
     <a class="button header-book" href={localPath("/cottages/",language)}>{translations.book}</a>
-    <div class="language-switcher" aria-label="Language"><label for="site-language" class="sr-only">Language</label><select id="site-language" aria-label="Select language" data-language-select>{languages.map(lang=><option value={localPath(basePath,lang)} selected={language===lang}>{languageNames[lang]}</option>)}</select></div>
+    <details class="language-switcher">
+      <summary aria-label="Change language" title="Change language"><span class="language-flag" aria-hidden="true">{({en:'🇬🇧',nl:'🇳🇱',fr:'🇫🇷'} as const)[language]}</span></summary>
+      <nav class="language-options" aria-label="Choose language">
+        <a href={localPath(basePath,'en')} lang="en" aria-current={language==='en'?'true':undefined}><span aria-hidden="true">🇬🇧</span><span class="sr-only">English</span></a>
+        <a href={localPath(basePath,'nl')} lang="nl" aria-current={language==='nl'?'true':undefined}><span aria-hidden="true">🇳🇱</span><span class="sr-only">Nederlands</span></a>
+        <a href={localPath(basePath,'fr')} lang="fr" aria-current={language==='fr'?'true':undefined}><span aria-hidden="true">🇫🇷</span><span class="sr-only">Français</span></a>
+      </nav>
+    </details>
     <details class="mobile-menu">
       <summary><Icon name="menu" size={22}/>{translations.menu}</summary>
       <nav>
@@ -40,9 +47,18 @@ const current=(href:string)=>href==='/'?basePath==='/':basePath.startsWith(href)
     </details>
   </div>
 </header>
-<script is:inline>document.addEventListener("change",event=>{const element=event.target;if(element instanceof HTMLSelectElement && element.matches("[data-language-select]"))window.location.assign(element.value);});</script>
 <style>
-.language-switcher{margin-left:auto;flex:none}.language-switcher select{max-width:8.5rem;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);padding:.45rem .5rem;font:600 .78rem var(--body)}@media(max-width:47.99rem){.language-switcher select{max-width:6.6rem;font-size:.7rem}}
+.language-switcher{position:relative;margin-left:auto;flex:none}
+.language-switcher summary{display:grid;place-items:center;width:2.65rem;height:2.65rem;list-style:none;cursor:pointer;border-radius:50%;border:1px solid transparent}
+.language-switcher summary::-webkit-details-marker{display:none}
+.language-switcher summary:hover,.language-switcher[open] summary{background:var(--paper);border-color:var(--line)}
+.language-switcher summary:focus-visible,.language-options a:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.language-flag{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:1.7rem;line-height:1}
+.language-options{position:absolute;z-index:30;top:calc(100% + .35rem);right:0;display:flex;gap:.15rem;padding:.35rem;border-radius:.6rem;background:var(--paper);border:1px solid var(--line);box-shadow:0 8px 24px #182f2529}
+.language-options a{display:grid;place-items:center;width:2.65rem;height:2.65rem;border-radius:.35rem;text-decoration:none;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:1.6rem}
+.language-options a:hover,.language-options a[aria-current="true"]{background:var(--cream)}
+@media(max-width:47.99rem){.language-switcher summary{width:2.3rem;height:2.3rem}.language-flag{font-size:1.5rem}}
+
 .illustrated-brand{display:block;flex:none;line-height:0;padding:.15rem 0}
 .illustrated-brand img{display:block;width:clamp(9.4rem,17vw,11.5rem);height:auto}
 @media(max-width:29rem){.illustrated-brand img{width:9rem}}
