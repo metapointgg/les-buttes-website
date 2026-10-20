@@ -1,0 +1,421 @@
+---
+import { getCollection, getEntry } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import HeroMedia from '../../../components/HeroMedia.astro';
+import ResponsiveImage from '../../../components/ResponsiveImage.astro';
+import ReviewsCarousel from '../../../components/ReviewsCarousel.astro';
+import Callout from '../../../components/Callout.astro';
+import Icon from '../../../components/Icon.astro';
+import site from '../../../data/site.json';
+import {localizedText, localPath} from '../../../lib/i18n';
+import type {SiteLanguage} from '../../../lib/i18n';
+import { getImage as getImageMetadata } from '../../../lib/images';
+
+export async function getStaticPaths(){
+  return (['nl','fr'] as const).flatMap(lang=>(await getCollection('cottages')).filter(c=>c.data.available).map(c=>({params:{lang,slug:c.data.slug}})));
+}
+
+const cottage=await getEntry('cottages',Astro.params.slug!);
+if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
+const lang=Astro.params.lang as SiteLanguage;
+const c=localizedText(cottage.data,lang) as typeof cottage.data;
+const contentSections=c.sections??[];
+const galleryIndexForImage=(image:string)=>c.gallery.findIndex(item=>item.image===image);
+const cottageReviews=c.reviews?.length
+  ? c.reviews
+  : c.review
+    ? [{stars:5,comment:c.review.quote,userDetails:c.review.guest,sourceUrl:c.review.sourceUrl,sourceLabel:'Read reviews on Airbnb'}]
+    : [];
+
+const findFacility=(pattern:RegExp)=>c.facilities.find(item=>pattern.test(item));
+type FacilityIcon='wifi'|'kitchen'|'bed'|'pin'|'garden';
+const facilityOverview=([
+  {icon:'wifi',title:'Wi-Fi',text:findFacility(/wi-fi/i)},
+  {icon:'kitchen',title:'Kitchen',text:findFacility(/fully equipped kitchen/i)},
+  {icon:'kitchen',title:'Washing facilities',text:findFacility(/washing|dryer/i)},
+  {icon:'bed',title:'Heating, linen & towels',text:findFacility(/heating.*linen.*towels/i)},
+  {icon:'pin',title:'Parking',text:findFacility(/parking/i)},
+  {icon:'garden',title:'Private garden',text:findFacility(/private.*garden/i)}
+] as Array<{icon:FacilityIcon;title:string;text:string|undefined}>).filter(item=>Boolean(item.text));
+
+const privateGarden=findFacility(/private.*garden/i);
+const parking=findFacility(/parking/i);
+const faqItems=[
+  {
+    question:`How many guests can ${c.name} accommodate?`,
+    answer:`${c.name} sleeps up to ${c.sleeps} guests in ${c.bedrooms} bedrooms.`
+  },
+  {
+    question:`How many bathrooms does ${c.name} have?`,
+    answer:`${c.name} has ${c.bathrooms} bathrooms.`
+  },
+  ...(privateGarden?[{
+    question:`Does ${c.name} have a private garden?`,
+    answer:`Yes. ${c.name} has its own ${privateGarden.toLowerCase()}.`
+  }]:[]),
+  ...(parking?[{
+    question:`Is parking available at ${c.name}?`,
+    answer:`Yes. ${parking}.`
+  }]:[]),
+  {
+    question:`Is ${c.name} dog friendly?`,
+    answer:c.dogFriendly
+      ? `Yes. ${c.name} is dog friendly.`
+      : `${c.name} is not listed as dog friendly. Geranium Cottage is the dog-friendly cottage at Les Buttes.`
+  }
+];
+
+const propertyUrl=new URL(localPath(`/cottages/${c.slug}/`,lang),site.url).toString();
+const imageUrls=c.gallery.map(item=>new URL(getImageMetadata(item.image).src,site.url).toString());
+const facilitiesText=c.facilities.join(' ');
+const bedDetailsByCottage:Record<string,Array<Record<string,unknown>>>={
+  honeysuckle:[
+    {'@type':'BedDetails',numberOfBeds:1,typeOfBed:'King'},
+    {'@type':'BedDetails',numberOfBeds:4,typeOfBed:'Single'}
+  ],
+  geranium:[
+    {'@type':'BedDetails',numberOfBeds:1,typeOfBed:'Double'},
+    {'@type':'BedDetails',numberOfBeds:2,typeOfBed:'Single'}
+  ]
+};
+const bedDetails=bedDetailsByCottage[c.slug]??[];
+const amenityFeature=[
+  {'@type':'LocationFeatureSpecification',name:'wifi',value:/wi-fi/i.test(facilitiesText)},
+  ...(/free wi-fi/i.test(facilitiesText)?[{'@type':'LocationFeatureSpecification',name:'internetType',value:'Free'}]:[]),
+  {'@type':'LocationFeatureSpecification',name:'tv',value:/television/i.test(facilitiesText)},
+  {'@type':'LocationFeatureSpecification',name:'washerDryer',value:/washing machine|dryer/i.test(facilitiesText)},
+  {'@type':'LocationFeatureSpecification',name:'petsAllowed',value:c.dogFriendly}
+];
+const vacationRentalJsonLd={
+  '@context':'https://schema.org',
+  '@type':'VacationRental',
+  '@id':`${propertyUrl}#vacation-rental`,
+  identifier:`les-buttes-${c.slug}`,
+  additionalType:'Cottage',
+  name:c.name,
+  description:c.summary,
+  url:propertyUrl,
+  image:imageUrls,
+  latitude:site.coordinates.latitude,
+  longitude:site.coordinates.longitude,
+  address:{
+    '@type':'PostalAddress',
+    streetAddress:site.address.street,
+    addressLocality:site.address.locality,
+    addressRegion:site.address.island,
+    postalCode:site.address.postcode,
+    addressCountry:site.address.country
+  },
+  brand:{'@type':'Brand',name:site.name},
+  provider:{'@id':`${site.url}/#business`},
+  sameAs:c.airbnbUrl,
+  containsPlace:{
+    '@type':'Accommodation',
+    additionalType:'EntirePlace',
+    occupancy:{'@type':'QuantitativeValue',value:c.sleeps},
+    ...(bedDetails.length?{bed:bedDetails}:{}),
+    numberOfBedrooms:c.bedrooms,
+    numberOfBathroomsTotal:c.bathrooms,
+    petsAllowed:c.dogFriendly,
+    amenityFeature
+  }
+};
+const faqJsonLd={
+  '@context':'https://schema.org',
+  '@type':'FAQPage',
+  mainEntity:faqItems.map(item=>({
+    '@type':'Question',
+    name:item.question,
+    acceptedAnswer:{'@type':'Answer',text:item.answer}
+  }))
+};
+---
+<BaseLayout title={c.seo.title} description={c.seo.description} jsonLd={[vacationRentalJsonLd,faqJsonLd]}>
+  <article class="cottage-focused-page">
+    <header class="cottage-editorial-hero">
+      <HeroMedia mediaType={c.heroMediaType} imageSrc={c.heroImage} imageAlt={c.heroAlt} pan={c.heroPan} videoSrc={c.heroVideo} posterSrc={c.heroPoster} class="cottage-editorial-hero-media" widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high" decorative />
+      <div class="wrap cottage-editorial-hero-inner">
+        <div class="cottage-editorial-copy">
+          <h1>{c.name}</h1>
+          <p class="cottage-hero-summary">{c.tagline}</p>
+          <ul class="cottage-hero-facts" aria-label="Accommodation summary">
+            <li><Icon name="guests" size={18}/>Sleeps {c.sleeps}</li>
+            <li><Icon name="bed" size={18}/>{c.bedrooms} bedrooms</li>
+            <li><Icon name="bath" size={18}/>{c.bathrooms} bathrooms</li>
+            {c.season&&<li>Season {c.season}</li>}
+            {c.dogFriendly&&<li class="cottage-dog-fact">● Dog friendly</li>}
+          </ul>
+          <div class="cottage-actions">
+            {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">Check availability</a>}
+            <button class="button button-outline" type="button" data-open-cottage-gallery>View gallery</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="cottage-content-sections">
+      {contentSections.map((section,index)=>{
+        const images=section.images.slice(0,4);
+        return <section class:list={['section','cottage-template-section',index%2===0&&'paper']}>
+          <div class="wrap cottage-template-grid">
+            <div class="cottage-template-copy">
+              <h2>{section.title}</h2>
+              <p>{section.description}</p>
+            </div>
+            <div class:list={['cottage-template-images',`count-${images.length}`]}>
+              {images.map((item,imageIndex)=>{
+                const galleryIndex=galleryIndexForImage(item.image);
+                const imageLabel=item.caption??item.alt??section.title;
+                return <figure class:list={[imageIndex===0&&'is-primary']}>
+                  <button
+                    class="cottage-template-image-button"
+                    type="button"
+                    data-open-cottage-gallery
+                    data-gallery-index={galleryIndex>=0?galleryIndex:0}
+                    aria-label={`Open ${imageLabel} in the ${c.name} gallery`}
+                  >
+                    <ResponsiveImage src={item.image} alt={item.alt??section.title} widths={[420,640,900,1200]} sizes="(max-width: 768px) 100vw, 52vw"/>
+                  </button>
+                  {item.caption&&images.length>1&&<figcaption>{item.caption}</figcaption>}
+                </figure>;
+              })}
+            </div>
+          </div>
+        </section>;
+      })}
+    </div>
+
+    <section class="section cottage-facilities-section cottage-facilities-compact">
+      <div class="wrap">
+        <header class="section-heading cottage-facilities-heading">
+          <h2>Everything you need</h2>
+        </header>
+        <ul class="cottage-facility-grid">
+          {facilityOverview.map(item=><li>
+            <span class="cottage-facility-icon"><Icon name={item.icon} size={38}/></span>
+            <div class="cottage-facility-copy"><h3>{item.title}</h3><p>{item.text}</p></div>
+          </li>)}
+        </ul>
+      </div>
+    </section>
+
+    <section class="section paper cottage-faq-section" aria-labelledby={`faq-${c.slug}`}>
+      <div class="wrap cottage-faq-wrap">
+        <header class="section-heading cottage-faq-heading">
+          <p class="eyebrow">Frequently asked questions</p>
+          <h2 id={`faq-${c.slug}`}>Planning your stay at {c.name}</h2>
+        </header>
+        <div class="cottage-faq-list">
+          {faqItems.map(item=><details>
+            <summary>{item.question}</summary>
+            <p>{item.answer}</p>
+          </details>)}
+        </div>
+      </div>
+    </section>
+
+    <ReviewsCarousel
+      reviews={cottageReviews}
+      title="Guest reviews"
+      autoRotate={c.reviewAutoRotate ?? false}
+      rotateIntervalSeconds={c.reviewIntervalSeconds ?? 6.5}
+    />
+
+    <Callout title={`Check availability for ${c.name}`} text="View current dates, prices and booking terms securely through Airbnb." href={c.airbnbUrl??'/contact/'} label={c.airbnbUrl?'Check availability':'Contact us'}/>
+  </article>
+
+  <dialog id={`cottage-gallery-${c.slug}`} class="cottage-quick-gallery" data-cottage-gallery-dialog>
+    <button class="cottage-quick-gallery-close" type="button" data-gallery-close aria-label="Close gallery">×</button>
+    <div class="cottage-quick-gallery-header">
+      <h2>{c.name} gallery</h2>
+      <span class="cottage-quick-gallery-counter" data-gallery-counter aria-live="polite"></span>
+    </div>
+    <div class="cottage-quick-gallery-stage" id="gallery">
+      <button class="cottage-quick-gallery-nav cottage-quick-gallery-prev" type="button" data-gallery-prev aria-label="Previous photograph">‹</button>
+      <div class="cottage-quick-gallery-slides">
+        {c.gallery.map((item,index)=><figure data-gallery-slide data-gallery-index={index} hidden={index!==0}>
+          <ResponsiveImage src={item.image} alt={item.alt} widths={[960,1280,1600,2000]} sizes="100vw"/>
+          <figcaption>{item.caption}</figcaption>
+        </figure>)}
+      </div>
+      <button class="cottage-quick-gallery-nav cottage-quick-gallery-next" type="button" data-gallery-next aria-label="Next photograph">›</button>
+    </div>
+    <div class="cottage-quick-gallery-thumbs" aria-label="Choose a photograph">
+      {c.gallery.map((item,index)=><button type="button" data-gallery-thumb data-gallery-index={index} aria-label={`View ${item.caption}`}>
+        <ResponsiveImage src={item.image} alt="" widths={[120,180,240]} sizes="7rem"/>
+      </button>)}
+    </div>
+  </dialog>
+</BaseLayout>
+
+<script is:inline>
+(() => {
+  const dialog=document.querySelector('[data-cottage-gallery-dialog]');
+  if(!(dialog instanceof HTMLDialogElement)) return;
+
+  const slides=Array.from(dialog.querySelectorAll('[data-gallery-slide]'));
+  const thumbs=Array.from(dialog.querySelectorAll('[data-gallery-thumb]'));
+  const counter=dialog.querySelector('[data-gallery-counter]');
+  let activeIndex=0;
+
+  const showSlide=index=>{
+    if(!slides.length) return;
+    activeIndex=(index+slides.length)%slides.length;
+    slides.forEach((slide,slideIndex)=>{
+      if(!(slide instanceof HTMLElement)) return;
+      slide.hidden=slideIndex!==activeIndex;
+    });
+    thumbs.forEach((thumb,thumbIndex)=>{
+      if(!(thumb instanceof HTMLElement)) return;
+      thumb.toggleAttribute('aria-current',thumbIndex===activeIndex);
+    });
+    if(counter) counter.textContent=`${activeIndex+1} / ${slides.length}`;
+  };
+
+  const openGallery=index=>{
+    showSlide(Number.isFinite(index)?index:0);
+    if(!dialog.open) dialog.showModal();
+  };
+
+  document.querySelectorAll('[data-open-cottage-gallery]').forEach(trigger=>{
+    trigger.addEventListener('click',()=>{
+      const index=Number.parseInt(trigger.getAttribute('data-gallery-index')??'0',10);
+      openGallery(Number.isNaN(index)?0:index);
+    });
+  });
+
+  dialog.querySelector('[data-gallery-prev]')?.addEventListener('click',()=>showSlide(activeIndex-1));
+  dialog.querySelector('[data-gallery-next]')?.addEventListener('click',()=>showSlide(activeIndex+1));
+  dialog.querySelector('[data-gallery-close]')?.addEventListener('click',()=>dialog.close());
+
+  thumbs.forEach(thumb=>{
+    thumb.addEventListener('click',()=>{
+      const index=Number.parseInt(thumb.getAttribute('data-gallery-index')??'0',10);
+      showSlide(Number.isNaN(index)?0:index);
+    });
+  });
+
+  dialog.addEventListener('click',event=>{if(event.target===dialog) dialog.close();});
+  dialog.addEventListener('keydown',event=>{
+    if(event.key==='ArrowLeft'){event.preventDefault();showSlide(activeIndex-1);}
+    if(event.key==='ArrowRight'){event.preventDefault();showSlide(activeIndex+1);}
+  });
+  dialog.addEventListener('close',()=>{
+    const url=new URL(window.location.href);
+    if(url.searchParams.has('gallery')){
+      url.searchParams.delete('gallery');
+      history.replaceState(null,'',url.pathname+url.search+url.hash.replace('#gallery',''));
+    }
+  });
+
+  const requestedIndex=Number.parseInt(new URLSearchParams(window.location.search).get('gallery')??'',10);
+  if(!Number.isNaN(requestedIndex)) openGallery(requestedIndex);
+})();
+</script>
+
+<style is:global>
+.cottage-focused-page .cottage-editorial-hero{min-height:clamp(34rem,58vw,44rem)}
+.cottage-focused-page .cottage-editorial-copy{max-width:40rem}
+.cottage-focused-page .cottage-editorial-copy .cottage-hero-summary{max-width:31rem;margin-bottom:1rem}
+.cottage-hero-facts{display:flex;flex-wrap:wrap;gap:.65rem 1.15rem;margin:1rem 0 0;padding:1rem 0;border-block:1px solid rgba(255,255,255,.28);list-style:none}
+.cottage-hero-facts li{display:flex;align-items:center;gap:.4rem;color:#fff;font-size:.9rem;font-weight:600}
+.cottage-dog-fact{font-size:.82rem!important}
+.cottage-focused-page .cottage-actions{margin-top:1.25rem!important}
+.cottage-focused-page .cottage-actions button.button{font:700 .9rem var(--body);cursor:pointer}
+
+.cottage-template-section{padding-block:clamp(2.8rem,5vw,4.5rem)!important}
+.cottage-template-grid{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:clamp(2rem,5vw,5.2rem);align-items:center;min-width:0}
+.cottage-template-copy{max-width:34rem;min-width:0}
+.cottage-template-copy h2{max-width:15ch;margin-bottom:1.15rem}
+.cottage-template-copy p{margin:0;color:var(--soft);font-size:1.04rem;line-height:1.68}
+.cottage-template-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;min-width:0}
+.cottage-template-images figure{position:relative;overflow:hidden;margin:0;min-width:0;aspect-ratio:4/3;background:var(--pale);border-radius:.35rem}
+.cottage-template-image-button{display:block;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+.cottage-template-image-button:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+.cottage-template-images picture,.cottage-template-images img{display:block;width:100%;height:100%}
+.cottage-template-images img{object-fit:cover;transition:transform .2s ease}
+.cottage-template-image-button:hover img{transform:scale(1.015)}
+.cottage-template-images.count-1{grid-template-columns:minmax(0,1fr)}
+.cottage-template-images.count-1 figure{aspect-ratio:16/10}
+.cottage-template-images.count-2 figure{aspect-ratio:4/3}
+.cottage-template-images.count-3 figure.is-primary{grid-column:1/-1;aspect-ratio:16/8}
+.cottage-template-images.count-4 figure{aspect-ratio:4/3}
+.cottage-template-images figcaption{position:absolute;right:.45rem;bottom:.45rem;left:.45rem;padding:.36rem .5rem;color:#fff;background:linear-gradient(90deg,rgba(6,29,24,.7),rgba(6,29,24,.08));border-radius:.2rem;font-size:.7rem}
+
+.cottage-facilities-compact{padding-block:clamp(2.7rem,4vw,3.7rem)!important}
+.cottage-facilities-compact .cottage-facilities-heading{margin-bottom:1.2rem!important}
+.cottage-facilities-compact .cottage-facilities-heading h2{font-size:clamp(2rem,3.2vw,2.8rem)}
+.cottage-facilities-compact .cottage-facility-grid{gap:0!important}
+.cottage-facilities-compact .cottage-facility-grid li{min-height:0!important;padding:1rem 1.2rem!important}
+.cottage-facilities-compact .cottage-facility-icon{width:2.75rem;height:2.75rem}
+.cottage-facilities-compact .cottage-facility-icon svg{width:2.35rem!important;height:2.35rem!important;stroke-width:1.7}
+.cottage-facilities-compact .cottage-facility-copy h3{font-size:1.05rem!important}
+.cottage-facilities-compact .cottage-facility-copy p{font-size:.82rem}
+
+.cottage-faq-wrap{max-width:62rem}
+.cottage-faq-heading{margin-bottom:1.5rem!important}
+.cottage-faq-heading h2{max-width:20ch}
+.cottage-faq-list{border-top:1px solid rgba(31,59,46,.16)}
+.cottage-faq-list details{border-bottom:1px solid rgba(31,59,46,.16)}
+.cottage-faq-list summary{position:relative;padding:1.15rem 2.4rem 1.15rem 0;color:var(--deep);font-weight:700;cursor:pointer;list-style:none}
+.cottage-faq-list summary::-webkit-details-marker{display:none}
+.cottage-faq-list summary::after{content:'+';position:absolute;right:.25rem;top:50%;transform:translateY(-50%);font-size:1.35rem;font-weight:400}
+.cottage-faq-list details[open] summary::after{content:'–'}
+.cottage-faq-list p{max-width:48rem;margin:0;padding:0 2.4rem 1.2rem 0;color:var(--soft);line-height:1.65}
+
+.cottage-focused-page>.callout{margin-top:2.2rem!important;margin-bottom:clamp(2.5rem,5vw,4rem)!important;padding-block:clamp(3rem,5vw,4.5rem)!important}
+.cottage-focused-page>.callout h2{max-width:20ch}
+
+.cottage-quick-gallery{width:100vw!important;max-width:none!important;height:100dvh;max-height:none!important;margin:0;padding:0;border:0;background:#07110d;box-shadow:none}
+.cottage-quick-gallery::backdrop{background:#07110df5}
+.cottage-quick-gallery-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4.25rem;padding:0 5rem 0 1.25rem;color:#fff;border-bottom:1px solid #ffffff1f}
+.cottage-quick-gallery-header h2{overflow:hidden;margin:0;color:#fff;font-size:clamp(1.25rem,2vw,1.7rem);text-overflow:ellipsis;white-space:nowrap}
+.cottage-quick-gallery-counter{flex:0 0 auto;color:#ffffffb8;font-size:.85rem}
+.cottage-quick-gallery-stage{position:relative;display:grid;height:calc(100dvh - 10rem);place-items:center}
+.cottage-quick-gallery-slides{width:100%;height:100%}
+.cottage-quick-gallery-slides figure{display:grid;width:100%;height:100%;margin:0;grid-template-rows:minmax(0,1fr) auto;place-items:center}
+.cottage-quick-gallery-slides figure[hidden]{display:none}
+.cottage-quick-gallery-slides picture{display:grid;width:100%;height:100%;place-items:center}
+.cottage-quick-gallery-slides img{display:block;width:100%;height:100%;max-height:calc(100dvh - 13rem);object-fit:contain}
+.cottage-quick-gallery-slides figcaption{width:100%;margin:0;padding:.65rem 4.5rem;color:#fff;text-align:center;font-size:.85rem}
+.cottage-quick-gallery-close{position:fixed;z-index:5;top:.75rem;right:.85rem;display:grid;width:2.75rem;height:2.75rem;padding:0;place-items:center;color:#fff;background:#0b231dcc;border:1px solid #ffffff66;border-radius:50%;font-size:1.7rem;line-height:1;cursor:pointer}
+.cottage-quick-gallery-nav{position:fixed;z-index:4;top:50%;display:grid;width:3rem;height:4rem;padding:0;place-items:center;transform:translateY(-50%);color:#fff;background:#07110db8;border:1px solid #ffffff38;border-radius:.35rem;font-size:2.25rem;cursor:pointer}
+.cottage-quick-gallery-prev{left:1rem}.cottage-quick-gallery-next{right:1rem}
+.cottage-quick-gallery-thumbs{display:flex;height:5.75rem;gap:.4rem;overflow-x:auto;padding:.45rem 1rem;background:#0b1b16;border-top:1px solid #ffffff1f}
+.cottage-quick-gallery-thumbs button{flex:0 0 6.5rem;overflow:hidden;padding:0;border:2px solid transparent;border-radius:.3rem;background:#122a22;cursor:pointer;opacity:.7}
+.cottage-quick-gallery-thumbs button[aria-current]{border-color:#d7ba75;opacity:1}
+.cottage-quick-gallery-thumbs picture,.cottage-quick-gallery-thumbs img{display:block;width:100%;height:100%}
+.cottage-quick-gallery-thumbs img{object-fit:cover}
+
+@media(min-width:64rem){
+  .cottage-facilities-compact .cottage-facility-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;row-gap:0!important}
+  .cottage-facilities-compact .cottage-facility-grid li{min-height:6.5rem!important;padding:1rem 1.5rem!important}
+}
+
+@media(max-width:51.99rem){
+  .cottage-quick-gallery-header{height:3.8rem;padding-left:1rem;padding-right:4.3rem}
+  .cottage-quick-gallery-stage{height:calc(100dvh - 9rem)}
+  .cottage-quick-gallery-slides img{max-height:calc(100dvh - 12rem)}
+  .cottage-quick-gallery-slides figcaption{padding:.55rem 3.4rem;font-size:.78rem}
+  .cottage-quick-gallery-nav{width:2.6rem;height:3.5rem;font-size:1.9rem}
+  .cottage-quick-gallery-prev{left:.4rem}.cottage-quick-gallery-next{right:.4rem}
+  .cottage-quick-gallery-thumbs{height:5.2rem;padding-inline:.55rem}
+  .cottage-quick-gallery-thumbs button{flex-basis:5.5rem}
+  .cottage-template-grid{grid-template-columns:minmax(0,1fr);gap:1.45rem}
+  .cottage-template-copy{max-width:none}
+  .cottage-template-images{width:100%;max-width:100%;min-width:0}
+  .cottage-template-images.count-1 figure{aspect-ratio:4/3}
+  .cottage-template-images.count-3 figure.is-primary{aspect-ratio:4/3}
+  .cottage-quick-gallery-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:30rem){
+  .cottage-template-section{padding-block:2.15rem!important}
+  .cottage-template-images{gap:.4rem}
+  .cottage-template-images.count-2,.cottage-template-images.count-3,.cottage-template-images.count-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cottage-template-images.count-3 figure.is-primary{grid-column:1/-1}
+  .cottage-template-copy h2{font-size:clamp(2rem,11vw,2.7rem)}
+  .cottage-template-copy p{font-size:.98rem;line-height:1.6}
+  .cottage-quick-gallery-header{padding-inline:1.2rem}
+}
+</style>
