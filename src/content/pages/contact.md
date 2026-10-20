@@ -40,7 +40,7 @@ sections:
     items:
       - titleNl: "Stuur ons een e-mail"
         titleFr: "Écrivez-nous"
-      - title: Email us
+        title: Email us
         textNl: "Stel ons een vraag over Les Buttes of uw verblijf."
         textFr: "Posez-nous vos questions sur Les Buttes ou votre séjour."
         text: Send us a question about Les Buttes or your stay.
@@ -49,7 +49,7 @@ sections:
         linkUrl: "mailto:{{email}}"
       - titleNl: "Vind Les Buttes"
         titleFr: "Trouver Les Buttes"
-      - title: Find Les Buttes
+        title: Find Les Buttes
         textNl: "St Pierre du Bois, Guernsey."
         textFr: "St Pierre du Bois, Guernesey."
         text: St Pierre du Bois, Guernsey.
@@ -60,7 +60,7 @@ sections:
         linkUrl: /find-us/
       - titleNl: "Bekijk beschikbaarheid"
         titleFr: "Voir les disponibilités"
-      - title: Check availability
+        title: Check availability
         textNl: "Vergelijk de huisjes en bekijk op Airbnb actuele data en prijzen."
         textFr: "Comparez les gîtes et consultez les dates et les tarifs sur Airbnb."
         text: Compare the cottages and continue to Airbnb for live dates and pricing.
