@@ -66,10 +66,15 @@ const translatedTextFields = {
   locationFr: z.string().optional(),
   dateNl: z.string().optional(),
   dateFr: z.string().optional(),
+  commentNl: z.string().optional(),
+  commentFr: z.string().optional(),
+  socialTitleNl: z.string().optional(),
+  socialTitleFr: z.string().optional(),
+  socialDescriptionNl: z.string().optional(),
+  socialDescriptionFr: z.string().optional(),
 };
 
 const seo = z.object({
-  ...translatedTextFields,
   ...translatedTextFields,
   title: z.string(),
   description: z.string(),
