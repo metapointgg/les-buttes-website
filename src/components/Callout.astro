@@ -1,4 +1,5 @@
 ---
-interface Props{title:string;text:string;href:string;label:string;secondaryHref?:string;secondaryLabel?:string} const{title,text,href,label,secondaryHref,secondaryLabel}=Astro.props;
+import {languageFromPath,localPath} from '../lib/i18n';
+interface Props{title:string;text:string;href:string;label:string;secondaryHref?:string;secondaryLabel?:string} const{title,text,href,label,secondaryHref,secondaryLabel}=Astro.props; const lang=languageFromPath(Astro.url.pathname); const eyebrow={en:'Plan your stay',nl:'Plan uw verblijf',fr:'Préparez votre séjour'}[lang];
 ---
-<section class="callout wrap"><div><p class="eyebrow eyebrow-light">Plan your stay</p><h2>{title}</h2><p>{text}</p></div><div class="callout-actions"><a class="button button-light" href={href}>{label}</a>{secondaryHref&&secondaryLabel&&<a class="button button-outline" href={secondaryHref}>{secondaryLabel}</a>}</div></section>
+<section class="callout wrap"><div><p class="eyebrow eyebrow-light">{eyebrow}</p><h2>{title}</h2><p>{text}</p></div><div class="callout-actions"><a class="button button-light" href={localPath(href,lang)}>{label}</a>{secondaryHref&&secondaryLabel&&<a class="button button-outline" href={localPath(secondaryHref,lang)}>{secondaryLabel}</a>}</div></section>
