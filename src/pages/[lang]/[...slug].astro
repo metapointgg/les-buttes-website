@@ -1,0 +1,49 @@
+---
+import { getCollection, getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import HeroMedia from '../../components/HeroMedia.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import PageSections from '../../components/PageSections.astro';
+import ContentPageTemplate from '../../components/templates/ContentPageTemplate.astro';
+import { localizedText, localPath } from '../../lib/i18n';
+import type { SiteLanguage } from '../../lib/i18n';
+
+export async function getStaticPaths(){
+  const core=(await getCollection('pages')).map(entry=>({slug:entry.data.urlStub.replace(/^\/+|\/+$/g,''),entry}));
+  const sub=(await getCollection('subpages')).filter(e=>e.data.published).map(entry=>({slug:entry.data.slug,entry}));
+  const paths=[...core,...sub];
+  return (['nl','fr'] as const).flatMap(lang=>paths.map(({slug,entry})=>({
+    params:{lang,slug:slug||undefined},props:{page:entry}
+  })));
+}
+const lang=Astro.params.lang as SiteLanguage;
+const {page}=Astro.props;
+const p=localizedText(page.data,lang) as any;
+const isHome=p.urlStub==='/';
+const isSub=Boolean(p.slug);
+---
+{isHome ? (
+<BaseLayout title={p.seo.title} description={p.seo.description}>
+  <section class="home-hero">
+    <HeroMedia mediaType={p.heroMediaType} imageSrc={p.heroImage} imageAlt={p.heroAlt} pan={p.heroPan} videoSrc={p.heroVideo} posterSrc={p.heroPoster} class="home-hero-image" widths={[384,480,640,768,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high" decorative/>
+    <div class="wrap home-hero-inner">
+      <div class="home-hero-copy">
+        <h1>{p.title}</h1>
+        <p class="lede">{p.intro}</p>
+        <div class="hero-actions">
+          {p.heroPrimaryLabel&&p.heroPrimaryUrl&&<a class="button button-light" href={p.heroPrimaryUrl}>{p.heroPrimaryLabel}</a>}
+          {p.heroSecondaryLabel&&p.heroSecondaryUrl&&<a class="button button-outline" href={p.heroSecondaryUrl}>{p.heroSecondaryLabel}</a>}
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="home-sections"><PageSections sections={p.sections}/></div>
+</BaseLayout>
+) : isSub ? (
+  <ContentPageTemplate pageData={p}/>
+) : (
+<BaseLayout title={p.seo.title} description={p.seo.description}>
+  <PageIntro eyebrow={p.eyebrow} title={p.title} intro={p.intro} mediaType={p.heroMediaType} imageSrc={p.heroImage} imageAlt={p.heroAlt} pan={p.heroPan} videoSrc={p.heroVideo} posterSrc={p.heroPoster}/>
+  <PageSections sections={p.sections}/>
+</BaseLayout>
+)}
