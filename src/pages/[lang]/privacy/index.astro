@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageIntro from '../../../components/PageIntro.astro';
+export function getStaticPaths(){return ['nl','fr'].map(lang=>({params:{lang}}));}
+const lang=Astro.params.lang as 'nl'|'fr';
+const copy={
+  nl:{
+    title:'Privacy | Les Buttes Holiday Cottages',eyebrow:'Privacy',heading:'Uw privacy',intro:'We verzamelen alleen de gegevens die nodig zijn om Les Buttes Holiday Cottages te beheren en contact te houden met mensen die daarom vragen.',
+    sections:[
+      ['Websitegegevens',['Deze website gebruikt geen advertentiecookies of trackingpixels. Onze hostingproviders kunnen technische loggegevens verwerken voor de beveiliging, betrouwbaarheid en werking van de website.']],
+      ['Nieuwsbrief',['Als u zich voor onze nieuwsbrief aanmeldt, verzamelen we uw e-mailadres en, als u dat invult, uw voornaam. We bewaren ook de datum en het tijdstip waarop u via de website toestemming gaf.','We gebruiken deze gegevens uitsluitend om u af en toe nieuws over Les Buttes, nieuwe seizoensdata en bijzondere beschikbaarheid te sturen. De gegevens worden namens ons opgeslagen met Amazon Web Services, waaronder Amazon SES.','U kunt zich op elk moment afmelden via de afmeldlink in een e-mail of door contact op te nemen via info@lesbuttes.com. Na afmelding gebruiken we uw gegevens niet langer voor marketing.']],
+      ['Als u contact met ons opneemt',['Als u ons belt of e-mailt, gebruiken we de gegevens die u verstrekt om uw vraag te beantwoorden en de bijbehorende correspondentie te beheren.']],
+      ['Airbnb en externe links',['Boekingen worden via Airbnb afgehandeld. Externe diensten hanteren hun eigen privacybeleid en zijn zelf verantwoordelijk voor de verwerking van persoonsgegevens.']],
+      ['Uw gegevens',['Als u wilt weten welke persoonsgegevens wij over u bewaren, deze wilt corrigeren of, waar van toepassing, wilt laten verwijderen, kunt u mailen naar info@lesbuttes.com.']],
+      ['Vragen',['Voor vragen over privacy kunt u mailen naar info@lesbuttes.com.']]
+    ]
+  },
+  fr:{
+    title:'Confidentialité | Gîtes Les Buttes',eyebrow:'Confidentialité',heading:'Vos données personnelles',intro:'Nous recueillons uniquement les informations nécessaires à la gestion des gîtes Les Buttes et pour rester en contact avec les personnes qui le souhaitent.',
+    sections:[
+      ['Données du site web',['Ce site n’utilise ni cookies publicitaires ni pixels de suivi publicitaire. Nos hébergeurs peuvent traiter des journaux techniques de base pour assurer la sécurité, la fiabilité et le fonctionnement du site.']],
+      ['Lettre d’information',['Si vous vous inscrivez à notre lettre d’information, nous recueillons votre adresse e-mail et, si vous le renseignez, votre prénom. Nous conservons également la date et l’heure de votre consentement donné sur le site.','Nous utilisons ces données uniquement pour envoyer occasionnellement des nouvelles des Buttes, les dates des prochaines saisons et les disponibilités particulières. Les informations sont stockées pour notre compte à l’aide des services Amazon Web Services, notamment Amazon SES.','Vous pouvez vous désinscrire à tout moment grâce au lien présent dans nos courriels ou en nous écrivant à info@lesbuttes.com. Après votre désinscription, nous cesserons d’utiliser vos données à des fins de marketing.']],
+      ['Lorsque vous nous contactez',['Si vous nous écrivez ou nous appelez, nous utilisons les renseignements fournis pour répondre à votre demande et gérer les échanges correspondants.']],
+      ['Airbnb et liens externes',['Les réservations sont gérées par Airbnb. Les services externes disposent de leurs propres politiques de confidentialité et sont responsables du traitement des informations personnelles qu’ils collectent.']],
+      ['Vos informations',['Pour connaître les données personnelles que nous détenons à votre sujet, les corriger ou demander leur suppression lorsque cela est approprié, écrivez à info@lesbuttes.com.']],
+      ['Questions',['Pour toute question relative à la confidentialité, écrivez à info@lesbuttes.com.']]
+    ]
+  }
+}[lang];
+---
+<BaseLayout title={copy.title} description={copy.intro}>
+  <div class="wrap"><PageIntro eyebrow={copy.eyebrow} title={copy.heading} intro={copy.intro}/></div>
+  <section class="section-tight paper"><div class="narrow prose">
+    {copy.sections.map(([heading,paragraphs])=><section>
+      <h2>{heading}</h2>
+      {(paragraphs as string[]).map(paragraph=><p>{paragraph.includes('info@lesbuttes.com') ? <>{paragraph.split('info@lesbuttes.com')[0]}<a href="mailto:info@lesbuttes.com">info@lesbuttes.com</a>{paragraph.split('info@lesbuttes.com')[1]}</> : paragraph}</p>)}
+    </section>)}
+  </div></section>
+</BaseLayout>
