@@ -20,6 +20,11 @@ const cottage=await getEntry('cottages',Astro.params.slug!);
 if(!cottage||!cottage.data.available) throw new Error('Cottage not found');
 const lang=Astro.params.lang as SiteLanguage;
 const c=localizedText(cottage.data,lang) as typeof cottage.data;
+const labels={
+  nl:{summary:'Overzicht accommodatie',sleeps:'Geschikt voor',bedrooms:'slaapkamers',bathrooms:'badkamers',season:'Seizoen',dog:'Honden welkom',book:'Beschikbaarheid bekijken',gallery:'Bekijk foto’s',need:'Alles wat u nodig heeft',faq:'Veelgestelde vragen',planning:'Uw verblijf bij',close:'Galerij sluiten',prev:'Vorige foto',next:'Volgende foto',choose:'Kies een foto',view:'Bekijk'},
+  fr:{summary:'Résumé du logement',sleeps:'Accueille',bedrooms:'chambres',bathrooms:'salles de bains',season:'Saison',dog:'Chiens acceptés',book:'Voir les disponibilités',gallery:'Voir les photos',need:'Tout ce dont vous avez besoin',faq:'Questions fréquentes',planning:'Préparez votre séjour à',close:'Fermer la galerie',prev:'Photo précédente',next:'Photo suivante',choose:'Choisir une photo',view:'Voir'}
+}[lang];
+
 const contentSections=c.sections??[];
 const galleryIndexForImage=(image:string)=>c.gallery.findIndex(item=>item.image===image);
 const cottageReviews=c.reviews?.length
@@ -44,11 +49,11 @@ const parking=findFacility(/parking/i);
 const faqItems=[
   {
     question:`How many guests can ${c.name} accommodate?`,
-    answer:`${c.name} sleeps up to ${c.sleeps} guests in ${c.bedrooms} bedrooms.`
+    answer:`${c.name} sleeps up to ${c.sleeps} guests in ${c.bedrooms} {labels.bedrooms}.`
   },
   {
     question:`How many bathrooms does ${c.name} have?`,
-    answer:`${c.name} has ${c.bathrooms} bathrooms.`
+    answer:`${c.name} has ${c.bathrooms} {labels.bathrooms}.`
   },
   ...(privateGarden?[{
     question:`Does ${c.name} have a private garden?`,
@@ -139,16 +144,16 @@ const faqJsonLd={
         <div class="cottage-editorial-copy">
           <h1>{c.name}</h1>
           <p class="cottage-hero-summary">{c.tagline}</p>
-          <ul class="cottage-hero-facts" aria-label="Accommodation summary">
-            <li><Icon name="guests" size={18}/>Sleeps {c.sleeps}</li>
+          <ul class="cottage-hero-facts" aria-label={labels.summary}>
+            <li><Icon name="guests" size={18}/>{labels.sleeps} {c.sleeps}</li>
             <li><Icon name="bed" size={18}/>{c.bedrooms} bedrooms</li>
             <li><Icon name="bath" size={18}/>{c.bathrooms} bathrooms</li>
-            {c.season&&<li>Season {c.season}</li>}
-            {c.dogFriendly&&<li class="cottage-dog-fact">● Dog friendly</li>}
+            {c.season&&<li>{labels.season} {c.season}</li>}
+            {c.dogFriendly&&<li class="cottage-dog-fact">● {labels.dog}</li>}
           </ul>
           <div class="cottage-actions">
-            {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">Check availability</a>}
-            <button class="button button-outline" type="button" data-open-cottage-gallery>View gallery</button>
+            {c.airbnbUrl&&<a class="button button-light" href={c.airbnbUrl} target="_blank" rel="noopener">{labels.book}</a>}
+            <button class="button button-outline" type="button" data-open-cottage-gallery>{labels.gallery}</button>
           </div>
         </div>
       </div>
@@ -189,7 +194,7 @@ const faqJsonLd={
     <section class="section cottage-facilities-section cottage-facilities-compact">
       <div class="wrap">
         <header class="section-heading cottage-facilities-heading">
-          <h2>Everything you need</h2>
+          <h2>{labels.need}</h2>
         </header>
         <ul class="cottage-facility-grid">
           {facilityOverview.map(item=><li>
@@ -203,8 +208,8 @@ const faqJsonLd={
     <section class="section paper cottage-faq-section" aria-labelledby={`faq-${c.slug}`}>
       <div class="wrap cottage-faq-wrap">
         <header class="section-heading cottage-faq-heading">
-          <p class="eyebrow">Frequently asked questions</p>
-          <h2 id={`faq-${c.slug}`}>Planning your stay at {c.name}</h2>
+          <p class="eyebrow">{labels.faq}</p>
+          <h2 id={`faq-${c.slug}`}>{labels.planning} {c.name}</h2>
         </header>
         <div class="cottage-faq-list">
           {faqItems.map(item=><details>
@@ -226,23 +231,23 @@ const faqJsonLd={
   </article>
 
   <dialog id={`cottage-gallery-${c.slug}`} class="cottage-quick-gallery" data-cottage-gallery-dialog>
-    <button class="cottage-quick-gallery-close" type="button" data-gallery-close aria-label="Close gallery">×</button>
+    <button class="cottage-quick-gallery-close" type="button" data-gallery-close aria-label={labels.close}>×</button>
     <div class="cottage-quick-gallery-header">
-      <h2>{c.name} gallery</h2>
+      <h2>{c.name} – {labels.gallery}</h2>
       <span class="cottage-quick-gallery-counter" data-gallery-counter aria-live="polite"></span>
     </div>
     <div class="cottage-quick-gallery-stage" id="gallery">
-      <button class="cottage-quick-gallery-nav cottage-quick-gallery-prev" type="button" data-gallery-prev aria-label="Previous photograph">‹</button>
+      <button class="cottage-quick-gallery-nav cottage-quick-gallery-prev" type="button" data-gallery-prev aria-label={labels.prev}>‹</button>
       <div class="cottage-quick-gallery-slides">
         {c.gallery.map((item,index)=><figure data-gallery-slide data-gallery-index={index} hidden={index!==0}>
           <ResponsiveImage src={item.image} alt={item.alt} widths={[960,1280,1600,2000]} sizes="100vw"/>
           <figcaption>{item.caption}</figcaption>
         </figure>)}
       </div>
-      <button class="cottage-quick-gallery-nav cottage-quick-gallery-next" type="button" data-gallery-next aria-label="Next photograph">›</button>
+      <button class="cottage-quick-gallery-nav cottage-quick-gallery-next" type="button" data-gallery-next aria-label={labels.next}>›</button>
     </div>
-    <div class="cottage-quick-gallery-thumbs" aria-label="Choose a photograph">
-      {c.gallery.map((item,index)=><button type="button" data-gallery-thumb data-gallery-index={index} aria-label={`View ${item.caption}`}>
+    <div class="cottage-quick-gallery-thumbs" aria-label={labels.choose}>
+      {c.gallery.map((item,index)=><button type="button" data-gallery-thumb data-gallery-index={index} aria-label={`${labels.view} ${item.caption}`}>
         <ResponsiveImage src={item.image} alt="" widths={[120,180,240]} sizes="7rem"/>
       </button>)}
     </div>
