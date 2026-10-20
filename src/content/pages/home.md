@@ -10,20 +10,34 @@ heroPrimaryLabel: Check availability
 heroPrimaryUrl: /cottages/
 heroSecondaryLabel: Explore our cottages
 heroSecondaryUrl: /cottages/
+titleNl: "Een rustiger ritme van het eilandleven"
+titleFr: "Le rythme paisible de la vie insulaire"
+introNl: "Historische vakantiehuisjes met prachtige tuinen op Guernsey."
+introFr: "Des gîtes de vacances historiques entourés de beaux jardins à Guernesey."
+heroPrimaryLabelNl: "Beschikbaarheid bekijken"
+heroPrimaryLabelFr: "Voir les disponibilités"
+heroSecondaryLabelNl: "Ontdek onze vakantiehuisjes"
+heroSecondaryLabelFr: "Découvrir nos gîtes"
 sections:
   - enabled: true
     type: feature
     theme: paper
     width: wide
+    titleNl: "Historische vakantiehuisjes. Guernsey op een warmere manier beleven."
+    titleFr: "Des gîtes historiques. Une autre façon, chaleureuse, de découvrir Guernesey."
     title: |-
       Historic cottages.
       A warmer way to experience Guernsey.
+    textNl: "Twee prachtig gerestaureerde vakantiehuisjes op een Guernsey-boerderij uit de 16e eeuw, omringd door volgroeide tuinen, rustige weggetjes en de kust van het eiland."
+    textFr: "Deux gîtes magnifiquement restaurés dans une ferme guernesiaise du XVIe siècle, entourés de jardins arborés, de chemins tranquilles et du littoral de l'île."
     text: Two beautifully restored cottages on a 16th-century Guernsey farm,
       surrounded by mature gardens, quiet lanes and the island's coastline.
     image: /src/assets/images/cottage-illustration.png
     imageAlt: Illustration of the historic Les Buttes farmhouse
     imagePosition: right
     showCottagePreviewStrip: false
+    buttonLabelNl: "Lees ons verhaal"
+    buttonLabelFr: "Découvrez notre histoire"
     buttonLabel: Read our story
     buttonUrl: /about/
     buttonExternal: false
@@ -32,20 +46,30 @@ sections:
     type: featureStrip
     theme: cream
     width: wide
+    titleNl: "Waarom verblijven bij Les Buttes?"
+    titleFr: "Pourquoi séjourner aux Buttes ?"
     title: Why stay at Les Buttes
     imagePosition: left
     showCottagePreviewStrip: false
     items:
-      - title: Historic farm setting
+      - titleNl: "Historische boerderijomgeving"
+        titleFr: "Cadre d'une ferme historique"
+        title: Historic farm setting
         icon: history
         external: false
-      - title: Mature gardens
+      - titleNl: "Volgroeide tuinen"
+        titleFr: "Jardins arborés"
+        title: Mature gardens
         icon: garden
         external: false
-      - title: Coast within easy reach
+      - titleNl: "Kust binnen handbereik"
+        titleFr: "La côte à portée de main"
+        title: Coast within easy reach
         icon: beach
         external: false
-      - title: Family run since 1981
+      - titleNl: "Familiebedrijf sinds 1981"
+        titleFr: "Entreprise familiale depuis 1981"
+        title: Family run since 1981
         icon: guests
         external: false
     buttonExternal: false
@@ -54,6 +78,8 @@ sections:
     type: cottageListing
     theme: paper
     width: wide
+    titleNl: "Onze vakantiehuisjes"
+    titleFr: "Nos gîtes"
     title: Our Cottages
     imagePosition: left
     showCottagePreviewStrip: false
@@ -107,6 +133,10 @@ reviews:
 reviewAutoRotate: true
 reviewIntervalSeconds: 15
 seo:
+  titleNl: "Les Buttes | Vakantiehuisjes en zelfstandige accommodatie op Guernsey"
+  titleFr: "Les Buttes | Gîtes et locations de vacances à Guernesey"
+  descriptionNl: "Familiegerunde vakantiehuisjes in het rustige St Pierre du Bois op Guernsey. Ontdek Geranium en Honeysuckle en boek veilig via Airbnb."
+  descriptionFr: "Gîtes de vacances familiaux dans le paisible St Pierre du Bois, à Guernesey. Découvrez Geranium et Honeysuckle et réservez en toute sécurité via Airbnb."
   title: Les Buttes | Guernsey Holiday Cottages & Self Catering
   description: Family-run self-catering holiday cottages in peaceful St Pierre du
     Bois, Guernsey. Discover Geranium and Honeysuckle and book securely through

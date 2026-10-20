@@ -3,7 +3,13 @@
     "enabled": true,
     "label": "A warm Guernsey welcome",
     "heading": "Slow down. Settle in. Make yourself at home.",
-    "text": "Family-run self-catering cottages in peaceful St Pierre du Bois."
+    "text": "Family-run self-catering cottages in peaceful St Pierre du Bois.",
+    "labelNl": "Een warm welkom op Guernsey",
+    "labelFr": "Un accueil chaleureux à Guernesey",
+    "headingNl": "Vertraag. Kom tot rust. Voel u thuis.",
+    "headingFr": "Ralentissez. Installez-vous. Faites comme chez vous.",
+    "textNl": "Familiegerunde vakantiehuisjes in het rustige St Pierre du Bois.",
+    "textFr": "Des gîtes familiaux dans le paisible St Pierre du Bois."
   },
   "logo": {
     "enabled": true,
@@ -26,7 +32,9 @@
           "icon": "pin",
           "external": false
         }
-      ]
+      ],
+      "titleNl": "Bezoek",
+      "titleFr": "Visiter"
     },
     {
       "title": "Contact",
@@ -37,7 +45,9 @@
           "icon": "mail",
           "external": false
         }
-      ]
+      ],
+      "titleNl": "Contact",
+      "titleFr": "Contact"
     },
     {
       "title": "Follow",
@@ -54,7 +64,9 @@
           "icon": "external",
           "external": true
         }
-      ]
+      ],
+      "titleNl": "Volg ons",
+      "titleFr": "Suivez-nous"
     },
     {
       "title": "Explore",
@@ -101,11 +113,15 @@
           "icon": "",
           "external": false
         }
-      ]
+      ],
+      "titleNl": "Ontdek",
+      "titleFr": "Explorer"
     }
   ],
   "bottom": {
     "copyrightName": "Les Buttes Holiday Cottages",
-    "note": "Bookings are made securely through Airbnb."
+    "note": "Bookings are made securely through Airbnb.",
+    "noteNl": "Reserveringen worden veilig via Airbnb gemaakt.",
+    "noteFr": "Les réservations s'effectuent en toute sécurité sur Airbnb."
   }
 }

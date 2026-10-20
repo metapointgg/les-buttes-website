@@ -1,41 +1,66 @@
 ---
 import { getCollection } from 'astro:content';
 import Icon from './Icon.astro';
+import LocaleFlag from './LocaleFlag.astro';
 import logoHeader from '../assets/images/logo-header.png';
+import { languageFromPath, localPath, localizedText, unprefixPath } from '../lib/i18n';
 
 const path=Astro.url.pathname;
+const language=languageFromPath(path);
+// A 404 page has no translated equivalent; the flag selector takes visitors home.
+const basePath=['/404','/404/'].includes(unprefixPath(path))?'/':unprefixPath(path);
+const translations={en:{home:'Home',cottages:'Our Cottages',story:'Our Story',explore:'Explore Guernsey',contact:'Contact',book:'Check availability',menu:'Menu'},nl:{home:'Home',cottages:'Onze vakantiehuisjes',story:'Ons verhaal',explore:'Ontdek Guernsey',contact:'Contact',book:'Beschikbaarheid bekijken',menu:'Menu'},fr:{home:'Accueil',cottages:'Nos gîtes',story:'Notre histoire',explore:'Découvrir Guernesey',contact:'Contact',book:'Voir les disponibilités',menu:'Menu'}}[language];
 const fixedNav=[
-  {href:'/',label:'Home',order:10},
-  {href:'/cottages/',label:'Our Cottages',order:20},
-  {href:'/about/',label:'Our Story',order:35},
-  {href:'/explore-guernsey/',label:'Explore Guernsey',order:40},
-  {href:'/contact/',label:'Contact',order:70}
+  {href:'/',label:translations.home,order:10},
+  {href:'/cottages/',label:translations.cottages,order:20},
+  {href:'/about/',label:translations.story,order:35},
+  {href:'/explore-guernsey/',label:translations.explore,order:40},
+  {href:'/contact/',label:translations.contact,order:70}
 ];
 const subNav=(await getCollection('subpages'))
   .filter(page=>page.data.published&&page.data.showInNavigation)
-  .map(page=>({href:`/${page.data.slug}/`,label:page.data.navigationLabel||page.data.title,order:page.data.navigationOrder??45}));
+  .map(page=>({href:`/${page.data.slug}/`,label:localizedText(page.data,language).navigationLabel||localizedText(page.data,language).title,order:page.data.navigationOrder??45}));
 const nav=[...fixedNav,...subNav].sort((a,b)=>a.order-b.order);
-const current=(href:string)=>href==='/'?path==='/':path.startsWith(href);
+const current=(href:string)=>href==='/'?basePath==='/':basePath.startsWith(href);
 ---
 <header class="site-header">
   <div class="header-inner wrap">
-    <a class="brand illustrated-brand" href="/" aria-label="Les Buttes Holiday Cottages — home">
+    <a class="brand illustrated-brand" href={localPath("/",language)} aria-label="Les Buttes Holiday Cottages — home">
       <img src={logoHeader.src} width={logoHeader.width} height={logoHeader.height} alt="" />
     </a>
     <nav class="desktop-nav" aria-label="Primary navigation">
-      {nav.map(item=><a href={item.href} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
+      {nav.map(item=><a href={localPath(item.href,language)} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
     </nav>
-    <a class="button header-book" href="/cottages/">Check availability</a>
+    <a class="button header-book" href={localPath("/cottages/",language)}>{translations.book}</a>
+    <details class="language-switcher">
+      <summary aria-label="Change language" title="Change language"><LocaleFlag language={language}/></summary>
+      <div class="language-options" role="group" aria-label="Choose language">
+        <a href={localPath(basePath,'en')} lang="en" aria-label="English" aria-current={language==='en'?'page':undefined} title="English"><LocaleFlag language="en"/></a>
+        <a href={localPath(basePath,'nl')} lang="nl" aria-label="Nederlands" aria-current={language==='nl'?'page':undefined} title="Nederlands"><LocaleFlag language="nl"/></a>
+        <a href={localPath(basePath,'fr')} lang="fr" aria-label="Français" aria-current={language==='fr'?'page':undefined} title="Français"><LocaleFlag language="fr"/></a>
+      </div>
+    </details>
     <details class="mobile-menu">
-      <summary><Icon name="menu" size={22}/>Menu</summary>
+      <summary><Icon name="menu" size={22}/>{translations.menu}</summary>
       <nav>
-        {nav.map(item=><a href={item.href} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
-        <a class="button" href="/cottages/">Check availability</a>
+        {nav.map(item=><a href={localPath(item.href,language)} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
+        <a class="button" href={localPath("/cottages/",language)}>{translations.book}</a>
       </nav>
     </details>
   </div>
 </header>
 <style>
+.language-switcher{position:relative;flex:none;margin-left:auto;z-index:40}
+.language-switcher>summary{display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box;width:2.8rem;height:2.8rem;margin:0;padding:0;list-style:none;cursor:pointer;border:1px solid transparent;border-radius:50%;background:transparent;line-height:1}
+.language-switcher>summary::marker{content:""}
+.language-switcher>summary::-webkit-details-marker{display:none}
+.language-switcher>summary:hover,.language-switcher[open]>summary{background:var(--paper);border-color:var(--line)}
+.language-switcher>summary:focus-visible,.language-options>a:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.language-options{position:absolute!important;z-index:50!important;top:calc(100% + .3rem)!important;right:0!important;left:auto!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:.3rem!important;box-sizing:border-box;width:max-content!important;min-width:0!important;max-width:none!important;margin:0!important;padding:.4rem!important;white-space:nowrap;background:var(--paper)!important;border:1px solid var(--line)!important;border-radius:.65rem;box-shadow:0 8px 24px #182f2529}
+.language-options>a{display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;box-sizing:border-box;width:2.8rem!important;height:2.65rem!important;margin:0!important;padding:0!important;border:0!important;border-radius:.4rem;background:transparent;color:inherit;text-decoration:none!important;line-height:1!important}
+.language-options>a:hover,.language-options>a[aria-current="page"]{background:var(--cream)!important}
+@media(max-width:47.99rem){.language-switcher>summary{width:2.5rem;height:2.5rem}}
+
 .illustrated-brand{display:block;flex:none;line-height:0;padding:.15rem 0}
 .illustrated-brand img{display:block;width:clamp(9.4rem,17vw,11.5rem);height:auto}
 @media(max-width:29rem){.illustrated-brand img{width:9rem}}

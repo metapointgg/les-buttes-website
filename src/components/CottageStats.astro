@@ -1,5 +1,6 @@
 ---
-import Icon from './Icon.astro'; interface Props{sleeps:number;bedrooms:number;beds:number;bathrooms:number;dogFriendly?:boolean;compact?:boolean} const{sleeps,bedrooms,beds,bathrooms,dogFriendly=false,compact=false}=Astro.props;
-const items=[['guests',`Sleeps ${sleeps}`],['bed',`${bedrooms} bedrooms`],['bed',`${beds} beds`],['bath',`${bathrooms} bathrooms`]] as const;
+import Icon from './Icon.astro'; import {languageFromPath} from '../lib/i18n'; interface Props{sleeps:number;bedrooms:number;beds:number;bathrooms:number;dogFriendly?:boolean;compact?:boolean} const{sleeps,bedrooms,beds,bathrooms,dogFriendly=false,compact=false}=Astro.props;
+const locale=languageFromPath(Astro.url.pathname); const names={en:{sleeps:'Sleeps',bedrooms:'bedrooms',beds:'beds',bathrooms:'bathrooms',dog:'Dog friendly',summary:'Accommodation summary'},nl:{sleeps:'Geschikt voor',bedrooms:'slaapkamers',beds:'bedden',bathrooms:'badkamers',dog:'Honden welkom',summary:'Overzicht accommodatie'},fr:{sleeps:'Accueille',bedrooms:'chambres',beds:'lits',bathrooms:'salles de bains',dog:'Chiens acceptés',summary:'Résumé du logement'}}[locale];
+const items=[['guests',`${names.sleeps} ${sleeps}`],['bed',`${bedrooms} ${names.bedrooms}`],['bed',`${beds} ${names.beds}`],['bath',`${bathrooms} ${names.bathrooms}`]] as const;
 ---
-<ul class:list={['cottage-stats',compact&&'compact']} aria-label="Accommodation summary">{items.map(([icon,label],i)=><li class:list={[compact&&i===2&&'hide-compact']}><Icon name={icon} size={18}/>{label}</li>)}{dogFriendly&&<li>● Dog friendly</li>}</ul>
+<ul class:list={['cottage-stats',compact&&'compact']} aria-label={names.summary}>{items.map(([icon,label],i)=><li class:list={[compact&&i===2&&'hide-compact']}><Icon name={icon} size={18}/>{label}</li>)}{dogFriendly&&<li>● {names.dog}</li>}</ul>

@@ -1,45 +1,53 @@
 ---
 import newsletter from '../data/newsletter.json';
+import {languageFromPath,localizedText,localPath} from '../lib/i18n';
+const language=languageFromPath(Astro.url.pathname);
+const copy=localizedText(newsletter,language) as typeof newsletter;
+const formLabels={
+ en:{kicker:'Les Buttes mailing list',first:'First name',optional:'(optional)',email:'Email address',privacy:'Read our privacy information.',close:'Close',closeAria:'Close mailing list form',connecting:'Mailing list sign-up is being connected. Please try again shortly.',joining:'Joining…',failed:'We couldn’t add you just now. Please try again in a moment.'},
+ nl:{kicker:'Nieuwsbrief van Les Buttes',first:'Voornaam',optional:'(optioneel)',email:'E-mailadres',privacy:'Lees onze privacyinformatie.',close:'Sluiten',closeAria:'Nieuwsbriefformulier sluiten',connecting:'Aanmelden voor de nieuwsbrief is tijdelijk niet mogelijk. Probeer het straks opnieuw.',joining:'Aanmelden…',failed:'Aanmelden is niet gelukt. Probeer het over een ogenblik opnieuw.'},
+ fr:{kicker:'Lettre d’information des Buttes',first:'Prénom',optional:'(facultatif)',email:'Adresse e-mail',privacy:'Lire notre politique de confidentialité.',close:'Fermer',closeAria:'Fermer le formulaire d’inscription',connecting:'L’inscription n’est pas disponible pour le moment. Veuillez réessayer bientôt.',joining:'Inscription…',failed:'Votre inscription n’a pas abouti. Veuillez réessayer dans un instant.'}
+}[language];
 const enabled = newsletter.enabled !== false;
 ---
 {enabled && (
-  <dialog class="newsletter-dialog" data-newsletter-dialog aria-labelledby="newsletter-heading">
-    <button class="newsletter-close" type="button" data-newsletter-close aria-label="Close mailing list form">×</button>
+  <dialog class="newsletter-dialog" data-newsletter-dialog data-connecting-message={formLabels.connecting} data-joining-message={formLabels.joining} data-error-message={formLabels.failed} aria-labelledby="newsletter-heading">
+    <button class="newsletter-close" type="button" data-newsletter-close aria-label={formLabels.closeAria}>×</button>
     <div class="newsletter-dialog-inner">
-      <p class="newsletter-kicker">Les Buttes mailing list</p>
-      <h2 id="newsletter-heading">{newsletter.modalHeading}</h2>
-      <p class="newsletter-intro">{newsletter.modalText}</p>
+      <p class="newsletter-kicker">{formLabels.kicker}</p>
+      <h2 id="newsletter-heading">{copy.modalHeading}</h2>
+      <p class="newsletter-intro">{copy.modalText}</p>
 
-      <form class="newsletter-form" data-newsletter-form data-endpoint={newsletter.endpoint} novalidate>
+      <form class="newsletter-form" data-newsletter-form data-endpoint={copy.endpoint} novalidate>
         <div class="newsletter-fields">
           <label>
-            <span>First name <small>(optional)</small></span>
+            <span>{formLabels.first} <small>{formLabels.optional}</small></span>
             <input type="text" name="firstName" autocomplete="given-name" maxlength="80" />
           </label>
           <label>
-            <span>Email address</span>
+            <span>{formLabels.email}</span>
             <input type="email" name="email" autocomplete="email" maxlength="320" required />
           </label>
         </div>
 
         <label class="newsletter-consent">
           <input type="checkbox" name="consent" required />
-          <span>{newsletter.consentText}</span>
+          <span>{copy.consentText}</span>
         </label>
 
         <div class="newsletter-honeypot" aria-hidden="true">
           <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
         </div>
 
-        <button class="button newsletter-submit" type="submit">{newsletter.buttonLabel}</button>
-        <p class="newsletter-privacy">{newsletter.privacyText} <a href="/privacy/">Read our privacy information.</a></p>
+        <button class="button newsletter-submit" type="submit">{copy.buttonLabel}</button>
+        <p class="newsletter-privacy">{copy.privacyText} <a href={localPath("/privacy/",language)}>{formLabels.privacy}</a></p>
         <p class="newsletter-status" data-newsletter-status role="status" aria-live="polite"></p>
       </form>
 
       <div class="newsletter-success" data-newsletter-success hidden>
-        <h3>{newsletter.successHeading}</h3>
-        <p>{newsletter.successText}</p>
-        <button class="button button-secondary" type="button" data-newsletter-close>Close</button>
+        <h3>{copy.successHeading}</h3>
+        <p>{copy.successText}</p>
+        <button class="button button-secondary" type="button" data-newsletter-close>{formLabels.close}</button>
       </div>
     </div>
   </dialog>
@@ -79,7 +87,7 @@ const enabled = newsletter.enabled !== false;
 
     const endpoint = form.dataset.endpoint?.trim();
     if (!endpoint) {
-      status.textContent = 'Mailing list sign-up is being connected. Please try again shortly.';
+      status.textContent = dialog.dataset.connectingMessage || 'Mailing list sign-up is temporarily unavailable.';
       return;
     }
 
@@ -87,7 +95,7 @@ const enabled = newsletter.enabled !== false;
     if (submit instanceof HTMLButtonElement) {
       submit.disabled = true;
       submit.dataset.originalText = submit.textContent ?? '';
-      submit.textContent = 'Joining…';
+      submit.textContent = dialog.dataset.joiningMessage || 'Joining…';
     }
 
     const data = new FormData(form);
@@ -110,7 +118,7 @@ const enabled = newsletter.enabled !== false;
       form.hidden = true;
       if (success instanceof HTMLElement) success.hidden = false;
     } catch {
-      status.textContent = 'We couldn’t add you just now. Please try again in a moment.';
+      status.textContent = dialog.dataset.errorMessage || 'Please try again in a moment.';
     } finally {
       if (submit instanceof HTMLButtonElement) {
         submit.disabled = false;

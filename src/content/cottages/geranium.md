@@ -2,6 +2,10 @@
 name: Geranium Cottage
 slug: geranium
 available: true
+taglineNl: "Karakter, comfort en een eigen tuin"
+taglineFr: "Charme, confort et jardin privé"
+summaryNl: "Een vrijstaand vakantiehuis met twee slaapkamers, een lichte serre, twee badkamers en een beschutte privétuin."
+summaryFr: "Un gîte indépendant de deux chambres avec véranda lumineuse, deux salles de bains et jardin privé abrité."
 tagline: Character, comfort and a garden of your own
 summary: A detached two-bedroom cottage with a bright conservatory, two
   bathrooms and a private sheltered garden.
@@ -17,7 +21,11 @@ heroImage: /src/assets/images/cottages/geranium/exterior.jpg
 heroAlt: The traditional granite exterior of Geranium Cottage at Les Buttes
 heroPan: false
 sections:
-  - title: Character and comfort
+  - titleNl: "Karakter en comfort"
+    titleFr: "Charme et confort"
+    title: Character and comfort
+    descriptionNl: "Geranium is een vrijstaand vakantiehuis met twee verdiepingen. Het combineert een traditionele uitstraling met comfortabele accommodatie voor maximaal vier gasten. Vanuit het lichte interieur loopt u zo naar de serre en privétuin."
+    descriptionFr: "Geranium est un gîte indépendant sur deux niveaux, alliant caractère traditionnel et confort pour quatre personnes au maximum. Les pièces lumineuses donnent naturellement accès à la véranda et au jardin privé."
     description: Geranium is a detached cottage arranged over two floors, with
       traditional character and comfortable accommodation for up to four guests.
       Its bright interior leads naturally through to the conservatory and
@@ -25,21 +33,33 @@ sections:
     images:
       - image: /src/assets/images/cottages/geranium/exterior.jpg
         alt: The exterior of Geranium Cottage
-  - title: Room to settle in
+  - titleNl: "Ruimte om tot rust te komen"
+    titleFr: "De l'espace pour se détendre"
+    title: Room to settle in
+    descriptionNl: "De gezellige woonkamer is een fijne plek om te ontspannen, met de serre en tuin vlakbij."
+    descriptionFr: "Le salon confortable invite à la détente, avec la véranda et le jardin à proximité."
     description: The sitting room is a comfortable place to unwind, with the
       conservatory and garden close at hand.
     images:
       - image: /src/assets/images/cottages/geranium/sitting-room.jpg
         alt: The comfortable sitting room in Geranium Cottage
         caption: Sitting room
-  - title: Made for easy self-catering
+  - titleNl: "Zelf koken, heel eenvoudig"
+    titleFr: "La liberté de cuisiner à votre rythme"
+    title: Made for easy self-catering
+    descriptionNl: "De volledig uitgeruste keuken heeft een eethoek, zodat u tijdens uw verblijf gemakkelijk zelf kunt koken."
+    descriptionFr: "La cuisine entièrement équipée comprend un coin repas, pour préparer vos repas en toute simplicité."
     description: The fully equipped kitchen includes a dining area, making everyday
       self-catering straightforward.
     images:
       - image: /src/assets/images/cottages/geranium/kitchen.jpg
         alt: Geranium Cottage's fitted kitchen and dining table
         caption: Kitchen and dining area
-  - title: Space to sleep comfortably
+  - titleNl: "Comfortabel slapen"
+    titleFr: "Des nuits tout confort"
+    title: Space to sleep comfortably
+    descriptionNl: "Boven bevinden zich een slaapkamer met een tweepersoonsbed, een slaapkamer met twee eenpersoonsbedden en de gezinsbadkamer. Op de begane grond is een aparte doucheruimte."
+    descriptionFr: "À l'étage se trouvent une chambre double, une chambre avec deux lits simples et la salle de bains familiale. Une salle d'eau séparée se situe au rez-de-chaussée."
     description: Upstairs there is one double bedroom and one twin bedroom, together
       with the family bathroom. A separate shower room is on the ground floor.
     images:
@@ -55,7 +75,11 @@ sections:
       - image: /src/assets/images/cottages/geranium/shower-room.jpg
         alt: The ground-floor shower room in Geranium Cottage
         caption: Ground-floor shower room
-  - title: Your private garden
+  - titleNl: "Uw eigen tuin"
+    titleFr: "Votre jardin privé"
+    title: Your private garden
+    descriptionNl: "Geranium heeft een eigen omheinde tuin, bereikbaar vanuit de serre en uitsluitend bestemd voor de gasten van het huisje."
+    descriptionFr: "Geranium dispose d'un jardin privé et clos, accessible depuis la véranda et réservé aux occupants du gîte."
     description: Geranium has its own private enclosed garden, reached from the
       conservatory and reserved for cottage guests.
     images:
@@ -136,6 +160,10 @@ gallery:
     alt: The ground-floor shower room in Geranium Cottage
     caption: Ground-floor shower room
 seo:
+  titleNl: "Geranium Cottage | Vakantiehuisje voor vier op Guernsey"
+  titleFr: "Geranium Cottage | Gîte pour quatre à Guernesey"
+  descriptionNl: "Verblijf in Geranium Cottage, een charmant vakantiehuis met twee slaapkamers, twee badkamers en een privétuin in St Pierre du Bois op Guernsey."
+  descriptionFr: "Séjournez au Geranium Cottage, un gîte de charme avec deux chambres, deux salles de bains et jardin privé à St Pierre du Bois, Guernesey."
   title: Geranium Cottage | Guernsey Holiday Cottage for Four
   description: Stay at Geranium Cottage, a charming two-bedroom self-catering
     cottage with two bathrooms and a private garden in St Pierre du Bois,

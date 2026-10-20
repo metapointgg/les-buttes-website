@@ -2,6 +2,7 @@
 import footer from '../data/footer.json';
 import Icon from './Icon.astro';
 import ResponsiveImage from './ResponsiveImage.astro';
+import {languageFromPath,localizedText,localPath} from '../lib/i18n';
 
 const year=new Date().getFullYear();
 type FooterIcon='arrow'|'bed'|'bath'|'guests'|'phone'|'mail'|'pin'|'external'|'menu'|'beach'|'walk'|'guernsey'|'history'|'islands'|'food'|'kitchen'|'living'|'garden'|'wifi';
@@ -13,7 +14,8 @@ type FooterData={
   columns?:FooterColumn[];
   bottom?:{copyrightName?:string;note?:string};
 };
-const footerData=footer as FooterData;
+const language=languageFromPath(Astro.url.pathname);
+const footerData=localizedText(footer,language) as FooterData;
 const allowedIcons=new Set<FooterIcon>(['arrow','bed','bath','guests','phone','mail','pin','external','menu','beach','walk','guernsey','history','islands','food','kitchen','living','garden','wifi']);
 const columns=footerData.columns??[];
 ---
@@ -25,7 +27,7 @@ const columns=footerData.columns??[];
       {footerData.intro.text&&<p>{footerData.intro.text}</p>}
     </div>}
 
-    {footerData.logo?.enabled&&footerData.logo.image&&<a class="footer-brand" href="/" aria-label="Les Buttes Holiday Cottages — home">
+    {footerData.logo?.enabled&&footerData.logo.image&&<a class="footer-brand" href={localPath("/",language)} aria-label="Les Buttes Holiday Cottages — home">
       <ResponsiveImage src={footerData.logo.image} alt={footerData.logo.alt??''} widths={[220,360,480]} sizes="17rem" />
     </a>}
 
@@ -35,8 +37,9 @@ const columns=footerData.columns??[];
         {(column.items??[]).map(item=>{
           const icon=allowedIcons.has(item.icon as FooterIcon)?item.icon as FooterIcon:undefined;
           const url=item.url?.trim();
+          const href=url?localPath(url,language):undefined;
           return url
-            ? <a class:list={['footer-item',icon&&'footer-link']} href={url} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>
+            ? <a class:list={['footer-item',icon&&'footer-link']} href={href} target={item.external?'_blank':undefined} rel={item.external?'noopener':undefined}>
                 {icon&&<Icon name={icon} size={18}/>}<span>{item.label}</span>
               </a>
             : <span class:list={['footer-item','footer-text',icon&&'footer-link']}>

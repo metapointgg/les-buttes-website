@@ -1,0 +1,34 @@
+---
+import {getCollection,getEntry} from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageIntro from '../../../components/PageIntro.astro';
+import PageSections from '../../../components/PageSections.astro';
+import CottageCard from '../../../components/CottageCard.astro';
+import {localizedText} from '../../../lib/i18n';
+export function getStaticPaths(){return ['nl','fr'].map(lang=>({params:{lang}}));}
+const lang=Astro.params.lang as 'nl'|'fr';
+const entry=await getEntry('pages','our-cottages');
+if(!entry)throw new Error('Missing cottages page content');
+const page=localizedText(entry.data,lang) as typeof entry.data;
+const cottages=(await getCollection('cottages')).filter(c=>c.data.available).sort((a,b)=>a.data.name.localeCompare(b.data.name));
+const labels={
+  nl:{eyebrow:'Vergelijk de vakantiehuisjes',heading:'Twee vakantiehuisjes, elk met een eigen karakter',description:'Geranium is een vrijstaand vakantiehuis met twee slaapkamers voor vier personen. Honeysuckle biedt meer ruimte voor maximaal zes personen, verdeeld over drie slaapkamers.'},
+  fr:{eyebrow:'Comparer les gîtes',heading:'Deux gîtes, chacun avec son caractère',description:'Geranium est un gîte indépendant de deux chambres pour quatre personnes. Honeysuckle offre davantage d’espace et trois chambres pour accueillir jusqu’à six personnes.'}
+}[lang];
+---
+<BaseLayout title={page.seo.title} description={page.seo.description}>
+  <PageIntro eyebrow={page.eyebrow} title={page.title} intro={page.intro} mediaType={page.heroMediaType} imageSrc={page.heroImage} imageAlt={page.heroAlt} pan={page.heroPan} videoSrc={page.heroVideo} posterSrc={page.heroPoster}/>
+  <section class="section paper cottage-compare-section">
+    <div class="wrap section-builder-wide">
+      <header class="section-heading cottage-compare-heading">
+        <p class="eyebrow">{labels.eyebrow}</p>
+        <h2>{labels.heading}</h2>
+        <p class="lede">{labels.description}</p>
+      </header>
+      <div class="cottage-grid cottage-compare-grid">
+        {cottages.map(c=><CottageCard cottage={c} showPreviewStrip/>)}
+      </div>
+    </div>
+  </section>
+  <PageSections sections={page.sections}/>
+</BaseLayout>

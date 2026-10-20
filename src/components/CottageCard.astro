@@ -2,39 +2,39 @@
 import type { CollectionEntry } from 'astro:content';
 import ResponsiveImage from './ResponsiveImage.astro';
 import CottageStats from './CottageStats.astro';
+import {languageFromPath,localPath,localizedText} from '../lib/i18n';
 
 interface Props {
   cottage: CollectionEntry<'cottages'>;
   showPreviewStrip?: boolean;
 }
 const { cottage, showPreviewStrip = false } = Astro.props;
-const c = cottage.data;
+const language=languageFromPath(Astro.url.pathname);
+const c = localizedText(cottage.data,language) as typeof cottage.data;
+const viewText={en:'View cottage',nl:'Bekijk vakantiehuis',fr:'Voir le gîte'}[language];
+const bookText={en:'Book',nl:'Boeken',fr:'Réserver'}[language];
 const previewImages = c.gallery.map((item,galleryIndex)=>({...item,galleryIndex})).filter(item => item.image !== c.heroImage).slice(0,3);
-const outdoorSpace = c.facilities.find(item => /garden|outdoor/i.test(item));
-const comparisonCues = c.slug === 'geranium'
-  ? [
-      { label: 'Best suited to', text: 'couples and smaller families' },
-      { text: outdoorSpace ?? 'Private enclosed garden' },
-      { text: 'Cosy and characterful' }
-    ]
-  : c.slug === 'honeysuckle'
-    ? [
-        { label: 'Best suited to', text: 'families and groups' },
-        { text: outdoorSpace ?? 'Private garden' },
-        { text: 'Spacious and flexible' }
-      ]
-    : [{ text: c.summary }];
+const cues={
+ en:{suited:'Best suited to',small:'couples and smaller families',big:'families and groups',geraniumGarden:'Private enclosed garden',honeysuckleGarden:'Private garden',cosy:'Cosy and characterful',spacious:'Spacious and flexible',dog:'Dog friendly'},
+ nl:{suited:'Bij uitstek geschikt voor',small:'stellen en kleinere gezinnen',big:'gezinnen en groepen',geraniumGarden:'Omheinde privétuin',honeysuckleGarden:'Privétuin',cosy:'Gezellig en karaktervol',spacious:'Ruim en flexibel',dog:'Honden welkom'},
+ fr:{suited:'Idéal pour',small:'les couples et les petites familles',big:'les familles et les groupes',geraniumGarden:'Jardin privé clos',honeysuckleGarden:'Jardin privé',cosy:'Chaleureux et plein de charme',spacious:'Spacieux et modulable',dog:'Chiens acceptés'}
+}[language];
+const comparisonCues=c.slug==='geranium'
+  ? [{label:cues.suited,text:cues.small},{text:cues.geraniumGarden},{text:cues.cosy}]
+  : c.slug==='honeysuckle'
+    ? [{label:cues.suited,text:cues.big},{text:cues.honeysuckleGarden},{text:cues.spacious}]
+    : [{text:c.summary}];
 ---
 <article class:list={["cottage-card",showPreviewStrip && "cottage-card-comparison"]}>
-  <a class="card-image" href={`/cottages/${c.slug}/`} aria-label={`View ${c.name}`} tabindex="-1">
+  <a class="card-image" href={localPath(`/cottages/${c.slug}/`,language)} aria-label={`View ${c.name}`} tabindex="-1">
     <ResponsiveImage src={c.heroImage} alt="" widths={[360,480,640,720,800,960]} sizes="(max-width: 760px) calc(100vw - 2rem), 50vw" quality={50}/>
   </a>
   <div class="card-body">
-    <h2><a href={`/cottages/${c.slug}/`}>{c.name}</a></h2>
+    <h2><a href={localPath(`/cottages/${c.slug}/`,language)}>{c.name}</a></h2>
     {showPreviewStrip && <p class="cottage-card-tagline">{c.tagline}</p>}
     {!showPreviewStrip && <p class="cottage-card-summary">{c.tagline}</p>}
     <CottageStats sleeps={c.sleeps} bedrooms={c.bedrooms} beds={c.beds} bathrooms={c.bathrooms} dogFriendly={showPreviewStrip ? false : c.dogFriendly} compact={true}/>
-    {showPreviewStrip && c.dogFriendly && <p class="cottage-dog-friendly">● Dog friendly</p>}
+    {showPreviewStrip && c.dogFriendly && <p class="cottage-dog-friendly">● {cues.dog}</p>}
     {showPreviewStrip && (
       <ul class="cottage-decision-cues" aria-label={`${c.name} at a glance`}>
         {comparisonCues.map(cue => (
@@ -43,11 +43,11 @@ const comparisonCues = c.slug === 'geranium'
       </ul>
     )}
     <div class="card-actions">
-      <a class="button button-secondary cottage-card-button cottage-card-view-button" href={`/cottages/${c.slug}/`}>
-        <span class="cottage-card-view-label-desktop">{showPreviewStrip ? `View ${c.name}` : 'View cottage'}</span>
-        <span class="cottage-card-view-label-mobile">View cottage</span>
+      <a class="button button-secondary cottage-card-button cottage-card-view-button" href={localPath(`/cottages/${c.slug}/`,language)}>
+        <span class="cottage-card-view-label-desktop">{showPreviewStrip ? `${viewText}: ${c.name}` : viewText}</span>
+        <span class="cottage-card-view-label-mobile">{viewText}</span>
       </a>
-      {showPreviewStrip && c.airbnbUrl && <a class="button cottage-card-button cottage-card-book-button" href={c.airbnbUrl} target="_blank" rel="noopener">Book</a>}
+      {showPreviewStrip && c.airbnbUrl && <a class="button cottage-card-button cottage-card-book-button" href={c.airbnbUrl} target="_blank" rel="noopener">{bookText}</a>}
     </div>
   </div>
   {showPreviewStrip && previewImages.length > 0 && (
@@ -55,7 +55,7 @@ const comparisonCues = c.slug === 'geranium'
       {previewImages.map(item => (
         <a
           class="cottage-preview-link"
-          href={`/cottages/${c.slug}/?gallery=${item.galleryIndex}#gallery`}
+          href={localPath(`/cottages/${c.slug}/?gallery=${item.galleryIndex}#gallery`,language)}
           aria-label={`Open ${item.caption} in the ${c.name} gallery`}
         >
           <ResponsiveImage src={item.image} alt={item.alt} widths={[220,320,420]} sizes="(max-width:760px) 33vw, 15vw" />

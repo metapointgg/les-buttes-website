@@ -15,6 +15,9 @@ import '../styles/redline-polish-fixes.css';
 import '../styles/cottage-mobile.css';
 import '../styles/heading-balance.css';
 import site from '../data/site.json';
+import { languageFromPath, unprefixPath, localPath, languages } from '../lib/i18n';
+const language=languageFromPath(Astro.url.pathname);
+const canonicalPagePath=unprefixPath(Astro.url.pathname);
 
 interface Props {
   title:string;
@@ -32,7 +35,7 @@ const {
   noindex=false
 }=Astro.props;
 
-const pathKey=Astro.url.pathname==='/'?'home':Astro.url.pathname.replace(/^\/+|\/+$/g,'').replace(/\//g,'-')||'home';
+const pathKey=canonicalPagePath==='/'?'home':canonicalPagePath.replace(/^\/+|\/+$/g,'').replace(/\//g,'-')||'home';
 const pageClass=`page-${pathKey}`;
 
 const googleAnalyticsId=site.analytics?.googleAnalyticsId?.trim();
@@ -43,7 +46,7 @@ const [pages,subpages,cottages]=await Promise.all([
   getCollection('cottages')
 ]);
 
-const currentPath=Astro.url.pathname;
+const currentPath=canonicalPagePath;
 const pageEntry=pages.find(entry=>entry.data.urlStub===currentPath);
 const subpageEntry=subpages.find(entry=>`/${entry.data.slug}/`===currentPath);
 const cottageSlug=currentPath.match(/^\/cottages\/([^/]+)\/$/)?.[1];
@@ -138,8 +141,8 @@ const socialImage=socialImageSource?.startsWith('/src/assets/images/')
     ? new URL(socialImageSource,socialBaseUrl).toString()
     : defaultSocialImage;
 
-const socialTitle=currentEntry?.data.seo.socialTitle??title;
-const socialDescription=currentEntry?.data.seo.socialDescription??description;
+const socialTitle=title;
+const socialDescription=description;
 const socialImageAlt=currentEntry?.data.seo.imageAlt??'Les Buttes Holiday Cottages in Guernsey';
 const businessImage=defaultSocialImage;
 
@@ -180,7 +183,7 @@ const pageJsonLd=jsonLd?(Array.isArray(jsonLd)?jsonLd:[jsonLd]):[];
 const structuredData=[localBusiness,webPage,...pageJsonLd];
 ---
 <!doctype html>
-<html lang="en-GB">
+<html lang={language==="en"?"en-GB":language==="nl"?"nl-NL":"fr-FR"}>
   <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width"/>
@@ -198,11 +201,13 @@ gtag('config', '${googleAnalyticsId}');`}></script>
     <title>{title}</title>
     <meta name="description" content={description}/>
     <link rel="canonical" href={canonical}/>
+    {languages.map(lang=><link rel="alternate" hreflang={lang==="en"?"en-GB":lang} href={new URL(localPath(canonicalPagePath,lang),site.url).toString()}/>)}
+    <link rel="alternate" hreflang="x-default" href={new URL(canonicalPagePath,site.url).toString()}/>
     <meta name="robots" content={noindex?'noindex,follow,max-image-preview:large':'max-image-preview:large'}/>
 
     <meta property="og:type" content="website"/>
     <meta property="og:site_name" content={site.name}/>
-    <meta property="og:locale" content="en_GB"/>
+    <meta property="og:locale" content={language==="en"?"en_GB":language==="nl"?"nl_NL":"fr_FR"}/>
     <meta property="og:title" content={socialTitle}/>
     <meta property="og:description" content={socialDescription}/>
     <meta property="og:url" content={socialUrl}/>
@@ -225,7 +230,7 @@ gtag('config', '${googleAnalyticsId}');`}></script>
     <script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>
   </head>
   <body class={pageClass}>
-    <a class="skip-link" href="#main-content">Skip to content</a>
+    <a class="skip-link" href="#main-content">{({en:"Skip to content",nl:"Ga naar inhoud",fr:"Aller au contenu"} as const)[language]}</a>
     <Header/>
     <main id="main-content"><slot/></main>
     <Footer/>
