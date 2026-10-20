@@ -35,7 +35,7 @@ const {
   noindex=false
 }=Astro.props;
 
-const pathKey=Astro.url.pathname==='/'?'home':Astro.url.pathname.replace(/^\/+|\/+$/g,'').replace(/\//g,'-')||'home';
+const pathKey=canonicalPagePath==='/'?'home':canonicalPagePath.replace(/^\/+|\/+$/g,'').replace(/\//g,'-')||'home';
 const pageClass=`page-${pathKey}`;
 
 const googleAnalyticsId=site.analytics?.googleAnalyticsId?.trim();
@@ -46,7 +46,7 @@ const [pages,subpages,cottages]=await Promise.all([
   getCollection('cottages')
 ]);
 
-const currentPath=Astro.url.pathname;
+const currentPath=canonicalPagePath;
 const pageEntry=pages.find(entry=>entry.data.urlStub===currentPath);
 const subpageEntry=subpages.find(entry=>`/${entry.data.slug}/`===currentPath);
 const cottageSlug=currentPath.match(/^\/cottages\/([^/]+)\/$/)?.[1];
@@ -141,8 +141,8 @@ const socialImage=socialImageSource?.startsWith('/src/assets/images/')
     ? new URL(socialImageSource,socialBaseUrl).toString()
     : defaultSocialImage;
 
-const socialTitle=currentEntry?.data.seo.socialTitle??title;
-const socialDescription=currentEntry?.data.seo.socialDescription??description;
+const socialTitle=title;
+const socialDescription=description;
 const socialImageAlt=currentEntry?.data.seo.imageAlt??'Les Buttes Holiday Cottages in Guernsey';
 const businessImage=defaultSocialImage;
 
@@ -207,7 +207,7 @@ gtag('config', '${googleAnalyticsId}');`}></script>
 
     <meta property="og:type" content="website"/>
     <meta property="og:site_name" content={site.name}/>
-    <meta property="og:locale" content="en_GB"/>
+    <meta property="og:locale" content={language==="en"?"en_GB":language==="nl"?"nl_NL":"fr_FR"}/>
     <meta property="og:title" content={socialTitle}/>
     <meta property="og:description" content={socialDescription}/>
     <meta property="og:url" content={socialUrl}/>
@@ -230,7 +230,7 @@ gtag('config', '${googleAnalyticsId}');`}></script>
     <script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>
   </head>
   <body class={pageClass}>
-    <a class="skip-link" href="#main-content">Skip to content</a>
+    <a class="skip-link" href="#main-content">{({en:"Skip to content",nl:"Ga naar inhoud",fr:"Aller au contenu"} as const)[language]}</a>
     <Header/>
     <main id="main-content"><slot/></main>
     <Footer/>
