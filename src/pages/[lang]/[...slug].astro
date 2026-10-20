@@ -1,5 +1,5 @@
 ---
-import { getCollection, getEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HeroMedia from '../../components/HeroMedia.astro';
 import PageIntro from '../../components/PageIntro.astro';
@@ -8,13 +8,14 @@ import ReviewsCarousel from '../../components/ReviewsCarousel.astro';
 import Callout from '../../components/Callout.astro';
 import newsletter from '../../data/newsletter.json';
 import ContentPageTemplate from '../../components/templates/ContentPageTemplate.astro';
-import { localizedText, localPath } from '../../lib/i18n';
+import { localizedText } from '../../lib/i18n';
 import type { SiteLanguage } from '../../lib/i18n';
 
 export async function getStaticPaths(){
   const core=(await getCollection('pages')).map(entry=>({slug:entry.data.urlStub.replace(/^\/+|\/+$/g,''),entry}));
   const sub=(await getCollection('subpages')).filter(e=>e.data.published).map(entry=>({slug:entry.data.slug,entry}));
-  const paths=[...core,...sub];
+  const routes=new Map([...sub,...core].map(item=>[item.slug,item]));
+  const paths=[...routes.values()];
   return (['nl','fr'] as const).flatMap(lang=>paths.map(({slug,entry})=>({
     params:{lang,slug:slug||undefined},props:{page:entry}
   })));
