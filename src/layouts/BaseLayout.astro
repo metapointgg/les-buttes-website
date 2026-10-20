@@ -15,6 +15,9 @@ import '../styles/redline-polish-fixes.css';
 import '../styles/cottage-mobile.css';
 import '../styles/heading-balance.css';
 import site from '../data/site.json';
+import { languageFromPath, unprefixPath, localPath, languages } from '../lib/i18n';
+const language=languageFromPath(Astro.url.pathname);
+const canonicalPagePath=unprefixPath(Astro.url.pathname);
 
 interface Props {
   title:string;
@@ -180,7 +183,7 @@ const pageJsonLd=jsonLd?(Array.isArray(jsonLd)?jsonLd:[jsonLd]):[];
 const structuredData=[localBusiness,webPage,...pageJsonLd];
 ---
 <!doctype html>
-<html lang="en-GB">
+<html lang={language==="en"?"en-GB":language==="nl"?"nl-NL":"fr-FR"}>
   <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width"/>
@@ -198,6 +201,8 @@ gtag('config', '${googleAnalyticsId}');`}></script>
     <title>{title}</title>
     <meta name="description" content={description}/>
     <link rel="canonical" href={canonical}/>
+    {languages.map(lang=><link rel="alternate" hreflang={lang==="en"?"en-GB":lang} href={new URL(localPath(canonicalPagePath,lang),site.url).toString()}/>)}
+    <link rel="alternate" hreflang="x-default" href={new URL(canonicalPagePath,site.url).toString()}/>
     <meta name="robots" content={noindex?'noindex,follow,max-image-preview:large':'max-image-preview:large'}/>
 
     <meta property="og:type" content="website"/>
