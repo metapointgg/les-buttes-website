@@ -20,7 +20,9 @@ sections:
     titleFr: "Inclus dans chaque séjour"
     title: Included in every stay
     items:
-      - title: Heating & electricity
+      - titleNl: "Verwarming en elektriciteit"
+        titleFr: "Chauffage et électricité"
+        title: Heating & electricity
         textNl: "Inbegrepen in de prijs van uw verblijf."
         textFr: "Inclus dans le prix du séjour."
         text: Included in the price of your stay.
@@ -30,12 +32,16 @@ sections:
         textFr: "Wi-Fi gratuit dans les deux gîtes."
         text: Complimentary Wi-Fi in both cottages.
         icon: wifi
-      - title: Linen & towels
+      - titleNl: "Beddengoed en handdoeken"
+        titleFr: "Draps et serviettes"
+        title: Linen & towels
         textNl: "Beddengoed en handdoeken zijn aanwezig."
         textFr: "Le linge de lit et les serviettes sont fournis."
         text: Bed linen and towels are provided.
         icon: bed
-      - title: A Guernsey welcome
+      - titleNl: "Een warm welkom op Guernsey"
+        titleFr: "Un accueil guernesiais"
+        title: A Guernsey welcome
         textNl: "Bij aankomst staan thee, koffie, lokale melk en boter voor u klaar."
         textFr: "Thé, café, lait et beurre locaux vous attendent à votre arrivée."
         text: Tea, coffee, local milk and butter for your arrival.
@@ -54,15 +60,21 @@ sections:
     textFr: "Les disponibilités, les tarifs actuels, les paiements et les conditions de réservation sont gérés par Airbnb."
     text: Availability, current pricing, payment and booking terms are handled through Airbnb.
     items:
-      - title: Live availability
+      - titleNl: "Actuele beschikbaarheid"
+        titleFr: "Disponibilités en temps réel"
+        title: Live availability
         textNl: "Bekijk welke data momenteel beschikbaar zijn voor elk vakantiehuis."
         textFr: "Consultez les dates actuellement disponibles pour chaque gîte."
         text: See the dates currently available for each cottage.
-      - title: Current price
+      - titleNl: "Actuele prijs"
+        titleFr: "Tarif actuel"
+        title: Current price
         textNl: "Airbnb toont de prijs voor de door u gekozen data en het aantal gasten."
         textFr: "Airbnb affiche le tarif correspondant aux dates et au nombre de personnes choisis."
         text: Airbnb shows the price for the dates and party size you select.
-      - title: Payment & terms
+      - titleNl: "Betaling en voorwaarden"
+        titleFr: "Paiement et conditions"
+        title: Payment & terms
         textNl: "Betalingen en boekingsvoorwaarden worden veilig via Airbnb afgehandeld."
         textFr: "Les paiements et les conditions de réservation sont gérés en toute sécurité par Airbnb."
         text: Payment and booking terms are handled securely through Airbnb.
