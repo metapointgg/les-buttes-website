@@ -9,7 +9,7 @@ export function unprefixPath(path:string):string {
   return path.replace(/^\/(nl|fr)(?=\/|$)/,'') || '/';
 }
 export function localPath(path:string,language:SiteLanguage):string {
-  if (!path.startsWith('/') || path.startsWith('//')) return path;
+  if (!path.startsWith('/') || path.startsWith('//') || /^\/(src|_astro|videos|favicon)(\/|\.)/.test(path)) return path;
   const clean=unprefixPath(path);
   return language==='en' ? clean : `/${language}${clean}`;
 }
