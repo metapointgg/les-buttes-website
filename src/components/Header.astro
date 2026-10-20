@@ -8,7 +8,7 @@ import { languageFromPath, localPath, localizedText, unprefixPath } from '../lib
 const path=Astro.url.pathname;
 const language=languageFromPath(path);
 // A 404 page has no translated equivalent; the flag selector takes visitors home.
-const basePath=/^\\/404\\/?$/.test(unprefixPath(path))?'/':unprefixPath(path);
+const basePath=['/404','/404/'].includes(unprefixPath(path))?'/':unprefixPath(path);
 const translations={en:{home:'Home',cottages:'Our Cottages',story:'Our Story',explore:'Explore Guernsey',contact:'Contact',book:'Check availability',menu:'Menu'},nl:{home:'Home',cottages:'Onze vakantiehuisjes',story:'Ons verhaal',explore:'Ontdek Guernsey',contact:'Contact',book:'Beschikbaarheid bekijken',menu:'Menu'},fr:{home:'Accueil',cottages:'Nos gîtes',story:'Notre histoire',explore:'Découvrir Guernesey',contact:'Contact',book:'Voir les disponibilités',menu:'Menu'}}[language];
 const fixedNav=[
   {href:'/',label:translations.home,order:10},
