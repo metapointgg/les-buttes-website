@@ -52,16 +52,24 @@ sections:
     imagePosition: left
     showCottagePreviewStrip: false
     items:
-      - title: Historic farm setting
+      - titleNl: "Historische boerderijomgeving"
+        titleFr: "Cadre d'une ferme historique"
+        title: Historic farm setting
         icon: history
         external: false
-      - title: Mature gardens
+      - titleNl: "Volgroeide tuinen"
+        titleFr: "Jardins arborés"
+        title: Mature gardens
         icon: garden
         external: false
-      - title: Coast within easy reach
+      - titleNl: "Kust binnen handbereik"
+        titleFr: "La côte à portée de main"
+        title: Coast within easy reach
         icon: beach
         external: false
-      - title: Family run since 1981
+      - titleNl: "Familiebedrijf sinds 1981"
+        titleFr: "Entreprise familiale depuis 1981"
+        title: Family run since 1981
         icon: guests
         external: false
     buttonExternal: false
