@@ -13,7 +13,7 @@ import type { SiteLanguage } from '../../lib/i18n';
 
 export async function getStaticPaths(){
   const core=(await getCollection('pages')).map(entry=>({slug:entry.data.urlStub.replace(/^\/+|\/+$/g,''),entry}));
-  const sub=(await getCollection('subpages')).filter(e=>e.data.published).map(entry=>({slug:entry.data.slug,entry}));
+  const sub=(await getCollection('subpages')).filter(e=>e.data.published || e.data.slug==='gardens').map(entry=>({slug:entry.data.slug,entry}));
   const routes=new Map([...sub,...core].map(item=>[item.slug,item]));
   const paths=[...routes.values()];
   return (['nl','fr'] as const).flatMap(lang=>paths.map(({slug,entry})=>({
