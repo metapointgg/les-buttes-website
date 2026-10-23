@@ -1,7 +1,7 @@
 export const DAY=86400000;
 const capacities={geranium:4,honeysuckle:6,both:10};
 const unitNames={geranium:['geranium'],honeysuckle:['honeysuckle'],both:['geranium','honeysuckle']};
-const datePattern=/^\\d{4}-\\d{2}-\\d{2}$/;
+const datePattern=/^\d{4}-\d{2}-\d{2}$/;
 
 export function parseDate(value){
   if(typeof value!=='string'||!datePattern.test(value))return NaN;
