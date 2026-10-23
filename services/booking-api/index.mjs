@@ -129,8 +129,8 @@ export async function handler(event){
     if(!table||!process.env.NOTIFY_FROM||!process.env.NOTIFY_TO||!process.env.TURNSTILE_SECRET)return response(503,{error:'Service not configured'});
     try{
       if(method==='POST'){
-        if(Number(event.headers?.['content-length']||0)>10000)return response(413,{error:'Request too large'});
-        let input;try{input=JSON.parse(event.body||'{}');}catch{return response(400,{error:'Invalid request'});}
+        if((event.body?.length??0)>10000)return response(413,{error:'Request too large'});
+        let input;try{input=JSON.parse(event.body||'{}');if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Invalid request');}catch{return response(400,{error:'Invalid request'});}
         return await createRequest(input,event);
       }
       const q=event.queryStringParameters||{};
