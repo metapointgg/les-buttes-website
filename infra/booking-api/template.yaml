@@ -6,6 +6,9 @@ Parameters:
   AllowedOrigin:
     Type: String
     Default: https://lesbuttes.com
+  AllowedWwwOrigin:
+    Type: String
+    Default: https://www.lesbuttes.com
   BookingRequestsEnabled:
     Type: String
     AllowedValues: ['true', 'false']
@@ -57,7 +60,7 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       CorsConfiguration:
-        AllowOrigins: [!Ref AllowedOrigin]
+        AllowOrigins: [!Ref AllowedOrigin, !Ref AllowedWwwOrigin]
         AllowMethods: ['GET', 'POST', 'OPTIONS']
         AllowHeaders: ['content-type']
         MaxAge: 300
