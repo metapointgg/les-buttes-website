@@ -72,7 +72,7 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
   });
   // Render the challenge only when its official script has loaded.
   const captcha=form.querySelector<HTMLElement>('[data-turnstile-slot]');
-  const siteKey=(document.querySelector('meta[name="booking-turnstile-key"]') as HTMLMetaElement|null)?.content;
+  const siteKey=form.dataset.siteKey;
   if(captcha&&siteKey){
     const render=()=>{
       const t=(window as typeof window & {turnstile?:{render:(el:HTMLElement,opts:{sitekey:string})=>string}}).turnstile;
