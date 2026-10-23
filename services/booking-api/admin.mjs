@@ -27,7 +27,7 @@ async function change(id,expected,status,extras={},nextExpiry){
   if(nextExpiry!==undefined&&b.holdExpiresAt<=Math.floor(Date.now()/1000))fail('Hold expired; recheck availability and request again');
   const txn=[{Update:{TableName:table,Key:{PK:'BOOKING#'+id,SK:'META'},
     UpdateExpression:'SET #status = :new, updatedAt = :at'+(nextExpiry!==undefined?', holdExpiresAt = :expiry':'')+
-      Object.keys(extras).map((k,i)=>', #extra'+i+' = :extra'+i).join('')+(status==='CONFIRMED'?' REMOVE recordTtl':''),
+      Object.keys(extras).map((k,i)=>', #extra'+i+' = :extra'+i).join('')+(status==='CONFIRMED'?' REMOVE expiresAt':''),
     ConditionExpression:'#status = :old',
     ExpressionAttributeNames:{'#status':'status',...Object.fromEntries(Object.keys(extras).map((k,i)=>['#extra'+i,k]))},
     ExpressionAttributeValues:{':new':status,':old':expected,':at':new Date().toISOString(),...(nextExpiry!==undefined?{':expiry':nextExpiry}:{}),...Object.fromEntries(Object.values(extras).map((v,i)=>[':extra'+i,v]))}
