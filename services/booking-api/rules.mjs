@@ -18,7 +18,7 @@ export function dates(start,end){
 export function validBooking(input){
   const {unit,start,end,guests}=input;
   const nights=dates(start,end);
-  if(!nights||!(unit in unitNames)||!Number.isInteger(guests)||guests<1||guests>capacities[unit])return {error:'Invalid dates or guest count (maximum stay: 27 nights)'};
+  if(!nights||!Object.hasOwn(unitNames,unit)||!Number.isInteger(guests)||guests<1||guests>capacities[unit])return {error:'Invalid dates or guest count (maximum stay: 27 nights)'};
   if(parseDate(start)<Date.parse(new Date().toISOString().slice(0,10)+'T00:00:00Z'))return {error:'Arrival date is in the past'};
   let rules;
   try{rules=JSON.parse(process.env.BOOKING_RULES_JSON||'{}');}catch{return {error:'Booking rules not configured',serverError:true};}
