@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Les Buttes direct booking request API - intentionally disabled until configuration is complete.
+
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Default: https://lesbuttes.com
+  BookingRequestsEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+  BookingRulesJson:
+    Type: String
+    Default: '{}'
+    Description: Explicit dates and minimum stays. See services/booking-api/README.md.
+  CalendarToken:
+    Type: String
+    NoEcho: true
+    MinLength: 24
+    Description: Random bearer token required to read the no-PII Airbnb iCal feeds.
+  TurnstileSecret:
+    Type: String
+    NoEcho: true
+    Description: Cloudflare Turnstile private server verification secret.
+  NotifyFrom:
+    Type: String
+    Default: ''
+    Description: Verified SES sender for host notifications.
+  NotifyTo:
+    Type: String
+    Default: ''
+    Description: Host email receiving new booking requests.
+
+Resources:
+  BookingTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  BookingApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref AllowedOrigin]
+        AllowMethods: ['GET', 'POST', 'OPTIONS']
+        AllowHeaders: ['content-type']
+        MaxAge: 300
+
+  BookingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: index.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 12
+      Environment:
+        Variables:
+          BOOKINGS_TABLE: !Ref BookingTable
+          ALLOWED_ORIGIN: !Ref AllowedOrigin
+          BOOKING_REQUESTS_ENABLED: !Ref BookingRequestsEnabled
+          BOOKING_RULES_JSON: !Ref BookingRulesJson
+          TURNSTILE_SECRET: !Ref TurnstileSecret
+          CALENDAR_TOKEN: !Ref CalendarToken
+          NOTIFY_FROM: !Ref NotifyFrom
+          NOTIFY_TO: !Ref NotifyTo
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookingTable
+        - Statement:
+            Effect: Allow
+            Action: ['ses:SendEmail']
+            Resource: '*'
+      Events:
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BookingApi
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: API root for PUBLIC_BOOKING_API_URL at website build time (do not configure until ready).
+    Value: !Sub https://${BookingApi}.execute-api.${AWS::Region}.amazonaws.com
+  BookingTableName:
+    Description: Private DynamoDB table name for the host admin CLI.
+    Value: !Ref BookingTable
