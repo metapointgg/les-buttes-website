@@ -24,7 +24,7 @@ const maxDate='2099-12-31';
             <p>{c.liveSoon}</p>
             <a class="button" href={localPath('/cottages/',lang)}>{c.airbnb}</a>
           </div>}
-          <form data-booking-form data-api={apiUrl} data-messages={JSON.stringify(c)} novalidate>
+          <form data-booking-form data-api={apiUrl} data-site-key={turnstileKey} data-messages={JSON.stringify(c)} novalidate>
             <fieldset disabled={!enabled}>
               <div class="booking-fields">
                 <label class="full">{c.choose}
