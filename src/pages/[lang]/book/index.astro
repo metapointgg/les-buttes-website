@@ -1,0 +1,5 @@
+---
+import BookingRequestPage from '../../../components/BookingRequestPage.astro';
+export function getStaticPaths(){return ['nl','fr'].map(lang=>({params:{lang}}));}
+---
+<BookingRequestPage/>
