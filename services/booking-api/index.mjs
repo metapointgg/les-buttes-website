@@ -156,7 +156,7 @@ export async function handler(event){
   }
   if((method==='POST'&&path==='/requests')||(method==='GET'&&path==='/availability')){
     if(process.env.BOOKING_REQUESTS_ENABLED!=='true')return response(503,{error:'Direct booking requests are not open yet'});
-    if(!table)return response(503,{error:'Service not configured'});
+    if(!table||!process.env.NOTIFY_FROM||!process.env.NOTIFY_TO||!process.env.TURNSTILE_SECRET)return response(503,{error:'Service not configured'});
     try{
       if(method==='POST'){
         if(Number(event.headers?.['content-length']||0)>10000)return response(413,{error:'Request too large'});
