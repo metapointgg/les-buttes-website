@@ -24,8 +24,15 @@ try{
     & aws ssm put-parameter --cli-input-json "file://$temp" --profile $Profile --region $Region --output json | Out-Null
     if($LASTEXITCODE -ne 0){throw 'The SSM SecureString write failed.'}
     Write-Host "Saved $Unit Airbnb calendar token in encrypted staging SSM Parameter Store. No URL printed or committed."
-    Set-Clipboard -Value ''
-    Write-Host 'Clipboard cleared to reduce accidental sharing.'
+    # Windows PowerShell 5.1 rejects an empty clipboard value. A single blank
+    # character clears the private link while remaining a valid text value.
+    # Clipboard cleanup is best-effort and must not turn an SSM write into failure.
+    try {
+        Set-Clipboard -Value ' ' -ErrorAction Stop
+        Write-Host 'Clipboard cleared to reduce accidental sharing.'
+    } catch {
+        Write-Warning 'SecureString was saved, but clipboard cleanup failed. Copy non-sensitive text to the clipboard manually.'
+    }
 }finally{
     Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
 }
