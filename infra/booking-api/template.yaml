@@ -46,11 +46,16 @@ Parameters:
     Default: ''
     Description: Host email receiving new booking requests.
 
+  BookingRequestsIndexEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: One-time staging index opt-in. Keep true on ALL subsequent staging stack updates.
   ManagementPreviewEnabled:
     Type: String
     AllowedValues: ['true', 'false']
     Default: 'false'
-    Description: Explicit opt-in for staging-only Cognito-protected read-only management API and booking index.
+    Description: Explicit opt-in for staging-only Cognito-protected read-only API; requires permanent staging booking index opt-in.
   ManagementCognitoPoolId:
     Type: String
     Default: ''
@@ -93,8 +98,11 @@ Parameters:
     Description: Name only, not value; actual private URL is an SSM SecureString.
 
 Conditions:
-  ManagementPreviewEnabledCondition: !And
+  BookingRequestsIndexCondition: !And
     - !Equals [!Ref BookingEnvironment, 'staging']
+    - !Equals [!Ref BookingRequestsIndexEnabled, 'true']
+  ManagementPreviewEnabledCondition: !And
+    - !Condition BookingRequestsIndexCondition
     - !Equals [!Ref ManagementPreviewEnabled, 'true']
     - !Not [!Equals [!Ref ManagementCognitoPoolId, '']]
     - !Not [!Equals [!Ref ManagementCognitoClientId, '']]
@@ -108,7 +116,7 @@ Resources:
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions: !If
-        - ManagementPreviewEnabledCondition
+        - BookingRequestsIndexCondition
         - - {AttributeName: PK, AttributeType: S}
           - {AttributeName: SK, AttributeType: S}
           - {AttributeName: GSI1PK, AttributeType: S}
@@ -121,7 +129,7 @@ Resources:
         - AttributeName: SK
           KeyType: RANGE
       GlobalSecondaryIndexes: !If
-        - ManagementPreviewEnabledCondition
+        - BookingRequestsIndexCondition
         - - IndexName: BookingRequestsIndex
             KeySchema:
               - {AttributeName: GSI1PK, KeyType: HASH}
@@ -213,6 +221,8 @@ Resources:
         Variables:
           BOOKINGS_TABLE: !Ref BookingTable
           BOOKING_REQUESTS_INDEX: BookingRequestsIndex
+          MANAGEMENT_COGNITO_CLIENT_ID: !Ref ManagementCognitoClientId
+          MANAGEMENT_COGNITO_ISSUER: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${ManagementCognitoPoolId}
       Policies:
         - Statement:
             Effect: Allow
