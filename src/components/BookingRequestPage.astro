@@ -17,11 +17,11 @@ const preview=!enabled;
 const maxDate=preview?'2027-10-02':'2099-12-31';
 ---
 <BaseLayout title={(preview?p.headline:c.title)+' | Les Buttes'} description={preview?p.intro:c.intro} noindex>
-  <section class="section paper">
-    <div class="wrap booking-page">
-      {preview ? (
-        <BookingDiscoveryPreview/>
-      ) : (
+  {preview ? (
+    <BookingDiscoveryPreview/>
+  ) : (
+    <section class="section paper">
+      <div class="wrap booking-page">
         <>
           <div class="booking-heading">
             <p class="eyebrow">{c.eyebrow}</p>
@@ -69,9 +69,9 @@ const maxDate=preview?'2027-10-02':'2099-12-31';
             </aside>
           </div>
         </>
-      )}
-    </div>
-  </section>
+      </div>
+    </section>
+  )}
 </BaseLayout>
 {enabled && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>}
 <script>import '../scripts/booking-form';</script>
@@ -93,29 +93,4 @@ const maxDate=preview?'2027-10-02':'2099-12-31';
 fieldset{border:0;padding:0;margin:0;min-width:0}fieldset[disabled]{opacity:.6}
 @media(max-width:48rem){.booking-layout{grid-template-columns:1fr}.booking-fields{grid-template-columns:1fr}}
 
-/* Hidden preview. Styles follow the site's editorial palette and remain readable on mobile. */
-.preview-alert{display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:1.3rem;padding:.95rem 1.1rem;border:1px solid var(--line);border-radius:.5rem;background:var(--cream);color:var(--ink);font-size:.86rem}
-.preview-alert span{color:var(--soft)}
-.booking-step-title{font-size:clamp(1.35rem,2.6vw,1.8rem);margin:0 0 .65rem}
-.booking-explainer{font-size:.94rem;color:var(--soft);margin-bottom:1.5rem}
-.preview-result{border-top:1px solid var(--line);margin-top:2rem;padding-top:1.5rem}
-.preview-result[hidden]{display:none}
-.preview-result-heading .eyebrow{margin-bottom:.3rem}
-.preview-dates{font-weight:600;margin:.2rem 0 1rem}
-.preview-cottage-list{list-style:none;padding:0;margin:0 0 1.4rem;display:grid;gap:.6rem}
-/* Rows are inserted by browser JavaScript; :global is required so Astro's scoped CSS applies. */
-.preview-cottage-list :global(li){display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;column-gap:1rem;min-width:0;padding:.7rem .9rem;border-radius:.35rem;background:var(--cream);font-size:.9rem}
-.preview-cottage-list :global(li span:last-child){font-weight:700;text-align:right;white-space:nowrap}
-.preview-totals{margin:0;display:grid;gap:.8rem}
-.preview-totals>div{display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
-.preview-totals dt{font-size:.87rem;color:var(--soft)}
-.preview-totals dd{margin:0;font-weight:700}
-.preview-totals .preview-highlight{border-top:1px solid var(--line);padding-top:1rem}
-.preview-totals .preview-highlight dt{color:var(--ink);font-size:1rem;font-weight:700}
-.preview-totals .preview-highlight dd{font-size:clamp(1.4rem,3vw,1.9rem);color:var(--green)}
-.preview-draft-minimum{margin-top:1.25rem;font-size:.87rem;font-weight:600}
-.preview-caution{border-left:3px solid var(--green);padding:.65rem .85rem;margin-top:1rem;background:var(--cream);font-size:.87rem}
-.preview-contact-link{display:block;margin-top:1rem;font-weight:600}
-.booking-aside .button{margin-top:1rem}
-@media(max-width:48rem){.preview-totals>div{align-items:start}.preview-cottage-list :global(li){grid-template-columns:minmax(0,1fr) auto}}
 </style>
