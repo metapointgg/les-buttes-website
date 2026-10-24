@@ -8,10 +8,9 @@ import {SESClient,SendEmailCommand} from '@aws-sdk/client-ses';
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const ses=new SESClient({});
 const table=process.env.BOOKINGS_TABLE;
-const origin=process.env.ALLOWED_ORIGIN||'https://lesbuttes.com';
 
 function response(statusCode,body,headers={}){
-  return {statusCode,headers:{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':origin,'Cache-Control':'no-store',...headers},body:typeof body==='string'?body:JSON.stringify(body)};
+  return {statusCode,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers},body:typeof body==='string'?body:JSON.stringify(body)};
 }
 function slotsFor(units,nights){return units.flatMap(unit=>nights.map(day=>({PK:'UNIT#'+unit,SK:'DATE#'+day})));}
 async function existingSlots(slots){
