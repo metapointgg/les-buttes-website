@@ -34,15 +34,25 @@ test('missing JSON configuration is not silently priced',()=>{
   finally{if(old===undefined)delete process.env.BOOKING_RATES_JSON;else process.env.BOOKING_RATES_JSON=old;}
 });
 
-test('proposed price sheets must not open the public API without explicit approval',()=>{
-  const original=process.env.BOOKING_RATES_JSON;
+test('proposed prices never activate requests; each environment requires its own explicit approval',()=>{
+  const originalRates=process.env.BOOKING_RATES_JSON;
+  const originalEnvironment=process.env.BOOKING_ENVIRONMENT;
   try{
-    process.env.BOOKING_RATES_JSON=JSON.stringify({...rates,status:'PROPOSED_ONLY_NOT_APPROVED'});
-    assert.equal(configuredQuote(['geranium'],nights).serverError,true);
-    process.env.BOOKING_RATES_JSON=JSON.stringify({...rates,status:'APPROVED_FOR_LIVE_BOOKINGS'});
-    assert.equal(configuredQuote(['geranium'],nights).totalGBP,'475.00');
+    for(const environment of ['production','staging']){
+      process.env.BOOKING_ENVIRONMENT=environment;
+      process.env.BOOKING_RATES_JSON=JSON.stringify({...rates,status:'PROPOSED_ONLY_NOT_APPROVED'});
+      assert.equal(configuredQuote(['geranium'],nights).serverError,true);
+      const correctStatus=environment==='staging'?'APPROVED_FOR_STAGING_TESTS':'APPROVED_FOR_LIVE_BOOKINGS';
+      const wrongStatus=environment==='staging'?'APPROVED_FOR_LIVE_BOOKINGS':'APPROVED_FOR_STAGING_TESTS';
+      process.env.BOOKING_RATES_JSON=JSON.stringify({...rates,status:wrongStatus});
+      assert.equal(configuredQuote(['geranium'],nights).serverError,true);
+      process.env.BOOKING_RATES_JSON=JSON.stringify({...rates,status:correctStatus});
+      assert.equal(configuredQuote(['geranium'],nights).totalGBP,'475.00');
+    }
   }finally{
-    if(original===undefined)delete process.env.BOOKING_RATES_JSON;
-    else process.env.BOOKING_RATES_JSON=original;
+    if(originalRates===undefined)delete process.env.BOOKING_RATES_JSON;
+    else process.env.BOOKING_RATES_JSON=originalRates;
+    if(originalEnvironment===undefined)delete process.env.BOOKING_ENVIRONMENT;
+    else process.env.BOOKING_ENVIRONMENT=originalEnvironment;
   }
 });
