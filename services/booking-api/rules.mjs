@@ -15,11 +15,16 @@ export function dates(start,end){
   if(!Number.isInteger(nights)||nights<1||nights>27)return null;
   return Array.from({length:nights},(_,i)=>new Date(a+i*DAY).toISOString().slice(0,10));
 }
+export function guernseyToday(instant=new Date()){
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Guernsey',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(instant);
+  const byType=Object.fromEntries(parts.filter(p=>['year','month','day'].includes(p.type)).map(p=>[p.type,p.value]));
+  return byType.year+'-'+byType.month+'-'+byType.day;
+}
 export function validBooking(input){
   const {unit,start,end,guests}=input;
   const nights=dates(start,end);
   if(!nights||!Object.hasOwn(unitNames,unit)||!Number.isInteger(guests)||guests<1||guests>capacities[unit])return {error:'Invalid dates or guest count (maximum stay: 27 nights)'};
-  if(parseDate(start)<Date.parse(new Date().toISOString().slice(0,10)+'T00:00:00Z'))return {error:'Arrival date is in the past'};
+  if(parseDate(start)<parseDate(guernseyToday()))return {error:'Arrival date is in the past'};
   let rules;
   try{rules=JSON.parse(process.env.BOOKING_RULES_JSON||'{}');}catch{return {error:'Booking rules not configured',serverError:true};}
   // Never silently assume 3-night minimums or a season without explicit rules.
