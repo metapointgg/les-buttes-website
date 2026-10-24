@@ -17,6 +17,10 @@ Parameters:
     Type: String
     Default: '{}'
     Description: Explicit dates and minimum stays. See services/booking-api/README.md.
+  BookingRatesJson:
+    Type: String
+    Default: '{}'
+    Description: Explicit nightly GBP rates for both cottages. Required before public activation.
   CalendarToken:
     Type: String
     NoEcho: true
@@ -79,6 +83,7 @@ Resources:
           ALLOWED_ORIGIN: !Ref AllowedOrigin
           BOOKING_REQUESTS_ENABLED: !Ref BookingRequestsEnabled
           BOOKING_RULES_JSON: !Ref BookingRulesJson
+          BOOKING_RATES_JSON: !Ref BookingRatesJson
           TURNSTILE_SECRET: !Ref TurnstileSecret
           CALENDAR_TOKEN: !Ref CalendarToken
           NOTIFY_FROM: !Ref NotifyFrom
