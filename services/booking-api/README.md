@@ -48,12 +48,15 @@ An `openSeasons` end date represents the **last occupied night**, not the depart
 
 ```json
 {
+  "status": "PROPOSED_ONLY_NOT_APPROVED",
   "periods": [
     {"start":"2027-03-20","end":"2027-06-30","geranium":100,"honeysuckle":120},
     {"start":"2027-07-01","end":"2027-10-01","geranium":140,"honeysuckle":160}
   ]
 }
 ```
+
+The API will **not** issue any guest quotes unless the rate configuration also contains `"status":"APPROVED_FOR_LIVE_BOOKINGS"`. Do not set this flag until all prices, bank holiday overlays, open dates and inclusions have been verified. The earlier proposed September 2026 Option B monthly rates are preserved as a **draft only** at `services/booking-api/config/proposed-2027-option-b.json`. That file is missing March rates and does not implement proposed holiday overlays. It is **not** deployed or active.
 
 The host may vary the quoted amount only with an explicit recorded reason. Deposit, cleaning fees, taxes and discount codes are not implemented; the current quote assumes that configured nightly amounts are the full price of the accommodation. Check the figures and any statutory disclosures before launch.
 
@@ -93,7 +96,7 @@ node admin.mjs cancel <confirmed-booking-reference> "Refund discussed and record
 - [ ] Confirm 2027 open/close dates and exact 3/5/7-night minimum-stay periods.
 - [ ] Load all confirmed Airbnb bookings and winter lets into the master calendar, and reconcile with Airbnb calendars.
 - [ ] Verify **both Airbnb listings are request-to-book**, set **27-night maximum** in Airbnb manually and connect each correct calendar feed.
-- [ ] Configure all 2027 nightly prices in `BOOKING_RATES_JSON`, test boundaries, and verify quotes against Airbnb; finalise exact short-stay Strict cancellation wording and refund responsibilities.
+- [ ] Approve and configure all 2027 nightly prices in `BOOKING_RATES_JSON` (with explicit live-rate status), test boundaries, and verify quotes against Airbnb; finalise exact short-stay Strict cancellation wording and refund responsibilities.
 - [ ] Set up AWS SAM, test DynamoDB transactions/conflicts, test rejected 28-night dates and both-cottage atomicity, verify SES sender/recipient and notifications. Run `npm run test:booking` from the repository root.
 - [ ] Configure Turnstile keys and test captcha and anti-abuse rate limits, including input errors, webhook failures and accessibility.
 - [ ] Confirm hosted SumUp link creation and manual payment verification workflow using the Guernsey merchant account.
