@@ -70,19 +70,33 @@ async function main(){
     let last;let count=0;
     do{
       const r=await db.send(new ScanCommand({TableName:table,FilterExpression:'begins_with(PK,:prefix)',ExpressionAttributeValues:{':prefix':'BOOKING#'},ExclusiveStartKey:last}));
-      for(const b of r.Items??[]){console.log([b.id,b.status,b.unit,b.start,b.end,b.guestName??''].join('\t'));count++;}
+      for(const b of r.Items??[]){const expired=b.holdExpiresAt && b.holdExpiresAt<Math.floor(Date.now()/1000) && ['REQUESTED','APPROVED_AWAITING_PAYMENT'].includes(b.status);console.log([b.id,expired?'HOLD_EXPIRED ('+b.status+')':b.status,b.unit,b.start,b.end,b.guestName??''].join('\t'));count++;}
       last=r.LastEvaluatedKey;
     }while(last);
     console.log(count+' records');
   }else if(command==='show'){
-    const b=await booking(args[0]);console.log(JSON.stringify(b,null,2));
+    const b=await booking(args[0]);console.log(JSON.stringify({...b,holdActive:!!(b.holdExpiresAt&&b.holdExpiresAt>Math.floor(Date.now()/1000))},null,2));
   }else if(command==='approve'){
-    const [id,amount,link]=args;
+    const [id,amount,link,...reasonParts]=args;
     if(!id||!amount||!Number.isFinite(Number(amount))||Number(amount)<=0||!link)fail('Usage: approve ID AMOUNT_GBP SUMUP_PAYMENT_URL');
     const u=new URL(link);if(u.protocol!=='https:'||u.hostname!=='pay.sumup.com'||u.username||u.password)fail('Expected official HTTPS pay.sumup.com payment link');
+    const bookingRecord=await booking(id);
+    const expectedAmount=Number(bookingRecord.quote?.totalGBP);
+    const priceChanged=Math.abs(expectedAmount-Number(amount))>0.0001;
+    const priceReason=reasonParts.join(' ').trim();
+    if(!Number.isFinite(expectedAmount))fail('Quote missing; review and repair pricing before approval');
+    if(priceChanged&&priceReason.length<5)fail('Approved amount differs from quoted GBP '+bookingRecord.quote.totalGBP+'. Add an explicit reason after the SumUp URL.');
     const expiry=Math.floor(Date.now()/1000)+48*3600;
-    await change(id,'REQUESTED','APPROVED_AWAITING_PAYMENT',{approvedAmountGBP:Number(amount),paymentUrl:link},expiry);
-    console.log('Approved. Date hold extended for 48h. Send the reviewed terms and SumUp link to the guest; NOT automatically emailed.');
+    await change(id,'REQUESTED','APPROVED_AWAITING_PAYMENT',{approvedAmountGBP:Number(amount),paymentUrl:link,...(priceChanged?{priceChangeReason:priceReason}:{})},expiry);
+    console.log('Approved. Date hold extended for 48h. Confirm guest identity and SumUp amount against the approved amount.');
+    console.log('Guest email: '+bookingRecord.guestEmail);
+    console.log('Subject: Your Les Buttes booking request – payment details');
+    console.log('Thank you for your request for '+bookingRecord.unit+' ('+bookingRecord.start+' to '+bookingRecord.end+'). We have approved your request.');
+    console.log('Total accommodation price: GBP '+Number(amount).toFixed(2)+'.');
+    console.log('Please review the agreed cancellation and refund terms attached to this message BEFORE paying.');
+    console.log('Your secure SumUp payment link is: '+link);
+    console.log('Please complete payment within 48 hours. Your booking is confirmed only after we have verified the payment.');
+    console.log('NOTE: Send the terms AND payment link manually; no guest message was dispatched.');
   }else if(command==='confirm'){
     const [id,paymentReference]=args;
     if(!paymentReference||paymentReference.length<6)fail('Usage: confirm ID VERIFIED_SUMUP_PAYMENT_REFERENCE');
