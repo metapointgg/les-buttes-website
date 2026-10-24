@@ -51,7 +51,19 @@ Rates are composed as **non-overlapping inclusive date ranges**; there is exactl
 
 The season contains **196 occupied nights per cottage**. At 100% paid occupancy, these proposed rates imply a purely theoretical gross accommodation-price ceiling of **£43,390 for Geranium and £49,080 for Honeysuckle**, or £92,470 combined, before vacancies, fees, concessions and operating costs. This is **not** an occupancy/revenue prediction.
 
-## 4. Basis for holiday overlays
+## 4. Airbnb fee-adjusted calendar cross-check — REQUIRED BEFORE APPROVAL
+
+On 24 October 2026, the host supplied two long Airbnb calendar screenshots for Geranium and Honeysuckle. **The host confirms in-season Airbnb rates were already adjusted for Airbnb's 2026 single-service-fee transition. Do NOT add another fee uplift.** The screenshots are only 207–208 pixels wide in this conversation; individual daily GBP figures cannot be safely transcribed. No actual calendar-night prices have been imported into this price proposal.
+
+Sources: [Airbnb, simplifying service fees (Oct 2026)](https://www.airbnb.com/resources/hosting-homes/a/simplifying-airbnb-service-fees-746) and [Airbnb, one-time price adjustment tool](https://www.airbnb.com/help/article/4095). Airbnb's typical single host fee is **15.5%**, deducted from the configured guest-facing accommodation price (exceptions/taxes possible). At the time of comparison, [SumUp UK Payment Links fees](https://help.sumup.com/en-GB/articles/1bTBfAoe7SiaKiUxCo2uzP-payment-links-faq) are **2.5%** on a completed remotely paid transaction, subject to confirming the actual merchant account.
+
+**Like-for-like comparison must use the full guest-facing Airbnb accommodation price and the real host payout after fee; our direct-booking nightly rate is the *guest total before SumUp transaction fees*.** The previous 28 August–4 September quotes to the returning guest were Geranium **£1,630** and Honeysuckle **£1,845**, total **£3,475**. Our newer proposed model gives **£1,745 + £1,975 = £3,720**, **£245 / 7.1% higher**. These quotes are *historical examples*, not a verified extraction of the current screenshots, and the reservation has been held in both cottages separately.
+
+At the published fee assumptions, the earlier Airbnb £3,475 quote would produce an indicative host payout of **£2,936.38**; a hypothetical direct price 10% below that guest total (£3,127.50) after 2.5% payment-link fees produces **£3,049.31**, improving net payout by about **£112.94**. The exact platform booking breakdown, discounted base, tax, custom fees and actual SumUp merchant rate must be checked before using this comparison commercially.
+
+**Acceptance action**: Capture larger calendar screenshots or a dated spreadsheet listing the actual Airbnb 2027 prices for each cottage and season. Mark which calendar dates had the one-time platform price uplift. Compare proposed guest-facing nightly prices against those actual nightly prices and expected host net receipts. Do NOT add 15.5% to *already adjusted* Airbnb rates. Do NOT approve or deploy the proposed price JSON until this reconciliation has been done. Existing reservations remain unchanged.
+
+## 5. Basis for holiday overlays
 
 - Guernsey summer term ends **Thursday 22 July 2027** and local May half-term runs 31 May–4 June. Source: [States of Guernsey term dates](https://www.gov.gg/termdates). (Some individual school pages incorrectly label 22 July as a Friday; the date falls on Thursday.)
 - English school breaks: Easter around 26 March–9 April, May half-term 31 May–4 June, summer from late July. Source: [Portsmouth City Council term calendar](https://www.portsmouth.gov.uk/services/schools-and-learning/schools/school-term-dates).
@@ -60,7 +72,7 @@ The season contains **196 occupied nights per cottage**. At 100% paid occupancy,
 
 These dates justify *when* to consider overlays; they do not prove an exact achievable nightly market price.
 
-## 5. Acceptance gates before deployment
+## 6. Acceptance gates before deployment
 
 1. Approve or amend **each** proposed rate and stay band, especially March opening, Easter, May holidays, July peak commencement, late-August uplift and September step-down.
 2. Verify comparable 2027 Airbnb guest-facing quotes, cleaning inclusions and platform service-fee treatment for both listings. The file is a pricing proposal, **not** a guarantee of demand at these values.
