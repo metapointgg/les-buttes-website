@@ -1,4 +1,4 @@
-import {canPickCheckout,daysForMonth,getCapacity,indicativeSelection,matchingOptions,nightsInRange,plusDays,possibleNight,referenceAllows,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
+import {canPickCheckout,daysForMonth,indicativeSelection,matchingOptions,nightsInRange,plusDays,possibleNight,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
 
 const widget=document.querySelector<HTMLElement>('[data-discovery]');
 if(widget){
@@ -6,7 +6,7 @@ if(widget){
   const tr=(key:string)=>typeof t[key]==='string'?t[key] as string:key;
   const form=widget.querySelector<HTMLFormElement>('[data-discovery-search]')!;
   const get=(name:string)=>form.elements.namedItem(name) as HTMLInputElement|HTMLSelectElement;
-  const arrival=get('arrival'),departure=get('departure');
+  const arrival=get('arrival') as HTMLInputElement,departure=get('departure') as HTMLInputElement;
   const feedback=widget.querySelector<HTMLElement>('[data-discovery-feedback]')!;
   const optionCards=Array.from(widget.querySelectorAll<HTMLElement>('[data-discovery-option]'));
   const calendarSection=widget.querySelector<HTMLElement>('[data-discovery-availability]')!;
@@ -24,7 +24,6 @@ if(widget){
   const formatDay=(date:string)=>readable(date,{weekday:'long',day:'numeric',month:'long'});
   let choice:CottageChoice|null=null,month='2027-03',pendingStart:string|null=null;
   let filters:SearchFilters={adults:2,children:0,bedrooms:0,choice:'any'};
-  const allChoices:CottageChoice[]=['geranium','honeysuckle','both'];
   const monthShift=(m:string,n:number)=>{
     const [year,mo]=m.split('-').map(Number);
     return new Date(Date.UTC(year,mo-1+n,1)).toISOString().slice(0,7);
