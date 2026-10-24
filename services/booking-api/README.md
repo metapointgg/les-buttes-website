@@ -76,6 +76,14 @@ The host may vary the quoted amount only with an explicit recorded reason. Depos
 
 Cloudflare Turnstile is required on public requests (free tier, externally hosted), and validated by the backend. Owner email notification is sent via SES when configured. The Lambda currently logs notification delivery failures; CloudWatch alarm/error review is required before launch.
 
+## Owner-only split-savings direct quote workflow (draft)
+
+The confirmed manual quoting principle uses **the two 2027 Airbnb calendar screenshots as the comparison baseline** (fees already reflected) and aims for approximately 11% direct-guest savings, rounded per cottage and always subject to owner approval. This is **not an automatic guest discount**.
+
+For a read-only local preview, run `node services/booking-api/preview-direct-quote.mjs both 2027-08-28 2027-09-04` at the repo root. It reproduces the agreed **£1,450 Geranium + £1,650 Honeysuckle = £3,100** example from Airbnb £1,630/£1,845, without reading or modifying AWS. For other dates it is merely an **indicative owner calculation** based on the Oct 2026 screenshot snapshot; it does not check availability, does not authorise final nightly prices and does not issue a guest quote. Full instructions in [OWNER_QUOTING.md](OWNER_QUOTING.md).
+
+For the already-existing 28 Aug–4 Sep 2027 `direct / RESERVED` block, the admin command `record-direct-price ID geranium=1450 honeysuckle=1650` can store the negotiated amounts **on the existing booking metadata only**, if the host explicitly executes it after checking the record. No slot or payment statuses change, and the command refuses to overwrite an existing quote. See [OWNER_QUOTING.md](OWNER_QUOTING.md) for the safeguarded PowerShell sequence. **No agreed amount has yet been written to the AWS record by this code commit.**
+
 ## Host administration — private terminal only
 
 Use the host's own AWS credentials with least-privilege permission on the booking table. In PowerShell set `$env:BOOKINGS_TABLE` to the deployed table name, and configure `AWS_PROFILE`/region for the relevant account. From `services/booking-api/` install packages and run:
@@ -84,6 +92,7 @@ Use the host's own AWS credentials with least-privilege permission on the bookin
 npm install
 node admin.mjs list
 node admin.mjs show <booking-reference>
+node admin.mjs record-direct-price <already-reserved-direct-block-id> geranium=1450 honeysuckle=1650
 node admin.mjs block geranium 2027-08-28 2027-09-04 "Confirmed Airbnb booking"
 node admin.mjs approve <booking-reference> 1450.00 https://pay.sumup.com/EXAMPLE
 node admin.mjs approve <booking-reference> 1400.00 https://pay.sumup.com/EXAMPLE "Returning guest discount"
