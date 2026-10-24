@@ -25,6 +25,10 @@ async function booking(id){
 async function change(id,expected,status,extras={},nextExpiry){
   const b=await booking(id);
   if(b.status!==expected)fail('Expected '+expected+', found '+b.status);
+  const lifecycleStatus={APPROVED_AWAITING_PAYMENT:'AWAITING_PAYMENT',CONFIRMED:'CONFIRMED',DECLINED:'DECLINED',CANCELLED:'CANCELLED'};
+  if(b.source==='direct'||(b.status==='BLOCKED'&&status==='CANCELLED')){
+    extras={reservationStatus:lifecycleStatus[status]??status,...extras};
+  }
   if(['REQUESTED','APPROVED_AWAITING_PAYMENT'].includes(expected)&&!isNaN(b.holdExpiresAt)&&b.holdExpiresAt<=Math.floor(Date.now()/1000))fail('Hold expired; do NOT send a payment link or confirm. Recheck calendar and contact guest first.');
   const txn=[{Update:{TableName:table,Key:{PK:'BOOKING#'+id,SK:'META'},
     UpdateExpression:'SET #status = :new, updatedAt = :at'+(nextExpiry!==undefined?', holdExpiresAt = :expiry':'')+
