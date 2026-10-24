@@ -147,7 +147,7 @@ const properties=[
 .discover-cottage-body .discover-availability-state{font-weight:650;color:var(--ink);min-height:2.2em}
 .discover-cottage-card.is-selected{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
 .discover-cottage-body .button{margin-top:.65rem}
-.discover-availability,.discover-summary{padding:clamp(1rem,2.5vw,1.7rem);border:1px solid var(--line);border-radius:.6rem;background:#fff}
+.discover-availability,.discover-summary{padding:clamp(.75rem,2vw,1.5rem);border:1px solid var(--line);border-radius:.6rem;background:#fff}
 .discover-calendar-heading{display:flex;justify-content:space-between;gap:1rem;align-items:start;flex-wrap:wrap}
 .discover-calendar-nav{display:flex;align-items:center;gap:.45rem}
 .discover-calendar-nav button{width:2.4rem;height:2.4rem;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--ink);font-size:1.5rem;cursor:pointer}
@@ -205,5 +205,5 @@ const properties=[
 .discover-help-links{display:flex;flex-direction:column;align-items:start;gap:.8rem;margin-top:1rem}
 @media(max-width:76rem){.discover-layout{grid-template-columns:minmax(0,1fr) 17rem}.discover-calendar-grids :global(.calendar-two-months){gap:.65rem}}
 @media(max-width:55rem){.discover-layout{grid-template-columns:1fr}.discover-aside{position:static}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 1}}
-@media(max-width:36rem){.discover-result-list{grid-template-columns:1fr}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 2}.discover-calendar-grids :global(.calendar-two-months){grid-template-columns:1fr}.discover-calendar-grids :global(.calendar-days button){min-height:2.45rem}.discover-calendar-nav{width:100%;justify-content:space-between}}
+@media(max-width:36rem){.discover-result-list{grid-template-columns:1fr}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 2}.discover-calendar-grids :global(.calendar-two-months){grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.discover-calendar-grids :global(.calendar-days button){min-height:1.3rem}.discover-calendar-grids :global(.calendar-days .calendar-day){font-size:.67rem}.discover-calendar-grids :global(.calendar-weekdays span){font-size:.58rem}.discover-calendar-grids :global(.calendar-month-label){font-size:.72rem}.discover-calendar-nav{width:100%;justify-content:space-between}}
 </style>
