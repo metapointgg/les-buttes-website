@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {dates,parseDate,validBooking} from '../rules.mjs';
+import {dates,parseDate,validBooking,guernseyToday} from '../rules.mjs';
 
 const exampleRules={
   openSeasons:[{start:'2027-03-20',end:'2027-10-01'}],
@@ -42,4 +42,10 @@ test('capacity and closed-season validation applies to both cottages atomically'
 test('unconfigured booking rules fail closed',()=>{
   process.env.BOOKING_RULES_JSON='{}';
   assert.equal(validBooking({unit:'geranium',start:'2027-08-01',end:'2027-08-08',guests:2}).serverError,true);
+});
+
+test('Guernsey local date follows BST and GMT, not AWS UTC',()=>{
+  assert.equal(guernseyToday(new Date('2026-10-24T23:30:00Z')),'2026-10-25');
+  assert.equal(guernseyToday(new Date('2026-12-01T23:30:00Z')),'2026-12-01');
+  assert.equal(guernseyToday(new Date('2027-03-29T23:30:00Z')),'2027-03-30');
 });
