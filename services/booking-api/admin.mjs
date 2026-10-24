@@ -108,13 +108,13 @@ async function main(){
     console.log('Declined; date hold released. Inform guest.');
   }else if(command==='unblock'){
     if(!args[0])fail('Usage: unblock ID');
-    await change(args[0],'BLOCKED','CANCELLED',{cancelReason:'Manual block removed'});
+    await change(args[0],'BLOCKED','CANCELLED',{cancelReason:'Manual block removed',expiresAt:Math.floor(Date.now()/1000)+90*86400});
     console.log('Block removed; associated nights are available again.');
   }else if(command==='cancel'){
     const [id,...notes]=args;
     const reason=notes.join(' ').trim();
     if(!id||reason.length<5)fail('Usage: cancel ID "Reason / refund reconciliation reference"');
-    await change(id,'CONFIRMED','CANCELLED',{cancelReason:reason,cancelledAt:new Date().toISOString()});
+    await change(id,'CONFIRMED','CANCELLED',{cancelReason:reason,cancelledAt:new Date().toISOString(),expiresAt:Math.floor(Date.now()/1000)+90*86400});
     console.log('Booking cancelled and dates released. Any SumUp refund and guest notification must be handled separately.');
   }else if(command==='block'){
     const [unit,start,end,...label]=args;
