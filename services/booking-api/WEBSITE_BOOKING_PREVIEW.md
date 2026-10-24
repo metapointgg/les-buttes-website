@@ -25,28 +25,48 @@ The routes exist **only on the PR branch until it is merged**. They are also mar
 
 1. **Search filters:** optional arrival/checkout dates, adults (at least one), children (0+), **bedrooms needed**, and either best-matching accommodation or explicitly **both cottages**. Geranium has **2 bedrooms / sleeps 4**; Honeysuckle has **3 bedrooms / sleeps 6**. Parties of 7–10 or requests for 4–5 bedrooms automatically require **both**.
 2. **Matching cottage cards:** image-led Geranium and Honeysuckle result cards. A chosen single-cottage option opens its calendar. When two cottages are needed or explicitly selected, show **two adjacent calendars**.
-3. **Date-based calendar:** each month shows weekday headings, *reference-snapshot* occupied nights, and the **recorded Airbnb nightly rate** for potentially available nights. Click an arrival and a checkout date; checkout is excluded from occupied nights, so same-day changeovers are possible. Date ranges with a known booking, outside the season, or over 27 nights cannot be used.
+3. **Date-based calendar:** the compact picker shows **two months side by side**, with master-occupied nights grey, unblocked nights white, and a highlighted range. Exact nightly Airbnb comparison rates remain in the quote model, with date-level rates available to accessibility labels. Click an arrival and a checkout date; checkout is excluded from occupied nights, so same-day changeovers are possible. Date ranges with a known booking, outside the season, or over 27 nights cannot be used.
 4. **Price summary:** after a valid reference-available selection, displays cottage-by-cottage indicative split-savings price, Airbnb calendar comparison and possible guest saving. The **3/5/7-night minimums are draft**; a too-short stay is flagged.
 5. **Request to reserve:** visible but **disabled during private preview**, with a clear statement that requests, guest-data collection, live availability checks and payments are not enabled.
 6. **Multilingual and responsive:** English, Dutch and French, mobile-friendly cottage cards and calendar layout.
 
-### Availability source and safe snapshot refresh
+### LIVE staging-master calendar in the private local preview
 
-A dated, **no-PII** occupancy snapshot at `src/data/booking-occupancy-snapshot-2027.json` contains the known 2027 reservations already reconciled with the staging master: Geranium May 22–29 and June 19–26; Honeysuckle June 12–19, July 31–August 7 and August 14–21; **both** cottages August 28–September 4 (existing direct/RESERVED). Blocked ranges are `[from,to)`, with checkout excluded.
+**The hidden booking page now uses a read-only local master bridge, not the old dated occupancy snapshot.** This bridge reads only `UNIT#geranium` and `UNIT#honeysuckle` date slots from the existing staging DynamoDB table, with **strongly consistent reads** and the same expiry rule used by the booking API. The browser receives only occupied date ranges and a timestamp; it never sees guest names, booking IDs, AWS credentials, SSM secrets or Airbnb iCal tokens.
 
-For a fresh reference **only after checking the booking account and table**, use the owner-only read-only exporter from the repository root:
+Use TWO PowerShell terminals from the website repository. **Terminal 1 — start the safe local bridge (once):**
 
 ```powershell
+cd C:\ProjectsGit\les-buttes-website
 $env:AWS_PROFILE = "default"
 $env:AWS_REGION = "eu-west-2"
 $env:BOOKING_ENVIRONMENT = "staging"
 $env:BOOKINGS_TABLE = "les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK"
-node services/booking-api/export-availability-snapshot.mjs
+npm --prefix services/booking-api install
+node services/booking-api/preview-master-server.mjs
 ```
 
-This queries the **existing staging master date slots** with consistent reads, excludes expired request holds, and writes **only blocked night date ranges and a capture timestamp** to the local JSON file. It **never mutates AWS reservations** or exposes guest names, booking references, private iCalendar URLs or credentials. If the table appears wrong or zero occupied nights are returned for either cottage, it refuses to write a possibly misleading snapshot. Review the generated JSON before sharing a branch or promoting any changes. The webpage remains a snapshot, and future bookings can make it stale instantly.
+The bridge listens **only on `127.0.0.1:4328`**, checks the HTTP Host and only permits browser CORS origins `http://localhost:4321` and `http://127.0.0.1:4321`. Only `GET /availability` is implemented. There are **no write, reservation, user-data or payment handlers**. The bridge requires an explicitly named **staging** table and cannot start when configured for production. The `AWS_PROFILE` environment setting is used server-side only.
 
-**Do not call unblocked dates “available” without qualification.** All results are **potential** matches until the master AND Airbnb calendars are queried at the time a reservation is submitted. There is no public-safe live availability API connected to the hidden preview; the existing staging API requires a token that **must not be embedded in browser code**.
+**Terminal 2 — website preview:**
+
+```powershell
+cd C:\ProjectsGit\les-buttes-website
+git pull --ff-only
+npm run test:booking
+npm run test:discovery
+npm run dev
+```
+
+Open `http://localhost:4321/book/`. The page requests fresh read-only master data when loading, searching, changing months or choosing dates. **White** means there is no blocked master slot at the time of the read; **grey** means occupied/closed/unknown; **green** means selected check-in and checkout; **#BED4C3** fills the dates between. There are **two smaller months side by side for each cottage**; when both cottages are selected, each cottage gets its own two-month row. The checkout date itself is not occupied.
+
+**If the bridge is stopped, network permission is denied, or DynamoDB cannot be reached, the UI fails closed: days are grey/unselectable, no quote can be generated, and the page reports that live master availability is offline.** A local file or the old snapshot is never substituted as live availability. Prices are still **indicative** and drawn from October 2026 host-calendar rates. The holiday season/minimum stay periods are still proposals, and any direct stay must be independently checked against Airbnb before owner approval.
+
+**Security boundaries:** Do NOT change the bridge listener to `0.0.0.0`, deploy this server, commit AWS credentials, or expose the staging API token in browser JavaScript. This is deliberately a **local prototype**, NOT a public production availability API. No existing AWS infrastructure must be redeployed to test it.
+
+### Legacy snapshot (reference only)
+
+The existing `src/data/booking-occupancy-snapshot-2027.json` and `export-availability-snapshot.mjs` still exist for historic comparison and no-PII audits, but the new hidden browser calendar does **not** fall back to them when the live read fails. They are never authoritative for live bookability.
 
 ### Hidden until explicitly approved
 
@@ -66,10 +86,10 @@ This queries the **existing staging master date slots** with consistent reads, e
 
 ### Data and regression tests
 
-Static review-only prices: `src/data/booking-preview-2027.json`; dated occupied-night snapshot: `src/data/booking-occupancy-snapshot-2027.json`.
+Static review-only prices: `src/data/booking-preview-2027.json`; historic occupied-night snapshot: `src/data/booking-occupancy-snapshot-2027.json` (NOT used as fallback).
 Pure browser quote calculator: `src/lib/booking-preview.ts`; filter/availability-snapshot rules: `src/lib/booking-discovery.ts`.
 Shared localised discovery copy: `src/lib/booking-discovery-copy.ts`.
 Discovery page: `src/components/BookingDiscoveryPreview.astro` and `src/scripts/booking-discovery.ts`. The future live request form remains isolated in `BookingRequestPage.astro` / `booking-form.ts` behind the explicit activation flag.
-Tests: `services/booking-api/test/website-preview.test.mjs` checks preview invariants and does not expose the live API, while `src/test/booking-discovery.test.mjs` exercises the actual TypeScript search and occupancy-snapshot logic using the website's build dependencies.
+Tests: `services/booking-api/test/master-occupied.test.mjs` validates read-only master slot projection; `services/booking-api/test/website-preview.test.mjs` protects no-booking-write controls; `src/test/booking-discovery.test.mjs` exercises date selection, capacity and fail-closed live-master validation.
 
 No AWS deployment is needed to test this front-end preview.
