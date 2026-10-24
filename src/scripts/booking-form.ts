@@ -24,7 +24,12 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
     const feedback=form.querySelector<HTMLElement>('[data-feedback]');
     const button=form.querySelector<HTMLButtonElement>('[data-preview-quote]');
     const label=(selector:string)=>output?.querySelector<HTMLElement>(selector);
-    const money=(value:number)=>new Intl.NumberFormat(document.documentElement.lang||'en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(value);
+    const locale=document.documentElement.lang||'en-GB';
+    const money=(value:number)=>new Intl.NumberFormat(locale,{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(value);
+    // Date inputs supply YYYY-MM-DD; use UTC to avoid off-by-one rendering across time zones.
+    const displayStay=(start:string,end:string)=>new Intl.DateTimeFormat(locale,{
+      day:'numeric',month:'long',year:'numeric',timeZone:'UTC'
+    }).formatRange(new Date(start+'T00:00:00Z'),new Date(end+'T00:00:00Z'));
     const reset=()=>{
       if(output)output.hidden=true;
       if(feedback)feedback.textContent=c.defaultPrompt||'';
@@ -61,7 +66,7 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
           }
         }
         const dateLabel=label('[data-preview-dates]');
-        if(dateLabel)dateLabel.textContent=quote.start+' – '+quote.end+' · '+quote.nights+' '+(c.nights||'nights');
+        if(dateLabel)dateLabel.textContent=displayStay(quote.start,quote.end)+' · '+quote.nights+' '+(c.nights||'nights');
         const airbnb=label('[data-preview-airbnb]');
         const direct=label('[data-preview-direct]');
         const savings=label('[data-preview-saving]');
