@@ -1,7 +1,8 @@
 // Host-only tool. Requires AWS credentials and DynamoDB permissions. NEVER expose as a public API.
 import {randomUUID} from 'node:crypto';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
-import {DynamoDBDocumentClient,GetCommand,ScanCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
+import {DynamoDBDocumentClient,GetCommand,ScanCommand,UpdateCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
+import {validClassification,normalizeExternalReference} from './reservation-metadata.mjs';
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const table=process.env.BOOKINGS_TABLE;
 const DAY=86400000;
@@ -64,6 +65,30 @@ async function putBlock(unit,start,end,label){
   }));
   console.log('Blocked '+unit+' '+start+' to '+end+' under reference '+id);
 }
+async function classify(id,source,reservationStatus,externalRef){
+  if(!id||!validClassification(source,reservationStatus))fail('Usage: classify ID airbnb CONFIRMED [EXTERNAL_REF] | classify ID direct RESERVED [EXTERNAL_REF]');
+  const b=await booking(id);
+  if(b.status!=='BLOCKED')fail('Cannot classify a '+b.status+' record; only existing manual reservation blocks are supported');
+  const reference=normalizeExternalReference(externalRef);
+  const now=new Date().toISOString();
+  const exprNames={'#source':'source','#status':'status','#reservationStatus':'reservationStatus'};
+  const exprValues={':source':source,':blocked':'BLOCKED',':reservationStatus':reservationStatus,':updatedAt':now,':unclassified':'unclassified'};
+  let update='SET #source = :source, #reservationStatus = :reservationStatus, updatedAt = :updatedAt';
+  if(source==='airbnb'){
+    update+=', lastReconciledAt = :lastReconciledAt';
+    exprValues[':lastReconciledAt']=now;
+  }
+  if(reference){
+    update+=', externalReference = :externalReference';
+    exprValues[':externalReference']=reference;
+  }
+  await db.send(new UpdateCommand({TableName:table,Key:{PK:'BOOKING#'+id,SK:'META'},
+    UpdateExpression:update,
+    ConditionExpression:'#status = :blocked AND (attribute_not_exists(#source) OR #source = :unclassified OR #source = :source)',
+    ExpressionAttributeNames:exprNames,ExpressionAttributeValues:exprValues
+  }));
+  console.log('Classified '+b.unit+' '+b.start+' to '+b.end+': '+source+' / '+reservationStatus+' ('+id+'). Date slots unchanged.');
+}
 async function main(){
   if(!table)fail('Set BOOKINGS_TABLE to the deployed DynamoDB table name');
   if(process.env.BOOKING_ENVIRONMENT==='staging' && !table.includes('staging') && !table.includes('Staging'))fail('Staging CLI refuses tables without staging in the name');
@@ -71,7 +96,7 @@ async function main(){
     let last;let count=0;
     do{
       const r=await db.send(new ScanCommand({TableName:table,FilterExpression:'begins_with(PK,:prefix)',ExpressionAttributeValues:{':prefix':'BOOKING#'},ExclusiveStartKey:last}));
-      for(const b of r.Items??[]){const expired=b.holdExpiresAt && b.holdExpiresAt<Math.floor(Date.now()/1000) && ['REQUESTED','APPROVED_AWAITING_PAYMENT'].includes(b.status);console.log([b.id,expired?'HOLD_EXPIRED ('+b.status+')':b.status,b.unit,b.start,b.end,b.guestName??''].join('\t'));count++;}
+      for(const b of r.Items??[]){const expired=b.holdExpiresAt && b.holdExpiresAt<Math.floor(Date.now()/1000) && ['REQUESTED','APPROVED_AWAITING_PAYMENT'].includes(b.status);console.log([b.id,expired?'HOLD_EXPIRED ('+b.status+')':b.status,b.unit,b.start,b.end,b.source??'unclassified',b.reservationStatus??'UNVERIFIED',b.guestName??''].join('\t'));count++;}
       last=r.LastEvaluatedKey;
     }while(last);
     console.log(count+' records');
@@ -112,6 +137,9 @@ async function main(){
     if(!args[0])fail('Usage: decline ID');
     await change(args[0],'REQUESTED','DECLINED');
     console.log('Declined; date hold released. Inform guest.');
+  }else if(command==='classify'){
+    const [id,source,reservationStatus,externalRef]=args;
+    await classify(id,source,reservationStatus,externalRef);
   }else if(command==='unblock'){
     if(!args[0])fail('Usage: unblock ID');
     await change(args[0],'BLOCKED','CANCELLED',{cancelReason:'Manual block removed',expiresAt:Math.floor(Date.now()/1000)+90*86400});
@@ -125,6 +153,6 @@ async function main(){
   }else if(command==='block'){
     const [unit,start,end,...label]=args;
     await putBlock(unit,start,end,label.join(' '));
-  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | confirm ID PAYMENT_REFERENCE | decline ID | cancel ID REASON | block COTTAGE START END LABEL | unblock ID');
+  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | confirm ID PAYMENT_REFERENCE | decline ID | cancel ID REASON | block COTTAGE START END LABEL | classify ID SOURCE RESERVATION_STATUS [EXTERNAL_REF] | unblock ID');
 }
 main().catch(e=>{console.error(e.message);process.exitCode=1;});
