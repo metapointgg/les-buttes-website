@@ -2,66 +2,131 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import {bookingCopy} from '../lib/booking-copy';
 import {languageFromPath,localPath} from '../lib/i18n';
+import {bookingPreviewCopy} from '../lib/booking-preview-copy';
 
 const lang=languageFromPath(Astro.url.pathname);
 const c=bookingCopy(lang);
+const p=bookingPreviewCopy(lang);
 const apiUrl=(import.meta.env.PUBLIC_BOOKING_API_URL??'').trim().replace(/\/$/,'');
 const turnstileKey=(import.meta.env.PUBLIC_TURNSTILE_SITE_KEY??'').trim();
-const enabled=Boolean(apiUrl&&turnstileKey);
-const maxDate='2099-12-31';
+// Preview by default. Never activate the submission form merely because an API URL is present.
+// Explicit environment approval is required for a future live build.
+const enabled=import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&Boolean(apiUrl&&turnstileKey);
+const preview=!enabled;
+const maxDate=preview?'2027-10-02':'2099-12-31';
 ---
-<BaseLayout title={c.title+' | Les Buttes'} description={c.intro} noindex>
+<BaseLayout title={(preview?p.headline:c.title)+' | Les Buttes'} description={preview?p.intro:c.intro} noindex>
   <section class="section paper">
     <div class="wrap booking-page">
-      <div class="booking-heading">
-        <p class="eyebrow">{c.eyebrow}</p>
-        <h1>{c.title}</h1>
-        <p class="lede">{c.intro}</p>
-      </div>
-      <div class="booking-layout">
-        <div class="booking-panel">
-          {!enabled && <div class="booking-not-ready" role="status">
-            <p>{c.liveSoon}</p>
-            <a class="button" href={localPath('/cottages/',lang)}>{c.airbnb}</a>
-          </div>}
-          <form data-booking-form data-api={apiUrl} data-site-key={turnstileKey} data-messages={JSON.stringify(c)} novalidate>
-            <fieldset disabled={!enabled}>
-              <div class="booking-fields">
-                <label class="full">{c.choose}
-                  <select name="unit" required>
-                    <option value="geranium">{c.geranium}</option>
-                    <option value="honeysuckle">{c.honeysuckle}</option>
-                    <option value="both">{c.both}</option>
-                  </select>
-                </label>
-                <label>{c.arrival}<input name="start" type="date" max={maxDate} required/></label>
-                <label>{c.departure}<input name="end" type="date" max={maxDate} required/></label>
-                <label>{c.guests}<input name="guests" type="number" min="1" max="10" step="1" value="2" required/></label>
-              </div>
-              <p class="booking-note">{c.minMax}</p>
-              <button type="button" class="button button-secondary" data-check-availability>{c.check}</button>
-              <p class="booking-feedback" data-feedback role="status" aria-live="polite"></p>
-              <div class="booking-quote" data-quote hidden><strong data-quote-value></strong><p>{c.priceDisclaimer}</p></div>
-              <div class="booking-fields guest-fields">
-                <label>{c.name}<input name="name" type="text" maxlength="120" autocomplete="name" required/></label>
-                <label>{c.email}<input name="email" type="email" maxlength="254" autocomplete="email" required/></label>
-                <label class="full">{c.notes}<textarea name="notes" rows="3" maxlength="1500"></textarea></label>
-                <label class="full booking-consent"><input name="consent" type="checkbox" required/><span>{c.consent}</span></label>
-              </div>
-              <div class="booking-captcha" data-turnstile-slot></div>
-              <div class="booking-hidden" aria-hidden="true"><label>Leave this field blank<input name="website" tabindex="-1" autocomplete="off"/></label></div>
-              <button type="submit" class="button" data-submit>{c.send}</button>
-            </fieldset>
-          </form>
-        </div>
-        <aside class="booking-aside">
-          <h2>{c.important}</h2>
-          <ol>{c.steps.map(step=><li>{step}</li>)}</ol>
-          <p>{c.noCharge}</p>
-          <p>{c.longer}</p>
-          <p class="booking-footnote">{c.privacy} {c.terms}</p>
-        </aside>
-      </div>
+      {preview ? (
+        <>
+          <div class="booking-heading">
+            <p class="eyebrow">{p.review}</p>
+            <h1>{p.headline}</h1>
+            <p class="lede">{p.intro}</p>
+            <div class="preview-alert" role="note">
+              <strong>{p.previewLabel}</strong>
+              <span>{p.privacyNote}</span>
+            </div>
+          </div>
+          <div class="booking-layout">
+            <div class="booking-panel">
+              <h2 class="booking-step-title">{p.step1}</h2>
+              <p class="booking-explainer">{p.guidance}</p>
+              <form data-booking-form data-mode="preview" data-preview-messages={JSON.stringify(p)} novalidate>
+                <fieldset>
+                  <div class="booking-fields">
+                    <label class="full">{c.choose}
+                      <select name="unit" required>
+                        <option value="geranium">{c.geranium}</option>
+                        <option value="honeysuckle">{c.honeysuckle}</option>
+                        <option value="both">{c.both}</option>
+                      </select>
+                    </label>
+                    <label>{c.arrival}<input name="start" type="date" min="2027-03-20" max="2027-10-01" required/></label>
+                    <label>{c.departure}<input name="end" type="date" min="2027-03-21" max={maxDate} required/></label>
+                    <label>{c.guests}<input name="guests" type="number" min="1" max="4" step="1" value="2" required/></label>
+                  </div>
+                  <p class="booking-note">{c.minMax}</p>
+                  <button type="button" class="button" data-preview-quote>{p.button}</button>
+                  <p class="booking-feedback" data-feedback role="status" aria-live="polite">{p.defaultPrompt}</p>
+                </fieldset>
+              </form>
+              <section class="preview-result" data-preview-result hidden aria-label={p.step2}>
+                <div class="preview-result-heading">
+                  <p class="eyebrow">{p.step2}</p>
+                  <p class="preview-dates" data-preview-dates></p>
+                </div>
+                <ul class="preview-cottage-list" data-preview-cottages></ul>
+                <dl class="preview-totals">
+                  <div><dt>{p.airbnb}</dt><dd data-preview-airbnb></dd></div>
+                  <div class="preview-highlight"><dt>{p.estimate}</dt><dd data-preview-direct></dd></div>
+                  <div><dt>{p.saving}</dt><dd data-preview-saving></dd></div>
+                </dl>
+                <p class="preview-draft-minimum" data-preview-minimum></p>
+                <p class="booking-footnote">{p.estimated}</p>
+                <p class="preview-caution">{p.noAvailability}</p>
+              </section>
+            </div>
+            <aside class="booking-aside">
+              <p class="eyebrow">{p.step3}</p>
+              <h2>{p.next}</h2>
+              <p>{p.nextCopy}</p>
+              <ol>{c.steps.map(step=><li>{step}</li>)}</ol>
+              <a class="button button-secondary" href={localPath('/cottages/',lang)}>{p.back}</a>
+              <a class="preview-contact-link" href={localPath('/contact/',lang)}>{p.contact}</a>
+            </aside>
+          </div>
+        </>
+      ) : (
+        <>
+          <div class="booking-heading">
+            <p class="eyebrow">{c.eyebrow}</p>
+            <h1>{c.title}</h1>
+            <p class="lede">{c.intro}</p>
+          </div>
+          <div class="booking-layout">
+            <div class="booking-panel">
+              <form data-booking-form data-mode="live" data-api={apiUrl} data-site-key={turnstileKey} data-messages={JSON.stringify(c)} novalidate>
+                <fieldset>
+                  <div class="booking-fields">
+                    <label class="full">{c.choose}
+                      <select name="unit" required>
+                        <option value="geranium">{c.geranium}</option>
+                        <option value="honeysuckle">{c.honeysuckle}</option>
+                        <option value="both">{c.both}</option>
+                      </select>
+                    </label>
+                    <label>{c.arrival}<input name="start" type="date" max={maxDate} required/></label>
+                    <label>{c.departure}<input name="end" type="date" max={maxDate} required/></label>
+                    <label>{c.guests}<input name="guests" type="number" min="1" max="10" step="1" value="2" required/></label>
+                  </div>
+                  <p class="booking-note">{c.minMax}</p>
+                  <button type="button" class="button button-secondary" data-check-availability>{c.check}</button>
+                  <p class="booking-feedback" data-feedback role="status" aria-live="polite"></p>
+                  <div class="booking-quote" data-quote hidden><strong data-quote-value></strong><p>{c.priceDisclaimer}</p></div>
+                  <div class="booking-fields guest-fields">
+                    <label>{c.name}<input name="name" type="text" maxlength="120" autocomplete="name" required/></label>
+                    <label>{c.email}<input name="email" type="email" maxlength="254" autocomplete="email" required/></label>
+                    <label class="full">{c.notes}<textarea name="notes" rows="3" maxlength="1500"></textarea></label>
+                    <label class="full booking-consent"><input name="consent" type="checkbox" required/><span>{c.consent}</span></label>
+                  </div>
+                  <div class="booking-captcha" data-turnstile-slot></div>
+                  <div class="booking-hidden" aria-hidden="true"><label>Leave this field blank<input name="website" tabindex="-1" autocomplete="off"/></label></div>
+                  <button type="submit" class="button" data-submit>{c.send}</button>
+                </fieldset>
+              </form>
+            </div>
+            <aside class="booking-aside">
+              <h2>{c.important}</h2>
+              <ol>{c.steps.map(step=><li>{step}</li>)}</ol>
+              <p>{c.noCharge}</p>
+              <p>{c.longer}</p>
+              <p class="booking-footnote">{c.privacy} {c.terms}</p>
+            </aside>
+          </div>
+        </>
+      )}
     </div>
   </section>
 </BaseLayout>
@@ -84,4 +149,29 @@ const maxDate='2099-12-31';
 .booking-captcha{margin:1rem 0}.booking-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 fieldset{border:0;padding:0;margin:0;min-width:0}fieldset[disabled]{opacity:.6}
 @media(max-width:48rem){.booking-layout{grid-template-columns:1fr}.booking-fields{grid-template-columns:1fr}}
+
+/* Hidden preview. Styles follow the site's editorial palette and remain readable on mobile. */
+.preview-alert{display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:1.3rem;padding:.95rem 1.1rem;border:1px solid var(--line);border-radius:.5rem;background:var(--cream);color:var(--ink);font-size:.86rem}
+.preview-alert span{color:var(--soft)}
+.booking-step-title{font-size:clamp(1.35rem,2.6vw,1.8rem);margin:0 0 .65rem}
+.booking-explainer{font-size:.94rem;color:var(--soft);margin-bottom:1.5rem}
+.preview-result{border-top:1px solid var(--line);margin-top:2rem;padding-top:1.5rem}
+.preview-result[hidden]{display:none}
+.preview-result-heading .eyebrow{margin-bottom:.3rem}
+.preview-dates{font-weight:600;margin:.2rem 0 1rem}
+.preview-cottage-list{list-style:none;padding:0;margin:0 0 1.4rem;display:grid;gap:.6rem}
+.preview-cottage-list li{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:.7rem .9rem;border-radius:.35rem;background:var(--cream);font-size:.9rem}
+.preview-cottage-list span:last-child{font-weight:700}
+.preview-totals{margin:0;display:grid;gap:.8rem}
+.preview-totals>div{display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+.preview-totals dt{font-size:.87rem;color:var(--soft)}
+.preview-totals dd{margin:0;font-weight:700}
+.preview-totals .preview-highlight{border-top:1px solid var(--line);padding-top:1rem}
+.preview-totals .preview-highlight dt{color:var(--ink);font-size:1rem;font-weight:700}
+.preview-totals .preview-highlight dd{font-size:clamp(1.4rem,3vw,1.9rem);color:var(--green)}
+.preview-draft-minimum{margin-top:1.25rem;font-size:.87rem;font-weight:600}
+.preview-caution{border-left:3px solid var(--green);padding:.65rem .85rem;margin-top:1rem;background:var(--cream);font-size:.87rem}
+.preview-contact-link{display:block;margin-top:1rem;font-weight:600}
+.booking-aside .button{margin-top:1rem}
+@media(max-width:48rem){.preview-totals>div{align-items:start}.preview-cottage-list li{flex-wrap:wrap}}
 </style>
