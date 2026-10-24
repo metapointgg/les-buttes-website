@@ -75,9 +75,7 @@ try {
       "BookingRatesJson=$ratesName",
       "StagingApiToken=$stagingToken",
       "CalendarToken=$calendarToken",
-      'TurnstileSecret=1x0000000000000000000000000000000AA',
-      'NotifyFrom=',
-      'NotifyTo='
+      'TurnstileSecret=1x0000000000000000000000000000000AA'
     )
     & sam @argsList
     if ($LASTEXITCODE -ne 0) { throw 'SAM deploy failed.' }
