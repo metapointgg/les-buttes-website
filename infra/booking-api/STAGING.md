@@ -1,5 +1,17 @@
 # AWS staging rehearsal — not production
 
+## Verified AWS staging milestone — 24 October 2026
+
+The host deployed the stack `les-buttes-booking-staging` successfully to AWS account `145608514666`, region `eu-west-2`. After fixing the permanent-block availability regression and cleaning up the initial synthetic booking, the end-to-end run finished with:
+
+```
+STAGING PASS: quote -> request -> conflict rejection -> approval -> synthetic confirmation -> cancellation -> availability.
+No SumUp payment, real guest email, or production booking was created.
+```
+
+This verifies the AWS core reservation workflow (including confirmed occupancy, cancellation and availability restoration). It **does not** verify real SumUp payments, real Airbnb calendar reconciliation, SES mail deliverability or live pricing. The stack is still deployed and can incur small ongoing AWS charges. The live website is unchanged.
+
+
 The booking backend is **not deployed automatically** by website GitHub Actions. PR #41 remains draft. Use this runbook only for an *isolated* AWS test stack, with synthetic guests, rates and season rules. This script does not modify the site's main branch or production booking links.
 
 ## 1. Local prerequisites
