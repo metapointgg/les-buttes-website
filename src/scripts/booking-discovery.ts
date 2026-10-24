@@ -102,7 +102,9 @@ if(widget){
   }
   function updateResults(){
     const dates=[arrival.value||undefined,departure.value||undefined] as const;
-    const candidates=[...matchingOptions({...filters,choice:'any'},...dates),...matchingOptions({...filters,choice:'both'},...dates)];
+    const guests=filters.adults+filters.children;
+    // Offer both only where no single cottage can accommodate the party.
+    const candidates=guests>6?[...matchingOptions({...filters,choice:'both'},...dates)]:matchingOptions({...filters,choice:'any'},...dates);
     const haveValidParty=filters.adults>=1&&filters.children>=0&&filters.adults+filters.children<=10&&
       Number.isInteger(filters.adults)&&Number.isInteger(filters.children);
     for(const card of optionCards){
@@ -263,7 +265,7 @@ if(widget){
     if(arrival.value&&(!saturday(arrival.value)||departure.value&&!saturday(departure.value))){feedback.textContent='Check-in and checkout must both be Saturdays.';return;}
     if(arrival.value)month=arrival.value.slice(0,7);
     updateResults();
-    if(advance&&matchingOptions({...filters,choice:'any'}).length)setStep(2);
+    if(advance&&matchingOptions({...filters,choice:(filters.adults+filters.children>6?'both':'any')}).length)setStep(2);
   }
   form.addEventListener('submit',event=>{event.preventDefault();void search(true);});
   for(const card of optionCards){
@@ -304,7 +306,21 @@ if(widget){
   });
   // Preview details never leave the browser: no POST/fetch, booking request, session
   // storage, analytics event, payment handler or confirmation exists in this step.
-  detailsForm.addEventListener('submit',event=>event.preventDefault());
+  // The draft has no submission endpoint; validation is for local preview feedback only.
+  const emailField=detailsForm.elements.namedItem('email') as HTMLInputElement;
+  const phoneField=detailsForm.elements.namedItem('telephone') as HTMLInputElement;
+  const validation=widget.querySelector<HTMLElement>('[data-details-validation]');
+  function validateContact(){
+    const emailValid=emailField.validity.valid;
+    const phoneValid=phoneField.validity.valid && phoneField.value.replace(/\D/g,'').length>=7;
+    phoneField.setCustomValidity(phoneField.value&&phoneField.value.replace(/\D/g,'').length<7?'Enter a valid contact number.':'');
+    if(validation)validation.textContent=!emailField.value&&!phoneField.value?'':!emailValid?'Enter a valid email address.':!phoneValid?'Enter a valid contact number.':'';
+    emailField.setAttribute('aria-invalid',String(Boolean(emailField.value)&&!emailValid));
+    phoneField.setAttribute('aria-invalid',String(Boolean(phoneField.value)&&!phoneValid));
+  }
+  emailField.addEventListener('input',validateContact);
+  phoneField.addEventListener('input',validateContact);
+  detailsForm.addEventListener('submit',event=>{event.preventDefault();validateContact();});
   const disabledConfirm=detailsForm.querySelector<HTMLButtonElement>('[disabled]');
   if(disabledConfirm)disabledConfirm.disabled=true;
 
