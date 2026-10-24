@@ -33,3 +33,16 @@ test('missing JSON configuration is not silently priced',()=>{
   try{assert.equal(configuredQuote(['geranium'],nights).serverError,true);}
   finally{if(old===undefined)delete process.env.BOOKING_RATES_JSON;else process.env.BOOKING_RATES_JSON=old;}
 });
+
+test('proposed price sheets must not open the public API without explicit approval',()=>{
+  const original=process.env.BOOKING_RATES_JSON;
+  try{
+    process.env.BOOKING_RATES_JSON=JSON.stringify({...rates,status:'PROPOSED_ONLY_NOT_APPROVED'});
+    assert.equal(configuredQuote(['geranium'],nights).serverError,true);
+    process.env.BOOKING_RATES_JSON=JSON.stringify({...rates,status:'APPROVED_FOR_LIVE_BOOKINGS'});
+    assert.equal(configuredQuote(['geranium'],nights).totalGBP,'475.00');
+  }finally{
+    if(original===undefined)delete process.env.BOOKING_RATES_JSON;
+    else process.env.BOOKING_RATES_JSON=original;
+  }
+});
