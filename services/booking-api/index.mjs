@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import {DAY,parseDate,validBooking} from './rules.mjs';
 import {configuredQuote} from './pricing.mjs';
+import {slotBlocksAvailability} from './occupancy.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,QueryCommand,BatchGetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {SESClient,SendEmailCommand} from '@aws-sdk/client-ses';
@@ -30,7 +31,7 @@ function nowEpoch(){return Math.floor(Date.now()/1000);}
 async function available(units,nights){
   const found=await existingSlots(slotsFor(units,nights));
   const now=nowEpoch();
-  return found.every(slot=>!slot.expiresAt||slot.expiresAt>0&&slot.expiresAt<now);
+  return found.every(slot=>!slotBlocksAvailability(slot,now));
 }
 async function verifyChallenge(token,ip){
   const secret=process.env.TURNSTILE_SECRET;
@@ -105,7 +106,7 @@ async function calendar(cottage,token){
     rows.push(...result.Items??[]);next=result.LastEvaluatedKey;
   }while(next);
   const now=nowEpoch();
-  const active=rows.filter(item=>!item.expiresAt||item.expiresAt>now).map(item=>item.SK.slice(5)).sort();
+  const active=rows.filter(item=>slotBlocksAvailability(item,now)).map(item=>item.SK.slice(5)).sort();
   // Consolidate contiguous occupied nights into one event per occupied period.
   const spans=[];
   for(const night of active){
