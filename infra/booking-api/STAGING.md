@@ -77,6 +77,10 @@ The preview reports blocked date ranges and prints suggested private admin.mjs b
 
 After reviewing blocks, manually record each verified range using the staging-table CLI. Never automate an unreviewed import. Calendar sync is delayed, so continue checking Airbnb's host calendar before approving direct bookings.
 
+## Optional automated Airbnb feed monitoring
+
+For staging-only read-only change checks every four hours, with encrypted Airbnb export URLs and SNS email alerts, follow **[MONITORING.md](MONITORING.md)**. Monitoring is **disabled by default**, requires an explicit deployment flag and a confirmed SNS email subscription, and will never import or cancel reservations. It uses a separate checkpoint table and can incur extra AWS charges.
+
 ## 4. Later production readiness
 
 Staging must succeed before we consider a real booking launch. Production still needs approved 2027 rate/season boundaries, a full calendar reconciliation, the exact Strict cancellation and refund wording, SumUp merchant checks, email setup, and production monitoring. Keep the GitHub PR in draft until those gates are satisfied.
