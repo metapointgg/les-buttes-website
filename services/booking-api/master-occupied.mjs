@@ -1,6 +1,5 @@
 // Read-only availability calculation over authoritative DynamoDB UNIT/DATE slots.
 // Guest names, booking identifiers, payment data and private calendar URLs are NEVER read.
-import {QueryCommand} from '@aws-sdk/lib-dynamodb';
 import {slotBlocksAvailability} from './occupancy.mjs';
 
 export const FIRST_NIGHT='2027-03-20';
@@ -16,7 +15,7 @@ export async function masterOccupied({db,table,nowEpoch=Math.floor(Date.now()/10
   for(const unit of UNITS){
     const dates=[];let cursor;
     do{
-      const result=await db.send(new QueryCommand({
+      const result=await db.send({input:{
         TableName:table,ConsistentRead:true,
         KeyConditionExpression:'PK = :unit AND SK BETWEEN :start AND :end',
         ExpressionAttributeValues:{
@@ -24,7 +23,7 @@ export async function masterOccupied({db,table,nowEpoch=Math.floor(Date.now()/10
         },
         ProjectionExpression:'PK, SK, expiresAt',
         ExclusiveStartKey:cursor
-      }));
+      }});
       for(const row of result.Items??[]){
         if(slotBlocksAvailability(row,nowEpoch)){
           const date=row.SK?.slice(5);
