@@ -97,6 +97,17 @@ Parameters:
     AllowedPattern: '/les-buttes/booking/staging/airbnb/[a-z0-9-]+'
     Description: Name only, not value; actual private URL is an SSM SecureString.
 
+Rules:
+  ManagementRequiresIndex:
+    RuleCondition: !Equals [!Ref ManagementPreviewEnabled, 'true']
+    Assertions:
+      - Assert: !Equals [!Ref BookingRequestsIndexEnabled, 'true']
+        AssertDescription: A staging management API requires BookingRequestsIndexEnabled=true.
+      - Assert: !Not [!Equals [!Ref ManagementCognitoPoolId, '']]
+        AssertDescription: Supply staging Cognito user pool ID.
+      - Assert: !Not [!Equals [!Ref ManagementCognitoClientId, '']]
+        AssertDescription: Supply staging public Cognito client ID.
+
 Conditions:
   BookingRequestsIndexCondition: !And
     - !Equals [!Ref BookingEnvironment, 'staging']
