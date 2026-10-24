@@ -12,7 +12,7 @@ export function validClassification(source,reservationStatus){
 }
 export function normalizeExternalReference(value){
   if(value===undefined||value===null||value==='-')return undefined;
-  if(typeof value!=='string'||value.length<3||value.length>120||/[\r\n\t]/.test(value))
+  if(typeof value!=='string'||value.trim().length<3||value.trim().length>120||/[\r\n\t]/.test(value))
     throw Error('External reference must be 3-120 characters without control characters (or use - if not known)');
   return value.trim();
 }
