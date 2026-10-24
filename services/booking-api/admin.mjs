@@ -76,7 +76,7 @@ async function main(){
     }while(last);
     console.log(count+' records');
   }else if(command==='show'){
-    const b=await booking(args[0]);console.log(JSON.stringify({...b,holdActive:!!(b.holdExpiresAt&&b.holdExpiresAt>Math.floor(Date.now()/1000))},null,2));
+    const b=await booking(args[0]);console.log(JSON.stringify({...b,holdActive:['REQUESTED','APPROVED_AWAITING_PAYMENT'].includes(b.status)&&!!(b.holdExpiresAt&&b.holdExpiresAt>Math.floor(Date.now()/1000))},null,2));
   }else if(command==='approve'){
     const [id,amount,link,...reasonParts]=args;
     if(!id||!amount||!Number.isFinite(Number(amount))||Number(amount)<=0||!link)fail('Usage: approve ID AMOUNT_GBP SUMUP_PAYMENT_URL');
