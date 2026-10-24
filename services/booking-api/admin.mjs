@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,GetCommand,ScanCommand,UpdateCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {validClassification,normalizeExternalReference} from './reservation-metadata.mjs';
+import {agreedDirectQuote} from './direct-reservation-quote.mjs';
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const table=process.env.BOOKINGS_TABLE;
 const DAY=86400000;
@@ -93,6 +94,23 @@ async function classify(id,source,reservationStatus,externalRef){
   }));
   console.log('Classified '+b.unit+' '+b.start+' to '+b.end+': '+source+' / '+reservationStatus+' ('+id+'). Date slots unchanged.');
 }
+async function recordDirectPrice(id,pairs){
+  if(!id||!pairs.length)fail('Usage: record-direct-price ID geranium=1450 honeysuckle=1650 (include exactly the cottages reserved)');
+  const b=await booking(id);
+  if(b.agreedDirectQuote)fail('An agreed direct price is already recorded. Do not overwrite without a separate owner reconciliation.');
+  const record=agreedDirectQuote(b,pairs);
+  await db.send(new UpdateCommand({
+    TableName:table,Key:{PK:'BOOKING#'+id,SK:'META'},
+    UpdateExpression:'SET agreedDirectQuote = :quote, updatedAt = :at',
+    ConditionExpression:'#status = :blocked AND #source = :direct AND #reservationStatus = :reserved AND attribute_not_exists(agreedDirectQuote)',
+    ExpressionAttributeNames:{'#status':'status','#source':'source','#reservationStatus':'reservationStatus'},
+    ExpressionAttributeValues:{':quote':record,':at':new Date().toISOString(),
+      ':blocked':'BLOCKED',':direct':'direct',':reserved':'RESERVED'}
+  }));
+  console.log('Recorded owner-agreed direct quote on existing '+b.unit+' reservation '+id);
+  console.log('Agreed guest total GBP '+record.totalGBP+'; per cottage: '+record.perCottage.map(x=>x.unit+' GBP '+x.amountGBP).join(', '));
+  console.log('Booking remains direct / RESERVED. No occupied dates, guest payments or booking confirmations were changed.');
+}
 async function main(){
   if(!table)fail('Set BOOKINGS_TABLE to the deployed DynamoDB table name');
   if(process.env.BOOKING_ENVIRONMENT==='staging' && !table.includes('staging') && !table.includes('Staging'))fail('Staging CLI refuses tables without staging in the name');
@@ -141,6 +159,9 @@ async function main(){
     if(!args[0])fail('Usage: decline ID');
     await change(args[0],'REQUESTED','DECLINED');
     console.log('Declined; date hold released. Inform guest.');
+  }else if(command==='record-direct-price'){
+    const [id,...pairs]=args;
+    await recordDirectPrice(id,pairs);
   }else if(command==='classify'){
     const [id,source,reservationStatus,externalRef]=args;
     await classify(id,source,reservationStatus,externalRef);
@@ -157,6 +178,6 @@ async function main(){
   }else if(command==='block'){
     const [unit,start,end,...label]=args;
     await putBlock(unit,start,end,label.join(' '));
-  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | confirm ID PAYMENT_REFERENCE | decline ID | cancel ID REASON | block COTTAGE START END LABEL | classify ID SOURCE RESERVATION_STATUS [EXTERNAL_REF] | unblock ID');
+  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | confirm ID PAYMENT_REFERENCE | decline ID | cancel ID REASON | block COTTAGE START END LABEL | classify ID SOURCE RESERVATION_STATUS [EXTERNAL_REF] | record-direct-price ID geranium=GBP honeysuckle=GBP | unblock ID');
 }
 main().catch(e=>{console.error(e.message);process.exitCode=1;});
