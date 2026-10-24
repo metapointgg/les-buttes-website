@@ -20,8 +20,8 @@ export function indexUpdate(table,row,key){
   return {
     TableName:table,Key:{PK:row.PK,SK:'META'},
     UpdateExpression:'SET GSI1PK = :gsiPk, GSI1SK = :gsiSk',
-    ConditionExpression:'attribute_not_exists(GSI1PK) AND attribute_not_exists(GSI1SK) AND #src = :source AND requestedAt = :requested AND id = :id',
-    ExpressionAttributeNames:{'#src':'source'},
+    ConditionExpression:'attribute_not_exists(GSI1PK) AND attribute_not_exists(GSI1SK) AND #src = :source AND #requestedAt = :requested AND #id = :id',
+    ExpressionAttributeNames:{'#src':'source','#requestedAt':'requestedAt','#id':'id'},
     ExpressionAttributeValues:{':gsiPk':key.pk,':gsiSk':key.sk,':source':'direct',':requested':row.requestedAt,':id':row.id}
   };
 }
@@ -34,8 +34,8 @@ export async function run({db,table,apply=false,maxRows=5000,log=console.log}){
     const result=await db.send(new ScanCommand({
       TableName:table,ConsistentRead:true,Limit:100,ExclusiveStartKey:cursor,
       FilterExpression:'begins_with(#pk,:booking) AND #sk = :meta',
-      ProjectionExpression:'#pk,#sk,id,#src,requestedAt,GSI1PK,GSI1SK',
-      ExpressionAttributeNames:{'#pk':'PK','#sk':'SK','#src':'source'},
+      ProjectionExpression:'#pk,#sk,#id,#src,#requestedAt,GSI1PK,GSI1SK',
+      ExpressionAttributeNames:{'#pk':'PK','#sk':'SK','#id':'id','#src':'source','#requestedAt':'requestedAt'},
       ExpressionAttributeValues:{':booking':'BOOKING#',':meta':'META'}
     }));
     for(const row of result.Items??[]){
