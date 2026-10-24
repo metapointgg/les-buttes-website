@@ -46,8 +46,10 @@ if(widget){
     heading?.setAttribute('tabindex','-1');
     heading?.focus({preventScroll:true});
   };
+  const saturday=(d:string)=>new Date(d+'T00:00:00Z').getUTCDay()===6;
+  const weekly=(start:string,end:string)=>{try{const n=nightsInRange(start,end).length;return saturday(start)&&saturday(end)&&n%7===0;}catch{return false;}};
   const getQuote=()=>{
-    if(!masterConnected()||!choice||!arrival.value||!departure.value)return null;
+    if(!masterConnected()||!choice||!arrival.value||!departure.value||!weekly(arrival.value,departure.value))return null;
     try{return indicativeSelection(choice,arrival.value,departure.value,filters);}
     catch{return null;}
   };
@@ -96,10 +98,11 @@ if(widget){
   }
   function newFilters():SearchFilters{
     return {adults:Number(get('adults').value),children:Number(get('children').value),
-      bedrooms:Number(get('bedrooms').value),choice:get('choice').value==='both'?'both':'any'};
+      bedrooms:Number(get('bedrooms').value),choice:'any'};
   }
   function updateResults(){
-    const candidates=matchingOptions(filters,arrival.value||undefined,departure.value||undefined);
+    const dates=[arrival.value||undefined,departure.value||undefined] as const;
+    const candidates=[...matchingOptions({...filters,choice:'any'},...dates),...matchingOptions({...filters,choice:'both'},...dates)];
     const haveValidParty=filters.adults>=1&&filters.children>=0&&filters.adults+filters.children<=10&&
       Number.isInteger(filters.adults)&&Number.isInteger(filters.children);
     for(const card of optionCards){
@@ -127,6 +130,7 @@ if(widget){
       choice=candidates.find(c=>c.listedAs!=='occupied')?.unit??candidates[0].unit;
       pendingStart=null;
     }
+    filters.choice=choice==='both'?'both':'any';
     feedback.textContent=!masterConnected()?tr('masterOffline'):
       arrival.value&&departure.value&&candidates.every(c=>c.listedAs==='occupied')?tr('blocked'):tr('liveDisclaimer');
     calendarSection.hidden=false;
@@ -167,8 +171,8 @@ if(widget){
   function renderCalendars(){
     if(!choice)return;
     calendarGrids.replaceChildren();
-    calendarGrids.classList.toggle('two-cottages',choice==='both');
-    const names=choice==='both'?(['geranium','honeysuckle'] as const):([choice] as const);
+    calendarGrids.classList.toggle('two-cottages',false);
+    const names=choice==='both'?(['geranium'] as const):([choice] as const);
     const shownMonths=[month,monthShift(month,1)];
     monthLabel.textContent=shownMonths.map(m=>readable(m+'-01',{month:'short',year:'numeric'})).join(' – ');
     prev.disabled=month<='2027-03';next.disabled=month>='2027-09';
@@ -176,7 +180,7 @@ if(widget){
     for(const unit of names){
       const section=document.createElement('div');section.className='calendar-cottage';
       const title=document.createElement('h3');title.className='calendar-cottage-title';
-      title.textContent=unit==='geranium'?'Geranium Cottage':'Honeysuckle Cottage';
+      title.textContent=choice==='both'?'Geranium + Honeysuckle — shared availability':unit==='geranium'?'Geranium Cottage':'Honeysuckle Cottage';
       section.appendChild(title);
       const twoMonths=document.createElement('div');twoMonths.className='calendar-two-months';
       for(const m of shownMonths){
@@ -191,12 +195,13 @@ if(widget){
         const first=m+'-01',pad=(new Date(first+'T00:00:00Z').getUTCDay()+6)%7;
         for(let i=0;i<pad;i++){const blank=document.createElement('span');blank.className='calendar-empty';grid.appendChild(blank);}
         for(const d of daysForMonth(unit,m)){
+          if(choice==='both'&&d.status==='possible'&&!possibleNight('both',d.date))d.status='occupied';
           const date=d.date;
           const between=!!arrival.value&&!!departure.value&&date>arrival.value&&date<departure.value;
           const markedStart=date===(pendingStart||arrival.value);
           const markedEnd=!!departure.value&&date===departure.value;
-          const checkoutAllowed=!!pendingStart&&pendingStart<date&&canPickCheckout(choice,pendingStart,date);
-          const canStart=possibleNight(choice,date);
+          const checkoutAllowed=!!pendingStart&&pendingStart<date&&weekly(pendingStart,date)&&canPickCheckout(choice,pendingStart,date);
+          const canStart=saturday(date)&&possibleNight(choice,date);
           const disabled=!canStart&&!checkoutAllowed;
           const button=document.createElement('button');button.type='button';
           button.disabled=disabled;
@@ -223,7 +228,7 @@ if(widget){
     if(!await refreshMaster()){calendarMessage.textContent=tr('masterOffline');updateResults();return;}
     if(!choice)return;
     // One click selects arrival; second click selects checkout (excluded from occupied nights).
-    if(!pendingStart||date<=pendingStart||!canPickCheckout(choice,pendingStart,date)){
+    if(!pendingStart||date<=pendingStart||!weekly(pendingStart,date)||!canPickCheckout(choice,pendingStart,date)){
       if(!possibleNight(choice,date)){
         calendarMessage.textContent=tr('different');return;
       }
@@ -251,24 +256,28 @@ if(widget){
         month=arrival.value.slice(0,7);
       }else{feedback.textContent=tr('invalid');return;}
     }else if(arrival.value&&departure.value){
+      if(!weekly(arrival.value,departure.value)){feedback.textContent='Please choose Saturday-to-Saturday dates (7, 14 or 21 nights).';return;}
       try{nightsInRange(arrival.value,departure.value);}
       catch{feedback.textContent=tr('invalid');summarySection.hidden=true;return;}
     }
+    if(arrival.value&&(!saturday(arrival.value)||departure.value&&!saturday(departure.value))){feedback.textContent='Check-in and checkout must both be Saturdays.';return;}
     if(arrival.value)month=arrival.value.slice(0,7);
     updateResults();
-    if(advance&&matchingOptions(filters).length)setStep(2);
+    if(advance&&matchingOptions({...filters,choice:'any'}).length)setStep(2);
   }
   form.addEventListener('submit',event=>{event.preventDefault();void search(true);});
   for(const card of optionCards){
     card.querySelector<HTMLButtonElement>('[data-select-option]')?.addEventListener('click',()=>{
       choice=card.dataset.discoveryOption as CottageChoice;
+      filters.choice=choice==='both'?'both':'any';
       pendingStart=null;calendarMessage.textContent='';
       updateResults();
       calendarSection.scrollIntoView({behavior:'smooth',block:'start'});
     });
   }
-  prev.addEventListener('click',async()=>{await refreshMaster();month=monthShift(month,-1);updateResults();});
-  next.addEventListener('click',async()=>{await refreshMaster();month=monthShift(month,1);updateResults();});
+  // Month navigation must never wait for a network round-trip.
+  prev.addEventListener('click',()=>{month=monthShift(month,-1);updateResults();});
+  next.addEventListener('click',()=>{month=monthShift(month,1);updateResults();});
   const onClick=(selector:string,callback:()=>void|Promise<void>)=>
     widget.querySelector<HTMLButtonElement>(selector)?.addEventListener('click',()=>{void callback();});
   widget.querySelectorAll<HTMLButtonElement>('[data-back-to-filter]').forEach(button=>
@@ -299,6 +308,6 @@ if(widget){
   const disabledConfirm=detailsForm.querySelector<HTMLButtonElement>('[disabled]');
   if(disabledConfirm)disabledConfirm.disabled=true;
 
-  arrival.addEventListener('change',()=>{if(arrival.value){departure.min=plusDays(arrival.value,1);}});
+  arrival.addEventListener('change',()=>{if(arrival.value){departure.min=plusDays(arrival.value,7);}});
   void search();
 }
