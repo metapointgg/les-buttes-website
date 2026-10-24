@@ -43,6 +43,10 @@ async function verifyChallenge(token,ip){
 }
 async function notifyOwner(booking){
   // SES sender must be verified and the account must have permission to email the recipient.
+  if(process.env.BOOKING_ENVIRONMENT==='staging'){
+    console.info('STAGING ONLY: synthetic request created, no email dispatched:',booking.id);
+    return;
+  }
   const from=process.env.NOTIFY_FROM,to=process.env.NOTIFY_TO;
   if(!from||!to)throw Error('Owner notification email is not configured');
   const body=[
@@ -66,6 +70,7 @@ async function createRequest(input,event){
   if(result.error)return response(result.serverError?503:400,{error:result.error});
   const quote=configuredQuote(result.units,result.nights);
   if(quote.error)return response(503,{error:quote.error});
+  if(process.env.BOOKING_ENVIRONMENT==='staging' && input.email!=='test@example.invalid')return response(400,{error:'Use synthetic test@example.invalid data only in staging'});
   const guestName=typeof input.name==='string'?input.name.trim():'';
   const guestEmail=typeof input.email==='string'?input.email.trim():'';
   const notes=typeof input.notes==='string'?input.notes.trim():'';
@@ -120,6 +125,11 @@ async function calendar(cottage,token){
 }
 export async function handler(event){
   const path=event.rawPath||'';
+  if(process.env.BOOKING_ENVIRONMENT==='staging'){
+    const incoming=event.headers?.['x-lesbuttes-staging-token']??event.headers?.['X-LesButtes-Staging-Token'];
+    const expected=process.env.STAGING_API_TOKEN;
+    if(!expected||expected.length<24||incoming!==expected)return response(404,{error:'Not found'});
+  }
   const method=event.requestContext?.http?.method||event.httpMethod;
   if(method==='OPTIONS')return response(204,'');
   if(method==='GET'&&path==='/health')return response(200,{status:'ok',acceptingRequests:process.env.BOOKING_REQUESTS_ENABLED==='true'});
@@ -129,7 +139,7 @@ export async function handler(event){
   }
   if((method==='POST'&&path==='/requests')||(method==='GET'&&path==='/availability')){
     if(process.env.BOOKING_REQUESTS_ENABLED!=='true')return response(503,{error:'Direct booking requests are not open yet'});
-    if(!table||!process.env.NOTIFY_FROM||!process.env.NOTIFY_TO||!process.env.TURNSTILE_SECRET)return response(503,{error:'Service not configured'});
+    if(!table||!process.env.TURNSTILE_SECRET||(process.env.BOOKING_ENVIRONMENT!=='staging'&&(!process.env.NOTIFY_FROM||!process.env.NOTIFY_TO)))return response(503,{error:'Service not configured'});
     try{
       if(method==='POST'){
         if((event.body?.length??0)>10000)return response(413,{error:'Request too large'});
