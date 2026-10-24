@@ -140,6 +140,8 @@ export async function handler(event){
   if((method==='POST'&&path==='/requests')||(method==='GET'&&path==='/availability')){
     if(process.env.BOOKING_REQUESTS_ENABLED!=='true')return response(503,{error:'Direct booking requests are not open yet'});
     if(!table||!process.env.TURNSTILE_SECRET||(process.env.BOOKING_ENVIRONMENT!=='staging'&&(!process.env.NOTIFY_FROM||!process.env.NOTIFY_TO)))return response(503,{error:'Service not configured'});
+    // Published Cloudflare demo credentials may be used in the private staging stack only.
+    if(process.env.BOOKING_ENVIRONMENT!=='staging'&&/^[123]x0000000000000000000000000000000AA$/.test(process.env.TURNSTILE_SECRET))return response(503,{error:'Production challenge verification is not configured'});
     try{
       if(method==='POST'){
         if((event.body?.length??0)>10000)return response(413,{error:'Request too large'});
