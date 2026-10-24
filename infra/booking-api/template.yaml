@@ -3,6 +3,15 @@ Transform: AWS::Serverless-2016-10-31
 Description: Les Buttes direct booking request API - intentionally disabled until configuration is complete.
 
 Parameters:
+  BookingEnvironment:
+    Type: String
+    AllowedValues: ['staging', 'production']
+    Default: staging
+  StagingApiToken:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: Required 24+ character secret for every staging request; never required by production.
   AllowedOrigin:
     Type: String
     Default: https://lesbuttes.com
@@ -80,6 +89,8 @@ Resources:
       Environment:
         Variables:
           BOOKINGS_TABLE: !Ref BookingTable
+          BOOKING_ENVIRONMENT: !Ref BookingEnvironment
+          STAGING_API_TOKEN: !Ref StagingApiToken
           ALLOWED_ORIGIN: !Ref AllowedOrigin
           BOOKING_REQUESTS_ENABLED: !Ref BookingRequestsEnabled
           BOOKING_RULES_JSON: !Ref BookingRulesJson
