@@ -46,6 +46,24 @@ Parameters:
     Default: ''
     Description: Host email receiving new booking requests.
 
+  ManagementPreviewEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: Explicit opt-in for staging-only Cognito-protected read-only management API and booking index.
+  ManagementCognitoPoolId:
+    Type: String
+    Default: ''
+    Description: Existing staging Cognito user-pool identifier; must be configured before enabling.
+  ManagementCognitoClientId:
+    Type: String
+    Default: ''
+    Description: Existing public staging Cognito app-client ID with code flow and PKCE; no secret.
+  ManagementAllowedOrigin:
+    Type: String
+    Default: http://127.0.0.1:5173
+    Description: Exact authorised management PWA origin for staging CORS.
+
   CalendarMonitorEnabled:
     Type: String
     AllowedValues: ['true', 'false']
@@ -75,6 +93,11 @@ Parameters:
     Description: Name only, not value; actual private URL is an SSM SecureString.
 
 Conditions:
+  ManagementPreviewEnabledCondition: !And
+    - !Equals [!Ref BookingEnvironment, 'staging']
+    - !Equals [!Ref ManagementPreviewEnabled, 'true']
+    - !Not [!Equals [!Ref ManagementCognitoPoolId, '']]
+    - !Not [!Equals [!Ref ManagementCognitoClientId, '']]
   MonitoringEnabledCondition: !And
     - !Equals [!Ref CalendarMonitorEnabled, 'true']
     - !Equals [!Ref BookingEnvironment, 'staging']
@@ -84,16 +107,28 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: PK
-          AttributeType: S
-        - AttributeName: SK
-          AttributeType: S
+      AttributeDefinitions: !If
+        - ManagementPreviewEnabledCondition
+        - - {AttributeName: PK, AttributeType: S}
+          - {AttributeName: SK, AttributeType: S}
+          - {AttributeName: GSI1PK, AttributeType: S}
+          - {AttributeName: GSI1SK, AttributeType: S}
+        - - {AttributeName: PK, AttributeType: S}
+          - {AttributeName: SK, AttributeType: S}
       KeySchema:
         - AttributeName: PK
           KeyType: HASH
         - AttributeName: SK
           KeyType: RANGE
+      GlobalSecondaryIndexes: !If
+        - ManagementPreviewEnabledCondition
+        - - IndexName: BookingRequestsIndex
+            KeySchema:
+              - {AttributeName: GSI1PK, KeyType: HASH}
+              - {AttributeName: GSI1SK, KeyType: RANGE}
+            Projection:
+              ProjectionType: KEYS_ONLY
+        - !Ref AWS::NoValue
       TimeToLiveSpecification:
         AttributeName: expiresAt
         Enabled: true
@@ -144,6 +179,55 @@ Resources:
             ApiId: !Ref BookingApi
             Path: /{proxy+}
             Method: ANY
+
+  # Entire management surface is staging-only and opt-in.
+  # It uses the SAME BookingTable as BookingFunction, with strictly read-only IAM.
+  ManagementApi:
+    Condition: ManagementPreviewEnabledCondition
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref ManagementAllowedOrigin]
+        AllowMethods: ['GET', 'OPTIONS']
+        AllowHeaders: ['authorization', 'content-type']
+        MaxAge: 300
+      Auth:
+        Authorizers:
+          ManagementCognito:
+            IdentitySource: '$request.header.Authorization'
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${ManagementCognitoPoolId}
+              audience: [!Ref ManagementCognitoClientId]
+
+  ManagementReadOnlyFunction:
+    Condition: ManagementPreviewEnabledCondition
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: booking-admin-http.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 12
+      Environment:
+        Variables:
+          BOOKINGS_TABLE: !Ref BookingTable
+          BOOKING_REQUESTS_INDEX: BookingRequestsIndex
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action: ['dynamodb:GetItem', 'dynamodb:Query']
+            Resource:
+              - !GetAtt BookingTable.Arn
+              - !Sub '${BookingTable.Arn}/index/BookingRequestsIndex'
+      Events:
+        GetBookingAdmin:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ManagementApi
+            Path: /admin/{proxy+}
+            Method: GET
+            Auth:
+              Authorizer: ManagementCognito
 
   CalendarMonitorCheckpointTable:
     Condition: MonitoringEnabledCondition
@@ -237,6 +321,11 @@ Resources:
             Description: Review live Airbnb calendars against isolated Les Buttes staging booking dates every four hours; never auto-edit bookings.
 
 Outputs:
+  ManagementApiUrl:
+    Condition: ManagementPreviewEnabledCondition
+    Description: Staging-only Cognito-protected management API (no browser AWS keys).
+    Value: !Sub https://${ManagementApi}.execute-api.${AWS::Region}.amazonaws.com
+
 
   CalendarMonitorFunctionName:
     Condition: MonitoringEnabledCondition
