@@ -26,6 +26,42 @@ if(widget){
   const formatDay=(date:string)=>readable(date,{weekday:'long',day:'numeric',month:'long'});
   let choice:CottageChoice|null=null,month='2027-03',pendingStart:string|null=null;
   let filters:SearchFilters={adults:2,children:0,bedrooms:0,choice:'any'};
+  let activeStep=1;
+  const screens=Array.from(widget.querySelectorAll<HTMLElement>('[data-booking-step]'));
+  const indicators=Array.from(widget.querySelectorAll<HTMLElement>('[data-journey-indicator]'));
+  const reviewNext=widget.querySelector<HTMLButtonElement>('[data-continue-review]')!;
+  const detailsForm=widget.querySelector<HTMLFormElement>('[data-preview-guest-details]')!;
+  const setStep=(step:number)=>{
+    activeStep=step;
+    for(const screen of screens)screen.hidden=Number(screen.dataset.bookingStep)!==step;
+    for(const indicator of indicators){
+      const index=Number(indicator.dataset.journeyIndicator);
+      if(index===step)indicator.setAttribute('aria-current','step');
+      else indicator.removeAttribute('aria-current');
+      indicator.classList.toggle('is-complete',index<step);
+    }
+    const heading=screens.find(x=>Number(x.dataset.bookingStep)===step)?.querySelector<HTMLElement>('h2');
+    // Keep browser scrolling predictable when moving between the four screens.
+    widget.scrollIntoView({behavior:'smooth',block:'start'});
+    heading?.setAttribute('tabindex','-1');
+    heading?.focus({preventScroll:true});
+  };
+  const getQuote=()=>{
+    if(!masterConnected()||!choice||!arrival.value||!departure.value)return null;
+    try{return indicativeSelection(choice,arrival.value,departure.value,filters);}
+    catch{return null;}
+  };
+  const updateNext=()=>{
+    const q=getQuote();
+    reviewNext.disabled=!q||!q.meetsDraftMinimum;
+    const note=widget.querySelector<HTMLElement>('[data-selection-feedback]');
+    if(note)note.textContent=!masterConnected()?tr('masterOffline'):
+      !q?tr('datesNeeded'):!q.meetsDraftMinimum?tr('tooShort'):tr('minimumOkay');
+    const searchSummary=widget.querySelector<HTMLElement>('[data-journey-selection]');
+    if(searchSummary)searchSummary.textContent=filters.adults+' '+tr('adults')+' · '+filters.children+' '+tr('children')+
+      (arrival.value&&departure.value?' · '+rangeLabel(arrival.value,departure.value):'');
+  };
+
   const monthShift=(m:string,n:number)=>{
     const [year,mo]=m.split('-').map(Number);
     return new Date(Date.UTC(year,mo-1+n,1)).toISOString().slice(0,7);
@@ -84,6 +120,7 @@ if(widget){
     if(!candidates.length){
       feedback.textContent=!haveValidParty?tr('guestsInvalid'):tr('none');
       choice=null;calendarSection.hidden=true;summarySection.hidden=true;
+      reviewNext.disabled=true;
       return;
     }
     if(!choice||!candidates.some(c=>c.unit===choice)){
@@ -101,6 +138,7 @@ if(widget){
       const button=card.querySelector<HTMLButtonElement>('[data-select-option]');
       if(button&&(!card.hidden)){button.textContent=unit===choice?tr('choice'):tr('pick');button.setAttribute('aria-pressed',String(unit===choice));}
     }
+    updateNext();
   }
   function renderSummary(){
     summarySection.hidden=true;
@@ -197,7 +235,7 @@ if(widget){
     }
     updateResults();
   }
-  async function search(){
+  async function search(advance=false){
     await refreshMaster();
     filters=newFilters();
     pendingStart=null;
@@ -218,8 +256,9 @@ if(widget){
     }
     if(arrival.value)month=arrival.value.slice(0,7);
     updateResults();
+    if(advance&&matchingOptions(filters).length)setStep(2);
   }
-  form.addEventListener('submit',event=>{event.preventDefault();void search();});
+  form.addEventListener('submit',event=>{event.preventDefault();void search(true);});
   for(const card of optionCards){
     card.querySelector<HTMLButtonElement>('[data-select-option]')?.addEventListener('click',()=>{
       choice=card.dataset.discoveryOption as CottageChoice;
@@ -230,6 +269,36 @@ if(widget){
   }
   prev.addEventListener('click',async()=>{await refreshMaster();month=monthShift(month,-1);updateResults();});
   next.addEventListener('click',async()=>{await refreshMaster();month=monthShift(month,1);updateResults();});
+  const onClick=(selector:string,callback:()=>void|Promise<void>)=>
+    widget.querySelector<HTMLButtonElement>(selector)?.addEventListener('click',()=>{void callback();});
+  widget.querySelectorAll<HTMLButtonElement>('[data-back-to-filter]').forEach(button=>
+    button.addEventListener('click',()=>setStep(1)));
+  onClick('[data-back-to-cottages]',()=>setStep(2));
+  onClick('[data-back-to-review]',()=>setStep(3));
+  onClick('[data-continue-review]',async()=>{
+    if(!await refreshMaster()){updateResults();return;}
+    updateResults();
+    const quote=getQuote();
+    if(!quote||!quote.meetsDraftMinimum)return;
+    setStep(3);
+  });
+  onClick('[data-continue-details]',async()=>{
+    if(!await refreshMaster()){updateResults();setStep(2);return;}
+    updateResults();
+    const q=getQuote();
+    if(!q||!q.meetsDraftMinimum){setStep(2);return;}
+    fill('[data-details-cottage]',q.units.map(item=>item.unit==='geranium'?'Geranium':'Honeysuckle').join(' + '));
+    fill('[data-details-stay]',rangeLabel(q.start,q.end)+' · '+q.nights+' '+tr('nightWord'));
+    fill('[data-details-guests]',String(q.adults+q.children));
+    fill('[data-details-price]',money(q.indicativeDirectTotalGBP));
+    setStep(4);
+  });
+  // Preview details never leave the browser: no POST/fetch, booking request, session
+  // storage, analytics event, payment handler or confirmation exists in this step.
+  detailsForm.addEventListener('submit',event=>event.preventDefault());
+  const disabledConfirm=detailsForm.querySelector<HTMLButtonElement>('[disabled]');
+  if(disabledConfirm)disabledConfirm.disabled=true;
+
   arrival.addEventListener('change',()=>{if(arrival.value){departure.min=plusDays(arrival.value,1);}});
   void search();
 }
