@@ -41,6 +41,7 @@ const maxDate='2099-12-31';
               <p class="booking-note">{c.minMax}</p>
               <button type="button" class="button button-secondary" data-check-availability>{c.check}</button>
               <p class="booking-feedback" data-feedback role="status" aria-live="polite"></p>
+              <div class="booking-quote" data-quote hidden><strong data-quote-value></strong><p>{c.priceDisclaimer}</p></div>
               <div class="booking-fields guest-fields">
                 <label>{c.name}<input name="name" type="text" maxlength="120" autocomplete="name" required/></label>
                 <label>{c.email}<input name="email" type="email" maxlength="254" autocomplete="email" required/></label>
@@ -78,7 +79,7 @@ const maxDate='2099-12-31';
 .booking-consent{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:.75rem!important;font-weight:400!important}
 .booking-consent input{margin-top:.4rem;flex:none}
 .booking-note,.booking-footnote{margin-top:1rem;font-size:.84rem;color:var(--soft)}
-.booking-feedback{min-height:1.5rem;margin-top:.75rem;font-size:.9rem;font-weight:600}
+.booking-feedback{min-height:1.5rem;margin-top:.75rem;font-size:.9rem;font-weight:600}.booking-quote{padding:1rem;margin:1rem 0;border-left:3px solid var(--green);background:var(--cream)}.booking-quote[hidden]{display:none}.booking-quote p{margin:.3rem 0 0;font-size:.85rem;color:var(--soft)}
 .guest-fields{margin-top:1.5rem}.booking-not-ready{padding:1.2rem;margin-bottom:1.5rem;background:var(--cream);border-radius:.5rem}
 .booking-captcha{margin:1rem 0}.booking-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 fieldset{border:0;padding:0;margin:0;min-width:0}fieldset[disabled]{opacity:.6}
