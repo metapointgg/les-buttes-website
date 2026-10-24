@@ -12,7 +12,7 @@
     "check": "astro check",
     "test:links": "node scripts/check-links.mjs",
     "test": "npm run build && npm run test:links && npm run test:booking && npm run test:discovery",
-    "test:booking": "node --check services/booking-api/index.mjs && node --check services/booking-api/admin.mjs && node --check services/booking-api/preview-direct-quote.mjs && node --check services/booking-api/reconcile-airbnb.mjs && node --check services/booking-api/preview-airbnb.mjs && node --check services/booking-api/monitor-airbnb.mjs && node --test services/booking-api/test/*.test.mjs",
+    "test:booking": "node --check services/booking-api/index.mjs && node --check services/booking-api/admin.mjs && node --check services/booking-api/export-availability-snapshot.mjs && node --check services/booking-api/preview-direct-quote.mjs && node --check services/booking-api/reconcile-airbnb.mjs && node --check services/booking-api/preview-airbnb.mjs && node --check services/booking-api/monitor-airbnb.mjs && node --test services/booking-api/test/*.test.mjs",
     "test:discovery": "node --test src/test/booking-discovery.test.mjs"
   },
   "dependencies": {
