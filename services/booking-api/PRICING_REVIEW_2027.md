@@ -47,7 +47,7 @@ Rates are composed as **non-overlapping inclusive date ranges**; there is exactl
 | Full 7-night August peak week | £1,820 | £2,065 | £3,885 |
 | 28 Aug–4 Sep 2027 **unapproved model calculation only** | £1,745 | £1,975 | £3,720 |
 
-**Do not reprice the already-reserved 28 Aug–4 Sep direct booking using these figures.** The customer had been shown Airbnb totals of £1,630 and £1,845 (£3,475 combined) and previously asked about a returning-guest direct discount. The agreed private booking price must be established separately and retained; this exercise does not change payment or booking status.
+**Do not reprice the already-reserved 28 Aug–4 Sep direct booking using these figures.** The Airbnb comparable quote was £1,630 Geranium + £1,845 Honeysuckle (£3,475 combined); the **owner-confirmed agreed direct prices are £1,450 Geranium + £1,650 Honeysuckle (£3,100 combined)**. These specific prices are the precedent for future split-savings quotes, NOT the £3,720 overlay model. The reservation remains **RESERVED, pending final confirmation**; do not infer it has been paid.
 
 The season contains **196 occupied nights per cottage**. At 100% paid occupancy, these proposed rates imply a purely theoretical gross accommodation-price ceiling of **£43,390 for Geranium and £49,080 for Honeysuckle**, or £92,470 combined, before vacancies, fees, concessions and operating costs. This is **not** an occupancy/revenue prediction.
 
@@ -101,21 +101,23 @@ Theoretical gross accommodation totals at 100% of the **196 holiday nights**, wi
 
 Machine-readable screenshot transcription: [config/observed-airbnb-honeysuckle-2027.json](config/observed-airbnb-honeysuckle-2027.json). Both observed calendar files are **reference evidence only**, NOT approved direct or production rate tables.
 
-### Direct pricing approach — recommendation for owner decision
+### Direct pricing approach — agreed commercial principle (not deployed)
 
-The screenshots and held-week cross-check support using the **actual Airbnb host-calendar monthly prices as the baseline** for direct booking, *not* the unapproved holiday overlays and *not* another 15.5% Airbnb fee uplift. Airbnb typically deducts a **15.5% single host fee**; SumUp UK's published Payment Links rate is **2.5%**. Both must be checked against actual account billing, tax, custom fees and any discount before confirmation. Sources: [Airbnb host service fees](https://www.airbnb.com/help/article/1857) and [SumUp Payment Links](https://help.sumup.com/en-GB/articles/1bTBfAoe7SiaKiUxCo2uzP-payment-links-faq).
+On **24 October 2026**, the owner confirmed the negotiated off-Airbnb booking for 28 August–4 September 2027 is **£1,450 for Geranium and £1,650 for Honeysuckle, total £3,100**. The corresponding fee-adjusted Airbnb calendar accommodation prices were £1,630 and £1,845, total £3,475. We should **stick to this approach for future direct quotes**: share the Airbnb platform-fee savings with guests and Les Buttes rather than applying a rigid standard 8% / returning-guest 10% policy.
 
-For the already-held **£3,475** combined Airbnb calendar-price example, illustrative amounts (rounded approximately, no separate cleaning/taxes assumed) are:
-
-| Guest discount vs adjusted Airbnb price | Direct guest total | Guest saving | Direct net after 2.5% SumUp | Difference vs approx. £2,936.38 Airbnb net |
+| Cottage | Airbnb calendar quote | Agreed direct quote | Guest saves | Effective reduction |
 | --- | ---: | ---: | ---: | ---: |
-| None | £3,475.00 | £0.00 | £3,388.13 | +£451.75 |
-| 5% | £3,301.25 | £173.75 | £3,218.72 | +£282.35 |
-| 8% | £3,197.00 | £278.00 | £3,117.08 | +£180.70 |
-| 10% | £3,127.50 | £347.50 | £3,049.31 | +£112.94 |
-| 12% | £3,058.00 | £417.00 | £2,981.55 | +£45.18 |
+| Geranium | £1,630 | **£1,450** | £180 | 11.04% |
+| Honeysuckle | £1,845 | **£1,650** | £195 | 10.57% |
+| **Combined** | **£3,475** | **£3,100** | **£375** | **10.79%** |
 
-**Illustrative recommendation (not approved):** consider a **5–8% visible discount** for direct guests and **up to 10%** for repeat guests / a two-cottage booking, provided the final terms, refund policy and real payment fees are factored in. Theoretical financial break-even with the 15.5% and 2.5% assumptions is about a **13.33% discount**, before risk, additional overheads and taxes. Never silently apply this to the existing reserved direct booking.
+**Quoting guidance:** derive the Airbnb comparable accommodation price for the exact dates from the already adjusted host-calendar rates. Target **approximately 11% lower** for a direct offer and round each cottage's total to a **sensible, easily communicated figure** (e.g. the nearest £25 or £50 for a week); exercise discretion on stay length and commercial context. This is a guide, **not a promise of an exact percentage, an automatic discount engine, or a fixed guest entitlement**. Owner approval remains required for each quote. Do not add another Airbnb service-fee adjustment or assume unapproved holiday overlays.
+
+**Illustrative owner economics, not a verified payout:** assuming Airbnb deducts a 15.5% single host fee and SumUp charges 2.5% for a Payment Link, the Airbnb £3,475 gross yields approximately £2,936.38 net, while the £3,100 direct quote yields **£3,022.50** net; the guest saves **£375** while Les Buttes retains roughly **£86 extra** before other costs, time, cancellations or tax. The real account fees and refunds still need verifying. This precedent shares the saved costs **unequally**, by agreement; it is not an arithmetic 50/50 fee split.
+
+**Reservation protection:** the existing 28 August–4 September two-cottage block remains **direct / RESERVED pending final confirmation**, with these agreed £1,450 / £1,650 guest amounts. This document is not evidence of payment received or a completed contract. No past Airbnb bookings are repriced. No pricing parameters are deployed.
+
+Machine-readable policy (guidance only): [config/direct-pricing-approach-2027.json](config/direct-pricing-approach-2027.json).
 
 ## 4. Airbnb fee-adjusted calendar cross-check — REQUIRED BEFORE APPROVAL
 
@@ -127,7 +129,7 @@ Sources: [Airbnb, simplifying service fees (Oct 2026)](https://www.airbnb.com/re
 
 At the published fee assumptions, the earlier Airbnb £3,475 quote would produce an indicative host payout of **£2,936.38**; a hypothetical direct price 10% below that guest total (£3,127.50) after 2.5% payment-link fees produces **£3,049.31**, improving net payout by about **£112.94**. The exact platform booking breakdown, discounted base, tax, custom fees and actual SumUp merchant rate must be checked before using this comparison commercially.
 
-**Acceptance action:** The calendar-price screenshots for **both** cottages are now available, and August/September guest-price sums reproduce the earlier quotes exactly. Confirm the **actual host Airbnb fee and SumUp merchant fee** against transaction statements and decide whether to use current Airbnb monthly prices or the optional overlays, plus whether to offer a standard/repeat-guest direct discount. Do NOT add 15.5% to already adjusted Airbnb rates. Do NOT deploy either unapproved rate proposal. Existing reservations remain unchanged.
+**Acceptance action:** The owner has **confirmed the direct-booking pricing approach and the £1,450/£1,650 example**. The actual host Airbnb fee and SumUp merchant fees still need verification against statements. Decide whether to keep the optional 2027 holiday price overlays or retain observed monthly Airbnb calendar bases. This split-savings approach is for **manually approved quotes** and is NOT an automatic 11% discount. Never add 15.5% to already adjusted Airbnb rates. Do NOT deploy unapproved nightly-rate proposals. Existing reservations remain unchanged.
 
 ## 5. Basis for holiday overlays
 
@@ -140,7 +142,7 @@ These dates justify *when* to consider overlays; they do not prove an exact achi
 
 ## 6. Acceptance gates before deployment
 
-1. Approve or amend **each** proposed rate and stay band, especially March opening, Easter, May holidays, July peak commencement, late-August uplift and September step-down.
+1. The **split-savings approach** and the £1,450 Geranium / £1,650 Honeysuckle existing direct quote are confirmed. Still approve or amend **each** proposed nightly rate and stay band, especially March opening, Easter, May holidays, July peak commencement, late-August uplift and September step-down.
 2. Verify comparable 2027 Airbnb guest-facing quotes, cleaning inclusions and platform service-fee treatment for both listings. The file is a pricing proposal, **not** a guarantee of demand at these values.
 3. Preserve all existing Airbnb bookings and the negotiated off-Airbnb booking of 28 August–4 September; no historical repricing.
 4. Finalise direct cancellation and refund terms, total-price disclosure and payment arrangements.
