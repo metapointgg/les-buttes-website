@@ -4,6 +4,12 @@
 
 This is a deliberately small request-to-book system for **Geranium, Honeysuckle or both**. The main Les Buttes Astro website remains static on S3/CloudFront and reuses a single booking page template in English, Dutch and French. Public routes: `/book/`, `/nl/book/`, `/fr/book/`. They show a disabled preview and direct visitors to existing Airbnb booking links until the environment is configured. The feature branch is separate from the production deployment workflow.
 
+## Confirmed 2027 availability window
+
+On **24 October 2026**, the host confirmed that **both Geranium and Honeysuckle are available for holiday guest arrivals from Saturday 20 March 2027**. No winter tenant remains booked into the holiday season. The existing staging rule already opens both cottages on `2027-03-20`; **do not introduce an April reopening for Geranium**.
+
+The current proposed end-of-season checkout is **Saturday 2 October 2027** (last occupied night `2027-10-01`). This matches the staging season rules but is distinct from the confirmed March opening. The 3/5/7-night season bands and nightly GBP rates remain subject to final host approval. Historical winter closure date blocks shown by Airbnb end **before** 20 March and should not be imported as extra future seasonal blocks in staging. The master has already been reconciled for the 2027 in-season periods.
+
 ## Locked-in rules
 
 - Guest check-in and checkout dates, 1 to **27 nights** (28+ nights must enquire separately).
