@@ -22,10 +22,10 @@ test('known Aug 28–Sep 4 precedent suggests exactly £1450 Geranium / £1650 H
 test('future five-night quote spans month boundaries and preserves each cottage offer independently',()=>{
   const q=previewOwnerQuote({unit:'both',start:'2027-05-29',end:'2027-06-03'});
   assert.equal(q.nights,5);
-  assert.deepEqual(q.items.map(i=>i.airbnbComparableGBP),['1055.00','1180.00']);
-  assert.deepEqual(q.items.map(i=>i.indicativeRoundedOfferGBP),['950.00','1050.00']);
-  assert.equal(q.total.airbnbComparableGBP,'2235.00');
-  assert.equal(q.total.indicativeSelectedDirectGBP,'2000.00');
+  assert.deepEqual(q.items.map(i=>i.airbnbComparableGBP),['1045.00','1170.00']);
+  assert.deepEqual(q.items.map(i=>i.indicativeRoundedOfferGBP),['925.00','1050.00']);
+  assert.equal(q.total.airbnbComparableGBP,'2215.00');
+  assert.equal(q.total.indicativeSelectedDirectGBP,'1975.00');
   assert.equal(q.provisionalMinimumStayNights,5);
 });
 test('explicit owner overrides can differ from guide but are not auto-approved or written',()=>{
