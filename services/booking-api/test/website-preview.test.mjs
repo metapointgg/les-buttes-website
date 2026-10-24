@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-const load=(name)=>JSON.parse(readFileSync(new URL('../../'+name,import.meta.url),'utf8'));
+const load=(name)=>JSON.parse(readFileSync(new URL('../'+name,import.meta.url),'utf8'));
 const publicData=JSON.parse(readFileSync(new URL('../../../src/data/booking-preview-2027.json',import.meta.url),'utf8'));
 const units=['geranium','honeysuckle'];
 const observed=Object.fromEntries(units.map(unit=>[unit,load('config/observed-airbnb-'+unit+'-2027.json')]));
