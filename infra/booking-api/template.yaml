@@ -127,7 +127,8 @@ Resources:
               - {AttributeName: GSI1PK, KeyType: HASH}
               - {AttributeName: GSI1SK, KeyType: RANGE}
             Projection:
-              ProjectionType: KEYS_ONLY
+              ProjectionType: INCLUDE
+              NonKeyAttributes: [id, start, end, units, status, guests, requestedAt]
         - !Ref AWS::NoValue
       TimeToLiveSpecification:
         AttributeName: expiresAt
