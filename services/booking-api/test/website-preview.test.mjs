@@ -60,7 +60,9 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discovery,/data-discovery-summary/);
   assert.match(discovery,/disabled aria-disabled="true"/);
   assert.match(discoveryScript,/indicativeSelection/);
-  assert.doesNotMatch(discoveryScript,/fetch\(/);
+  assert.match(discoveryScript,/fetch\('http:\/\/127\.0\.0\.1:4328\/availability'/);
+  assert.doesNotMatch(discoveryScript,/\/requests['`]/); // never send a booking request
+  assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
   assert.doesNotMatch(discovery,/name="email"/);
   assert.match(page,/data-mode="live"/);
   assert.match(script,/if\(form\.dataset\.mode==='preview'\)/);
