@@ -79,3 +79,23 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.ok(!JSON.stringify(publicData).includes('ics?t='));
   assert.ok(!JSON.stringify(publicData).includes('STAGING_API_TOKEN'));
 });
+
+test('private staging occupancy reference is no-PII, uses exclusive checkout dates and protects held direct dates',()=>{
+  const data=JSON.parse(readFileSync(new URL('../../../src/data/booking-occupancy-snapshot-2027.json',import.meta.url),'utf8'));
+  assert.equal(data.mode,'DATED_REFERENCE_OCCUPANCY_NOT_LIVE');
+  assert.equal(data.firstNight,'2027-03-20');
+  assert.equal(data.lastNight,'2027-10-01');
+  assert.equal(data.blocked.geranium.length,3);
+  assert.equal(data.blocked.honeysuckle.length,4);
+  const days=(ranges)=>ranges.reduce((sum,b)=>sum+(dateNumber(b.to)-dateNumber(b.from))/86400000,0);
+  assert.equal(days(data.blocked.geranium),21);
+  assert.equal(days(data.blocked.honeysuckle),28);
+  assert.ok(data.blocked.geranium.some(x=>x.from==='2027-08-28'&&x.to==='2027-09-04'));
+  assert.ok(data.blocked.honeysuckle.some(x=>x.from==='2027-08-28'&&x.to==='2027-09-04'));
+  assert.doesNotMatch(JSON.stringify(data),/guestName|guestEmail|paymentReference|calendarToken|airbnb\.com\/calendar\/ical/i);
+  const exporter=readFileSync(new URL('../export-availability-snapshot.mjs',import.meta.url),'utf8');
+  assert.match(exporter,/env!=='staging'/);
+  assert.match(exporter,/ConsistentRead:true/);
+  assert.match(exporter,/ProjectionExpression:'PK, SK, expiresAt'/);
+  assert.doesNotMatch(exporter,/(TransactWriteCommand|PutCommand|UpdateCommand|DeleteCommand)/);
+});
