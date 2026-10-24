@@ -1,4 +1,6 @@
 import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {parseDate,guernseyToday,DAY} from './rules.mjs';
 
 function isoDate(value){
@@ -66,7 +68,7 @@ export function consolidateBlockedNights(days,{fromDate=guernseyToday(),maxBlock
   }
   add();return result;
 }
-if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1].replace(/\\/g,'/')).href){
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const [unit,filepath]=process.argv.slice(2);
   if(!['geranium','honeysuckle'].includes(unit)||!filepath){
     console.error('Usage: node preview-airbnb.mjs geranium|honeysuckle local-export.ics');
