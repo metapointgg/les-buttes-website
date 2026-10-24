@@ -46,6 +46,39 @@ Parameters:
     Default: ''
     Description: Host email receiving new booking requests.
 
+  CalendarMonitorEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: Explicit opt-in for staging-only automated Airbnb calendar checking.
+  CalendarMonitorAlertEmail:
+    Type: String
+    Default: ''
+    Description: Recipient must confirm SNS email subscription before alerts are delivered.
+  CalendarMonitorStart:
+    Type: String
+    Default: '2027-03-20'
+    Description: Inclusive first occupied night compared with Airbnb in staging.
+  CalendarMonitorEnd:
+    Type: String
+    Default: '2027-10-02'
+    Description: Exclusive departure date for Airbnb comparisons.
+  GeraniumAirbnbUrlSsmPath:
+    Type: String
+    Default: '/les-buttes/booking/staging/airbnb/geranium-url'
+    AllowedPattern: '/les-buttes/booking/staging/airbnb/[a-z0-9-]+'
+    Description: Name only, not value; actual private URL is an SSM SecureString.
+  HoneysuckleAirbnbUrlSsmPath:
+    Type: String
+    Default: '/les-buttes/booking/staging/airbnb/honeysuckle-url'
+    AllowedPattern: '/les-buttes/booking/staging/airbnb/[a-z0-9-]+'
+    Description: Name only, not value; actual private URL is an SSM SecureString.
+
+Conditions:
+  MonitoringEnabledCondition: !And
+    - !Equals [!Ref CalendarMonitorEnabled, 'true']
+    - !Equals [!Ref BookingEnvironment, 'staging']
+
 Resources:
   BookingTable:
     Type: AWS::DynamoDB::Table
@@ -112,7 +145,88 @@ Resources:
             Path: /{proxy+}
             Method: ANY
 
+  CalendarMonitorCheckpointTable:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+
+  CalendarMonitorAlertTopic:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Les Buttes booking staging calendar alerts
+
+  CalendarMonitorEmailSubscription:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CalendarMonitorAlertTopic
+      Protocol: email
+      Endpoint: !Ref CalendarMonitorAlertEmail
+
+  CalendarMonitorFunction:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: monitor-airbnb.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 90
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: !Ref BookingEnvironment
+          BOOKINGS_TABLE: !Ref BookingTable
+          MONITOR_STATE_TABLE: !Ref CalendarMonitorCheckpointTable
+          MONITOR_SNS_TOPIC_ARN: !Ref CalendarMonitorAlertTopic
+          MONITOR_FROM_DATE: !Ref CalendarMonitorStart
+          MONITOR_TO_DATE: !Ref CalendarMonitorEnd
+          MONITOR_GERANIUM_SSM: !Ref GeraniumAirbnbUrlSsmPath
+          MONITOR_HONEYSUCKLE_SSM: !Ref HoneysuckleAirbnbUrlSsmPath
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action: ['dynamodb:Query', 'dynamodb:BatchGetItem']
+            Resource: !GetAtt BookingTable.Arn
+        - Statement:
+            Effect: Allow
+            Action: ['dynamodb:GetItem', 'dynamodb:PutItem']
+            Resource: !GetAtt CalendarMonitorCheckpointTable.Arn
+        - Statement:
+            Effect: Allow
+            Action: ['ssm:GetParameter']
+            Resource:
+              - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GeraniumAirbnbUrlSsmPath}
+              - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${HoneysuckleAirbnbUrlSsmPath}
+        - Statement:
+            Effect: Allow
+            Action: ['sns:Publish']
+            Resource: !Ref CalendarMonitorAlertTopic
+      Events:
+        EveryFourHours:
+          Type: Schedule
+          Properties:
+            Schedule: rate(4 hours)
+            Enabled: true
+            Description: Review live Airbnb calendars against isolated Les Buttes staging booking dates every four hours; never auto-edit bookings.
+
 Outputs:
+
+  CalendarMonitorFunctionName:
+    Condition: MonitoringEnabledCondition
+    Description: Lambda to invoke a one-off staging-only Airbnb calendar audit.
+    Value: !Ref CalendarMonitorFunction
+  CalendarMonitorAlertTopicArn:
+    Condition: MonitoringEnabledCondition
+    Description: SNS topic for Airbnb availability review; email subscription requires recipient confirmation.
+    Value: !Ref CalendarMonitorAlertTopic
   ApiUrl:
     Description: API root for PUBLIC_BOOKING_API_URL at website build time (do not configure until ready).
     Value: !Sub https://${BookingApi}.execute-api.${AWS::Region}.amazonaws.com
