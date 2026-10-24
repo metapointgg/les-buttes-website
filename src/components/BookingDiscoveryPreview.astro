@@ -70,13 +70,6 @@ const properties=[
         <p data-journey-selection></p>
         <button class="journey-text-button" type="button" data-back-to-filter>{t.editSearch}</button>
       </div>
-      <div class="journey-actions journey-actions-top">
-        <button type="button" class="button button-secondary" data-back-to-filter>{t.back}</button>
-        <div>
-          <p class="journey-action-note" data-selection-feedback role="status">{t.chooseHint}</p>
-          <button type="button" class="button" data-continue-review disabled>{t.continueReview}</button>
-        </div>
-      </div>
               <section class="discover-results" aria-labelledby="discover-results-title">
           <div class="discover-section-heading">
             <h2 id="discover-results-title">{t.results}</h2>
@@ -123,6 +116,7 @@ const properties=[
           </div>
           <div class="discover-calendar-grids" data-discovery-calendars></div>
           <p class="discover-calendar-message" data-calendar-message role="status" aria-live="polite"></p>
+          <div class="calendar-footer"><button type="button" class="button" data-continue-review disabled>{t.continueReview}</button><p class="journey-action-note" data-selection-feedback role="status">{t.chooseHint}</p></div>
           <p class="discover-snapshot-note">{t.notConfirmed}</p>
         </section>
 
@@ -148,11 +142,12 @@ const properties=[
           
           <p class="discover-request-note">{t.reviewHelp}</p>
           <p class="discover-snapshot-note">{t.snapshot}</p>
-        </section></div>
-      <div class="journey-actions">
+          <div class="journey-actions">
         <button type="button" class="button button-secondary" data-back-to-cottages>{t.editDates}</button>
         <button type="button" class="button" data-continue-details>{t.continueDetails}</button>
       </div>
+        </section></div>
+
     </section>
     <section class="journey-screen" data-booking-step="4" aria-labelledby="journey-four-heading" hidden>
       <div class="journey-stage-heading">
@@ -160,15 +155,16 @@ const properties=[
         <p>{t.detailsIntro}</p>
       </div>
       <div class="journey-details-grid">
-        <form data-preview-guest-details class="journey-details-form" novalidate autocomplete="off">
+        <form data-preview-guest-details class="journey-details-form" autocomplete="off">
           <h3>{t.primaryGuest}</h3>
           <div class="journey-guest-fields">
             <label>{t.firstName}<input type="text" name="firstName" autocomplete="off" maxlength="80"/></label>
             <label>{t.lastName}<input type="text" name="lastName" autocomplete="off" maxlength="80"/></label>
-            <label>{t.emailAddress}<input type="email" name="email" autocomplete="off" maxlength="254"/></label>
-            <label>{t.phoneNumber}<input type="tel" name="telephone" autocomplete="off" maxlength="40"/></label>
+            <label>{t.emailAddress}<input type="email" name="email" autocomplete="email" maxlength="254" required/></label>
+            <label>{t.phoneNumber}<input type="tel" name="telephone" autocomplete="tel" maxlength="40" inputmode="tel" pattern="[+0-9() .-]{7,40}" required/></label>
             <label class="journey-full">{t.guestNotes}<textarea name="notes" rows="3" maxlength="1000"></textarea></label>
           </div>
+          <p class="journey-validation-status" data-details-validation role="status" aria-live="polite"></p>
           <p class="journey-terms-pending">{t.termsPending}</p>
           <button type="button" class="button discover-request" disabled aria-disabled="true">{t.previewSubmit}</button>
           <p class="discover-request-note">{t.previewNoSubmit}</p>
@@ -292,7 +288,7 @@ const properties=[
 .journey-screen>.discover-availability{max-width:860px;margin:1.4rem 0}
 .journey-review{max-width:710px}
 .journey-review .discover-summary{display:block}
-.journey-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin:1.5rem 0 0;max-width:860px;padding-top:1.2rem;border-top:1px solid var(--line)}
+.calendar-footer{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:1.2rem}.calendar-footer .journey-action-note{margin:0}.journey-validation-status{font-size:.86rem;color:#a33}.journey-guest-fields input:invalid:not(:placeholder-shown){border-color:#b35a4a}.journey-review .journey-actions{max-width:none;margin-top:1.5rem;position:static;background:transparent;padding-top:1rem}.journey-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin:1.5rem 0 0;max-width:860px;padding-top:1.2rem;border-top:1px solid var(--line)}
 .journey-actions>div{text-align:right}
 .journey-action-note{font-size:.84rem;color:var(--soft);margin:0 0 .6rem}
 .journey-actions button:disabled{opacity:.48;cursor:not-allowed}
