@@ -66,8 +66,8 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(script,/if\(form\.dataset\.mode==='preview'\)/);
   assert.match(script,/previewBookingQuote/);
   // Client-inserted rows do not have Astro's scope attribute; keep selectors global.
-  assert.match(page,/\.preview-cottage-list :global\(li\)/);
-  assert.match(page,/\.preview-cottage-list :global\(li span:last-child\)/);
+  assert.match(discovery,/\.discover-summary-lines :global\(\.summary-line\)/);
+  assert.match(discovery,/\.discover-calendar-grids :global\(\.calendar-days button\)/);
   // Preview dates must be human-readable and use explicit UTC to avoid TZ off-by-one.
   assert.match(script,/\.formatRange\(/);
   assert.match(script,/timeZone:'UTC'/);
