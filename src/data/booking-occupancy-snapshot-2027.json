@@ -1,0 +1,42 @@
+{
+  "mode": "DATED_REFERENCE_OCCUPANCY_NOT_LIVE",
+  "capturedAt": "2026-10-24",
+  "source": "Previously reconciled staging master booking slots for 2027. Dates are occupied nights; checkout is exclusive. No guest identities are present. THIS DATA CAN GO STALE.",
+  "firstNight": "2027-03-20",
+  "lastNight": "2027-10-01",
+  "blocked": {
+    "geranium": [
+      {
+        "from": "2027-05-22",
+        "to": "2027-05-29"
+      },
+      {
+        "from": "2027-06-19",
+        "to": "2027-06-26"
+      },
+      {
+        "from": "2027-08-28",
+        "to": "2027-09-04"
+      }
+    ],
+    "honeysuckle": [
+      {
+        "from": "2027-06-12",
+        "to": "2027-06-19"
+      },
+      {
+        "from": "2027-07-31",
+        "to": "2027-08-07"
+      },
+      {
+        "from": "2027-08-14",
+        "to": "2027-08-21"
+      },
+      {
+        "from": "2027-08-28",
+        "to": "2027-09-04"
+      }
+    ]
+  },
+  "notice": "A dated snapshot can show known occupied dates, but dates without known blocks are not confirmed available. Always verify the authoritative master and Airbnb calendars immediately before creating a hold."
+}

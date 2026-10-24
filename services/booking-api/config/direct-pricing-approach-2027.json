@@ -1,0 +1,55 @@
+{
+  "status": "HOST_CONFIRMED_PRICING_APPROACH_NOT_DEPLOYED",
+  "confirmedOn": "2026-10-24",
+  "principle": "Share the Airbnb platform-fee saving with guests and Les Buttes; use the previously agreed one-week both-cottage direct booking as the pricing precedent. Avoid a rigid public discount percentage or automatic formula.",
+  "priceBasis": "Use comparable dates and real displayed nightly rates from the Airbnb host calendars; these are already adjusted for Airbnb's pricing change. Do NOT add Airbnb fees or apply unapproved holiday-overlay rates on top.",
+  "ownerQuotingPolicy": {
+    "guidance": "Aim for approximately 11% below equivalent Airbnb calendar accommodation-price total, but set a sensible rounded GBP quote for EACH cottage. The example rounds weekly guest offers to £50 increments. This is guidance, not a guaranteed customer discount, algorithm, coupon or automatic entitlement.",
+    "indicativeDiscountPercent": 11,
+    "suggestedWeeklyRoundingGBP": 50,
+    "hostApprovalRequired": true,
+    "channel": "Manual owner-approved direct quote, subject to full transparent terms and accurate fees.",
+    "doNotAutoRepriceExistingReservations": true
+  },
+  "actualDirectBookingPrecedent": {
+    "start": "2027-08-28",
+    "checkout": "2027-09-04",
+    "nights": 7,
+    "units": {
+      "geranium": {
+        "airbnbComparableGBP": 1630,
+        "agreedDirectGBP": 1450,
+        "guestSavingsGBP": 180,
+        "discountPctApprox": 11.04
+      },
+      "honeysuckle": {
+        "airbnbComparableGBP": 1845,
+        "agreedDirectGBP": 1650,
+        "guestSavingsGBP": 195,
+        "discountPctApprox": 10.57
+      }
+    },
+    "comparableAirbnbCombinedGBP": 3475,
+    "agreedDirectCombinedGBP": 3100,
+    "guestSavingsCombinedGBP": 375,
+    "weightedDiscountPctApprox": 10.79,
+    "reservationStatus": "RESERVED_PENDING_FINAL_CONFIRMATION",
+    "note": "These agreed prices supersede earlier hypothetical 8% or 10% pricing examples; preserve the booking at these amounts. This is not evidence of completed payment."
+  },
+  "illustrativePlatformFees": {
+    "assumptionsOnly": true,
+    "airbnbHostFeePct": 15.5,
+    "sumupPaymentLinkFeePct": 2.5,
+    "airbnbNetGBPApprox": 2936.38,
+    "directNetGBPApprox": 3022.5,
+    "ownerAdditionalNetGBPApprox": 86.12,
+    "note": "Rounded figures. Actual Airbnb host fee, SumUp processing fee, cancellation exposure, dispute risk, taxes and any other charges require verification."
+  },
+  "deployment": {
+    "approvedNightlyRates": false,
+    "enabledInStaging": false,
+    "enabledInProduction": false,
+    "enabledOnWebsite": false,
+    "requiresExplicitOwnerApprovalForEveryDirectQuote": true
+  }
+}

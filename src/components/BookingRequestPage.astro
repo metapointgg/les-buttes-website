@@ -1,0 +1,96 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import {bookingCopy} from '../lib/booking-copy';
+import {languageFromPath,localPath} from '../lib/i18n';
+import {bookingPreviewCopy} from '../lib/booking-preview-copy';
+import BookingDiscoveryPreview from './BookingDiscoveryPreview.astro';
+
+const lang=languageFromPath(Astro.url.pathname);
+const c=bookingCopy(lang);
+const p=bookingPreviewCopy(lang);
+const apiUrl=(import.meta.env.PUBLIC_BOOKING_API_URL??'').trim().replace(/\/$/,'');
+const turnstileKey=(import.meta.env.PUBLIC_TURNSTILE_SITE_KEY??'').trim();
+// Preview by default. Never activate the submission form merely because an API URL is present.
+// Explicit environment approval is required for a future live build.
+const enabled=import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&Boolean(apiUrl&&turnstileKey);
+const preview=!enabled;
+const maxDate=preview?'2027-10-02':'2099-12-31';
+---
+<BaseLayout title={(preview?p.headline:c.title)+' | Les Buttes'} description={preview?p.intro:c.intro} noindex>
+  {preview ? (
+    <BookingDiscoveryPreview/>
+  ) : (
+    <section class="section paper">
+      <div class="wrap booking-page">
+        <>
+          <div class="booking-heading">
+            <p class="eyebrow">{c.eyebrow}</p>
+            <h1>{c.title}</h1>
+            <p class="lede">{c.intro}</p>
+          </div>
+          <div class="booking-layout">
+            <div class="booking-panel">
+              <form data-booking-form data-mode="live" data-api={apiUrl} data-site-key={turnstileKey} data-messages={JSON.stringify(c)} novalidate>
+                <fieldset>
+                  <div class="booking-fields">
+                    <label class="full">{c.choose}
+                      <select name="unit" required>
+                        <option value="geranium">{c.geranium}</option>
+                        <option value="honeysuckle">{c.honeysuckle}</option>
+                        <option value="both">{c.both}</option>
+                      </select>
+                    </label>
+                    <label>{c.arrival}<input name="start" type="date" max={maxDate} required/></label>
+                    <label>{c.departure}<input name="end" type="date" max={maxDate} required/></label>
+                    <label>{c.guests}<input name="guests" type="number" min="1" max="10" step="1" value="2" required/></label>
+                  </div>
+                  <p class="booking-note">{c.minMax}</p>
+                  <button type="button" class="button button-secondary" data-check-availability>{c.check}</button>
+                  <p class="booking-feedback" data-feedback role="status" aria-live="polite"></p>
+                  <div class="booking-quote" data-quote hidden><strong data-quote-value></strong><p>{c.priceDisclaimer}</p></div>
+                  <div class="booking-fields guest-fields">
+                    <label>{c.name}<input name="name" type="text" maxlength="120" autocomplete="name" required/></label>
+                    <label>{c.email}<input name="email" type="email" maxlength="254" autocomplete="email" required/></label>
+                    <label class="full">{c.notes}<textarea name="notes" rows="3" maxlength="1500"></textarea></label>
+                    <label class="full booking-consent"><input name="consent" type="checkbox" required/><span>{c.consent}</span></label>
+                  </div>
+                  <div class="booking-captcha" data-turnstile-slot></div>
+                  <div class="booking-hidden" aria-hidden="true"><label>Leave this field blank<input name="website" tabindex="-1" autocomplete="off"/></label></div>
+                  <button type="submit" class="button" data-submit>{c.send}</button>
+                </fieldset>
+              </form>
+            </div>
+            <aside class="booking-aside">
+              <h2>{c.important}</h2>
+              <ol>{c.steps.map(step=><li>{step}</li>)}</ol>
+              <p>{c.noCharge}</p>
+              <p>{c.longer}</p>
+              <p class="booking-footnote">{c.privacy} {c.terms}</p>
+            </aside>
+          </div>
+        </>
+      </div>
+    </section>
+  )}
+</BaseLayout>
+{enabled && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>}
+<script>import '../scripts/booking-form';</script>
+<style>
+.booking-page{max-width:76rem}.booking-heading{max-width:55rem;margin-bottom:2.5rem}.booking-heading h1{font-size:clamp(2.4rem,5vw,4.2rem)}
+.booking-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(17rem,.7fr);align-items:start;gap:clamp(1.5rem,4vw,4rem)}
+.booking-panel,.booking-aside{padding:clamp(1.25rem,3vw,2rem);border-radius:.55rem;border:1px solid var(--line)}.booking-aside{background:var(--cream)}
+.booking-aside h2{font-size:1.8rem}.booking-aside ol{padding-left:1.25rem}.booking-aside li{margin-bottom:.75rem;color:var(--soft)}
+.booking-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.booking-fields .full{grid-column:1/-1}
+.booking-fields label{display:flex;flex-direction:column;gap:.35rem;font-size:.92rem;font-weight:600}
+.booking-fields input:not([type=checkbox]),.booking-fields textarea,.booking-fields select{width:100%;min-height:2.8rem;padding:.55rem .7rem;border:1px solid var(--line);border-radius:.3rem;background:#fff;color:var(--ink);font:inherit}
+.booking-fields textarea{resize:vertical}
+.booking-consent{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:.75rem!important;font-weight:400!important}
+.booking-consent input{margin-top:.4rem;flex:none}
+.booking-note,.booking-footnote{margin-top:1rem;font-size:.84rem;color:var(--soft)}
+.booking-feedback{min-height:1.5rem;margin-top:.75rem;font-size:.9rem;font-weight:600}.booking-quote{padding:1rem;margin:1rem 0;border-left:3px solid var(--green);background:var(--cream)}.booking-quote[hidden]{display:none}.booking-quote p{margin:.3rem 0 0;font-size:.85rem;color:var(--soft)}
+.guest-fields{margin-top:1.5rem}.booking-not-ready{padding:1.2rem;margin-bottom:1.5rem;background:var(--cream);border-radius:.5rem}
+.booking-captcha{margin:1rem 0}.booking-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+fieldset{border:0;padding:0;margin:0;min-width:0}fieldset[disabled]{opacity:.6}
+@media(max-width:48rem){.booking-layout{grid-template-columns:1fr}.booking-fields{grid-template-columns:1fr}}
+
+</style>

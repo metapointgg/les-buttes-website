@@ -1,0 +1,309 @@
+---
+import {getEntry} from 'astro:content';
+import ResponsiveImage from './ResponsiveImage.astro';
+import {discoveryCopy} from '../lib/booking-discovery-copy';
+import {languageFromPath,localPath} from '../lib/i18n';
+
+const lang=languageFromPath(Astro.url.pathname);
+const t=discoveryCopy(lang);
+const [geranium,honeysuckle]=await Promise.all([getEntry('cottages','geranium'),getEntry('cottages','honeysuckle')]);
+const properties=[
+  {id:'geranium',name:geranium?.data.name??'Geranium Cottage',guests:geranium?.data.sleeps??4,bedrooms:geranium?.data.bedrooms??2,bathrooms:geranium?.data.bathrooms??2,image:'/src/assets/images/cottages/geranium/exterior.jpg'},
+  {id:'honeysuckle',name:honeysuckle?.data.name??'Honeysuckle Cottage',guests:honeysuckle?.data.sleeps??6,bedrooms:honeysuckle?.data.bedrooms??3,bathrooms:honeysuckle?.data.bathrooms??2,image:'/src/assets/images/cottages/honeysuckle/exterior.jpg'}
+];
+---
+<section class="section paper discover" data-discovery data-locale={lang} data-copy={JSON.stringify(t)}>
+  <div class="wrap discover-journey">
+    <header class="discover-head">
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h1>{t.title}</h1>
+      <p class="lede">{t.intro}</p>
+      <div class="discover-preview-note" role="note">{t.preview}</div>
+    </header>
+    <nav class="journey-progress" aria-label={t.stepLabel}>
+      <ol>
+        {([t.stepSearch,t.stepChoose,t.stepReview,t.stepDetails] as string[]).map((label,index)=>
+          <li data-journey-indicator={index+1} aria-current={index===0?'step':undefined}>
+            <span class="journey-number">{index+1}</span><span>{label}</span>
+          </li>
+        )}
+      </ol>
+    </nav>
+    <section class="journey-screen" data-booking-step="1" aria-labelledby="journey-one-heading">
+      <div class="journey-stage-heading">
+        <p class="eyebrow">01 / 04</p><h2 id="journey-one-heading">{t.stepSearch}</h2>
+        <p>{t.intro}</p>
+      </div>
+      <div class="discover-layout">
+        <div class="discover-content">    <form class="discover-search" data-discovery-search novalidate>
+      <div class="discover-search-title"><h2>{t.filter}</h2></div>
+      <div class="discover-fields">
+        <label>{t.arrival}<input type="date" name="arrival" min="2027-03-20" max="2027-10-01"/></label>
+        <label>{t.departure}<input type="date" name="departure" min="2027-03-21" max="2027-10-02"/></label>
+        <label>{t.adults}<input name="adults" type="number" min="1" max="10" step="1" value="2" required/></label>
+        <label>{t.children}<input name="children" type="number" min="0" max="9" step="1" value="0" required/></label>
+        <label>{t.rooms}
+          <select name="bedrooms">
+            <option value="0">{t.anyRooms}</option>
+            {[1,2,3,4,5].map(n=><option value={n}>{n}</option>)}
+          </select>
+        </label>
+<button type="submit" class="button discover-search-button">{t.continueChoose}</button>
+      </div>
+    </form>
+          <p class="discover-feedback" data-discovery-feedback role="status" aria-live="polite">{t.nothing}</p>
+        </div>
+              <aside class="discover-aside">
+        <h2>{t.help}</h2>
+        <p>{t.helpBody}</p>
+        <ol>{t.helpPoints.map(point=><li>{point}</li>)}</ol>
+        <div class="discover-help-links">
+          <a class="button button-secondary" href={localPath('/cottages/',lang)}>{t.more}</a>
+          <a href={localPath('/contact/',lang)}>{t.alternative}</a>
+        </div>
+      </aside>
+      </div>
+    </section>
+    <section class="journey-screen" data-booking-step="2" aria-labelledby="journey-two-heading" hidden>
+      <div class="journey-stage-heading">
+        <p class="eyebrow">02 / 04</p><h2 id="journey-two-heading">{t.stepChoose}</h2>
+        <p data-journey-selection></p>
+        <button class="journey-text-button" type="button" data-back-to-filter>{t.editSearch}</button>
+      </div>
+              <section class="discover-results" aria-labelledby="discover-results-title">
+          <div class="discover-section-heading">
+            <h2 id="discover-results-title">{t.results}</h2>
+            <p class="discover-feedback" data-discovery-feedback role="status" aria-live="polite">{t.nothing}</p>
+          </div>
+          <div class="discover-result-list" data-discovery-options>
+            {properties.map(p=><article class="discover-cottage-card" data-discovery-option={p.id} hidden>
+              <div class="discover-cottage-image"><ResponsiveImage src={p.image} alt={p.name} widths={[320,480,720]} sizes="(max-width: 760px) 100vw, 22vw"/></div>
+              <div class="discover-cottage-body">
+                <h3>{p.name}</h3>
+                <p>{p.guests} {t.guestWord} · {p.bedrooms} {t.beds} · {p.bathrooms} {t.bath}</p>
+                <p class="discover-availability-state" data-discovery-status></p>
+                <button class="button button-secondary" type="button" data-select-option={p.id}>{t.pick}</button>
+              </div>
+            </article>)}
+            <article class="discover-cottage-card discover-combination" data-discovery-option="both" hidden>
+              <div class="discover-combination-images">
+                <ResponsiveImage src={properties[0].image} alt={properties[0].name} widths={[280,400]} sizes="(max-width: 760px) 50vw, 15vw"/>
+                <ResponsiveImage src={properties[1].image} alt={properties[1].name} widths={[280,400]} sizes="(max-width: 760px) 50vw, 15vw"/>
+              </div>
+              <div class="discover-cottage-body">
+                <h3>{t.both}</h3>
+                <p>10 {t.guestWord} · 5 {t.beds} · 4 {t.bath}</p>
+                <p class="discover-availability-state" data-discovery-status></p>
+                <button class="button button-secondary" type="button" data-select-option="both">{t.pick}</button>
+              </div>
+            </article>
+          </div>
+        </section>
+              <section class="discover-availability" data-discovery-availability hidden aria-labelledby="discover-calendar-title">
+          <div class="discover-calendar-heading">
+            <div><h2 id="discover-calendar-title">{t.months}</h2><p>{t.calendarHelp}</p></div>
+            <div class="discover-calendar-nav">
+              <button type="button" data-prev-month aria-label={t.previous}>‹</button>
+              <strong data-current-month></strong>
+              <button type="button" data-next-month aria-label={t.next}>›</button>
+            </div>
+          </div>
+          <p class="discover-master-status" data-master-status role="status" aria-live="polite">{t.masterOffline}</p>
+          <div class="discover-legend">
+            <span><i class="discover-dot discover-dot-possible"></i>{t.availableWhite}</span>
+            <span><i class="discover-dot discover-dot-blocked"></i>{t.dateBlocked}</span>
+            <span><i class="discover-dot discover-dot-selected"></i>{t.selectedDate}</span>
+          </div>
+          <div class="discover-calendar-grids" data-discovery-calendars></div>
+          <p class="discover-calendar-message" data-calendar-message role="status" aria-live="polite"></p>
+          <div class="calendar-footer"><button type="button" class="button" data-continue-review disabled>{t.continueReview}</button><p class="journey-action-note" data-selection-feedback role="status">{t.chooseHint}</p></div>
+          <p class="discover-snapshot-note">{t.notConfirmed}</p>
+        </section>
+
+    </section>
+    <section class="journey-screen" data-booking-step="3" aria-labelledby="journey-three-heading" hidden>
+      <div class="journey-stage-heading">
+        <p class="eyebrow">03 / 04</p><h2 id="journey-three-heading">{t.stepReview}</h2>
+        <p>{t.reviewHelp}</p>
+      </div>
+      <div class="journey-review">        <section class="discover-summary" data-discovery-summary hidden aria-labelledby="discover-price-heading">
+          <div class="discover-section-heading">
+            <p class="eyebrow">{t.quote}</p>
+            <h2 id="discover-price-heading">{t.quote}</h2>
+          </div>
+          <p class="discover-summary-meta" data-summary-stay></p>
+          <div class="discover-summary-lines" data-summary-lines></div>
+          <dl class="discover-cost-breakdown">
+            <div><dt>{t.airbnb}</dt><dd data-summary-airbnb></dd></div>
+            <div class="discover-grand-total"><dt>{t.direct}</dt><dd data-summary-direct></dd></div>
+            <div><dt>{t.saving}</dt><dd data-summary-saving></dd></div>
+          </dl>
+          <p class="discover-minimum" data-summary-minimum></p>
+          
+          <p class="discover-request-note">{t.reviewHelp}</p>
+          <p class="discover-snapshot-note">{t.snapshot}</p>
+          <div class="journey-actions">
+        <button type="button" class="button button-secondary" data-back-to-cottages>{t.editDates}</button>
+        <button type="button" class="button" data-continue-details>{t.continueDetails}</button>
+      </div>
+        </section></div>
+
+    </section>
+    <section class="journey-screen" data-booking-step="4" aria-labelledby="journey-four-heading" hidden>
+      <div class="journey-stage-heading">
+        <p class="eyebrow">04 / 04</p><h2 id="journey-four-heading">{t.stepDetails}</h2>
+        <p>{t.detailsIntro}</p>
+      </div>
+      <div class="journey-details-grid">
+        <form data-preview-guest-details class="journey-details-form" autocomplete="off">
+          <h3>{t.primaryGuest}</h3>
+          <div class="journey-guest-fields">
+            <label>{t.firstName}<input type="text" name="firstName" autocomplete="off" maxlength="80"/></label>
+            <label>{t.lastName}<input type="text" name="lastName" autocomplete="off" maxlength="80"/></label>
+            <label>{t.emailAddress}<input type="email" name="email" autocomplete="email" maxlength="254" required/></label>
+            <label>{t.phoneNumber}<input type="tel" name="telephone" autocomplete="tel" maxlength="40" inputmode="tel" pattern="[+0-9() .-]{7,40}" required/></label>
+            <label class="journey-full">{t.guestNotes}<textarea name="notes" rows="3" maxlength="1000"></textarea></label>
+          </div>
+          <p class="journey-validation-status" data-details-validation role="status" aria-live="polite"></p>
+          <p class="journey-terms-pending">{t.termsPending}</p>
+          <button type="button" class="button discover-request" disabled aria-disabled="true">{t.previewSubmit}</button>
+          <p class="discover-request-note">{t.previewNoSubmit}</p>
+        </form>
+        <aside class="journey-booking-recap">
+          <h3>{t.detailsTotal}</h3>
+          <p data-details-cottage></p>
+          <p data-details-stay></p>
+          <p>{t.yourParty}: <strong data-details-guests></strong></p>
+          <div class="journey-recap-total"><span>{t.direct}</span><strong data-details-price></strong></div>
+          <p class="discover-snapshot-note">{t.snapshot}</p>
+        </aside>
+      </div>
+      <div class="journey-actions">
+        <button type="button" class="button button-secondary" data-back-to-review>{t.back}</button>
+      </div>
+    </section>
+  </div>
+</section>
+<script>import '../scripts/booking-discovery';</script>
+<style>
+.discover{color:var(--ink)}.discover-head{max-width:63rem;margin-bottom:2rem}.discover-head h1{font-size:clamp(2.5rem,5vw,4.3rem);margin:.2rem 0 1rem}
+.discover-head .lede{max-width:45rem}.discover-preview-note{background:var(--cream);border:1px solid var(--line);border-radius:.4rem;padding:.75rem 1rem;margin-top:1rem;font-size:.9rem;color:var(--soft)}
+.discover-search{border:1px solid var(--line);padding:clamp(1rem,2.5vw,1.7rem);border-radius:.6rem;background:#fff;margin-bottom:2rem}
+.discover-search-title h2{font-size:1.4rem;margin:0 0 1.1rem}
+.discover-fields{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.8rem;align-items:end}
+.discover-fields label{display:flex;flex-direction:column;gap:.4rem;font-size:.85rem;font-weight:650;grid-column:span 2}
+.discover-fields input,.discover-fields select{width:100%;min-width:0;min-height:2.8rem;border-radius:.35rem;background:#fff;border:1px solid var(--line);padding:.5rem;color:var(--ink);font:inherit}
+.discover-search-button{grid-column:span 2;min-height:2.8rem}
+.discover-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(16rem,.34fr);gap:clamp(1.2rem,3vw,2.5rem);align-items:start}
+.discover-content{min-width:0}.discover-content section+section{margin-top:2rem}
+.discover-section-heading h2,.discover-calendar-heading h2{font-size:clamp(1.4rem,2.4vw,1.9rem);margin:0 0 .35rem}
+.discover-section-heading p,.discover-calendar-heading p{margin:.25rem 0 1rem;font-size:.9rem;color:var(--soft)}
+.discover-result-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.discover-cottage-card{overflow:hidden;border:1px solid var(--line);border-radius:.6rem;background:#fff}
+.discover-cottage-card[hidden],.discover-availability[hidden],.discover-summary[hidden]{display:none}
+.discover-cottage-image,.discover-combination-images{height:clamp(9rem,16vw,12rem);overflow:hidden}
+.discover-cottage-image :global(picture),.discover-cottage-image :global(img),.discover-combination-images :global(picture),.discover-combination-images :global(img){display:block;width:100%;height:100%;object-fit:cover}
+.discover-combination-images{display:grid;grid-template-columns:1fr 1fr;gap:.2rem}
+.discover-cottage-body{padding:1rem}.discover-cottage-body h3{font-size:1.3rem;margin:0 0 .25rem}
+.discover-cottage-body p{font-size:.84rem;color:var(--soft);margin:.45rem 0}
+.discover-cottage-body .discover-availability-state{font-weight:650;color:var(--ink);min-height:2.2em}
+.discover-cottage-card.is-selected{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.discover-cottage-body .button{margin-top:.65rem}
+.discover-availability,.discover-summary{padding:clamp(.75rem,2vw,1.5rem);border:1px solid var(--line);border-radius:.6rem;background:#fff}
+.discover-calendar-heading{display:flex;justify-content:space-between;gap:1rem;align-items:start;flex-wrap:wrap}
+.discover-calendar-nav{display:flex;align-items:center;gap:.45rem}
+.discover-calendar-nav button{width:2.4rem;height:2.4rem;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--ink);font-size:1.5rem;cursor:pointer}
+.discover-calendar-nav button:disabled{opacity:.4;cursor:not-allowed}
+.discover-calendar-nav strong{min-width:10ch;text-align:center;font-size:.9rem}
+
+.discover-master-status{font-size:.82rem;font-weight:650;color:var(--green);margin:.6rem 0 1rem}
+.discover-legend{display:flex;flex-wrap:wrap;gap:.6rem 1.25rem;font-size:.76rem;color:var(--soft);margin:0 0 1rem}
+.discover-legend span{display:flex;align-items:center;gap:.35rem}
+.discover-dot{width:.65rem;height:.65rem;border-radius:50%;display:inline-block}
+.discover-dot-possible{background:#fff;border:1px solid #b9c8bb}
+.discover-dot-blocked{background:#e5e5e5;border:1px solid #d1d1d1}
+.discover-dot-selected{background:var(--green)}
+.journey-actions-top{position:sticky;top:0;z-index:5;background:#fff;padding:.75rem 0;border-bottom:1px solid var(--line)}
+.discover-calendar-grids,.discover-calendar-grids.two-cottages{display:grid;grid-template-columns:1fr;gap:1.25rem}
+.discover-calendar-grids :global(.calendar-cottage-title){font-size:1.03rem;margin:0 0 .7rem}
+.discover-calendar-grids :global(.calendar-two-months){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(.65rem,2vw,1.3rem)}
+.discover-calendar-grids :global(.calendar-month){min-width:0}
+.discover-calendar-grids :global(.calendar-month-label){text-align:center;font-size:.89rem;font-weight:650;margin:0 0 .65rem}
+.discover-calendar-grids :global(.calendar-weekdays),.discover-calendar-grids :global(.calendar-days){display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.18rem}
+.discover-calendar-grids :global(.calendar-weekdays){margin-bottom:.25rem}
+.discover-calendar-grids :global(.calendar-weekdays span){text-align:center;font-size:.67rem;font-weight:600;color:var(--soft)}
+.discover-calendar-grids :global(.calendar-days button){
+  min-width:0;aspect-ratio:1;min-height:2rem;padding:0;border-radius:50%;border:1px solid transparent;
+  background:#fff;color:var(--ink);cursor:pointer;display:grid;place-items:center;font:inherit
+}
+.discover-calendar-grids :global(.calendar-days .calendar-empty){aspect-ratio:1}
+.discover-calendar-grids :global(.calendar-days .calendar-day){font-size:.76rem;font-weight:550}
+.discover-calendar-grids :global(.calendar-days button:not(:disabled):hover){border-color:var(--green);background:var(--cream)}
+.discover-calendar-grids :global(.calendar-days button:focus-visible){outline:2px solid var(--green);outline-offset:2px}
+.discover-calendar-grids :global(.calendar-days button.is-blocked),
+.discover-calendar-grids :global(.calendar-days button.is-closed),
+.discover-calendar-grids :global(.calendar-days button.is-unknown){background:#e8e8e8;color:#9b9b9b;border-color:#e8e8e8}
+.discover-calendar-grids :global(.calendar-days button:disabled){cursor:not-allowed}
+.discover-calendar-grids :global(.calendar-days button.is-between){background:#bed4c3;color:var(--ink);border-color:#bed4c3;border-radius:.25rem}
+.discover-calendar-grids :global(.calendar-days button.is-checkin),
+.discover-calendar-grids :global(.calendar-days button.is-checkout){background:var(--green);color:#fff;border-color:var(--green);border-radius:50%;font-weight:700}
+.discover-calendar-message{margin:.85rem 0;min-height:1.25rem;font-weight:600;font-size:.85rem}
+.discover-snapshot-note{font-size:.8rem;color:var(--soft);border-left:2px solid var(--line);padding-left:.8rem;margin:1rem 0 0}
+.discover-summary-lines{display:grid;gap:.5rem;margin:1rem 0}
+.discover-summary-lines :global(.summary-line){display:flex;align-items:center;justify-content:space-between;gap:1rem;font-size:.93rem}
+.discover-summary-meta{font-weight:600;color:var(--soft)}
+.discover-cost-breakdown{border-top:1px solid var(--line);padding-top:1rem;display:grid;gap:.7rem;margin:0}
+.discover-cost-breakdown>div{display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+.discover-cost-breakdown dt{font-size:.87rem;color:var(--soft)}
+.discover-cost-breakdown dd{margin:0;font-weight:700}
+.discover-grand-total{padding-top:.65rem;border-top:1px solid var(--line)}
+.discover-grand-total dt{font-size:1.05rem;font-weight:700;color:var(--ink)}
+.discover-grand-total dd{font-size:1.7rem;color:var(--green)}
+.discover-minimum{font-size:.85rem;margin:1rem 0;color:var(--soft)}
+.discover-request{width:100%;margin-top:.8rem}.discover-request:disabled{opacity:.6;cursor:not-allowed}
+.discover-request-note{font-size:.8rem;color:var(--soft);margin:.65rem 0}
+.discover-aside{padding:1.35rem;border:1px solid var(--line);background:var(--cream);border-radius:.6rem;position:sticky;top:1rem}
+.discover-aside h2{font-size:1.55rem;margin:0 0 .7rem}.discover-aside p{font-size:.94rem;color:var(--soft)}
+.discover-aside ol{padding-left:1.2rem}.discover-aside li{padding-left:.2rem;margin:.75rem 0;font-size:.9rem}
+.discover-help-links{display:flex;flex-direction:column;align-items:start;gap:.8rem;margin-top:1rem}
+@media(max-width:76rem){.discover-layout{grid-template-columns:minmax(0,1fr) 17rem}.discover-calendar-grids :global(.calendar-two-months){gap:.65rem}}
+@media(max-width:55rem){.discover-layout{grid-template-columns:1fr}.discover-aside{position:static}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 1}}
+@media(max-width:36rem){.discover-result-list{grid-template-columns:1fr}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 2}.discover-calendar-grids :global(.calendar-two-months){grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.discover-calendar-grids :global(.calendar-days button){min-height:1.3rem}.discover-calendar-grids :global(.calendar-days .calendar-day){font-size:.67rem}.discover-calendar-grids :global(.calendar-weekdays span){font-size:.58rem}.discover-calendar-grids :global(.calendar-month-label){font-size:.72rem}.discover-calendar-nav{width:100%;justify-content:space-between}}
+
+.discover-journey{max-width:1130px}
+.journey-screen[hidden],.discover-results[hidden],.discover-availability[hidden],.discover-summary[hidden]{display:none!important}
+.journey-progress{margin:1.8rem 0 2rem}
+.journey-progress ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;margin:0;padding:0}
+.journey-progress li{position:relative;display:flex;align-items:center;gap:.65rem;font-size:.87rem;color:var(--soft);font-weight:600;padding:.6rem .8rem .6rem 0}
+.journey-progress li:not(:last-child):after{content:'';position:absolute;top:50%;right:.6rem;width:26%;height:1px;background:var(--line)}
+.journey-progress li[aria-current="step"]{color:var(--green)}
+.journey-progress li.is-complete{color:var(--ink)}
+.journey-number{display:grid;place-items:center;flex:none;border:1px solid var(--line);border-radius:50%;height:2rem;width:2rem;font-size:.85rem;background:white}
+.journey-progress li[aria-current="step"] .journey-number,.journey-progress li.is-complete .journey-number{background:var(--green);color:#fff;border-color:var(--green)}
+.journey-stage-heading{margin:0 0 1.4rem}
+.journey-stage-heading h2{font-size:clamp(1.7rem,3vw,2.3rem);margin:.2rem 0 .5rem}
+.journey-stage-heading>p:not(.eyebrow){color:var(--soft);font-size:.95rem;margin:.3rem 0}
+.journey-stage-heading .journey-text-button{background:none;border:0;text-decoration:underline;color:var(--green);font:inherit;font-size:.87rem;cursor:pointer;padding:.25rem 0}
+.journey-screen>.discover-results{margin:0 0 1.4rem}
+.journey-screen>.discover-availability{max-width:860px;margin:1.4rem 0}
+.journey-review{max-width:710px}
+.journey-review .discover-summary{display:block}
+.calendar-footer{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:1.2rem}.calendar-footer .journey-action-note{margin:0}.journey-validation-status{font-size:.86rem;color:#a33}.journey-guest-fields input:invalid:not(:placeholder-shown){border-color:#b35a4a}.journey-review .journey-actions{max-width:none;margin-top:1.5rem;position:static;background:transparent;padding-top:1rem}.journey-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin:1.5rem 0 0;max-width:860px;padding-top:1.2rem;border-top:1px solid var(--line)}
+.journey-actions>div{text-align:right}
+.journey-action-note{font-size:.84rem;color:var(--soft);margin:0 0 .6rem}
+.journey-actions button:disabled{opacity:.48;cursor:not-allowed}
+.journey-details-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(16rem,1fr);gap:1.4rem;align-items:start}
+.journey-details-form,.journey-booking-recap{background:#fff;border:1px solid var(--line);border-radius:.6rem;padding:clamp(1rem,2vw,1.6rem)}
+.journey-details-form h3,.journey-booking-recap h3{font-size:1.3rem;margin:0 0 1.2rem}
+.journey-guest-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.journey-guest-fields label{display:flex;flex-direction:column;gap:.45rem;font-size:.87rem;font-weight:650}
+.journey-guest-fields input,.journey-guest-fields textarea{border:1px solid var(--line);border-radius:.3rem;min-width:0;padding:.75rem;color:var(--ink);font:inherit;background:#fff}
+.journey-guest-fields .journey-full{grid-column:span 2}
+.journey-terms-pending{border-left:3px solid var(--green);background:var(--cream);padding:.9rem;margin:1.3rem 0;font-size:.85rem;color:var(--soft)}
+.journey-booking-recap{background:var(--cream);position:sticky;top:1rem}
+.journey-booking-recap p{color:var(--soft);font-size:.91rem}
+.journey-recap-total{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;border-top:1px solid var(--line);padding-top:1rem;margin-top:1.2rem}
+.journey-recap-total strong{font-size:1.6rem;color:var(--green)}
+@media(max-width:48rem){.journey-details-grid{grid-template-columns:1fr}.journey-progress li{font-size:.73rem;gap:.35rem}.journey-progress li:not(:last-child):after{display:none}}
+@media(max-width:30rem){.journey-progress li{flex-direction:column;text-align:center;padding:.35rem .1rem}.journey-number{height:1.75rem;width:1.75rem}.journey-guest-fields{grid-template-columns:1fr}.journey-guest-fields .journey-full{grid-column:span 1}}
+</style>

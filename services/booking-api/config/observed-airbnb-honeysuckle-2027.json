@@ -1,0 +1,80 @@
+{
+  "status": "OBSERVED_AIRBNB_HOST_CALENDAR_NOT_APPROVED_FOR_DIRECT_BOOKINGS",
+  "property": "honeysuckle",
+  "listingId": "15695088",
+  "evidenceDate": "2026-10-24",
+  "evidence": "Eight user-supplied full-width screenshots of Honeysuckle Airbnb calendar (March–October 2027). The user confirms in-season prices already include the Airbnb service-fee adjustment; do not add an additional platform uplift.",
+  "season": {
+    "firstOccupiedNight": "2027-03-20",
+    "lastOccupiedNight": "2027-10-01",
+    "lastCheckout": "2027-10-02"
+  },
+  "displayedNightlyRatesGBP": [
+    {
+      "start": "2027-03-20",
+      "end": "2027-03-31",
+      "amount": 215
+    },
+    {
+      "start": "2027-04-01",
+      "end": "2027-04-30",
+      "amount": 215
+    },
+    {
+      "start": "2027-05-01",
+      "end": "2027-05-31",
+      "amount": 230
+    },
+    {
+      "start": "2027-06-01",
+      "end": "2027-06-30",
+      "amount": 240
+    },
+    {
+      "start": "2027-07-01",
+      "end": "2027-07-31",
+      "amount": 265
+    },
+    {
+      "start": "2027-08-01",
+      "end": "2027-08-31",
+      "amount": 285
+    },
+    {
+      "start": "2027-09-01",
+      "end": "2027-09-30",
+      "amount": 235
+    },
+    {
+      "start": "2027-10-01",
+      "end": "2027-10-01",
+      "amount": 235
+    }
+  ],
+  "caveats": [
+    "Some calendar cells are obscured by existing Airbnb booking bars; month-wide rates are visible on unobscured days and the held August-to-September week.",
+    "Dates before March 20 and after October 1 are out of the 2027 holiday season regardless of displayed calendar pricing.",
+    "Host calendar nightly amounts are not independently verified net payout totals and may exclude other guest charges/discounts.",
+    "This is an observed rate benchmark, not a command to update production or staging booking rates."
+  ],
+  "verifiedHeldDirectWeek": {
+    "start": "2027-08-28",
+    "checkout": "2027-09-04",
+    "calculation": [
+      {
+        "dates": "2027-08-28 through 2027-08-31",
+        "nights": 4,
+        "rateGBP": 285,
+        "totalGBP": 1140
+      },
+      {
+        "dates": "2027-09-01 through 2027-09-03",
+        "nights": 3,
+        "rateGBP": 235,
+        "totalGBP": 705
+      }
+    ],
+    "modelGrossGBP": 1845,
+    "earlierAirbnbQuoteGBP": 1845
+  }
+}
