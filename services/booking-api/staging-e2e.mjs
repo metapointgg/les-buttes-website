@@ -53,6 +53,20 @@ try{
   assert.equal(unavailable.data.available,false,'Hold blocks direct availability');
   const conflict=await send();
   assert.equal(conflict.status,409,'Second request for same dates is refused');
+  if(unit!=='both'){
+    const other=unit==='geranium'?'honeysuckle':'geranium';
+    const otherSearch='/availability?'+new URLSearchParams({unit:other,start,end,guests:String(guests)});
+    const otherBefore=await req(otherSearch);
+    assert.equal(otherBefore.data.available,true,'Other cottage remains independently available');
+    const combined={...request,unit:'both'};
+    const combinedConflict=await req('/requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(combined)});
+    assert.equal(combinedConflict.status,409,'Both-cottage request must fail when one cottage is held');
+    const otherAfter=await req(otherSearch);
+    assert.equal(otherAfter.data.available,true,'Failed combined request must NOT leave an orphan hold on the other cottage');
+  }
+  const end28=new Date(Date.parse(start+'T00:00:00Z')+28*86400000).toISOString().slice(0,10);
+  const tooLong=await req('/requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...request,end:end28})});
+  assert.equal(tooLong.status,400,'28-night requests must be rejected by the API');
   // No SumUp URL is contacted; host CLI accepts test.invalid only in staging.
   const approval=admin('approve',bookingId,before.data.quote.totalGBP,'https://test.invalid/not-a-payment');
   assert.match(approval,/Approved/);
