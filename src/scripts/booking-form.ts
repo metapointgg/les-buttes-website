@@ -1,3 +1,4 @@
+import {previewBookingQuote} from '../lib/booking-preview';
 type BookingMessages = {
   invalid:string; over:string; checking:string; sending:string; error:string; priceLabel:string;
   ready:string; unavailable:string; success:string;
@@ -12,6 +13,74 @@ function dateDays(start:string,end:string):number{
 }
 const caps:Record<string,number>={geranium:4,honeysuckle:6,both:10};
 document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>{
+  if(form.dataset.mode==='preview'){
+    const c:Record<string,string>=JSON.parse(form.dataset.previewMessages??'{}');
+    const get=(name:string)=>form.elements.namedItem(name) as HTMLInputElement|HTMLSelectElement;
+    const unitInput=get('unit') as HTMLSelectElement;
+    const startInput=get('start') as HTMLInputElement;
+    const endInput=get('end') as HTMLInputElement;
+    const guestsInput=get('guests') as HTMLInputElement;
+    const output=form.parentElement?.querySelector<HTMLElement>('[data-preview-result]');
+    const feedback=form.querySelector<HTMLElement>('[data-feedback]');
+    const button=form.querySelector<HTMLButtonElement>('[data-preview-quote]');
+    const label=(selector:string)=>output?.querySelector<HTMLElement>(selector);
+    const money=(value:number)=>new Intl.NumberFormat(document.documentElement.lang||'en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(value);
+    const reset=()=>{
+      if(output)output.hidden=true;
+      if(feedback)feedback.textContent=c.defaultPrompt||'';
+    };
+    const updateCapacity=()=>{
+      const capacity={geranium:4,honeysuckle:6,both:10}[unitInput.value as 'geranium'|'honeysuckle'|'both']||4;
+      guestsInput.max=String(capacity);
+      if(Number(guestsInput.value)>capacity)guestsInput.value=String(capacity);
+    };
+    unitInput.addEventListener('change',()=>{updateCapacity();reset();});
+    for(const input of [startInput,endInput,guestsInput])input.addEventListener('change',reset);
+    startInput.addEventListener('change',()=>{
+      if(startInput.value&&endInput.value&&endInput.value<=startInput.value)endInput.value='';
+      if(startInput.value){
+        const next=new Date(Date.parse(startInput.value+'T00:00:00Z')+DAY).toISOString().slice(0,10);
+        endInput.min=next;
+      }
+    });
+    form.addEventListener('submit',event=>event.preventDefault());
+    button?.addEventListener('click',()=>{
+      try{
+        const unit=unitInput.value as 'geranium'|'honeysuckle'|'both';
+        const quote=previewBookingQuote(unit,startInput.value,endInput.value,Number(guestsInput.value));
+        const rows=label('[data-preview-cottages]');
+        if(rows){
+          rows.replaceChildren();
+          for(const item of quote.units){
+            const li=document.createElement('li');
+            const name=document.createElement('span'),amount=document.createElement('span');
+            name.textContent=item.unit==='geranium'?'Geranium': 'Honeysuckle';
+            amount.textContent=money(item.indicativeDirectGBP);
+            li.append(name,amount);
+            rows.appendChild(li);
+          }
+        }
+        const dateLabel=label('[data-preview-dates]');
+        if(dateLabel)dateLabel.textContent=quote.start+' – '+quote.end+' · '+quote.nights+' '+(c.nights||'nights');
+        const airbnb=label('[data-preview-airbnb]');
+        const direct=label('[data-preview-direct]');
+        const savings=label('[data-preview-saving]');
+        const minimum=label('[data-preview-minimum]');
+        if(airbnb)airbnb.textContent=money(quote.airbnbTotalGBP);
+        if(direct)direct.textContent=money(quote.indicativeDirectTotalGBP);
+        if(savings)savings.textContent=money(quote.guestSavingGBP)+' ('+quote.guestSavingPercent+'%)';
+        if(minimum)minimum.textContent=(c.minimum||'Draft minimum')+': '+quote.draftMinimumNights+' '+(c.nights||'nights')+'. '+(quote.meetsDraftMinimum?c.minimumMet:c.minimumNotMet);
+        if(output)output.hidden=false;
+        if(feedback)feedback.textContent='';
+      }catch(error){
+        if(output)output.hidden=true;
+        const code=error instanceof Error?error.message:'unavailableQuote';
+        if(feedback)feedback.textContent=c[code]||c.unavailableQuote||'Unable to estimate';
+      }
+    });
+    updateCapacity();
+    return;
+  }
   const url=form.dataset.api??'';
   if(!url)return;
   const messages:BookingMessages=JSON.parse(form.dataset.messages??'{}');
