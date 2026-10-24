@@ -40,6 +40,10 @@ After successful tests, the staging stack remains deployed (and may continue acc
 
 If a rehearsal fails, the script reports the synthetic booking ID if known. Use the private host CLI on the staging table to inspect and manually release the test block. A failed payment simulation must never be confused with a real SumUp payment.
 
+**Specific confirmed-reservation regression fixed 24 October 2026:** the initial rehearsal reported `STAGING FAILED: Confirmed booking stays blocked` because the availability API mistakenly treated permanent date records (no TTL) as available. It was corrected in `services/booking-api/occupancy.mjs` and covered by automated regression tests. The failed run leaves a real **synthetic** DynamoDB booking in the isolated staging table; do not simply re-run with the same dates before releasing it. On the host workstation, set `AWS_PROFILE`, `AWS_REGION`, `BOOKING_ENVIRONMENT=staging` and the staging `BOOKINGS_TABLE`. From `services/booking-api/`, run `node admin.mjs show <reference>` and verify **guestEmail=test@example.invalid** and status `CONFIRMED`, then run `node admin.mjs cancel <reference> "Synthetic staging test cleanup after confirmed-block regression"`. The cancellation should release its nightly slots. Return to the repository root, pull the fixed branch, then redeploy the staging stack (this rotates the private token) and verify the E2E passes.
+
+Do not cancel any booking if its details or status differ from the synthetic test.
+
 The automatically generated staging access token is session-only; rerunning deployment rotates it. Do not commit a staging token, Airbnb iCalendar secret URL or merchant credentials to GitHub, Pages CMS or public website files.
 
 The PowerShell script has not been executed in your AWS account by ChatGPT because AWS account access is not connected in this conversation. CI validates pure booking logic but does not prove IAM/CloudFormation deployment or real DynamoDB transaction behaviour; those require the staged run.
