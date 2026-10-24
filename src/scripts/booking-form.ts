@@ -32,7 +32,9 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
   let busy=false;
   const key=()=>JSON.stringify(fields());
   const validate=()=>{
-    const f=fields(),today=new Date(),localToday=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
+    const f=fields(),parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Guernsey',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const p=Object.fromEntries(parts.filter(part=>['year','month','day'].includes(part.type)).map(part=>[part.type,part.value]));
+    const localToday=p.year+'-'+p.month+'-'+p.day;
     const nights=dateDays(f.start,f.end);
     if(!Number.isInteger(nights)||nights<1||nights>27||f.start<localToday){notice(messages.invalid);return false;}
     if(!Number.isInteger(f.guests)||f.guests<1||f.guests>(caps[f.unit]??0)){notice(messages.over);return false;}
