@@ -101,3 +101,26 @@ test('private staging occupancy reference is no-PII, uses exclusive checkout dat
   assert.match(exporter,/ProjectionExpression:'PK, SK, expiresAt'/);
   assert.doesNotMatch(exporter,/(TransactWriteCommand|PutCommand|UpdateCommand|DeleteCommand)/);
 });
+
+test('compact calendar uses two adjacent months and exact branded selection colours',()=>{
+  const page=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
+  const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+  assert.match(page,/\.calendar-two-months/);
+  assert.match(page,/#bed4c3/i);
+  assert.match(page,/\.is-checkin/);
+  assert.match(page,/\.is-checkout/);
+  assert.match(page,/\.is-blocked/);
+  assert.match(script,/shownMonths=\[month,monthShift\(month,1\)\]/);
+  assert.match(script,/setMasterAvailability\(data\)/);
+  assert.match(script,/clearMasterAvailability\(\)/);
+});
+test('local master bridge binds only loopback, enforces staging table, and has no guest data or write handlers',()=>{
+  const script=readFileSync(new URL('../preview-master-server.mjs',import.meta.url),'utf8');
+  assert.match(script,/HOST='127\.0\.0\.1',PORT=4328/);
+  assert.match(script,/environment!=='staging'/);
+  assert.match(script,/req\.method!=='GET'/);
+  assert.match(script,/req\.url!=='\/availability'/);
+  assert.match(script,/ORIGINS\.has\(origin\)/);
+  assert.match(script,/masterOccupied/);
+  assert.doesNotMatch(script,/TransactWriteCommand|UpdateCommand|PutCommand|DeleteCommand|SendEmailCommand/);
+});
