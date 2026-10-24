@@ -24,7 +24,7 @@ async function booking(id){
 async function change(id,expected,status,extras={},nextExpiry){
   const b=await booking(id);
   if(b.status!==expected)fail('Expected '+expected+', found '+b.status);
-  if(nextExpiry!==undefined&&b.holdExpiresAt<=Math.floor(Date.now()/1000))fail('Hold expired; recheck availability and request again');
+  if(['REQUESTED','APPROVED_AWAITING_PAYMENT'].includes(expected)&&!isNaN(b.holdExpiresAt)&&b.holdExpiresAt<=Math.floor(Date.now()/1000))fail('Hold expired; do NOT send a payment link or confirm. Recheck calendar and contact guest first.');
   const txn=[{Update:{TableName:table,Key:{PK:'BOOKING#'+id,SK:'META'},
     UpdateExpression:'SET #status = :new, updatedAt = :at'+(nextExpiry!==undefined?', holdExpiresAt = :expiry':'')+
       Object.keys(extras).map((k,i)=>', #extra'+i+' = :extra'+i).join('')+(status==='CONFIRMED'?' REMOVE expiresAt':''),
@@ -51,12 +51,17 @@ async function putBlock(unit,start,end,label){
   const nightList=dates(start,end);
   const id=randomUUID();
   const slots=units.flatMap(u=>nightList.map(d=>({PK:'UNIT#'+u,SK:'DATE#'+d,id})));
-  // Short, atomic chunks; longer winter-tenancy blocks are reconciled manually if interrupted.
-  for(let i=0;i<slots.length;i+=90){
-    const chunk=slots.slice(i,i+90);
-    await db.send(new TransactWriteCommand({TransactItems:chunk.map(slot=>({Put:{TableName:table,Item:slot,ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',ExpressionAttributeValues:{':now':Math.floor(Date.now()/1000)}}})),ClientRequestToken:randomUUID()}));
-  }
-  await db.send(new TransactWriteCommand({TransactItems:[{Put:{TableName:table,Item:{PK:'BOOKING#'+id,SK:'META',id,unit,units,start,end,status:'BLOCKED',label:label||'Manual block',requestedAt:new Date().toISOString()},ConditionExpression:'attribute_not_exists(PK)'}}]}));
+  // A single transaction guarantees no partially blocked date ranges.
+  // Divide longer winter tenancies into consecutive month-sized blocks.
+  if(slots.length>99)fail('Too many nights for one atomic block (max 99 cottage-nights). Divide long winter lets into monthly blocks.');
+  const metadata={PK:'BOOKING#'+id,SK:'META',id,unit,units,start,end,status:'BLOCKED',label:label||'Manual block',requestedAt:new Date().toISOString()};
+  await db.send(new TransactWriteCommand({
+    TransactItems:[
+      {Put:{TableName:table,Item:metadata,ConditionExpression:'attribute_not_exists(PK)'}},
+      ...slots.map(slot=>({Put:{TableName:table,Item:slot,ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',ExpressionAttributeValues:{':now':Math.floor(Date.now()/1000)}}}))
+    ],
+    ClientRequestToken:id
+  }));
   console.log('Blocked '+unit+' '+start+' to '+end+' under reference '+id);
 }
 async function main(){
@@ -74,7 +79,7 @@ async function main(){
   }else if(command==='approve'){
     const [id,amount,link]=args;
     if(!id||!amount||!Number.isFinite(Number(amount))||Number(amount)<=0||!link)fail('Usage: approve ID AMOUNT_GBP SUMUP_PAYMENT_URL');
-    const u=new URL(link);if(u.protocol!=='https:'||!u.hostname.endsWith('.sumup.com'))fail('Expected HTTPS SumUp payment URL');
+    const u=new URL(link);if(u.protocol!=='https:'||u.hostname!=='pay.sumup.com'||u.username||u.password)fail('Expected official HTTPS pay.sumup.com payment link');
     const expiry=Math.floor(Date.now()/1000)+48*3600;
     await change(id,'REQUESTED','APPROVED_AWAITING_PAYMENT',{approvedAmountGBP:Number(amount),paymentUrl:link},expiry);
     console.log('Approved. Date hold extended for 48h. Send the reviewed terms and SumUp link to the guest; NOT automatically emailed.');
@@ -87,9 +92,19 @@ async function main(){
     if(!args[0])fail('Usage: decline ID');
     await change(args[0],'REQUESTED','DECLINED');
     console.log('Declined; date hold released. Inform guest.');
+  }else if(command==='unblock'){
+    if(!args[0])fail('Usage: unblock ID');
+    await change(args[0],'BLOCKED','CANCELLED',{cancelReason:'Manual block removed'});
+    console.log('Block removed; associated nights are available again.');
+  }else if(command==='cancel'){
+    const [id,...notes]=args;
+    const reason=notes.join(' ').trim();
+    if(!id||reason.length<5)fail('Usage: cancel ID "Reason / refund reconciliation reference"');
+    await change(id,'CONFIRMED','CANCELLED',{cancelReason:reason,cancelledAt:new Date().toISOString()});
+    console.log('Booking cancelled and dates released. Any SumUp refund and guest notification must be handled separately.');
   }else if(command==='block'){
     const [unit,start,end,...label]=args;
     await putBlock(unit,start,end,label.join(' '));
-  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | confirm ID PAYMENT_REFERENCE | decline ID | block COTTAGE START END LABEL');
+  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | confirm ID PAYMENT_REFERENCE | decline ID | cancel ID REASON | block COTTAGE START END LABEL | unblock ID');
 }
 main().catch(e=>{console.error(e.message);process.exitCode=1;});
