@@ -53,7 +53,7 @@ The season contains **196 occupied nights per cottage**. At 100% paid occupancy,
 
 ## 4. Basis for holiday overlays
 
-- Guernsey summer term ends 22 July and local May half-term runs 31 May–4 June 2027. Source: [Vale Primary official term calendar](https://www.valeprimary.sch.gg/news-and-events/term-dates).
+- Guernsey summer term ends **Thursday 22 July 2027** and local May half-term runs 31 May–4 June. Source: [States of Guernsey term dates](https://www.gov.gg/termdates). (Some individual school pages incorrectly label 22 July as a Friday; the date falls on Thursday.)
 - English school breaks: Easter around 26 March–9 April, May half-term 31 May–4 June, summer from late July. Source: [Portsmouth City Council term calendar](https://www.portsmouth.gov.uk/services/schools-and-learning/schools/school-term-dates).
 - France's zone-based spring breaks are staggered from 3 April to 3 May and summer holidays begin 3 July. Source: [Service Public France](https://www.service-public.gouv.fr/particuliers/vosdroits/F31952?lang=fr).
 - Dutch national May break runs 24 April–2 May (some schools extend); summer starts 10, 17 or 24 July by region and lasts into early September. Source: [Government of the Netherlands](https://www.government.nl/themes/education/school-holidays/overview-of-school-holiday-dates-per-academic-year/school-holiday-dates-2026-2027).
