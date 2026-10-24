@@ -86,6 +86,12 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
       const t=(window as typeof window & {turnstile?:{render:(el:HTMLElement,opts:{sitekey:string})=>string}}).turnstile;
       if(t){t.render(captcha,{sitekey:siteKey});return true;}return false;
     };
-    if(!render())window.addEventListener('load',()=>{render();},{once:true});
+    if(!render()){
+      // Cloudflare's async script can finish after window.load: retry briefly, then fail closed.
+      let attempts=0;
+      const timer=window.setInterval(()=>{
+        if(render()||++attempts>=60)window.clearInterval(timer);
+      },150);
+    }
   }
 });
