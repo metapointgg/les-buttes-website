@@ -84,3 +84,34 @@ For staging-only read-only change checks every four hours, with encrypted Airbnb
 ## 4. Later production readiness
 
 Staging must succeed before we consider a real booking launch. Production still needs approved 2027 rate/season boundaries, a full calendar reconciliation, the exact Strict cancellation and refund wording, SumUp merchant checks, email setup, and production monitoring. Keep the GitHub PR in draft until those gates are satisfied.
+
+## Optional Cognito-protected booking management API — NOT YET DEPLOYED
+
+A staging-only **opt-in** management HTTP API and booking-request GSI have been
+added to `template.yaml`. They are **disabled by default** and leave the public
+booking API untouched.
+
+- `ManagementPreviewEnabled=true` requires `BookingEnvironment=staging`,
+  `ManagementCognitoPoolId`, `ManagementCognitoClientId` and an exact
+  `ManagementAllowedOrigin` (e.g. `http://127.0.0.1:5173`).
+- `ManagementApi` is a separate Cognito-JWT-protected API surface backed by
+  the **same** `BookingTable`; its Lambda has only GetItem/Query permissions.
+- The optional `BookingRequestsIndex` GSI is on the existing table, not a new
+  booking database. New direct requests write `GSI1PK=BOOKING_REQUESTS` and
+  `GSI1SK=<requestedAt>#<bookingId>`.
+- Historical requests without the GSI attributes require a reviewed,
+  idempotent staging-only backfill before the inbox can be considered complete.
+- No Cognito pool, SPA client, domain, index or API was created in AWS by
+  committing this code.
+- **Do not enable by an ordinary existing `deploy-staging.ps1` run.** That
+  script intentionally does not accept management-pool arguments, and a normal
+  run rotates other staging tokens. Extend its explicit confirmation/previous
+  settings preservation checks or deploy through a separately reviewed change
+  set before provisioning the new surface.
+- The management app source is tracked in
+  `metapointgg/les-buttes-cottage-management`, draft PR #9. It will point to
+  the new ManagementApiUrl and the Cognito issuer/client but contains no AWS
+  credentials. Its build is validated separately.
+- Payment initiation, guest request, approval, cancellation, rule publication
+  and refunds are **not part of this management read-only endpoint**.
+
