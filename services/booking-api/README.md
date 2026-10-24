@@ -10,6 +10,12 @@ On **24 October 2026**, the host confirmed that **both Geranium and Honeysuckle 
 
 The current proposed end-of-season checkout is **Saturday 2 October 2027** (last occupied night `2027-10-01`). This matches the staging season rules but is distinct from the confirmed March opening. The 3/5/7-night season bands and nightly GBP rates remain subject to final host approval. Historical winter closure date blocks shown by Airbnb end **before** 20 March and should not be imported as extra future seasonal blocks in staging. The master has already been reconciled for the 2027 in-season periods.
 
+## Proposed Option B 2027 prices and minimum stays — not approved
+
+A **full nightly-rate and minimum-stay calendar** is available for review at [PRICING_REVIEW_2027.md](PRICING_REVIEW_2027.md) and machine-readable [config/proposed-2027-reviewed-option-b.json](config/proposed-2027-reviewed-option-b.json). The proposal covers **all 196 nights** from 20 March to 1 October, with seven 3/5/7-night stay bands and school-holiday price overlays on prior Option B. The proposal's approval flags are intentionally **not valid for staging or production quoting**. The deployed staging configuration remains synthetic.
+
+No confirmed Airbnb or reserved off-Airbnb booking should be retrospectively repriced. In particular the 28 August–4 September two-cottage reservation retains its separately negotiated returning-guest terms.
+
 ## Locked-in rules
 
 - Guest check-in and checkout dates, 1 to **27 nights** (28+ nights must enquire separately).
