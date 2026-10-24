@@ -81,7 +81,7 @@ async function createRequest(input,event){
   const id=randomUUID();
   const requestedAt=new Date().toISOString();
   const expiresAt=nowEpoch()+24*60*60;
-  const item={PK:'BOOKING#'+id,SK:'META',id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,notes,quote,source:'direct',reservationStatus:'PENDING_REVIEW',status:'REQUESTED',requestedAt,holdExpiresAt:expiresAt,expiresAt:nowEpoch()+90*86400};
+  const item={PK:'BOOKING#'+id,SK:'META',GSI1PK:'BOOKING_REQUESTS',GSI1SK:requestedAt+'#'+id,id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,notes,quote,source:'direct',reservationStatus:'PENDING_REVIEW',status:'REQUESTED',requestedAt,holdExpiresAt:expiresAt,expiresAt:nowEpoch()+90*86400};
   const transact=[{Put:{TableName:table,Item:item,ConditionExpression:'attribute_not_exists(PK)'}}];
   for(const key of slotsFor(result.units,result.nights))transact.push({Put:{TableName:table,Item:{...key,id,expiresAt},ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',ExpressionAttributeValues:{':now':nowEpoch()}}});
   try{
