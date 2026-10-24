@@ -72,19 +72,62 @@ Some occupied Airbnb-booking date cells are obscured by booking overlays, so do 
 
 The observed Geranium listing base gives a theoretical full-occupancy 196-night gross ceiling of **£42,120** versus **£43,390** under the earlier proposed overlays, a **£1,270** increase. This is not a forecast and excludes fees, discounts, vacancies and other costs.
 
-Machine-readable screenshot transcription: [config/observed-airbnb-geranium-2027.json](config/observed-airbnb-geranium-2027.json). It is **NOT an approved production rate file**. Honeysuckle's month-by-month screenshots must be reviewed before approving direct booking prices or margins.
+Machine-readable screenshot transcription: [config/observed-airbnb-geranium-2027.json](config/observed-airbnb-geranium-2027.json). It is **NOT an approved production rate file**. Honeysuckle has now also been reviewed and its observed monthly baseline is documented below.
+
+## Honeysuckle — Airbnb host-calendar prices confirmed from March–October screenshots
+
+On 24 October 2026, the host also supplied **eight full-width month-by-month Honeysuckle Airbnb screenshots**. All unobscured in-season dates show these nightly rates, already adjusted for Airbnb's single-service-fee transition. A few booked nights are hidden behind reservation banners and cannot independently be verified against these screenshots.
+
+| Occupied nights | Geranium observed Airbnb | Honeysuckle observed Airbnb | Combined |
+| --- | ---: | ---: | ---: |
+| 20–31 March | £185 | £215 | £400 |
+| April | £185 | £215 | £400 |
+| May | £205 | £230 | £435 |
+| June | £215 | £240 | £455 |
+| July | £235 | £265 | £500 |
+| August | £250 | £285 | £535 |
+| September | £210 | £235 | £445 |
+| 1 October | £210 | £235 | £445 |
+
+**Second exact match:** The Honeysuckle 28 August–4 September held week is 4 × £285 (28–31 Aug) + 3 × £235 (1–3 Sep) = **£1,845**, matching the previously shared Airbnb quote exactly. Together with Geranium's independently matched **£1,630**, the existing two-cottage reservation corresponds to **£3,475** of displayed Airbnb accommodation prices for those dates. Our unapproved overlay proposal was **£3,720**—£245 or roughly 7.1% higher than the observed Airbnb calendar. Existing reservations and agreed private guest terms are not changed.
+
+Theoretical gross accommodation totals at 100% of the **196 holiday nights**, with **no guest discounts, vacancies, fees or operating costs**, are:
+
+| Cottage | Existing Airbnb nightly calendar | Optional holiday overlay proposal | Overlay difference |
+| --- | ---: | ---: | ---: |
+| Geranium | £42,120 | £43,390 | +£1,270 |
+| Honeysuckle | £47,695 | £49,080 | +£1,385 |
+| **Both** | **£89,815** | **£92,470** | **+£2,655 (+3.0%)** |
+
+Machine-readable screenshot transcription: [config/observed-airbnb-honeysuckle-2027.json](config/observed-airbnb-honeysuckle-2027.json). Both observed calendar files are **reference evidence only**, NOT approved direct or production rate tables.
+
+### Direct pricing approach — recommendation for owner decision
+
+The screenshots and held-week cross-check support using the **actual Airbnb host-calendar monthly prices as the baseline** for direct booking, *not* the unapproved holiday overlays and *not* another 15.5% Airbnb fee uplift. Airbnb typically deducts a **15.5% single host fee**; SumUp UK's published Payment Links rate is **2.5%**. Both must be checked against actual account billing, tax, custom fees and any discount before confirmation. Sources: [Airbnb host service fees](https://www.airbnb.com/help/article/1857) and [SumUp Payment Links](https://help.sumup.com/en-GB/articles/1bTBfAoe7SiaKiUxCo2uzP-payment-links-faq).
+
+For the already-held **£3,475** combined Airbnb calendar-price example, illustrative amounts (rounded approximately, no separate cleaning/taxes assumed) are:
+
+| Guest discount vs adjusted Airbnb price | Direct guest total | Guest saving | Direct net after 2.5% SumUp | Difference vs approx. £2,936.38 Airbnb net |
+| --- | ---: | ---: | ---: | ---: |
+| None | £3,475.00 | £0.00 | £3,388.13 | +£451.75 |
+| 5% | £3,301.25 | £173.75 | £3,218.72 | +£282.35 |
+| 8% | £3,197.00 | £278.00 | £3,117.08 | +£180.70 |
+| 10% | £3,127.50 | £347.50 | £3,049.31 | +£112.94 |
+| 12% | £3,058.00 | £417.00 | £2,981.55 | +£45.18 |
+
+**Illustrative recommendation (not approved):** consider a **5–8% visible discount** for direct guests and **up to 10%** for repeat guests / a two-cottage booking, provided the final terms, refund policy and real payment fees are factored in. Theoretical financial break-even with the 15.5% and 2.5% assumptions is about a **13.33% discount**, before risk, additional overheads and taxes. Never silently apply this to the existing reserved direct booking.
 
 ## 4. Airbnb fee-adjusted calendar cross-check — REQUIRED BEFORE APPROVAL
 
-On 24 October 2026, the host supplied two long Airbnb calendar screenshots for Geranium and Honeysuckle. **The host confirms in-season Airbnb rates were already adjusted for Airbnb's 2026 single-service-fee transition. Do NOT add another fee uplift.** The original compressed screenshots were unreadable, but subsequent full-width **Geranium** screenshots were readable and transcribed into the separate observed-listing baseline above. **Honeysuckle's readable monthly screenshots have not yet been received.** No live pricing has been changed.
+On 24 October 2026, the host supplied two long Airbnb calendar screenshots for Geranium and Honeysuckle. **The host confirms in-season Airbnb rates were already adjusted for Airbnb's 2026 single-service-fee transition. Do NOT add another fee uplift.** The original compressed screenshots were unreadable. Subsequent **full-width month-by-month screenshots for both cottages** were readable and transcribed into two separate observed-listing baseline JSON files. No live pricing has been changed.
 
 Sources: [Airbnb, simplifying service fees (Oct 2026)](https://www.airbnb.com/resources/hosting-homes/a/simplifying-airbnb-service-fees-746) and [Airbnb, one-time price adjustment tool](https://www.airbnb.com/help/article/4095). Airbnb's typical single host fee is **15.5%**, deducted from the configured guest-facing accommodation price (exceptions/taxes possible). At the time of comparison, [SumUp UK Payment Links fees](https://help.sumup.com/en-GB/articles/1bTBfAoe7SiaKiUxCo2uzP-payment-links-faq) are **2.5%** on a completed remotely paid transaction, subject to confirming the actual merchant account.
 
-**Like-for-like comparison must use the full guest-facing Airbnb accommodation price and the real host payout after fee; our direct-booking nightly rate is the *guest total before SumUp transaction fees*.** The previous 28 August–4 September quotes to the returning guest were Geranium **£1,630** and Honeysuckle **£1,845**, total **£3,475**. Our newer proposed model gives **£1,745 + £1,975 = £3,720**, **£245 / 7.1% higher**. These quotes are *historical examples*, not a verified extraction of the current screenshots, and the reservation has been held in both cottages separately.
+**Like-for-like comparison must use the full guest-facing Airbnb accommodation price and the real host payout after fee; our direct-booking nightly rate is the *guest total before SumUp transaction fees*.** The previous 28 August–4 September quotes to the returning guest were Geranium **£1,630** and Honeysuckle **£1,845**, total **£3,475**. Our newer proposed model gives **£1,745 + £1,975 = £3,720**, **£245 / 7.1% higher**. These values are now independently reproduced by the actual August and September monthly rates shown in the current screenshots, and the reservation has been held in both cottages separately.
 
 At the published fee assumptions, the earlier Airbnb £3,475 quote would produce an indicative host payout of **£2,936.38**; a hypothetical direct price 10% below that guest total (£3,127.50) after 2.5% payment-link fees produces **£3,049.31**, improving net payout by about **£112.94**. The exact platform booking breakdown, discounted base, tax, custom fees and actual SumUp merchant rate must be checked before using this comparison commercially.
 
-**Acceptance action**: Capture larger calendar screenshots or a dated spreadsheet listing the actual Airbnb 2027 prices for each cottage and season. Mark which calendar dates had the one-time platform price uplift. Compare proposed guest-facing nightly prices against those actual nightly prices and expected host net receipts. Do NOT add 15.5% to *already adjusted* Airbnb rates. Do NOT approve or deploy the proposed price JSON until this reconciliation has been done. Existing reservations remain unchanged.
+**Acceptance action:** The calendar-price screenshots for **both** cottages are now available, and August/September guest-price sums reproduce the earlier quotes exactly. Confirm the **actual host Airbnb fee and SumUp merchant fee** against transaction statements and decide whether to use current Airbnb monthly prices or the optional overlays, plus whether to offer a standard/repeat-guest direct discount. Do NOT add 15.5% to already adjusted Airbnb rates. Do NOT deploy either unapproved rate proposal. Existing reservations remain unchanged.
 
 ## 5. Basis for holiday overlays
 
