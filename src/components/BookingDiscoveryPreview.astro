@@ -13,14 +13,29 @@ const properties=[
 ];
 ---
 <section class="section paper discover" data-discovery data-locale={lang} data-copy={JSON.stringify(t)}>
-  <div class="wrap">
+  <div class="wrap discover-journey">
     <header class="discover-head">
       <p class="eyebrow">{t.eyebrow}</p>
       <h1>{t.title}</h1>
       <p class="lede">{t.intro}</p>
       <div class="discover-preview-note" role="note">{t.preview}</div>
     </header>
-    <form class="discover-search" data-discovery-search novalidate>
+    <nav class="journey-progress" aria-label={t.stepLabel}>
+      <ol>
+        {([t.stepSearch,t.stepChoose,t.stepReview,t.stepDetails] as string[]).map((label,index)=>
+          <li data-journey-indicator={index+1} aria-current={index===0?'step':undefined}>
+            <span class="journey-number">{index+1}</span><span>{label}</span>
+          </li>
+        )}
+      </ol>
+    </nav>
+    <section class="journey-screen" data-booking-step="1" aria-labelledby="journey-one-heading">
+      <div class="journey-stage-heading">
+        <p class="eyebrow">01 / 04</p><h2 id="journey-one-heading">{t.stepSearch}</h2>
+        <p>{t.intro}</p>
+      </div>
+      <div class="discover-layout">
+        <div class="discover-content">    <form class="discover-search" data-discovery-search novalidate>
       <div class="discover-search-title"><h2>{t.filter}</h2></div>
       <div class="discover-fields">
         <label>{t.arrival}<input type="date" name="arrival" min="2027-03-20" max="2027-10-01"/></label>
@@ -39,12 +54,29 @@ const properties=[
             <option value="both">{t.both}</option>
           </select>
         </label>
-        <button type="submit" class="button discover-search-button">{t.find}</button>
+        <button type="submit" class="button discover-search-button">{t.continueChoose}</button>
       </div>
     </form>
-    <div class="discover-layout">
-      <div class="discover-content">
-        <section class="discover-results" aria-labelledby="discover-results-title">
+          <p class="discover-feedback" data-discovery-feedback role="status" aria-live="polite">{t.nothing}</p>
+        </div>
+              <aside class="discover-aside">
+        <h2>{t.help}</h2>
+        <p>{t.helpBody}</p>
+        <ol>{t.helpPoints.map(point=><li>{point}</li>)}</ol>
+        <div class="discover-help-links">
+          <a class="button button-secondary" href={localPath('/cottages/',lang)}>{t.more}</a>
+          <a href={localPath('/contact/',lang)}>{t.alternative}</a>
+        </div>
+      </aside>
+      </div>
+    </section>
+    <section class="journey-screen" data-booking-step="2" aria-labelledby="journey-two-heading" hidden>
+      <div class="journey-stage-heading">
+        <p class="eyebrow">02 / 04</p><h2 id="journey-two-heading">{t.stepChoose}</h2>
+        <p data-journey-selection></p>
+        <button class="journey-text-button" type="button" data-back-to-filter>{t.editSearch}</button>
+      </div>
+              <section class="discover-results" aria-labelledby="discover-results-title">
           <div class="discover-section-heading">
             <h2 id="discover-results-title">{t.results}</h2>
             <p class="discover-feedback" data-discovery-feedback role="status" aria-live="polite">{t.nothing}</p>
@@ -73,7 +105,7 @@ const properties=[
             </article>
           </div>
         </section>
-        <section class="discover-availability" data-discovery-availability hidden aria-labelledby="discover-calendar-title">
+              <section class="discover-availability" data-discovery-availability hidden aria-labelledby="discover-calendar-title">
           <div class="discover-calendar-heading">
             <div><h2 id="discover-calendar-title">{t.months}</h2><p>{t.calendarHelp}</p></div>
             <div class="discover-calendar-nav">
@@ -92,7 +124,20 @@ const properties=[
           <p class="discover-calendar-message" data-calendar-message role="status" aria-live="polite"></p>
           <p class="discover-snapshot-note">{t.notConfirmed}</p>
         </section>
-        <section class="discover-summary" data-discovery-summary hidden aria-labelledby="discover-price-heading">
+      <div class="journey-actions">
+        <button type="button" class="button button-secondary" data-back-to-filter>{t.back}</button>
+        <div>
+          <p class="journey-action-note" data-selection-feedback role="status">{t.chooseHint}</p>
+          <button type="button" class="button" data-continue-review disabled>{t.continueReview}</button>
+        </div>
+      </div>
+    </section>
+    <section class="journey-screen" data-booking-step="3" aria-labelledby="journey-three-heading" hidden>
+      <div class="journey-stage-heading">
+        <p class="eyebrow">03 / 04</p><h2 id="journey-three-heading">{t.stepReview}</h2>
+        <p>{t.reviewHelp}</p>
+      </div>
+      <div class="journey-review">        <section class="discover-summary" data-discovery-summary hidden aria-labelledby="discover-price-heading">
           <div class="discover-section-heading">
             <p class="eyebrow">{t.quote}</p>
             <h2 id="discover-price-heading">{t.quote}</h2>
@@ -105,21 +150,47 @@ const properties=[
             <div><dt>{t.saving}</dt><dd data-summary-saving></dd></div>
           </dl>
           <p class="discover-minimum" data-summary-minimum></p>
-          <button type="button" class="button discover-request" disabled aria-disabled="true">{t.reserve}</button>
-          <p class="discover-request-note">{t.reserveDisabled}</p>
+          
+          <p class="discover-request-note">{t.reviewHelp}</p>
           <p class="discover-snapshot-note">{t.snapshot}</p>
-        </section>
+        </section></div>
+      <div class="journey-actions">
+        <button type="button" class="button button-secondary" data-back-to-cottages>{t.editDates}</button>
+        <button type="button" class="button" data-continue-details>{t.continueDetails}</button>
       </div>
-      <aside class="discover-aside">
-        <h2>{t.help}</h2>
-        <p>{t.helpBody}</p>
-        <ol>{t.helpPoints.map(point=><li>{point}</li>)}</ol>
-        <div class="discover-help-links">
-          <a class="button button-secondary" href={localPath('/cottages/',lang)}>{t.more}</a>
-          <a href={localPath('/contact/',lang)}>{t.alternative}</a>
-        </div>
-      </aside>
-    </div>
+    </section>
+    <section class="journey-screen" data-booking-step="4" aria-labelledby="journey-four-heading" hidden>
+      <div class="journey-stage-heading">
+        <p class="eyebrow">04 / 04</p><h2 id="journey-four-heading">{t.stepDetails}</h2>
+        <p>{t.detailsIntro}</p>
+      </div>
+      <div class="journey-details-grid">
+        <form data-preview-guest-details class="journey-details-form" novalidate autocomplete="off">
+          <h3>{t.primaryGuest}</h3>
+          <div class="journey-guest-fields">
+            <label>{t.firstName}<input type="text" name="firstName" autocomplete="off" maxlength="80"/></label>
+            <label>{t.lastName}<input type="text" name="lastName" autocomplete="off" maxlength="80"/></label>
+            <label>{t.emailAddress}<input type="email" name="email" autocomplete="off" maxlength="254"/></label>
+            <label>{t.phoneNumber}<input type="tel" name="telephone" autocomplete="off" maxlength="40"/></label>
+            <label class="journey-full">{t.guestNotes}<textarea name="notes" rows="3" maxlength="1000"></textarea></label>
+          </div>
+          <p class="journey-terms-pending">{t.termsPending}</p>
+          <button type="button" class="button discover-request" disabled aria-disabled="true">{t.previewSubmit}</button>
+          <p class="discover-request-note">{t.previewNoSubmit}</p>
+        </form>
+        <aside class="journey-booking-recap">
+          <h3>{t.detailsTotal}</h3>
+          <p data-details-cottage></p>
+          <p data-details-stay></p>
+          <p>{t.yourParty}: <strong data-details-guests></strong></p>
+          <div class="journey-recap-total"><span>{t.direct}</span><strong data-details-price></strong></div>
+          <p class="discover-snapshot-note">{t.snapshot}</p>
+        </aside>
+      </div>
+      <div class="journey-actions">
+        <button type="button" class="button button-secondary" data-back-to-review>{t.back}</button>
+      </div>
+    </section>
   </div>
 </section>
 <script>import '../scripts/booking-discovery';</script>
@@ -206,4 +277,41 @@ const properties=[
 @media(max-width:76rem){.discover-layout{grid-template-columns:minmax(0,1fr) 17rem}.discover-calendar-grids :global(.calendar-two-months){gap:.65rem}}
 @media(max-width:55rem){.discover-layout{grid-template-columns:1fr}.discover-aside{position:static}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 1}}
 @media(max-width:36rem){.discover-result-list{grid-template-columns:1fr}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 2}.discover-calendar-grids :global(.calendar-two-months){grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.discover-calendar-grids :global(.calendar-days button){min-height:1.3rem}.discover-calendar-grids :global(.calendar-days .calendar-day){font-size:.67rem}.discover-calendar-grids :global(.calendar-weekdays span){font-size:.58rem}.discover-calendar-grids :global(.calendar-month-label){font-size:.72rem}.discover-calendar-nav{width:100%;justify-content:space-between}}
+
+.discover-journey{max-width:1130px}
+.journey-screen[hidden],.discover-results[hidden],.discover-availability[hidden],.discover-summary[hidden]{display:none!important}
+.journey-progress{margin:1.8rem 0 2rem}
+.journey-progress ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;margin:0;padding:0}
+.journey-progress li{position:relative;display:flex;align-items:center;gap:.65rem;font-size:.87rem;color:var(--soft);font-weight:600;padding:.6rem .8rem .6rem 0}
+.journey-progress li:not(:last-child):after{content:'';position:absolute;top:50%;right:.6rem;width:26%;height:1px;background:var(--line)}
+.journey-progress li[aria-current="step"]{color:var(--green)}
+.journey-progress li.is-complete{color:var(--ink)}
+.journey-number{display:grid;place-items:center;flex:none;border:1px solid var(--line);border-radius:50%;height:2rem;width:2rem;font-size:.85rem;background:white}
+.journey-progress li[aria-current="step"] .journey-number,.journey-progress li.is-complete .journey-number{background:var(--green);color:#fff;border-color:var(--green)}
+.journey-stage-heading{margin:0 0 1.4rem}
+.journey-stage-heading h2{font-size:clamp(1.7rem,3vw,2.3rem);margin:.2rem 0 .5rem}
+.journey-stage-heading>p:not(.eyebrow){color:var(--soft);font-size:.95rem;margin:.3rem 0}
+.journey-stage-heading .journey-text-button{background:none;border:0;text-decoration:underline;color:var(--green);font:inherit;font-size:.87rem;cursor:pointer;padding:.25rem 0}
+.journey-screen>.discover-results{margin:0 0 1.4rem}
+.journey-screen>.discover-availability{max-width:860px;margin:1.4rem 0}
+.journey-review{max-width:710px}
+.journey-review .discover-summary{display:block}
+.journey-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin:1.5rem 0 0;max-width:860px;padding-top:1.2rem;border-top:1px solid var(--line)}
+.journey-actions>div{text-align:right}
+.journey-action-note{font-size:.84rem;color:var(--soft);margin:0 0 .6rem}
+.journey-actions button:disabled{opacity:.48;cursor:not-allowed}
+.journey-details-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(16rem,1fr);gap:1.4rem;align-items:start}
+.journey-details-form,.journey-booking-recap{background:#fff;border:1px solid var(--line);border-radius:.6rem;padding:clamp(1rem,2vw,1.6rem)}
+.journey-details-form h3,.journey-booking-recap h3{font-size:1.3rem;margin:0 0 1.2rem}
+.journey-guest-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.journey-guest-fields label{display:flex;flex-direction:column;gap:.45rem;font-size:.87rem;font-weight:650}
+.journey-guest-fields input,.journey-guest-fields textarea{border:1px solid var(--line);border-radius:.3rem;min-width:0;padding:.75rem;color:var(--ink);font:inherit;background:#fff}
+.journey-guest-fields .journey-full{grid-column:span 2}
+.journey-terms-pending{border-left:3px solid var(--green);background:var(--cream);padding:.9rem;margin:1.3rem 0;font-size:.85rem;color:var(--soft)}
+.journey-booking-recap{background:var(--cream);position:sticky;top:1rem}
+.journey-booking-recap p{color:var(--soft);font-size:.91rem}
+.journey-recap-total{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;border-top:1px solid var(--line);padding-top:1rem;margin-top:1.2rem}
+.journey-recap-total strong{font-size:1.6rem;color:var(--green)}
+@media(max-width:48rem){.journey-details-grid{grid-template-columns:1fr}.journey-progress li{font-size:.73rem;gap:.35rem}.journey-progress li:not(:last-child):after{display:none}}
+@media(max-width:30rem){.journey-progress li{flex-direction:column;text-align:center;padding:.35rem .1rem}.journey-number{height:1.75rem;width:1.75rem}.journey-guest-fields{grid-template-columns:1fr}.journey-guest-fields .journey-full{grid-column:span 1}}
 </style>
