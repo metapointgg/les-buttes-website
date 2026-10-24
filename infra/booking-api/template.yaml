@@ -23,13 +23,11 @@ Parameters:
     AllowedValues: ['true', 'false']
     Default: 'false'
   BookingRulesJson:
-    Type: String
-    Default: '{}'
-    Description: Explicit dates and minimum stays. See services/booking-api/README.md.
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: Name of SSM String parameter containing explicitly approved date/minimum stay JSON.
   BookingRatesJson:
-    Type: String
-    Default: '{}'
-    Description: Explicit nightly GBP rates for both cottages. Required before public activation.
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: Name of SSM String parameter containing GBP nightly rates and approval status.
   CalendarToken:
     Type: String
     NoEcho: true
