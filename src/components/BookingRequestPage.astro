@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import {bookingCopy} from '../lib/booking-copy';
 import {languageFromPath,localPath} from '../lib/i18n';
 import {bookingPreviewCopy} from '../lib/booking-preview-copy';
+import BookingDiscoveryPreview from './BookingDiscoveryPreview.astro';
 
 const lang=languageFromPath(Astro.url.pathname);
 const c=bookingCopy(lang);
@@ -19,65 +20,7 @@ const maxDate=preview?'2027-10-02':'2099-12-31';
   <section class="section paper">
     <div class="wrap booking-page">
       {preview ? (
-        <>
-          <div class="booking-heading">
-            <p class="eyebrow">{p.review}</p>
-            <h1>{p.headline}</h1>
-            <p class="lede">{p.intro}</p>
-            <div class="preview-alert" role="note">
-              <strong>{p.previewLabel}</strong>
-              <span>{p.privacyNote}</span>
-            </div>
-          </div>
-          <div class="booking-layout">
-            <div class="booking-panel">
-              <h2 class="booking-step-title">{p.step1}</h2>
-              <p class="booking-explainer">{p.guidance}</p>
-              <form data-booking-form data-mode="preview" data-preview-messages={JSON.stringify(p)} novalidate>
-                <fieldset>
-                  <div class="booking-fields">
-                    <label class="full">{c.choose}
-                      <select name="unit" required>
-                        <option value="geranium">{c.geranium}</option>
-                        <option value="honeysuckle">{c.honeysuckle}</option>
-                        <option value="both">{c.both}</option>
-                      </select>
-                    </label>
-                    <label>{c.arrival}<input name="start" type="date" min="2027-03-20" max="2027-10-01" required/></label>
-                    <label>{c.departure}<input name="end" type="date" min="2027-03-21" max={maxDate} required/></label>
-                    <label>{c.guests}<input name="guests" type="number" min="1" max="4" step="1" value="2" required/></label>
-                  </div>
-                  <p class="booking-note">{c.minMax}</p>
-                  <button type="button" class="button" data-preview-quote>{p.button}</button>
-                  <p class="booking-feedback" data-feedback role="status" aria-live="polite">{p.defaultPrompt}</p>
-                </fieldset>
-              </form>
-              <section class="preview-result" data-preview-result hidden aria-label={p.step2}>
-                <div class="preview-result-heading">
-                  <p class="eyebrow">{p.step2}</p>
-                  <p class="preview-dates" data-preview-dates></p>
-                </div>
-                <ul class="preview-cottage-list" data-preview-cottages></ul>
-                <dl class="preview-totals">
-                  <div><dt>{p.airbnb}</dt><dd data-preview-airbnb></dd></div>
-                  <div class="preview-highlight"><dt>{p.estimate}</dt><dd data-preview-direct></dd></div>
-                  <div><dt>{p.saving}</dt><dd data-preview-saving></dd></div>
-                </dl>
-                <p class="preview-draft-minimum" data-preview-minimum></p>
-                <p class="booking-footnote">{p.estimated}</p>
-                <p class="preview-caution">{p.noAvailability}</p>
-              </section>
-            </div>
-            <aside class="booking-aside">
-              <p class="eyebrow">{p.step3}</p>
-              <h2>{p.next}</h2>
-              <p>{p.nextCopy}</p>
-              <ol>{c.steps.map(step=><li>{step}</li>)}</ol>
-              <a class="button button-secondary" href={localPath('/cottages/',lang)}>{p.back}</a>
-              <a class="preview-contact-link" href={localPath('/contact/',lang)}>{p.contact}</a>
-            </aside>
-          </div>
-        </>
+        <BookingDiscoveryPreview/>
       ) : (
         <>
           <div class="booking-heading">
