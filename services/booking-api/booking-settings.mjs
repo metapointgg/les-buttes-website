@@ -1,7 +1,7 @@
 // Shared booking-master configuration repository.
 // Uses the SAME BOOKINGS_TABLE as BOOKING# metadata and UNIT# date slots.
 // These functions are intentionally not exposed as public HTTP handlers.
-import {GetCommand,PutCommand,QueryCommand} from '@aws-sdk/lib-dynamodb';
+import {GetCommand,QueryCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 const KIND=['pricing','stay-rules','cancellation','payments','business','arrival-departure','terms'];
 const UNIT=['geranium','honeysuckle','all'];
 const ISO=/^\d{4}-\d{2}-\d{2}$/;
@@ -61,5 +61,13 @@ export async function publishSetting(db,table,{kind,unit='all',value,version,exp
   const current={PK,SK:'CURRENT',kind,unit,version,value,approvedBy:actor,publishedAt:now};
   const historical={...current,SK:'VERSION#'+version};
   // DynamoDB Transaction preserves old settings on any conflict.
-  return db.transactPublish({table,current,historical,expectedVersion});
+  const names={'#version':'version'};
+  const values=expectedVersion===null?{}:{':expected':expectedVersion};
+  const condition=expectedVersion===null?'attribute_not_exists(PK)':'#version = :expected';
+  await db.send(new TransactWriteCommand({TransactItems:[
+    {Put:{TableName:table,Item:historical,ConditionExpression:'attribute_not_exists(PK)'}},
+    {Put:{TableName:table,Item:current,ConditionExpression:condition,
+      ...(expectedVersion===null?{}:{ExpressionAttributeNames:names,ExpressionAttributeValues:values})}}
+  ]}));
+  return {kind,unit,version,publishedAt:now};
 }
