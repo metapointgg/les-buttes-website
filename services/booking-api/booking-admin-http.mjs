@@ -5,12 +5,13 @@ const groups=(claims)=>{
  const raw=claims?.['cognito:groups']??[];
  return Array.isArray(raw)?raw:typeof raw==='string'?raw.split(',').map(v=>v.trim()):[];
 };
-export function identityFromGateway(event){
- // Claims are trustworthy ONLY when supplied by API Gateway with a configured
- // JWT authorizer. Reject requests without the documented authorization context.
+export function identityFromGateway(event,{issuer=process.env.MANAGEMENT_COGNITO_ISSUER,clientId=process.env.MANAGEMENT_COGNITO_CLIENT_ID}={}){
+ // Require an API Gateway VERIFIED Cognito *access* token. API Gateway checks
+ // JWT signature, issuer and audience; the Lambda adds token-use and group checks.
  const jwt=event?.requestContext?.authorizer?.jwt;
  const claims=jwt?.claims;
- if(!claims?.sub||!jwt?.scopes&&!claims?.iss)return null;
+ if(!issuer||!clientId||!claims||typeof claims.sub!=='string'||
+    claims.token_use!=='access'||claims.iss!==issuer||claims.client_id!==clientId)return null;
  const roles=groups(claims);
  const role=roles.includes('lesbuttes-owner')?'owner':roles.includes('lesbuttes-admin')?'admin':roles.includes('lesbuttes-viewer')?'viewer':null;
  return role?{subject:claims.sub,role}:null;
