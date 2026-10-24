@@ -67,7 +67,10 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discovery,/name="email"/);
   assert.match(discovery,/disabled aria-disabled="true"/);
   assert.doesNotMatch(discovery,/data-api=/);
-  assert.match(discoveryScript,/detailsForm\.addEventListener\('submit',event=>event\.preventDefault\(\)\)/);
+  // Validation is now allowed, but preview submission must still be prevented.
+  assert.match(discoveryScript,/detailsForm\\.addEventListener\\('submit',event=>\\{event\\.preventDefault\\(\\);validateContact\\(\\);\\}\\)/);
+  assert.match(discovery,/type="email" name="email"[^>]*required/);
+  assert.match(discovery,/type="tel" name="telephone"[^>]*pattern=/);
   assert.match(page,/data-mode="live"/);
   assert.match(script,/if\(form\.dataset\.mode==='preview'\)/);
   assert.match(script,/previewBookingQuote/);
@@ -150,6 +153,6 @@ test('hidden booking journey has four separate navigable steps and cannot confir
   assert.match(script,/getQuote\(\)/);
   assert.match(script,/await refreshMaster\(\)/);
   assert.doesNotMatch(script,/sessionStorage|localStorage|navigator\.sendBeacon|\/requests['`]/);
-  assert.match(page,/data-preview-guest-details[^>]*novalidate autocomplete="off"/);
+  assert.match(page,/data-preview-guest-details[^>]*autocomplete="off"/);
   assert.match(page,/disabled aria-disabled="true"/);
 });
