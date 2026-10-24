@@ -30,5 +30,6 @@ export function configuredQuote(units,nights){
   let rates;
   try{rates=JSON.parse(process.env.BOOKING_RATES_JSON||'{}');}
   catch{return {error:'Pricing is not configured',serverError:true};}
+  if(rates.status!=='APPROVED_FOR_LIVE_BOOKINGS')return {error:'Nightly rates have not been approved',serverError:true};
   return quoteFor(units,nights,rates);
 }
