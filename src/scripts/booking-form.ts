@@ -1,8 +1,8 @@
 type BookingMessages = {
-  invalid:string; over:string; checking:string; sending:string; error:string;
+  invalid:string; over:string; checking:string; sending:string; error:string; priceLabel:string;
   ready:string; unavailable:string; success:string;
 };
-type CheckResponse={available?:boolean;reason?:string};
+type CheckResponse={available?:boolean;reason?:string;quote?:{currency:string;totalGBP:string}};
 const DAY=86400000;
 function dateDays(start:string,end:string):number{
   if(!/^\d{4}-\d{2}-\d{2}$/.test(start)||!/^\d{4}-\d{2}-\d{2}$/.test(end))return NaN;
@@ -16,6 +16,9 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
   if(!url)return;
   const messages:BookingMessages=JSON.parse(form.dataset.messages??'{}');
   const feedback=form.querySelector<HTMLElement>('[data-feedback]');
+  const quoteBox=form.querySelector<HTMLElement>('[data-quote]');
+  const quoteValue=form.querySelector<HTMLElement>('[data-quote-value]');
+  const hideQuote=()=>{if(quoteBox)quoteBox.hidden=true;};
   const checkButton=form.querySelector<HTMLButtonElement>('[data-check-availability]');
   const submitButton=form.querySelector<HTMLButtonElement>('[data-submit]');
   const fields=()=>({
@@ -37,21 +40,26 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
   };
   async function checkAvailability(){
     if(busy||!validate())return false;
-    busy=true;checkButton && (checkButton.disabled=true);notice(messages.checking);
+    busy=true;hideQuote();checkButton && (checkButton.disabled=true);notice(messages.checking);
     try{
       const f=fields();
       const params=new URLSearchParams({unit:f.unit,start:f.start,end:f.end,guests:String(f.guests)});
       const response=await fetch(url+'/availability?'+params,{cache:'no-store',headers:{Accept:'application/json'}});
       if(!response.ok)throw Error('Availability check failed');
       const result:CheckResponse=await response.json();
-      if(result.available===true){approvedKey=key();notice(messages.ready);return true;}
+      if(result.available===true&&result.quote?.currency==='GBP'&&Number.isFinite(Number(result.quote.totalGBP))){
+        approvedKey=key();
+        if(quoteValue)quoteValue.textContent=messages.priceLabel+': '+new Intl.NumberFormat(document.documentElement.lang||'en-GB',{style:'currency',currency:'GBP'}).format(Number(result.quote.totalGBP));
+        if(quoteBox)quoteBox.hidden=false;
+        notice(messages.ready);return true;
+      }
       approvedKey='';notice(messages.unavailable);return false;
     }catch{
       approvedKey='';notice(messages.error);return false;
     }finally{busy=false;checkButton && (checkButton.disabled=false);}
   }
   checkButton?.addEventListener('click',()=>{void checkAvailability();});
-  form.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[name=unit],[name=start],[name=end],[name=guests]').forEach(el=>el.addEventListener('change',()=>{approvedKey='';notice('');}));
+  form.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[name=unit],[name=start],[name=end],[name=guests]').forEach(el=>el.addEventListener('change',()=>{approvedKey='';hideQuote();notice('');}));
   form.addEventListener('submit',async event=>{
     event.preventDefault();
     if(busy||!form.reportValidity()||!validate())return;
@@ -66,7 +74,7 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
       const payload={...f,name:(form.elements.namedItem('name') as HTMLInputElement).value.trim(),email:(form.elements.namedItem('email') as HTMLInputElement).value.trim(),notes:(form.elements.namedItem('notes') as HTMLTextAreaElement).value.trim(),consent:(form.elements.namedItem('consent') as HTMLInputElement).checked,website:(form.elements.namedItem('website') as HTMLInputElement).value,turnstileToken:token};
       const response=await fetch(url+'/requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       if(!response.ok)throw Error('Request unsuccessful');
-      form.reset();approvedKey='';turnstile?.reset();notice(messages.success);
+      form.reset();approvedKey='';hideQuote();turnstile?.reset();notice(messages.success);
     }catch{notice(messages.error);}
     finally{busy=false;submitButton && (submitButton.disabled=false);}
   });
