@@ -3,7 +3,7 @@
 // metadata remain on your own computer. No booking writes are possible.
 import {createServer} from 'node:http';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
-import {DynamoDBDocumentClient} from '@aws-sdk/lib-dynamodb';
+import {DynamoDBDocumentClient,QueryCommand} from '@aws-sdk/lib-dynamodb';
 import {masterOccupied} from './master-occupied.mjs';
 
 const HOST='127.0.0.1',PORT=4328;
@@ -14,7 +14,8 @@ if(environment!=='staging'||!/^les-buttes-booking-staging-BookingTable-[A-Za-z0-
   throw Error('Refusing to start: set BOOKING_ENVIRONMENT=staging and the existing staging master BOOKINGS_TABLE');
 }
 const client=new DynamoDBClient({region:'eu-west-2'});
-const db=DynamoDBDocumentClient.from(client);
+const awsDb=DynamoDBDocumentClient.from(client);
+const db={send:command=>awsDb.send(new QueryCommand(command.input))};
 const server=createServer(async(req,res)=>{
   const origin=req.headers.origin;
   const hostname=req.headers.host;
