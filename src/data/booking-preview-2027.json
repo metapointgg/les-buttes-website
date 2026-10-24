@@ -118,5 +118,19 @@
       "nights": 3
     }
   ],
-  "disclaimer": "Snapshot of displayed 2027 Airbnb nightly prices captured on 24 October 2026. Indicative, negotiated saving only. Neither live availability nor a payable guest quote."
+  "disclaimer": "Snapshot of displayed 2027 Airbnb nightly prices captured on 24 October 2026. Indicative, negotiated saving only. Neither live availability nor a payable guest quote.",
+  "cottages": {
+    "geranium": {
+      "title": "Geranium Cottage",
+      "maxGuests": 4,
+      "bedrooms": 2,
+      "bathrooms": 2
+    },
+    "honeysuckle": {
+      "title": "Honeysuckle Cottage",
+      "maxGuests": 6,
+      "bedrooms": 3,
+      "bathrooms": 2
+    }
+  }
 }
