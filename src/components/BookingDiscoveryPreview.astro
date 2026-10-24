@@ -1,0 +1,197 @@
+---
+import {getEntry} from 'astro:content';
+import ResponsiveImage from './ResponsiveImage.astro';
+import {discoveryCopy} from '../lib/booking-discovery-copy';
+import {languageFromPath,localPath} from '../lib/i18n';
+
+const lang=languageFromPath(Astro.url.pathname);
+const t=discoveryCopy(lang);
+const [geranium,honeysuckle]=await Promise.all([getEntry('cottages','geranium'),getEntry('cottages','honeysuckle')]);
+const properties=[
+  {id:'geranium',name:geranium?.data.name??'Geranium Cottage',guests:geranium?.data.sleeps??4,bedrooms:geranium?.data.bedrooms??2,bathrooms:geranium?.data.bathrooms??2,image:'/src/assets/images/cottages/geranium/exterior.jpg'},
+  {id:'honeysuckle',name:honeysuckle?.data.name??'Honeysuckle Cottage',guests:honeysuckle?.data.sleeps??6,bedrooms:honeysuckle?.data.bedrooms??3,bathrooms:honeysuckle?.data.bathrooms??2,image:'/src/assets/images/cottages/honeysuckle/exterior.jpg'}
+];
+---
+<section class="section paper discover" data-discovery data-locale={lang} data-copy={JSON.stringify(t)}>
+  <div class="wrap">
+    <header class="discover-head">
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h1>{t.title}</h1>
+      <p class="lede">{t.intro}</p>
+      <div class="discover-preview-note" role="note">{t.preview}</div>
+    </header>
+    <form class="discover-search" data-discovery-search novalidate>
+      <div class="discover-search-title"><h2>{t.filter}</h2></div>
+      <div class="discover-fields">
+        <label>{t.arrival}<input type="date" name="arrival" min="2027-03-20" max="2027-10-01"/></label>
+        <label>{t.departure}<input type="date" name="departure" min="2027-03-21" max="2027-10-02"/></label>
+        <label>{t.adults}<input name="adults" type="number" min="1" max="10" step="1" value="2" required/></label>
+        <label>{t.children}<input name="children" type="number" min="0" max="9" step="1" value="0" required/></label>
+        <label>{t.rooms}
+          <select name="bedrooms">
+            <option value="0">{t.anyRooms}</option>
+            {[1,2,3,4,5].map(n=><option value={n}>{n}</option>)}
+          </select>
+        </label>
+        <label>{t.cottages}
+          <select name="choice">
+            <option value="any">{t.anyCottage}</option>
+            <option value="both">{t.both}</option>
+          </select>
+        </label>
+        <button type="submit" class="button discover-search-button">{t.find}</button>
+      </div>
+    </form>
+    <div class="discover-layout">
+      <div class="discover-content">
+        <section class="discover-results" aria-labelledby="discover-results-title">
+          <div class="discover-section-heading">
+            <h2 id="discover-results-title">{t.results}</h2>
+            <p class="discover-feedback" data-discovery-feedback role="status" aria-live="polite">{t.nothing}</p>
+          </div>
+          <div class="discover-result-list" data-discovery-options>
+            {properties.map(p=><article class="discover-cottage-card" data-discovery-option={p.id} hidden>
+              <div class="discover-cottage-image"><ResponsiveImage src={p.image} alt={p.name} widths={[320,480,720]} sizes="(max-width: 760px) 100vw, 22vw"/></div>
+              <div class="discover-cottage-body">
+                <h3>{p.name}</h3>
+                <p>{p.guests} {t.guestWord} · {p.bedrooms} {t.beds} · {p.bathrooms} {t.bath}</p>
+                <p class="discover-availability-state" data-discovery-status></p>
+                <button class="button button-secondary" type="button" data-select-option={p.id}>{t.pick}</button>
+              </div>
+            </article>)}
+            <article class="discover-cottage-card discover-combination" data-discovery-option="both" hidden>
+              <div class="discover-combination-images">
+                <ResponsiveImage src={properties[0].image} alt={properties[0].name} widths={[280,400]} sizes="(max-width: 760px) 50vw, 15vw"/>
+                <ResponsiveImage src={properties[1].image} alt={properties[1].name} widths={[280,400]} sizes="(max-width: 760px) 50vw, 15vw"/>
+              </div>
+              <div class="discover-cottage-body">
+                <h3>{t.both}</h3>
+                <p>10 {t.guestWord} · 5 {t.beds} · 4 {t.bath}</p>
+                <p class="discover-availability-state" data-discovery-status></p>
+                <button class="button button-secondary" type="button" data-select-option="both">{t.pick}</button>
+              </div>
+            </article>
+          </div>
+        </section>
+        <section class="discover-availability" data-discovery-availability hidden aria-labelledby="discover-calendar-title">
+          <div class="discover-calendar-heading">
+            <div><h2 id="discover-calendar-title">{t.months}</h2><p>{t.calendarHelp}</p></div>
+            <div class="discover-calendar-nav">
+              <button type="button" data-prev-month aria-label={t.previous}>‹</button>
+              <strong data-current-month></strong>
+              <button type="button" data-next-month aria-label={t.next}>›</button>
+            </div>
+          </div>
+          <div class="discover-legend">
+            <span><i class="discover-dot discover-dot-possible"></i>{t.possibleDate}</span>
+            <span><i class="discover-dot discover-dot-blocked"></i>{t.dateBlocked}</span>
+          </div>
+          <div class="discover-calendar-grids" data-discovery-calendars></div>
+          <p class="discover-calendar-message" data-calendar-message role="status" aria-live="polite"></p>
+          <p class="discover-snapshot-note">{t.notConfirmed}</p>
+        </section>
+        <section class="discover-summary" data-discovery-summary hidden aria-labelledby="discover-price-heading">
+          <div class="discover-section-heading">
+            <p class="eyebrow">{t.quote}</p>
+            <h2 id="discover-price-heading">{t.quote}</h2>
+          </div>
+          <p class="discover-summary-meta" data-summary-stay></p>
+          <div class="discover-summary-lines" data-summary-lines></div>
+          <dl class="discover-cost-breakdown">
+            <div><dt>{t.airbnb}</dt><dd data-summary-airbnb></dd></div>
+            <div class="discover-grand-total"><dt>{t.direct}</dt><dd data-summary-direct></dd></div>
+            <div><dt>{t.saving}</dt><dd data-summary-saving></dd></div>
+          </dl>
+          <p class="discover-minimum" data-summary-minimum></p>
+          <button type="button" class="button discover-request" disabled aria-disabled="true">{t.reserve}</button>
+          <p class="discover-request-note">{t.reserveDisabled}</p>
+          <p class="discover-snapshot-note">{t.snapshot}</p>
+        </section>
+      </div>
+      <aside class="discover-aside">
+        <h2>{t.help}</h2>
+        <p>{t.helpBody}</p>
+        <ol>{t.helpPoints.map(point=><li>{point}</li>)}</ol>
+        <div class="discover-help-links">
+          <a class="button button-secondary" href={localPath('/cottages/',lang)}>{t.more}</a>
+          <a href={localPath('/contact/',lang)}>{t.alternative}</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+<script>import '../scripts/booking-discovery';</script>
+<style>
+.discover{color:var(--ink)}.discover-head{max-width:63rem;margin-bottom:2rem}.discover-head h1{font-size:clamp(2.5rem,5vw,4.3rem);margin:.2rem 0 1rem}
+.discover-head .lede{max-width:45rem}.discover-preview-note{background:var(--cream);border:1px solid var(--line);border-radius:.4rem;padding:.75rem 1rem;margin-top:1rem;font-size:.9rem;color:var(--soft)}
+.discover-search{border:1px solid var(--line);padding:clamp(1rem,2.5vw,1.7rem);border-radius:.6rem;background:#fff;margin-bottom:2rem}
+.discover-search-title h2{font-size:1.4rem;margin:0 0 1.1rem}
+.discover-fields{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.8rem;align-items:end}
+.discover-fields label{display:flex;flex-direction:column;gap:.4rem;font-size:.85rem;font-weight:650;grid-column:span 2}
+.discover-fields input,.discover-fields select{width:100%;min-width:0;min-height:2.8rem;border-radius:.35rem;background:#fff;border:1px solid var(--line);padding:.5rem;color:var(--ink);font:inherit}
+.discover-search-button{grid-column:span 2;min-height:2.8rem}
+.discover-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(16rem,.34fr);gap:clamp(1.2rem,3vw,2.5rem);align-items:start}
+.discover-content{min-width:0}.discover-content section+section{margin-top:2rem}
+.discover-section-heading h2,.discover-calendar-heading h2{font-size:clamp(1.4rem,2.4vw,1.9rem);margin:0 0 .35rem}
+.discover-section-heading p,.discover-calendar-heading p{margin:.25rem 0 1rem;font-size:.9rem;color:var(--soft)}
+.discover-result-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.discover-cottage-card{overflow:hidden;border:1px solid var(--line);border-radius:.6rem;background:#fff}
+.discover-cottage-card[hidden],.discover-availability[hidden],.discover-summary[hidden]{display:none}
+.discover-cottage-image,.discover-combination-images{height:clamp(9rem,16vw,12rem);overflow:hidden}
+.discover-cottage-image :global(picture),.discover-cottage-image :global(img),.discover-combination-images :global(picture),.discover-combination-images :global(img){display:block;width:100%;height:100%;object-fit:cover}
+.discover-combination-images{display:grid;grid-template-columns:1fr 1fr;gap:.2rem}
+.discover-cottage-body{padding:1rem}.discover-cottage-body h3{font-size:1.3rem;margin:0 0 .25rem}
+.discover-cottage-body p{font-size:.84rem;color:var(--soft);margin:.45rem 0}
+.discover-cottage-body .discover-availability-state{font-weight:650;color:var(--ink);min-height:2.2em}
+.discover-cottage-card.is-selected{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.discover-cottage-body .button{margin-top:.65rem}
+.discover-availability,.discover-summary{padding:clamp(1rem,2.5vw,1.7rem);border:1px solid var(--line);border-radius:.6rem;background:#fff}
+.discover-calendar-heading{display:flex;justify-content:space-between;gap:1rem;align-items:start;flex-wrap:wrap}
+.discover-calendar-nav{display:flex;align-items:center;gap:.45rem}
+.discover-calendar-nav button{width:2.4rem;height:2.4rem;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--ink);font-size:1.5rem;cursor:pointer}
+.discover-calendar-nav button:disabled{opacity:.4;cursor:not-allowed}
+.discover-calendar-nav strong{min-width:10ch;text-align:center;font-size:.9rem}
+.discover-legend{display:flex;flex-wrap:wrap;gap:.7rem 1.4rem;font-size:.77rem;color:var(--soft);margin:0 0 1rem}
+.discover-legend span{display:flex;align-items:center;gap:.35rem}.discover-dot{width:.65rem;height:.65rem;border-radius:50%;display:inline-block}
+.discover-dot-possible{background:#e0eae3;border:1px solid var(--green)}.discover-dot-blocked{background:#c4c6c4}
+.discover-calendar-grids{display:grid;grid-template-columns:1fr;gap:1.5rem}
+.discover-calendar-grids.two-cottages{grid-template-columns:repeat(2,minmax(0,1fr))}
+.discover-calendar-grids :global(.calendar-cottage-title){font-size:1.08rem;margin:0 0 .6rem}
+.discover-calendar-grids :global(.calendar-weekdays),.discover-calendar-grids :global(.calendar-days){display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.25rem}
+.discover-calendar-grids :global(.calendar-weekdays){margin-bottom:.35rem}
+.discover-calendar-grids :global(.calendar-weekdays span){text-align:center;font-size:.7rem;font-weight:650;color:var(--soft)}
+.discover-calendar-grids :global(.calendar-days button){min-width:0;min-height:3.7rem;padding:.25rem .1rem;border-radius:.35rem;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.35rem}
+.discover-calendar-grids :global(.calendar-days button:not(:disabled):hover){border-color:var(--green);background:var(--cream)}
+.discover-calendar-grids :global(.calendar-days button:focus-visible){outline:2px solid var(--green);outline-offset:2px}
+.discover-calendar-grids :global(.calendar-days .calendar-empty){min-height:3.7rem}
+.discover-calendar-grids :global(.calendar-days .calendar-day){font-size:.8rem;font-weight:650}
+.discover-calendar-grids :global(.calendar-days .calendar-rate){font-size:.65rem;color:var(--soft)}
+.discover-calendar-grids :global(.calendar-days button.is-blocked),.discover-calendar-grids :global(.calendar-days button.is-closed){background:#e9e9e9;color:#858585;border-color:#e5e5e5}
+.discover-calendar-grids :global(.calendar-days button.is-blocked .calendar-rate){color:#999}
+.discover-calendar-grids :global(.calendar-days button:disabled){cursor:default}
+.discover-calendar-grids :global(.calendar-days button.is-selected){background:var(--green);color:white;border-color:var(--green)}
+.discover-calendar-grids :global(.calendar-days button.is-selected .calendar-rate){color:#e2ede8}
+.discover-calendar-grids :global(.calendar-days button.is-between){background:#e1eae3;border-color:#bed4c3}
+.discover-calendar-message{margin:.85rem 0;min-height:1.25rem;font-weight:600;font-size:.85rem}
+.discover-snapshot-note{font-size:.8rem;color:var(--soft);border-left:2px solid var(--line);padding-left:.8rem;margin:1rem 0 0}
+.discover-summary-lines{display:grid;gap:.5rem;margin:1rem 0}
+.discover-summary-lines :global(.summary-line){display:flex;align-items:center;justify-content:space-between;gap:1rem;font-size:.93rem}
+.discover-summary-meta{font-weight:600;color:var(--soft)}
+.discover-cost-breakdown{border-top:1px solid var(--line);padding-top:1rem;display:grid;gap:.7rem;margin:0}
+.discover-cost-breakdown>div{display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+.discover-cost-breakdown dt{font-size:.87rem;color:var(--soft)}
+.discover-cost-breakdown dd{margin:0;font-weight:700}
+.discover-grand-total{padding-top:.65rem;border-top:1px solid var(--line)}
+.discover-grand-total dt{font-size:1.05rem;font-weight:700;color:var(--ink)}
+.discover-grand-total dd{font-size:1.7rem;color:var(--green)}
+.discover-minimum{font-size:.85rem;margin:1rem 0;color:var(--soft)}
+.discover-request{width:100%;margin-top:.8rem}.discover-request:disabled{opacity:.6;cursor:not-allowed}
+.discover-request-note{font-size:.8rem;color:var(--soft);margin:.65rem 0}
+.discover-aside{padding:1.35rem;border:1px solid var(--line);background:var(--cream);border-radius:.6rem;position:sticky;top:1rem}
+.discover-aside h2{font-size:1.55rem;margin:0 0 .7rem}.discover-aside p{font-size:.94rem;color:var(--soft)}
+.discover-aside ol{padding-left:1.2rem}.discover-aside li{padding-left:.2rem;margin:.75rem 0;font-size:.9rem}
+.discover-help-links{display:flex;flex-direction:column;align-items:start;gap:.8rem;margin-top:1rem}
+@media(max-width:76rem){.discover-layout{grid-template-columns:minmax(0,1fr) 17rem}.discover-calendar-grids.two-cottages{grid-template-columns:1fr}}
+@media(max-width:55rem){.discover-layout{grid-template-columns:1fr}.discover-aside{position:static}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 1}.discover-calendar-grids.two-cottages{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:36rem){.discover-result-list,.discover-calendar-grids.two-cottages{grid-template-columns:1fr}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 2}.discover-calendar-grids :global(.calendar-days button){min-height:3.25rem}.discover-calendar-nav{width:100%;justify-content:space-between}}
+</style>
