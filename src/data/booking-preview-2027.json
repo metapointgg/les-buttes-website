@@ -1,0 +1,122 @@
+{
+  "mode": "OWNER_REVIEW_PREVIEW_NOT_LIVE",
+  "sourceCaptured": "2026-10-24",
+  "firstNight": "2027-03-20",
+  "lastNight": "2027-10-01",
+  "lastCheckout": "2027-10-02",
+  "guestLimits": {
+    "geranium": 4,
+    "honeysuckle": 6,
+    "both": 10
+  },
+  "pricing": {
+    "indicativeSavingPercent": 11,
+    "roundWeeklyGBP": 50,
+    "roundShortGBP": 25,
+    "feesAlreadyIncludedInAirbnbRates": true
+  },
+  "nights": {
+    "geranium": [
+      {
+        "from": "2027-03-20",
+        "to": "2027-04-30",
+        "gbp": 185
+      },
+      {
+        "from": "2027-05-01",
+        "to": "2027-05-31",
+        "gbp": 205
+      },
+      {
+        "from": "2027-06-01",
+        "to": "2027-06-30",
+        "gbp": 215
+      },
+      {
+        "from": "2027-07-01",
+        "to": "2027-07-31",
+        "gbp": 235
+      },
+      {
+        "from": "2027-08-01",
+        "to": "2027-08-31",
+        "gbp": 250
+      },
+      {
+        "from": "2027-09-01",
+        "to": "2027-10-01",
+        "gbp": 210
+      }
+    ],
+    "honeysuckle": [
+      {
+        "from": "2027-03-20",
+        "to": "2027-04-30",
+        "gbp": 215
+      },
+      {
+        "from": "2027-05-01",
+        "to": "2027-05-31",
+        "gbp": 230
+      },
+      {
+        "from": "2027-06-01",
+        "to": "2027-06-30",
+        "gbp": 240
+      },
+      {
+        "from": "2027-07-01",
+        "to": "2027-07-31",
+        "gbp": 265
+      },
+      {
+        "from": "2027-08-01",
+        "to": "2027-08-31",
+        "gbp": 285
+      },
+      {
+        "from": "2027-09-01",
+        "to": "2027-10-01",
+        "gbp": 235
+      }
+    ]
+  },
+  "proposedMinimumStays": [
+    {
+      "from": "2027-03-20",
+      "to": "2027-03-25",
+      "nights": 3
+    },
+    {
+      "from": "2027-03-26",
+      "to": "2027-05-09",
+      "nights": 5
+    },
+    {
+      "from": "2027-05-10",
+      "to": "2027-05-21",
+      "nights": 3
+    },
+    {
+      "from": "2027-05-22",
+      "to": "2027-07-09",
+      "nights": 5
+    },
+    {
+      "from": "2027-07-10",
+      "to": "2027-09-03",
+      "nights": 7
+    },
+    {
+      "from": "2027-09-04",
+      "to": "2027-09-19",
+      "nights": 5
+    },
+    {
+      "from": "2027-09-20",
+      "to": "2027-10-01",
+      "nights": 3
+    }
+  ],
+  "disclaimer": "Snapshot of displayed 2027 Airbnb nightly prices captured on 24 October 2026. Indicative, negotiated saving only. Neither live availability nor a payable guest quote."
+}
