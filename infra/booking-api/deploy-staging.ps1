@@ -17,6 +17,20 @@ foreach ($cmd in @('aws','sam','node','npm')) {
     if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) { throw "$cmd is not installed or not on PATH" }
 }
 
+# This legacy rehearsal rotates staging credentials and sends only its own parameters.
+# Once the persistent shared booking index or Cognito admin endpoint is enabled,
+# never allow this command to revert their CloudFormation parameters to defaults.
+$existingStackJson = & aws cloudformation describe-stacks --stack-name $StackName --profile $Profile --region $Region --output json 2>$null
+if($LASTEXITCODE -eq 0 -and $existingStackJson){
+    $stackParameters = ($existingStackJson | ConvertFrom-Json).Stacks[0].Parameters
+    foreach($protectedKey in @('BookingRequestsIndexEnabled','ManagementPreviewEnabled')){
+        $isEnabled = @($stackParameters | Where-Object { $_.ParameterKey -eq $protectedKey -and $_.ParameterValue -eq 'true' }).Count -gt 0
+        if($isEnabled){
+            throw "$protectedKey is already enabled on this staging stack. Refusing the legacy redeploy to prevent removal of the shared booking index or management API. Use a separately reviewed change set preserving ALL prior parameters and secure token values."
+        }
+    }
+}
+
 if($EnableCalendarMonitoring -and $DisableCalendarMonitoring){throw 'Choose enable OR disable monitoring, not both.'}
 if($EnableCalendarMonitoring){
     if($MonitorAlertEmail -notmatch '^[^\s@]+@[^\s@]+\.[^\s@]+$'){throw 'Set -MonitorAlertEmail to the address that will confirm SNS notifications.'}
