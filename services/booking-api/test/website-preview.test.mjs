@@ -52,7 +52,16 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   const header=readFileSync(new URL('../../../src/components/Header.astro',import.meta.url),'utf8');
   assert.match(page,/PUBLIC_BOOKING_REQUESTS_ENABLED==='true'/);
   assert.match(page,/noindex>/);
-  assert.match(page,/data-mode="preview"/);
+  const discovery=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
+  const discoveryScript=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+  assert.match(page,/<BookingDiscoveryPreview\/>/);
+  assert.match(discovery,/data-discovery-search/);
+  assert.match(discovery,/data-discovery-calendars/);
+  assert.match(discovery,/data-discovery-summary/);
+  assert.match(discovery,/disabled aria-disabled="true"/);
+  assert.match(discoveryScript,/indicativeSelection/);
+  assert.doesNotMatch(discoveryScript,/fetch\(/);
+  assert.doesNotMatch(discovery,/name="email"/);
   assert.match(page,/data-mode="live"/);
   assert.match(script,/if\(form\.dataset\.mode==='preview'\)/);
   assert.match(script,/previewBookingQuote/);
