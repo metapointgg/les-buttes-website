@@ -1,14 +1,41 @@
 import preview from '../data/booking-preview-2027.json';
-import occupancy from '../data/booking-occupancy-snapshot-2027.json';
 import {previewBookingQuote} from './booking-preview';
 
 export type CottageUnit='geranium'|'honeysuckle';
 export type CottageChoice=CottageUnit|'both';
 export type SearchFilters={adults:number;children:number;bedrooms:number;choice:'any'|'both'};
-export type CalendarDay={date:string;status:'closed'|'occupied'|'possible';rateGBP:number|null};
+export type CalendarDay={date:string;status:'closed'|'occupied'|'possible'|'unknown';rateGBP:number|null};
 export type CottageCandidate={unit:CottageChoice;maxGuests:number;bedrooms:number;listedAs:'possible'|'occupied'|'not-checked'};
 export const COTTAGES:readonly CottageUnit[]=['geranium','honeysuckle'] as const;
-export const TODAY_SNAPSHOT=occupancy.capturedAt;
+export type MasterAvailability={
+  mode:'LIVE_STAGING_MASTER_READ_ONLY';capturedAt:string;
+  firstNight:string;lastNight:string;lastCheckout:string;
+  blocked:Record<CottageUnit,Array<{from:string;to:string}>>
+};
+let liveMaster:MasterAvailability|null=null;
+// Fail closed: no 2026 snapshot fallback may masquerade as a live master.
+export function masterConnected(){return liveMaster!==null;}
+export function masterCheckedAt(){return liveMaster?.capturedAt??null;}
+export function clearMasterAvailability(){liveMaster=null;}
+export function setMasterAvailability(value:unknown){
+  if(!value||typeof value!=='object')throw Error('masterUnavailable');
+  const v=value as MasterAvailability;
+  if(v.mode!=='LIVE_STAGING_MASTER_READ_ONLY'||v.firstNight!==preview.firstNight||
+    v.lastNight!==preview.lastNight||v.lastCheckout!==preview.lastCheckout||
+    !v.blocked||typeof v.capturedAt!=='string'||!Number.isFinite(Date.parse(v.capturedAt))||
+    Math.abs(Date.now()-Date.parse(v.capturedAt))>120000)throw Error('masterUnavailable');
+  for(const unit of COTTAGES){
+    if(!Array.isArray(v.blocked[unit])||v.blocked[unit].length>196)throw Error('masterUnavailable');
+    let end='';
+    for(const row of v.blocked[unit]){
+      if(typeof row.from!=='string'||typeof row.to!=='string'||!Number.isFinite(parseISO(row.from))||
+        !Number.isFinite(parseISO(row.to))||row.from<preview.firstNight||
+        row.to>preview.lastCheckout||row.from>=row.to||row.from<end)throw Error('masterUnavailable');
+      end=row.to;
+    }
+  }
+  liveMaster=v;
+}
 
 const DAY=86400000;
 const limits:Record<CottageChoice,{maxGuests:number;bedrooms:number}>={
@@ -37,13 +64,14 @@ export function matchingCottages(filters:SearchFilters):CottageChoice[]{
   return single.length?single:['both'];
 }
 export function hasOccupiedNight(unit:CottageUnit,date:string):boolean{
-  return occupancy.blocked[unit].some(block=>date>=block.from&&date<block.to);
+  if(!liveMaster)throw Error('masterUnavailable');
+  return liveMaster.blocked[unit].some(block=>date>=block.from&&date<block.to);
 }
 export function cottageNightBlocked(unit:CottageChoice,date:string):boolean{
   return unit==='both'?COTTAGES.some(c=>hasOccupiedNight(c,date)):hasOccupiedNight(unit,date);
 }
 export function possibleNight(unit:CottageChoice,date:string):boolean{
-  return date>=preview.firstNight&&date<=preview.lastNight&&!cottageNightBlocked(unit,date);
+  return Boolean(liveMaster)&&date>=preview.firstNight&&date<=preview.lastNight&&!cottageNightBlocked(unit,date);
 }
 export function nightsInRange(start:string,end:string):string[]{
   const a=parseISO(start),b=parseISO(end);
@@ -68,7 +96,7 @@ export function minimumFor(start:string,end:string):number{
 export function matchingOptions(filters:SearchFilters,start?:string,end?:string):CottageCandidate[]{
   return matchingCottages(filters).map(unit=>{
     let status:CottageCandidate['listedAs']='not-checked';
-    if(start&&end){
+    if(start&&end&&liveMaster){
       try{status=referenceAllows(unit,start,end)?'possible':'occupied';}
       catch{status='occupied';}
     }
@@ -89,7 +117,7 @@ export function daysForMonth(unit:CottageUnit,month:string):CalendarDay[]{
     const rateGBP=dayPrice(unit,date);
     return {
       date,
-      status:date<preview.firstNight||date>preview.lastNight?'closed':hasOccupiedNight(unit,date)?'occupied':'possible',
+      status:date<preview.firstNight||date>preview.lastNight?'closed':!liveMaster?'unknown':hasOccupiedNight(unit,date)?'occupied':'possible',
       rateGBP
     };
   });
