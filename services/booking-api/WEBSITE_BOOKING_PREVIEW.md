@@ -21,14 +21,18 @@ Open:
 
 The routes exist **only on the PR branch until it is merged**. They are also marked `noindex`, absent from the sitemap and have no navigation/footer/cottage-page CTA links. **Noindex and unlinked routes are discoverability controls, not access controls.** If a private *internet-hosted* preview is later wanted, use an authenticated preview host (e.g. CloudFront access protection), not the production domain with a secret URL.
 
-### What can be tested now — cottage discovery and date selection
+### Four-step visitor journey — separate screens
 
-1. **Search filters:** optional arrival/checkout dates, adults (at least one), children (0+), **bedrooms needed**, and either best-matching accommodation or explicitly **both cottages**. Geranium has **2 bedrooms / sleeps 4**; Honeysuckle has **3 bedrooms / sleeps 6**. Parties of 7–10 or requests for 4–5 bedrooms automatically require **both**.
-2. **Matching cottage cards:** image-led Geranium and Honeysuckle result cards. A chosen single-cottage option opens its calendar. When two cottages are needed or explicitly selected, show **two adjacent calendars**.
-3. **Date-based calendar:** the compact picker shows **two months side by side**, with master-occupied nights grey, unblocked nights white, and a highlighted range. Exact nightly Airbnb comparison rates remain in the quote model, with date-level rates available to accessibility labels. Click an arrival and a checkout date; checkout is excluded from occupied nights, so same-day changeovers are possible. Date ranges with a known booking, outside the season, or over 27 nights cannot be used.
-4. **Price summary:** after a valid reference-available selection, displays cottage-by-cottage indicative split-savings price, Airbnb calendar comparison and possible guest saving. The **3/5/7-night minimums are draft**; a too-short stay is flagged.
-5. **Request to reserve:** visible but **disabled during private preview**, with a clear statement that requests, guest-data collection, live availability checks and payments are not enabled.
-6. **Multilingual and responsive:** English, Dutch and French, mobile-friendly cottage cards and calendar layout.
+The hidden booking page is now a **four-screen stepper**, not a long scrolling page. Guests see **one stage at a time** and can go back without losing their date/cottage selection.
+
+1. **Your stay / Search** — arrival, departure (or leave dates blank to select from the calendar), number of **adults**, **children**, minimum **bedrooms**, and best match or both cottages. Click **See matching cottages**.
+2. **Choose cottages / Dates** — photo cards for eligible cottages, two compact month calendars side by side for the selected unit, or a calendar row for each of two cottages; click check-in then checkout. White master-unblocked dates, grey unavailable, green start/end and `#BED4C3` interior selection. Back to Search is available. The **Review price** button enables only for a valid, currently unblocked 1–27-night range meeting the **draft** seasonal minimum.
+3. **Review booking / Price summary** — dates, guest count, exact per-cottage **indicative negotiated price**, equivalent Airbnb calendar price and possible saving, plus the proposed minimum-stay notice. Guests can revise cottage/dates or continue.
+4. **Your details / Confirmation preview** — a simple name/email/telephone/notes form and a compact booking recap. This is **UI demonstration only**; entries remain in the browser session and **are not saved or transmitted**. The **Confirm reservation request** button is disabled, and the page explains that approved terms and cancellation conditions must come before any payable request.
+
+The progress indicator follows the current step. The master is rechecked before advancing from selection to review and before entering details; a failed or stale master read prevents proceeding and does **not** fall back to a static availability file.
+
+There are **no public booking submissions, guest-contact API calls, payment links, real-time Airbnb guarantees or production changes**. The **2027 nightly rates are still indicative**, based on host calendar screenshots, and min-stay dates remain unapproved.
 
 ### LIVE staging-master calendar in the private local preview
 
