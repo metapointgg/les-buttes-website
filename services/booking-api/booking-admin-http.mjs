@@ -46,6 +46,13 @@ export function createAdminHandler({reader}){
    }
  };
 }
-export const handler=createAdminHandler({reader:createReadOnlyAdminReader({
- authorise:async event=>identityFromGateway(event)
-})});
+// Lazy initialisation allows isolated test imports without AWS configuration.
+let deployedHandler;
+export async function handler(event){
+ if(!deployedHandler){
+   deployedHandler=createAdminHandler({reader:createReadOnlyAdminReader({
+     authorise:async request=>identityFromGateway(request)
+   })});
+ }
+ return deployedHandler(event);
+}
