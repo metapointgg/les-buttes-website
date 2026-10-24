@@ -3,14 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": {"node": ">=22"},
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "check": "node --check index.mjs && node --check admin.mjs",
+    "check": "node --check index.mjs && node --check admin.mjs && node --check monitor-airbnb.mjs",
     "test": "node --test"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.800.0",
     "@aws-sdk/lib-dynamodb": "^3.800.0",
-    "@aws-sdk/client-ses": "^3.800.0"
+    "@aws-sdk/client-ses": "^3.800.0",
+    "@aws-sdk/client-ssm": "^3.800.0",
+    "@aws-sdk/client-sns": "^3.800.0"
   }
 }
