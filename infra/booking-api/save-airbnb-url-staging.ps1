@@ -21,7 +21,7 @@ $body=@{Name=$paramName;Type='SecureString';Value=$url;Overwrite=$true;Descripti
 $temp=Join-Path ([System.IO.Path]::GetTempPath()) ("lb-monitor-"+[Guid]::NewGuid().ToString('N')+".json")
 try{
     [System.IO.File]::WriteAllText($temp,(ConvertTo-Json -InputObject $body -Depth 5),(New-Object System.Text.UTF8Encoding $false))
-    & aws ssm put-parameter --cli-input-json "file://$temp" --profile $Profile --region $Region --output none
+    & aws ssm put-parameter --cli-input-json "file://$temp" --profile $Profile --region $Region --output json | Out-Null
     if($LASTEXITCODE -ne 0){throw 'The SSM SecureString write failed.'}
     Write-Host "Saved $Unit Airbnb calendar token in encrypted staging SSM Parameter Store. No URL printed or committed."
     Set-Clipboard -Value ''
