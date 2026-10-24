@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
+import {readFileSync} from 'node:fs';
 
 const bundle=await build({
   entryPoints:['src/lib/booking-discovery.ts'],platform:'node',format:'esm',
@@ -8,9 +9,29 @@ const bundle=await build({
 });
 const src=Buffer.from(bundle.outputFiles[0].text).toString('base64');
 const {matchingCottages,matchingOptions,referenceAllows,canPickCheckout,
-  indicativeSelection,nightsInRange,minimumFor,daysForMonth,possibleNight}=await import('data:text/javascript;base64,'+src);
+  indicativeSelection,nightsInRange,minimumFor,daysForMonth,possibleNight,setMasterAvailability,clearMasterAvailability,masterConnected}=await import('data:text/javascript;base64,'+src);
 
 const filter=(adults=2,children=0,bedrooms=0,choice='any')=>({adults,children,bedrooms,choice});
+const fixture=JSON.parse(readFileSync(new URL('../data/booking-occupancy-snapshot-2027.json',import.meta.url),'utf8'));
+function injectMaster(){
+  setMasterAvailability({
+    mode:'LIVE_STAGING_MASTER_READ_ONLY',
+    capturedAt:new Date().toISOString(),
+    firstNight:fixture.firstNight,lastNight:fixture.lastNight,lastCheckout:'2027-10-02',
+    blocked:fixture.blocked
+  });
+}
+injectMaster();
+test('unavailable, stale, or malformed master is fail-closed; no 2026 fallback',()=>{
+  clearMasterAvailability();
+  assert.equal(masterConnected(),false);
+  assert.equal(possibleNight('geranium','2027-07-10'),false);
+  assert.equal(daysForMonth('honeysuckle','2027-07')[9].status,'unknown');
+  assert.throws(()=>setMasterAvailability({...fixture,mode:'LIVE_STAGING_MASTER_READ_ONLY',capturedAt:'2026-10-24T12:00:00.000Z',lastCheckout:'2027-10-02'}),/masterUnavailable/);
+  injectMaster();
+  assert.equal(masterConnected(),true);
+});
+
 
 test('groups and bedroom requirements return suitable cottages or both only',()=>{
   assert.deepEqual(matchingCottages(filter()),['geranium','honeysuckle']);
