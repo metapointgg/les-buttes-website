@@ -4,6 +4,12 @@
 
 This is a deliberately small request-to-book system for **Geranium, Honeysuckle or both**. The main Les Buttes Astro website remains static on S3/CloudFront and reuses a single booking page template in English, Dutch and French. Public routes: `/book/`, `/nl/book/`, `/fr/book/`. They show a disabled preview and direct visitors to existing Airbnb booking links until the environment is configured. The feature branch is separate from the production deployment workflow.
 
+## Hidden front-end booking preview — PRIVATE REVIEW, NOT LIVE
+
+The existing `/book/`, `/nl/book/` and `/fr/book/` Astro pages now have a **read-only interactive preview** for private review. They let you choose cottage(s), dates and guest count, show Airbnb-comparable nightly totals and a discretionary split-savings direct estimate, and explain future approval/payment steps. They explicitly **do not** check real-time availability, collect guest details, send requests or change reservations. The browser has no staging API token. The routes are unlinked, excluded from the sitemap and marked noindex; **that is not password protection**. PR remains draft, and the main production site still links to Airbnb.
+
+Read [WEBSITE_BOOKING_PREVIEW.md](WEBSITE_BOOKING_PREVIEW.md) for local dev commands and the launch criteria. Future live guest submission is separately guarded by `PUBLIC_BOOKING_REQUESTS_ENABLED=true` **as well as** the correct live API URL and Turnstile site key at website build time; do not enable before final legal/rate/operational sign-off.
+
 ## Confirmed 2027 availability window
 
 On **24 October 2026**, the host confirmed that **both Geranium and Honeysuckle are available for holiday guest arrivals from Saturday 20 March 2027**. No winter tenant remains booked into the holiday season. The existing staging rule already opens both cottages on `2027-03-20`; **do not introduce an April reopening for Geranium**.
