@@ -22,7 +22,17 @@ test('denies unauthenticated access before database query',async()=>{
 test('rejects malformed booking ids and unindexed booking listing',async()=>{
  const api=bookingAdminReader({db:{send:async()=>{throw Error('unexpected')}},table,authorise:identity});
  await assert.rejects(api.getBooking({},'../../secrets'),/Invalid reference/);
- const page=await api.listBookings({},{limit:10});
- assert.equal(page.indexRequired,true);
+ await assert.rejects(api.listBookings({},{limit:10}),/index not configured/);
  await assert.rejects(api.listBookings({},{limit:101}),/Invalid page size/);
+});
+
+test('booking inbox queries a GSI on the SAME table',async()=>{
+ let query;
+ const db={send:async cmd=>{query=cmd.input;return {Items:[{id:'abc'}]};}};
+ const api=bookingAdminReader({db,table,authorise:identity,bookingIndex:'BookingRequestsIndex'});
+ const page=await api.listBookings({},{limit:12});
+ assert.equal(query.TableName,table);
+ assert.equal(query.IndexName,'BookingRequestsIndex');
+ assert.equal(query.Limit,12);
+ assert.equal(page.items.length,1);
 });
