@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {DAY,parseDate,validBooking} from './rules.mjs';
+import {configuredQuote} from './pricing.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,QueryCommand,BatchGetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {SESClient,SendEmailCommand} from '@aws-sdk/client-ses';
@@ -51,6 +52,7 @@ async function notifyOwner(booking){
     'Property: '+booking.unit,
     'Dates: '+booking.start+' to '+booking.end+' (departure)',
     'Guests: '+booking.guests,
+    'Indicative total: GBP '+booking.quote.totalGBP+' (to be confirmed before payment)',
     'Name: '+booking.guestName,
     'Email: '+booking.guestEmail,
     'Notes: '+(booking.notes||'None'),
@@ -63,6 +65,8 @@ async function createRequest(input,event){
   if(input.website)return response(202,{received:true});
   const result=validBooking(input);
   if(result.error)return response(result.serverError?503:400,{error:result.error});
+  const quote=configuredQuote(result.units,result.nights);
+  if(quote.error)return response(503,{error:quote.error});
   const guestName=typeof input.name==='string'?input.name.trim():'';
   const guestEmail=typeof input.email==='string'?input.email.trim():'';
   const notes=typeof input.notes==='string'?input.notes.trim():'';
@@ -72,7 +76,7 @@ async function createRequest(input,event){
   const id=randomUUID();
   const requestedAt=new Date().toISOString();
   const expiresAt=nowEpoch()+24*60*60;
-  const item={PK:'BOOKING#'+id,SK:'META',id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,notes,status:'REQUESTED',requestedAt,holdExpiresAt:expiresAt,expiresAt:nowEpoch()+90*86400};
+  const item={PK:'BOOKING#'+id,SK:'META',id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,notes,quote,status:'REQUESTED',requestedAt,holdExpiresAt:expiresAt,expiresAt:nowEpoch()+90*86400};
   const transact=[{Put:{TableName:table,Item:item,ConditionExpression:'attribute_not_exists(PK)'}}];
   for(const key of slotsFor(result.units,result.nights))transact.push({Put:{TableName:table,Item:{...key,id,expiresAt},ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',ExpressionAttributeValues:{':now':nowEpoch()}}});
   try{
@@ -136,7 +140,10 @@ export async function handler(event){
       const q=event.queryStringParameters||{};
       const result=validBooking({unit:q.unit,start:q.start,end:q.end,guests:Number(q.guests)});
       if(result.error)return response(result.serverError?503:400,{available:false,error:result.error});
-      return response(200,{available:await available(result.units,result.nights)});
+      const quote=configuredQuote(result.units,result.nights);
+      if(quote.error)return response(503,{available:false,error:quote.error});
+      const isAvailable=await available(result.units,result.nights);
+      return response(200,{available:isAvailable,quote:isAvailable?quote:undefined});
     }catch(e){console.error('Booking API error',e);return response(500,{error:'Unable to check availability currently'});}
   }
   return response(404,{error:'Not found'});
