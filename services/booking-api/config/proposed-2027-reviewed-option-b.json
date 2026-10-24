@@ -1,0 +1,200 @@
+{
+  "status": "PROPOSED_ONLY_NOT_APPROVED_OR_DEPLOYED",
+  "_warning": "COMMERCIAL REVIEW ONLY. Never use as production BOOKING_RATES_JSON until the host explicitly approves every rate, seasonal minimum and overlay. Staging continues to use synthetic prices.",
+  "season": {
+    "firstArrival": "2027-03-20",
+    "lastOccupiedNight": "2027-10-01",
+    "lastCheckout": "2027-10-02",
+    "appliesTo": [
+      "geranium",
+      "honeysuckle"
+    ]
+  },
+  "rules": {
+    "openSeasons": [
+      {
+        "start": "2027-03-20",
+        "end": "2027-10-01"
+      }
+    ],
+    "minimumStays": [
+      {
+        "start": "2027-03-20",
+        "end": "2027-03-25",
+        "nights": 3,
+        "band": "low",
+        "reason": "Early spring before Easter"
+      },
+      {
+        "start": "2027-03-26",
+        "end": "2027-05-09",
+        "nights": 5,
+        "band": "shoulder",
+        "reason": "UK Easter and staggered French/Dutch spring holidays"
+      },
+      {
+        "start": "2027-05-10",
+        "end": "2027-05-21",
+        "nights": 3,
+        "band": "low",
+        "reason": "Quieter mid-May interval"
+      },
+      {
+        "start": "2027-05-22",
+        "end": "2027-07-09",
+        "nights": 5,
+        "band": "shoulder",
+        "reason": "May half term through early summer"
+      },
+      {
+        "start": "2027-07-10",
+        "end": "2027-09-03",
+        "nights": 7,
+        "band": "peak",
+        "reason": "Dutch summer holidays through Saturday changeover on 4 September"
+      },
+      {
+        "start": "2027-09-04",
+        "end": "2027-09-19",
+        "nights": 5,
+        "band": "shoulder",
+        "reason": "Early September, post-peak"
+      },
+      {
+        "start": "2027-09-20",
+        "end": "2027-10-01",
+        "nights": 3,
+        "band": "low",
+        "reason": "Late September and final nights of season"
+      }
+    ]
+  },
+  "rates": {
+    "status": "PROPOSED_ONLY_NOT_APPROVED",
+    "currency": "GBP",
+    "notes": "Nightly prices for accommodation, per cottage. Derived from previously recommended Option B monthly prices plus proposed holiday overlays. No taxes/cleaning charges/discounts are inferred. Both cottages pricing is the sum of the two.",
+    "periods": [
+      {
+        "start": "2027-03-20",
+        "end": "2027-03-25",
+        "geranium": 185,
+        "honeysuckle": 215,
+        "reason": "Proposed March opening: April Option B rate carried back"
+      },
+      {
+        "start": "2027-03-26",
+        "end": "2027-04-11",
+        "geranium": 205,
+        "honeysuckle": 235,
+        "reason": "Easter overlay"
+      },
+      {
+        "start": "2027-04-12",
+        "end": "2027-04-23",
+        "geranium": 185,
+        "honeysuckle": 215,
+        "reason": "April Option B baseline"
+      },
+      {
+        "start": "2027-04-24",
+        "end": "2027-04-30",
+        "geranium": 195,
+        "honeysuckle": 225,
+        "reason": "Dutch May holiday / French spring overlap"
+      },
+      {
+        "start": "2027-05-01",
+        "end": "2027-05-09",
+        "geranium": 215,
+        "honeysuckle": 245,
+        "reason": "May bank holiday, extended Dutch May break and Liberation Day weekend"
+      },
+      {
+        "start": "2027-05-10",
+        "end": "2027-05-21",
+        "geranium": 205,
+        "honeysuckle": 230,
+        "reason": "May Option B baseline"
+      },
+      {
+        "start": "2027-05-22",
+        "end": "2027-06-06",
+        "geranium": 225,
+        "honeysuckle": 250,
+        "reason": "UK and Guernsey half-term overlay and adjacent travel"
+      },
+      {
+        "start": "2027-06-07",
+        "end": "2027-06-30",
+        "geranium": 215,
+        "honeysuckle": 240,
+        "reason": "June Option B baseline"
+      },
+      {
+        "start": "2027-07-01",
+        "end": "2027-07-21",
+        "geranium": 235,
+        "honeysuckle": 265,
+        "reason": "July Option B baseline"
+      },
+      {
+        "start": "2027-07-22",
+        "end": "2027-07-31",
+        "geranium": 250,
+        "honeysuckle": 285,
+        "reason": "Late July school holiday overlay"
+      },
+      {
+        "start": "2027-08-01",
+        "end": "2027-08-31",
+        "geranium": 260,
+        "honeysuckle": 295,
+        "reason": "August peak overlay; within previously proposed price range"
+      },
+      {
+        "start": "2027-09-01",
+        "end": "2027-09-03",
+        "geranium": 235,
+        "honeysuckle": 265,
+        "reason": "Final peak holiday nights before 4 September turnover"
+      },
+      {
+        "start": "2027-09-04",
+        "end": "2027-09-30",
+        "geranium": 210,
+        "honeysuckle": 235,
+        "reason": "September Option B baseline"
+      },
+      {
+        "start": "2027-10-01",
+        "end": "2027-10-01",
+        "geranium": 185,
+        "honeysuckle": 215,
+        "reason": "Final October night: April-style low-season rate"
+      }
+    ]
+  },
+  "exceptions": [
+    "28 August to 4 September 2027: one reserved off-Airbnb booking for both cottages; preserve any agreed returning-guest price. This proposed rate file must never overwrite or reprice it.",
+    "All Airbnb confirmed reservations remain occupied; pricing config is not a mechanism to modify confirmed bookings.",
+    "No Christmas 2027 block or winter letting prices in this holiday-season proposal."
+  ],
+  "holidayEvidence": [
+    {
+      "name": "Guernsey 2027 school terms",
+      "url": "https://www.valeprimary.sch.gg/news-and-events/term-dates"
+    },
+    {
+      "name": "England 2027 Easter and summer holidays",
+      "url": "https://www.portsmouth.gov.uk/services/schools-and-learning/schools/school-term-dates"
+    },
+    {
+      "name": "Netherlands 2027 school holidays",
+      "url": "https://www.government.nl/themes/education/school-holidays/overview-of-school-holiday-dates-per-academic-year/school-holiday-dates-2026-2027"
+    },
+    {
+      "name": "France 2027 school holidays",
+      "url": "https://www.service-public.gouv.fr/particuliers/vosdroits/F31952?lang=fr"
+    }
+  ]
+}
