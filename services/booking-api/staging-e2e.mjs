@@ -18,8 +18,9 @@ if(!/^https:\/\/[a-z0-9.-]+\.amazonaws\.com$/.test(url)&&!/^https:\/\/[a-z0-9.-]
   process.exit(1);
 }
 const headers={'x-lesbuttes-staging-token':secret};
-const start=process.env.STAGING_CHECKIN??'2027-06-10';
-const end=process.env.STAGING_CHECKOUT??'2027-06-15';
+let start=process.env.STAGING_CHECKIN||null;
+let end=process.env.STAGING_CHECKOUT||null;
+if(Boolean(start)!==Boolean(end))throw Error('STAGING_CHECKIN and STAGING_CHECKOUT must both be supplied together');
 const unit=process.env.STAGING_COTTAGE??'geranium';
 if(!['geranium','honeysuckle','both'].includes(unit))throw Error('Invalid unit');
 const guests=2;
@@ -31,12 +32,33 @@ async function req(path,options={}){
   let data;try{data=JSON.parse(body);}catch{data=body;}
   return {status:res.status,data};
 }
-const search='/availability?'+new URLSearchParams({unit,start,end,guests:String(guests)});
-const request={unit,start,end,guests,name:'Staging Test Guest',email:'test@example.invalid',notes:'Synthetic test, never a guest booking',consent:true,turnstileToken:'XXXX.DUMMY.TOKEN.XXXX',website:''};
+// Test dates must be vacant in BOTH cottages because the rehearsal also verifies
+// that a rejected combined-cottage request never creates an orphan hold.
+// Staging now contains verified Airbnb reservations, so never reuse fixed dates blindly.
+const candidateDates=start&&end?[[start,end]]:[
+  ['2027-06-01','2027-06-06'],
+  ['2027-06-06','2027-06-11'],
+  ['2027-06-26','2027-07-01'],
+  ['2027-04-10','2027-04-15'],
+  ['2027-05-01','2027-05-06'],
+  ['2027-09-06','2027-09-11']
+];
 try{
   const health=await req('/health');
   assert.equal(health.status,200,'Staging health endpoint');
   assert.equal(health.data.acceptingRequests,true,'Staging API must be enabled');
+  let found=false;
+  for(const [candidateStart,candidateEnd] of candidateDates){
+    const probe='/availability?'+new URLSearchParams({unit:'both',start:candidateStart,end:candidateEnd,guests:String(guests)});
+    const availableBoth=await req(probe);
+    if(availableBoth.status===200&&availableBoth.data.available){
+      start=candidateStart;end=candidateEnd;found=true;break;
+    }
+  }
+  assert.equal(found,true,'No vacant synthetic test dates in both cottages. Provide STAGING_CHECKIN/STAGING_CHECKOUT after checking real Airbnb blocks.');
+  console.log('Staging synthetic test interval: '+start+' to '+end+' (both cottages vacant before test).');
+  const search='/availability?'+new URLSearchParams({unit,start,end,guests:String(guests)});
+  const request={unit,start,end,guests,name:'Staging Test Guest',email:'test@example.invalid',notes:'Synthetic test, never a guest booking',consent:true,turnstileToken:'XXXX.DUMMY.TOKEN.XXXX',website:''};
   const before=await req(search);
   assert.equal(before.status,200,'Availability must have staged approved test rates and minimum stays');
   assert.equal(before.data.available,true,'Choose a fresh unused interval in STAGING_CHECKIN / STAGING_CHECKOUT');
