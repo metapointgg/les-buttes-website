@@ -43,7 +43,17 @@ For the agreed 28 Aug–4 Sep week, the guide should show **Geranium £1,450**, 
 3. Confirm the guest-facing **all-in** price, including any cleaning or other compulsory charges, and check the actual merchant fees and cancellation risk.
 4. Approve the rounded agreed offer manually; if the quote changes from the original guest-facing proposal, note the reason in the private booking approval command.
 5. Give the guest the proposed terms and cancellation/refund conditions *before* requesting payment. Confirm only after independent verification of payment.
-6. Record the guest's final agreed amount separately from the source-calendar estimate. An unpriced `BLOCKED` direct reservation is **not** evidence that a specific amount has been recorded in AWS.
+6. For an already existing **direct / RESERVED** manual block, record the owner's agreed per-cottage prices in the staging master booking metadata using the dedicated command below. It makes **no occupied-date writes**, sends no payment message, and leaves the reservation **RESERVED / payment unverified**. Run it only once after checking the booking ID and agreed amounts; a different subsequent amount requires explicit owner-led reconciliation.
+   ```powershell
+   $env:AWS_PROFILE = "default"
+   $env:AWS_REGION = "eu-west-2"
+   $env:BOOKING_ENVIRONMENT = "staging"
+   $env:BOOKINGS_TABLE = "les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK"
+   node services/booking-api/admin.mjs show 2a1361bd-5662-4698-8ae3-68bccca689d5
+   node services/booking-api/admin.mjs record-direct-price 2a1361bd-5662-4698-8ae3-68bccca689d5 geranium=1450 honeysuckle=1650
+   node services/booking-api/admin.mjs show 2a1361bd-5662-4698-8ae3-68bccca689d5
+   ```
+   **Only run the record command after verifying** the booking remains `BLOCKED`, `source=direct`, `reservationStatus=RESERVED`, covers both units and has the expected dates **28 August–4 September 2027**. The command rejects other sources/states and existing agreed-price metadata rather than silently overwriting it. `show` may display private guest data for normal guest requests, so do not paste unredacted guest details into shared logs. If the final negotiated price changes, do not re-run: review the existing amount and agree an explicit correction process first.
 7. Retain the Airbnb calendar's **manual block for that direct reservation** until the direct booking has completed or been explicitly cancelled.
 
 **No automatic coupon, no fixed or guaranteed percentage discount, no season/rate activation and no production website changes.** Both screenshots are time-stamped observations, not authoritative future Airbnb pricing.
