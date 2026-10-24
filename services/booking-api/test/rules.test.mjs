@@ -23,6 +23,15 @@ test('checkout date is exclusive; allow 27 nights but reject 28',()=>{
   assert.equal(dates('2027-07-01','2027-07-01'),null);
   assert.equal(dates('2027-07-02','2027-07-01'),null);
 });
+test('confirmed 20 March 2027 reopening applies to both cottages',()=>{
+  for(const unit of ['geranium','honeysuckle','both']){
+    const guests=unit==='both'?10:unit==='geranium'?4:6;
+    const arrivingOnOpening=check({unit,start:'2027-03-20',end:'2027-03-23',guests});
+    assert.ok(Array.isArray(arrivingOnOpening.nights),unit+' accepts March 20 arrival with a compliant 3-night stay');
+    const arrivingBeforeOpening=check({unit,start:'2027-03-19',end:'2027-03-22',guests});
+    assert.match(arrivingBeforeOpening.error,/outside the bookable season/,unit+' excludes pre-opening nights');
+  }
+});
 test('short stays respect low/shoulder/peak minimum stays',()=>{
   assert.equal(check({unit:'geranium',start:'2027-04-04',end:'2027-04-07',guests:4}).nights.length,3);
   assert.ok(check({unit:'geranium',start:'2027-06-10',end:'2027-06-14',guests:2}).error);
