@@ -83,6 +83,27 @@ node admin.mjs cancel <confirmed-booking-reference> "Refund discussed and record
 
 **Manually block** winter tenancies, maintenance closures, owner use and all confirmed Airbnb bookings before inviting direct requests. Every manual block is written in **one atomic DynamoDB transaction**; the tool refuses blocks of more than 99 **cottage-nights**. Divide winter tenancies into consecutive monthly blocks. The host must verify any confirmed Airbnb booking and winter let against the master calendar before opening direct requests. There is no public administration endpoint.
 
+## Reservation origin and read-only Airbnb reconciliation
+
+Every guest booking request now receives `source=direct` and a separate `reservationStatus` (e.g. PENDING_REVIEW / AWAITING_PAYMENT / CONFIRMED). The DynamoDB `status` controls the actual reservation hold and remains authoritative.
+
+Existing `BLOCKED` records must be **classified in place** using `node admin.mjs classify ID SOURCE RESERVATION_STATUS [EXTERNAL_REF]`. This updates only the booking metadata item (never a cottage date slot). Supported sources include `airbnb`, `direct`, `owner`, `winter-let`, and `maintenance`. Classify confirmed Airbnb bookings as `airbnb CONFIRMED` and the held 28 August 2027 off-Airbnb booking as `direct RESERVED` until final payment/confirmation. **Do not re-create existing blocks.** If the external Airbnb reference is not known, omit it; do not invent a reference number. Reclassifying a record already assigned to another source is refused.
+
+Use local Airbnb exports and your isolated staging-table AWS credentials to run the **read-only** comparison. From the repository root:
+
+```powershell
+$env:AWS_PROFILE = "default"
+$env:AWS_REGION = "eu-west-2"
+$env:BOOKING_ENVIRONMENT = "staging"
+$env:BOOKINGS_TABLE = "<actual deployed STAGING DynamoDB table>"
+node services/booking-api/reconcile-airbnb.mjs geranium "$HOME\Downloads\LesButtesCalendars\geranium.ics" 2027-03-20 2027-10-02
+node services/booking-api/reconcile-airbnb.mjs honeysuckle "$HOME\Downloads\LesButtesCalendars\honeysuckle.ics" 2027-03-20 2027-10-02
+```
+
+The end date is **exclusive**. The report separates matching Airbnb-source dates, Airbnb-only blocks missing from our master, master Airbnb blocks missing from Airbnb, still-unclassified master records, and other-source (especially direct-booking) blocks in Airbnb's export. **No AWS writes are made** by this report. A date disappearing from the Airbnb iCalendar must **never** automatically cancel the master reservation; always compare with actual Airbnb reservation status, and never overwrite a direct booking. Airbnb calendar updates and imports are delayed.
+
+**Important:** The five 2027 Airbnb bookings and one both-cottage direct reservation have already been entered into the test table as six `BLOCKED` records. Classification commands for their exact IDs are provided in the accompanying project conversation, not hardcoded in this repository. The two cancelled synthetic test records need no classification.
+
 ## Availability calendar and guest privacy
 
 - All availability checks revalidate server-side. The client 27-night limit is for UX only.
