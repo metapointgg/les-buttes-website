@@ -48,13 +48,7 @@ const properties=[
             {[1,2,3,4,5].map(n=><option value={n}>{n}</option>)}
           </select>
         </label>
-        <label>{t.cottages}
-          <select name="choice">
-            <option value="any">{t.anyCottage}</option>
-            <option value="both">{t.both}</option>
-          </select>
-        </label>
-        <button type="submit" class="button discover-search-button">{t.continueChoose}</button>
+<button type="submit" class="button discover-search-button">{t.continueChoose}</button>
       </div>
     </form>
           <p class="discover-feedback" data-discovery-feedback role="status" aria-live="polite">{t.nothing}</p>
@@ -75,6 +69,13 @@ const properties=[
         <p class="eyebrow">02 / 04</p><h2 id="journey-two-heading">{t.stepChoose}</h2>
         <p data-journey-selection></p>
         <button class="journey-text-button" type="button" data-back-to-filter>{t.editSearch}</button>
+      </div>
+      <div class="journey-actions journey-actions-top">
+        <button type="button" class="button button-secondary" data-back-to-filter>{t.back}</button>
+        <div>
+          <p class="journey-action-note" data-selection-feedback role="status">{t.chooseHint}</p>
+          <button type="button" class="button" data-continue-review disabled>{t.continueReview}</button>
+        </div>
       </div>
               <section class="discover-results" aria-labelledby="discover-results-title">
           <div class="discover-section-heading">
@@ -124,13 +125,7 @@ const properties=[
           <p class="discover-calendar-message" data-calendar-message role="status" aria-live="polite"></p>
           <p class="discover-snapshot-note">{t.notConfirmed}</p>
         </section>
-      <div class="journey-actions">
-        <button type="button" class="button button-secondary" data-back-to-filter>{t.back}</button>
-        <div>
-          <p class="journey-action-note" data-selection-feedback role="status">{t.chooseHint}</p>
-          <button type="button" class="button" data-continue-review disabled>{t.continueReview}</button>
-        </div>
-      </div>
+
     </section>
     <section class="journey-screen" data-booking-step="3" aria-labelledby="journey-three-heading" hidden>
       <div class="journey-stage-heading">
@@ -232,6 +227,7 @@ const properties=[
 .discover-dot-possible{background:#fff;border:1px solid #b9c8bb}
 .discover-dot-blocked{background:#e5e5e5;border:1px solid #d1d1d1}
 .discover-dot-selected{background:var(--green)}
+.journey-actions-top{position:sticky;top:0;z-index:5;background:#fff;padding:.75rem 0;border-bottom:1px solid var(--line)}
 .discover-calendar-grids,.discover-calendar-grids.two-cottages{display:grid;grid-template-columns:1fr;gap:1.25rem}
 .discover-calendar-grids :global(.calendar-cottage-title){font-size:1.03rem;margin:0 0 .7rem}
 .discover-calendar-grids :global(.calendar-two-months){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(.65rem,2vw,1.3rem)}
