@@ -66,6 +66,7 @@ async function putBlock(unit,start,end,label){
 }
 async function main(){
   if(!table)fail('Set BOOKINGS_TABLE to the deployed DynamoDB table name');
+  if(process.env.BOOKING_ENVIRONMENT==='staging' && !table.includes('staging') && !table.includes('Staging'))fail('Staging CLI refuses tables without staging in the name');
   if(command==='list'){
     let last;let count=0;
     do{
@@ -79,7 +80,10 @@ async function main(){
   }else if(command==='approve'){
     const [id,amount,link,...reasonParts]=args;
     if(!id||!amount||!Number.isFinite(Number(amount))||Number(amount)<=0||!link)fail('Usage: approve ID AMOUNT_GBP SUMUP_PAYMENT_URL');
-    const u=new URL(link);if(u.protocol!=='https:'||u.hostname!=='pay.sumup.com'||u.username||u.password)fail('Expected official HTTPS pay.sumup.com payment link');
+    const u=new URL(link);
+    const staging=process.env.BOOKING_ENVIRONMENT==='staging';
+    const approvedHost=staging ? 'test.invalid' : 'pay.sumup.com';
+    if(u.protocol!=='https:'||u.hostname!==approvedHost||u.username||u.password)fail('Expected '+approvedHost+' HTTPS link');
     const bookingRecord=await booking(id);
     const expectedAmount=Number(bookingRecord.quote?.totalGBP);
     const priceChanged=Math.abs(expectedAmount-Number(amount))>0.0001;
@@ -100,6 +104,8 @@ async function main(){
   }else if(command==='confirm'){
     const [id,paymentReference]=args;
     if(!paymentReference||paymentReference.length<6)fail('Usage: confirm ID VERIFIED_SUMUP_PAYMENT_REFERENCE');
+    if(process.env.BOOKING_ENVIRONMENT==='staging' && !paymentReference.startsWith('TEST-'))fail('Staging confirmations must use TEST- payment references');
+    if(process.env.BOOKING_ENVIRONMENT!=='staging' && paymentReference.startsWith('TEST-'))fail('Synthetic payment references cannot confirm live bookings');
     await change(id,'APPROVED_AWAITING_PAYMENT','CONFIRMED',{paymentReference,confirmedAt:new Date().toISOString()});
     console.log('Confirmed; the calendar now blocks these nights permanently. Send confirmation email.');
   }else if(command==='decline'){
