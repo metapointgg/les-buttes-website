@@ -63,7 +63,11 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/fetch\('http:\/\/127\.0\.0\.1:4328\/availability'/);
   assert.doesNotMatch(discoveryScript,/\/requests['`]/); // never send a booking request
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
-  assert.doesNotMatch(discovery,/name="email"/);
+  assert.match(discovery,/data-preview-guest-details/);
+  assert.match(discovery,/name="email"/);
+  assert.match(discovery,/disabled aria-disabled="true"/);
+  assert.doesNotMatch(discovery,/data-api=/);
+  assert.match(discoveryScript,/detailsForm\.addEventListener\('submit',event=>event\.preventDefault\(\)\)/);
   assert.match(page,/data-mode="live"/);
   assert.match(script,/if\(form\.dataset\.mode==='preview'\)/);
   assert.match(script,/previewBookingQuote/);
@@ -123,4 +127,29 @@ test('local master bridge binds only loopback, enforces staging table, and has n
   assert.match(script,/ORIGINS\.has\(origin\)/);
   assert.match(script,/masterOccupied/);
   assert.doesNotMatch(script,/TransactWriteCommand|UpdateCommand|PutCommand|DeleteCommand|SendEmailCommand/);
+});
+
+test('hidden booking journey has four separate navigable steps and cannot confirm a booking',()=>{
+  const page=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
+  const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+  for(const n of [1,2,3,4])assert.match(page,new RegExp('data-booking-step="'+n+'"'));
+  assert.match(page,/data-journey-indicator/);
+  assert.match(page,/data-discovery-search/);
+  assert.match(page,/data-discovery-options/);
+  assert.match(page,/data-discovery-summary/);
+  assert.match(page,/data-preview-guest-details/);
+  assert.match(page,/data-continue-review disabled/);
+  assert.match(page,/data-continue-details/);
+  assert.match(page,/data-back-to-filter/);
+  assert.match(page,/data-back-to-cottages/);
+  assert.match(page,/data-back-to-review/);
+  assert.match(page,/data-journey-selection/);
+  assert.match(script,/setStep\(2\)/);
+  assert.match(script,/setStep\(3\)/);
+  assert.match(script,/setStep\(4\)/);
+  assert.match(script,/getQuote\(\)/);
+  assert.match(script,/await refreshMaster\(\)/);
+  assert.doesNotMatch(script,/sessionStorage|localStorage|navigator\.sendBeacon|\/requests['`]/);
+  assert.match(page,/data-preview-guest-details[^>]*novalidate autocomplete="off"/);
+  assert.match(page,/disabled aria-disabled="true"/);
 });
