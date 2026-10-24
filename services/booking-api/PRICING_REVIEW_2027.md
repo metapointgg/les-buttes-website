@@ -51,9 +51,32 @@ Rates are composed as **non-overlapping inclusive date ranges**; there is exactl
 
 The season contains **196 occupied nights per cottage**. At 100% paid occupancy, these proposed rates imply a purely theoretical gross accommodation-price ceiling of **£43,390 for Geranium and £49,080 for Honeysuckle**, or £92,470 combined, before vacancies, fees, concessions and operating costs. This is **not** an occupancy/revenue prediction.
 
+## Geranium — Airbnb host-calendar prices confirmed from March–October screenshots
+
+On 24 October 2026, the host supplied readable **month-by-month screenshots of Geranium's actual 2027 Airbnb host calendar**. The host confirms the listed **in-season nightly rates already incorporate the Airbnb service-fee price adjustment**. In-season monthly Airbnb baseline:
+
+| Occupied nights | Geranium Airbnb nightly GBP | Previous revised Option B |
+| --- | ---: | --- |
+| 20–31 March | £185 | £185–£205 |
+| 1–30 April | £185 | £185–£205 |
+| 1–31 May | £205 | £205–£225 |
+| 1–30 June | £215 | £215–£225 |
+| 1–31 July | £235 | £235–£250 |
+| 1–31 August | £250 | £260 |
+| 1–30 September | £210 | £210–£235 |
+| 1 October (final in-season night) | £210 | £185 |
+
+Some occupied Airbnb-booking date cells are obscured by booking overlays, so do not present the screenshots as independent proof of every individual booked-date price. Calendar months otherwise show uniform displayed rates. Greyed-out dates before March 20 and from October 2 onwards are *not* holiday-bookable, even where Airbnb displays a price.
+
+**Important confirmed match:** The existing Geranium 28 August–4 September off-Airbnb held week corresponds to 4 × £250 (28–31 August) plus 3 × £210 (1–3 September) = **£1,630 exactly**, matching the historical Airbnb quote. The revised proposal calculates **£1,745** for that week (difference +£115), showing that its proposed August/September overlays are genuine *additional price changes*, not existing Airbnb pricing. Do not revise the returning guest's direct booking from the new proposal.
+
+The observed Geranium listing base gives a theoretical full-occupancy 196-night gross ceiling of **£42,120** versus **£43,390** under the earlier proposed overlays, a **£1,270** increase. This is not a forecast and excludes fees, discounts, vacancies and other costs.
+
+Machine-readable screenshot transcription: [config/observed-airbnb-geranium-2027.json](config/observed-airbnb-geranium-2027.json). It is **NOT an approved production rate file**. Honeysuckle's month-by-month screenshots must be reviewed before approving direct booking prices or margins.
+
 ## 4. Airbnb fee-adjusted calendar cross-check — REQUIRED BEFORE APPROVAL
 
-On 24 October 2026, the host supplied two long Airbnb calendar screenshots for Geranium and Honeysuckle. **The host confirms in-season Airbnb rates were already adjusted for Airbnb's 2026 single-service-fee transition. Do NOT add another fee uplift.** The screenshots are only 207–208 pixels wide in this conversation; individual daily GBP figures cannot be safely transcribed. No actual calendar-night prices have been imported into this price proposal.
+On 24 October 2026, the host supplied two long Airbnb calendar screenshots for Geranium and Honeysuckle. **The host confirms in-season Airbnb rates were already adjusted for Airbnb's 2026 single-service-fee transition. Do NOT add another fee uplift.** The original compressed screenshots were unreadable, but subsequent full-width **Geranium** screenshots were readable and transcribed into the separate observed-listing baseline above. **Honeysuckle's readable monthly screenshots have not yet been received.** No live pricing has been changed.
 
 Sources: [Airbnb, simplifying service fees (Oct 2026)](https://www.airbnb.com/resources/hosting-homes/a/simplifying-airbnb-service-fees-746) and [Airbnb, one-time price adjustment tool](https://www.airbnb.com/help/article/4095). Airbnb's typical single host fee is **15.5%**, deducted from the configured guest-facing accommodation price (exceptions/taxes possible). At the time of comparison, [SumUp UK Payment Links fees](https://help.sumup.com/en-GB/articles/1bTBfAoe7SiaKiUxCo2uzP-payment-links-faq) are **2.5%** on a completed remotely paid transaction, subject to confirming the actual merchant account.
 
