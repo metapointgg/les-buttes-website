@@ -34,7 +34,774 @@ if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*\r?$').Count -ne 1 -or
 }
 $new=$original
 # Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*\r?), @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*\r?), @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1){throw 'Unexpected duplicate BookingTable definitions.'}
+$original=$resourceMatch.Value
+if($original -match 'GlobalSecondaryIndexes:|GSI1PK|GSI1SK'){throw 'Index attributes already present in deployed template.'}
+if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*\r?).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
 $new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+, @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1){throw 'Unexpected duplicate BookingTable definitions.'}
+$original=$resourceMatch.Value
+if($original -match 'GlobalSecondaryIndexes:|GSI1PK|GSI1SK'){throw 'Index attributes already present in deployed template.'}
+if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*\r?).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+, @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1){throw 'Unexpected duplicate BookingTable definitions.'}
+$original=$resourceMatch.Value
+if($original -match 'GlobalSecondaryIndexes:|GSI1PK|GSI1SK'){throw 'Index attributes already present in deployed template.'}
+if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*\r?).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+).Count -ne 1){
+    throw 'Unexpected BookingTable structure; manual review required.'
+}
+$new=$original
+# Preserve the exact deployed template apart from these two insertions.
+$new=$new -replace '(?m)^(      KeySchema:[ \t]*)$', @'
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+$1
+'@
+$new=$new -replace '(?m)^(      TimeToLiveSpecification:[ \t]*)$', @'
+      GlobalSecondaryIndexes:
+      - IndexName: BookingRequestsIndex
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: INCLUDE
+          NonKeyAttributes:
+          - id
+          - start
+          - end
+          - units
+          - status
+          - guests
+          - requestedAt
+$1
+'@
+if($new -eq $original){throw 'No changes produced.'}
+$updated=$template.Substring(0,$resourceMatch.Index)+$new+$template.Substring($resourceMatch.Index+$resourceMatch.Length)
+$parameters=@($stack.Parameters|ForEach-Object { @{ParameterKey=$_.ParameterKey;UsePreviousValue=$true} })
+$stamp=[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$changeSet="booking-index-only-$stamp"
+$templateFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-index-"+[Guid]::NewGuid().ToString('N')+".yaml")
+$paramsFile=Join-Path ([IO.Path]::GetTempPath()) ("lb-deployed-params-"+[Guid]::NewGuid().ToString('N')+".json")
+$utf8=New-Object System.Text.UTF8Encoding($false)
+try{
+    [IO.File]::WriteAllText($templateFile,$updated,$utf8)
+    [IO.File]::WriteAllText($paramsFile,($parameters|ConvertTo-Json -Depth 4),$utf8)
+    & aws cloudformation create-change-set --stack-name $StackName --change-set-name $changeSet --change-set-type UPDATE --template-body "file://$templateFile" --parameters "file://$paramsFile" --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --description 'Existing deployed template plus BookingRequestsIndex only; do not execute without change review' --profile $Profile --region $Region --output json
+    if($LASTEXITCODE -ne 0){throw 'Change set creation failed; AWS stack was not updated.'}
+}finally{
+    Remove-Item $templateFile,$paramsFile -ErrorAction SilentlyContinue
+}
+Write-Host "Prepared NOT EXECUTED: $changeSet"
+Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Replacement False.'
+Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
+, @'
       - AttributeName: GSI1PK
         AttributeType: S
       - AttributeName: GSI1SK
