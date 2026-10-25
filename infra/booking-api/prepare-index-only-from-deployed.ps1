@@ -24,12 +24,12 @@ $template=($templateJson|ConvertFrom-Json).TemplateBody
 if($template -isnot [string]){throw 'Expected deployed YAML template as a string; refusing conversion.'}
 $resourceMatch=[regex]::Match($template,'(?ms)^  BookingTable:[ \t]*\r?\n(?<content>.*?)(?=^  [A-Za-z][A-Za-z0-9]*:[ \t]*\r?$)')
 if(-not $resourceMatch.Success){throw 'Could not uniquely locate BookingTable resource.'}
-if([regex]::Matches($template,'(?m)^  BookingTable:[ \t]*\r?).Count -ne 1){throw 'Unexpected duplicate BookingTable definitions.'}
+if([regex]::Matches($template,'(?m)^  BookingTable:[ \t]*\r?$').Count -ne 1){throw 'Unexpected duplicate BookingTable definitions.'}
 $original=$resourceMatch.Value
 if($original -match 'GlobalSecondaryIndexes:|GSI1PK|GSI1SK'){throw 'Index attributes already present in deployed template.'}
-if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*$').Count -ne 1 -or
-   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*$').Count -ne 1 -or
-   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*$').Count -ne 1){
+if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*\r?).Count -ne 1 -or).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
     throw 'Unexpected BookingTable structure; manual review required.'
 }
 $new=$original
@@ -84,8 +84,8 @@ Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
 $original=$resourceMatch.Value
 if($original -match 'GlobalSecondaryIndexes:|GSI1PK|GSI1SK'){throw 'Index attributes already present in deployed template.'}
 if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*\r?).Count -ne 1 -or
-   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*$').Count -ne 1 -or
-   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*$').Count -ne 1){
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or).Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
     throw 'Unexpected BookingTable structure; manual review required.'
 }
 $new=$original
@@ -138,7 +138,7 @@ Write-Host 'Review the complete change set. EXPECT ONLY BookingTable Modify Repl
 Write-Host 'If ANY other resource changes, DO NOT EXECUTE.'
 ).Count -ne 1 -or
    [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or
-   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*$').Count -ne 1){
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
     throw 'Unexpected BookingTable structure; manual review required.'
 }
 $new=$original
