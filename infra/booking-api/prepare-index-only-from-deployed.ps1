@@ -27,9 +27,9 @@ if(-not $resourceMatch.Success){throw 'Could not uniquely locate BookingTable re
 if([regex]::Matches($template,'(?m)^  BookingTable:[ \t]*\r?$').Count -ne 1){throw 'Unexpected duplicate BookingTable definitions.'}
 $original=$resourceMatch.Value
 if($original -match 'GlobalSecondaryIndexes:|GSI1PK|GSI1SK'){throw 'Index attributes already present in deployed template.'}
-if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*\r?).Count -ne 1 -or).Count -ne 1 -or
-   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?).Count -ne 1 -or).Count -ne 1 -or
-   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?).Count -ne 1){).Count -ne 1){
+if([regex]::Matches($original,'(?m)^      KeySchema:[ \t]*\r?$').Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      AttributeDefinitions:[ \t]*\r?$').Count -ne 1 -or
+   [regex]::Matches($original,'(?m)^      TimeToLiveSpecification:[ \t]*\r?$').Count -ne 1){
     throw 'Unexpected BookingTable structure; manual review required.'
 }
 $new=$original
