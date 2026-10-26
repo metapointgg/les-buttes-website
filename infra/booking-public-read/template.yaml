@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Les Buttes isolated public read-only staging booking preview API (no booking writes).
+Parameters:
+  ExistingStagingTable:
+    Type: String
+    AllowedPattern: '^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$'
+  PreviewOrigin:
+    Type: String
+    Default: http://localhost:4321
+    AllowedPattern: '^https?://[a-zA-Z0-9.:-]+$'
+Resources:
+  ReadApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref PreviewOrigin]
+        AllowMethods: ['GET', 'OPTIONS']
+        AllowHeaders: ['content-type']
+        MaxAge: 60
+  ReadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: public-read-handler.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 12
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKINGS_TABLE: !Ref ExistingStagingTable
+          ALLOWED_PREVIEW_ORIGIN: !Ref PreviewOrigin
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: ['dynamodb:Query', 'dynamodb:GetItem']
+              Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}'
+      Events:
+        Availability:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ReadApi
+            Path: /availability
+            Method: GET
+        PublishedPrices:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ReadApi
+            Path: /published-pricing
+            Method: GET
+Outputs:
+  StagingReadUrl:
+    Description: Unauthenticated, origin-restricted staging read API. Do not place in production site builds.
+    Value: !Sub 'https://${ReadApi}.execute-api.${AWS::Region}.amazonaws.com'
