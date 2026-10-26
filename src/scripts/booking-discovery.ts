@@ -1,4 +1,4 @@
-import {canPickCheckout,clearMasterAvailability,daysForMonth,indicativeSelection,masterCheckedAt,masterConnected,matchingOptions,nightsInRange,plusDays,possibleNight,setMasterAvailability,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
+import {canPickCheckout,clearMasterAvailability,clearPublishedPricing,daysForMonth,publishedQuote,publishedPricingConnected,setPublishedPricing,masterCheckedAt,masterConnected,matchingOptions,nightsInRange,plusDays,possibleNight,setMasterAvailability,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
 
 const widget=document.querySelector<HTMLElement>('[data-discovery]');
 if(widget){
@@ -49,16 +49,16 @@ if(widget){
   const saturday=(d:string)=>new Date(d+'T00:00:00Z').getUTCDay()===6;
   const weekly=(start:string,end:string)=>{try{const n=nightsInRange(start,end).length;return saturday(start)&&saturday(end)&&n%7===0;}catch{return false;}};
   const getQuote=()=>{
-    if(!masterConnected()||!choice||!arrival.value||!departure.value||!weekly(arrival.value,departure.value))return null;
-    try{return indicativeSelection(choice,arrival.value,departure.value,filters);}
+    if(!masterConnected()||!publishedPricingConnected()||!choice||!arrival.value||!departure.value||!weekly(arrival.value,departure.value))return null;
+    try{return publishedQuote(choice,arrival.value,departure.value,filters);}
     catch{return null;}
   };
   const updateNext=()=>{
     const q=getQuote();
-    reviewNext.disabled=!q||!q.meetsDraftMinimum;
+    reviewNext.disabled=!q||!q.meetsMinimum;
     const note=widget.querySelector<HTMLElement>('[data-selection-feedback]');
     if(note)note.textContent=!masterConnected()?tr('masterOffline'):
-      !q?tr('datesNeeded'):!q.meetsDraftMinimum?tr('tooShort'):tr('minimumOkay');
+      !q?tr('datesNeeded'):!q.meetsMinimum?tr('tooShort'):tr('minimumOkay');
     const searchSummary=widget.querySelector<HTMLElement>('[data-journey-selection]');
     if(searchSummary)searchSummary.textContent=filters.adults+' '+tr('adults')+' · '+filters.children+' '+tr('children')+
       (arrival.value&&departure.value?' · '+rangeLabel(arrival.value,departure.value):'');
@@ -75,7 +75,7 @@ if(widget){
   async function refreshMaster(){
     const request=++fetchSequence;
     // Never put staging credentials in a web bundle or contact users' local ports on hosted sites.
-    if(!localPreview){clearMasterAvailability();return false;}
+    if(!localPreview){clearMasterAvailability();clearPublishedPricing();return false;}
     try{
       const response=await fetch('http://127.0.0.1:4328/availability',{
         method:'GET',cache:'no-store',signal:AbortSignal.timeout(8000)
@@ -84,13 +84,20 @@ if(widget){
       const data:unknown=await response.json();
       if(request!==fetchSequence)return false;
       setMasterAvailability(data);
+      const pricesResponse=await fetch('http://127.0.0.1:4328/published-pricing',{
+        method:'GET',cache:'no-store',signal:AbortSignal.timeout(8000)
+      });
+      if(!pricesResponse.ok)throw Error('publishedPricingUnavailable');
+      const prices:unknown=await pricesResponse.json();
+      if(request!==fetchSequence)return false;
+      setPublishedPricing(prices);
       fill('[data-master-status]',tr('liveMaster')+' '+new Intl.DateTimeFormat(lang,{
         hour:'2-digit',minute:'2-digit',timeZone:'Europe/Guernsey'
       }).format(new Date(masterCheckedAt()!)));
       return true;
     }catch{
       if(request===fetchSequence){
-        clearMasterAvailability();
+        clearMasterAvailability();clearPublishedPricing();
         fill('[data-master-status]',tr('masterOffline'));
       }
       return false;
@@ -150,22 +157,22 @@ if(widget){
     summarySection.hidden=true;
     if(!masterConnected()||!choice||!arrival.value||!departure.value)return;
     try{
-      const quote=indicativeSelection(choice,arrival.value,departure.value,filters);
+      const quote=publishedQuote(choice,arrival.value,departure.value,filters);
       summaryLines.replaceChildren();
       for(const item of quote.units){
         const row=document.createElement('div');row.className='summary-line';
         const name=document.createElement('span'),price=document.createElement('strong');
         name.textContent=item.unit==='geranium'?'Geranium':'Honeysuckle';
-        price.textContent=money(item.indicativeDirectGBP);
+        price.textContent=money(item.priceGBP);
         row.append(name,price);summaryLines.appendChild(row);
       }
       fill('[data-summary-stay]',rangeLabel(quote.start,quote.end)+' · '+quote.nights+' '+tr('nightWord')+' · '+(quote.adults+quote.children)+' '+tr('guestWord'));
-      fill('[data-summary-airbnb]',money(quote.airbnbTotalGBP));
-      fill('[data-summary-direct]',money(quote.indicativeDirectTotalGBP));
-      fill('[data-summary-saving]',money(quote.guestSavingGBP)+' ('+quote.guestSavingPercent+'%)');
-      fill('[data-summary-minimum]',tr('minimum')+': '+quote.draftMinimumNights+' '+tr('nightWord')+'. '+(quote.meetsDraftMinimum?tr('minimumOkay'):tr('tooShort')));
+      fill('[data-summary-airbnb]','—');
+      fill('[data-summary-direct]',money(quote.totalGBP));
+      fill('[data-summary-saving]','—');
+      fill('[data-summary-minimum]',tr('minimum')+': '+quote.minimumNights+' '+tr('nightWord')+'. '+(quote.meetsMinimum?tr('minimumOkay'):tr('tooShort')));
       summarySection.hidden=false;
-      if(!quote.meetsDraftMinimum)calendarMessage.textContent=tr('tooShort');
+      if(!quote.meetsMinimum)calendarMessage.textContent=tr('tooShort');
     }catch(error){
       if(error instanceof Error&&error.message==='occupied')calendarMessage.textContent=tr('blocked');
     }
@@ -290,18 +297,18 @@ if(widget){
     if(!await refreshMaster()){updateResults();return;}
     updateResults();
     const quote=getQuote();
-    if(!quote||!quote.meetsDraftMinimum)return;
+    if(!quote||!quote.meetsMinimum)return;
     setStep(3);
   });
   onClick('[data-continue-details]',async()=>{
     if(!await refreshMaster()){updateResults();setStep(2);return;}
     updateResults();
     const q=getQuote();
-    if(!q||!q.meetsDraftMinimum){setStep(2);return;}
+    if(!q||!q.meetsMinimum){setStep(2);return;}
     fill('[data-details-cottage]',q.units.map(item=>item.unit==='geranium'?'Geranium':'Honeysuckle').join(' + '));
     fill('[data-details-stay]',rangeLabel(q.start,q.end)+' · '+q.nights+' '+tr('nightWord'));
     fill('[data-details-guests]',String(q.adults+q.children));
-    fill('[data-details-price]',money(q.indicativeDirectTotalGBP));
+    fill('[data-details-price]',money(q.totalGBP));
     setStep(4);
   });
   // Preview details never leave the browser: no POST/fetch, booking request, session
