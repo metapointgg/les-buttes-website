@@ -1,95 +1,139 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import geranium from '../../assets/images/cottages/geranium/exterior.jpg';
+import honeysuckle from '../../assets/images/cottages/honeysuckle/exterior.jpg';
 ---
-<BaseLayout title="Plan your stay | Les Buttes Holiday Cottages" description="Explore a stay in Geranium or Honeysuckle at Les Buttes, Guernsey." noindex localizedAlternates={false}>
-<section class="section paper">
- <div class="wrap" style="max-width:920px">
+<BaseLayout title="Find your cottage | Les Buttes Holiday Cottages" description="Plan a stay in Geranium, Honeysuckle or both at Les Buttes in Guernsey." noindex localizedAlternates={false}>
+<section class="section paper booking-shell">
+ <div class="wrap" style="max-width:1080px">
   <p class="eyebrow">Your stay at Les Buttes</p>
   <h1>Find your cottage</h1>
-  <p>Choose dates and guests, then explore Geranium, Honeysuckle or both. This preview is not yet connected to live reservations and cannot accept bookings.</p>
-  <div id="booking-journey" class="booking-journey" data-ready="false">
-   <nav aria-label="Booking steps" class="journey-progress"><span data-progress="1" aria-current="step">1. Search</span><span data-progress="2">2. Cottages</span><span data-progress="3">3. Summary</span><span data-progress="4">4. Details</span></nav>
-   <form id="booking-search" class="journey-section">
-    <h2>When would you like to stay?</h2>
-    <div class="journey-fields">
-     <label>Check-in<input type="date" name="checkIn" required min="2027-03-20" max="2027-10-01"/></label>
-     <label>Check-out<input type="date" name="checkOut" required min="2027-03-21" max="2027-10-02"/></label>
-     <label>Adults<input type="number" name="adults" required min="1" max="10" value="2"/></label>
-     <label>Children<input type="number" name="children" required min="0" max="9" value="0"/></label>
-     <label>Bedrooms needed<input type="number" name="rooms" min="0" max="5" value="0"/><small>Optional; 0 means no preference</small></label>
-    </div>
-    <button class="button" type="submit">Explore cottages</button>
-   </form>
-   <section class="journey-section" id="journey-options" hidden aria-live="polite">
-    <h2>Choose your cottage</h2>
-    <p>These combinations meet your guest and bedroom requirements. Availability and prices cannot be confirmed until the booking master connection is enabled.</p>
-    <div id="journey-cottage-list"></div>
-    <button type="button" id="journey-back">Edit search</button>
+  <p class="booking-intro">A little more time to settle in. Explore our cottages and plan your Guernsey escape.</p>
+  <p class="preview-alert" role="note">Booking journey preview · Availability and prices are not yet connected to the booking master. No reservation can be made here.</p>
+  <div id="booking-journey">
+   <nav class="journey-steps" aria-label="Booking steps">
+    <span data-progress="1" aria-current="step"><b>1</b> Your stay</span><span data-progress="2"><b>2</b> Choose cottages</span><span data-progress="3"><b>3</b> Review</span><span data-progress="4"><b>4</b> Your details</span>
+   </nav>
+   <section id="step-search" class="journey-panel" aria-labelledby="search-heading">
+    <div class="journey-heading"><p class="eyebrow">Step 1</p><h2 id="search-heading">When would you like to stay?</h2><p>Choose your dates, then tell us who's coming.</p></div>
+    <div class="booking-dates"><div class="selected-dates"><div><small>Check-in</small><strong id="checkin-label">Choose a date</strong></div><span aria-hidden="true">—</span><div><small>Check-out</small><strong id="checkout-label">Choose a date</strong></div></div><div class="month-navigation"><button type="button" id="prev-month" aria-label="Previous month">‹</button><strong id="month-range"></strong><button type="button" id="next-month" aria-label="Next month">›</button></div></div>
+    <div id="calendar-pair" class="calendar-pair" aria-label="Select check-in and check-out dates"></div>
+    <p class="calendar-key"><span class="swatch available"></span> Dates to explore <span class="swatch selected"></span> Check-in / check-out <span class="swatch between"></span> Selected stay <span class="swatch blocked"></span> Outside operating season</p>
+    <p class="muted">White dates have not yet been checked against existing bookings. Booked dates will appear grey once availability is connected. Check-out is exclusive.</p>
+    <form id="booking-search" class="guest-search">
+     <div class="guest-grid"><label>Adults <input type="number" name="adults" min="1" max="10" value="2" required/></label><label>Children <input type="number" name="children" min="0" max="9" value="0" required/></label><label>Bedrooms <select name="rooms"><option value="0">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5</option></select></label></div>
+     <div class="journey-actions"><button class="button" type="submit">Find my cottage</button></div>
+    </form>
    </section>
-   <section class="journey-section" id="journey-summary" hidden aria-live="polite">
-    <h2>Your stay summary</h2>
-    <div id="journey-summary-content"></div>
-    <p>Booking prices, minimum stays and reserved dates must be checked against the published booking master before a request can proceed.</p>
-    <button type="button" id="journey-summary-back">Change cottages</button>
+   <section id="step-cottages" class="journey-panel" hidden>
+    <div class="journey-heading"><p class="eyebrow">Step 2</p><h2>Choose your cottage</h2><p id="search-recap"></p></div>
+    <div id="cottage-choices" class="cottage-choices"></div>
+    <p class="muted">These options are based on guest and bedroom capacity only. Booking availability and rates are not yet verified.</p>
+    <div class="journey-actions"><button class="secondary-action" type="button" data-back="1">Change dates or guests</button></div>
    </section>
-   <section class="journey-section" id="journey-details" hidden>
-    <h2>Guest details and confirmation</h2>
-    <p>Booking requests will become available only after server-side availability, quote validation and safe guest-data processing are implemented.</p>
+   <section id="step-summary" class="journey-panel" hidden>
+    <div class="journey-heading"><p class="eyebrow">Step 3</p><h2>Your stay at a glance</h2></div>
+    <div class="summary-layout"><div id="summary-details"></div><div class="summary-price"><p class="eyebrow">Price summary</p><strong>Awaiting verified prices</strong><p>Published nightly rates and reserved dates must be retrieved from the booking master.</p><p>No payment is requested.</p></div></div>
+    <div class="journey-actions"><button class="secondary-action" type="button" data-back="2">Change cottage</button><button class="button" type="button" id="to-details">View next step</button></div>
    </section>
-   <p id="journey-notice" role="status" aria-live="polite"></p>
+   <section id="step-details" class="journey-panel" hidden>
+    <div class="journey-heading"><p class="eyebrow">Step 4</p><h2>Almost there</h2></div>
+    <p>Once the secure booking API has been connected and tested, you'll be able to provide your details and submit a booking request here.</p>
+    <p class="preview-alert">Guest details and booking submissions are disabled in this preview.</p>
+    <div class="journey-actions"><button class="secondary-action" type="button" data-back="3">Back to summary</button></div>
+   </section>
+   <p id="booking-message" role="status" aria-live="polite"></p>
   </div>
  </div>
 </section>
+<div id="cottage-photo-templates" hidden aria-hidden="true">
+ <div data-cottage-photo="geranium"><Image src={geranium} alt="Geranium cottage exterior" width={720} formats={['avif','webp']} /></div>
+ <div data-cottage-photo="honeysuckle"><Image src={honeysuckle} alt="Honeysuckle cottage and garden" width={720} formats={['avif','webp']} /></div>
+</div>
 </BaseLayout>
 <style>
-.booking-journey{margin-top:1.5rem}.journey-progress{display:flex;flex-wrap:wrap;gap:.7rem;margin-bottom:1.5rem}.journey-progress span{padding:.45rem .8rem;border:1px solid #d3d9d1;border-radius:20px;font-size:.9rem}.journey-progress [aria-current=step]{background:#bed4c3;color:#183c27;border-color:#759780}.journey-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin:1rem 0 1.5rem}.journey-fields label{display:grid;gap:.3rem}.journey-fields input{max-width:100%;width:100%;box-sizing:border-box;padding:.7rem;border:1px solid #9eaaa0;border-radius:6px}.journey-fields small{font-size:.8rem}.journey-section{border:1px solid #d3d9d1;border-radius:12px;padding:1.5rem}.journey-choice{border:1px solid #d3d9d1;border-radius:8px;padding:1rem;margin-bottom:.7rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}.journey-choice strong{display:block}
+.booking-shell h1{margin-bottom:.4em}.booking-intro{max-width:64ch}.preview-alert{padding:.9rem 1.2rem;border:1px solid #b5c5b6;border-radius:9px;background:#eef4ee;font-size:.92rem}.journey-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin:1.8rem 0}.journey-steps span{display:flex;align-items:center;gap:.55rem;padding:.8rem .65rem;color:#5c6961;border-bottom:2px solid #d9dfd8;font-size:.87rem}.journey-steps b{border-radius:50%;width:1.7rem;height:1.7rem;display:grid;place-items:center;background:#e9eee8;color:#234935}.journey-steps [aria-current=step]{font-weight:700;color:#173c2b;border-color:#456e50}.journey-steps [aria-current=step] b{background:#426d50;color:white}.journey-panel{border:1px solid #d5ddd2;border-radius:15px;background:#fffefa;padding:clamp(1rem,3vw,2.2rem)}.journey-panel[hidden]{display:none!important}.journey-heading h2{font-size:clamp(2rem,4vw,3.1rem);margin:.2rem 0 .5rem}.journey-heading p{margin-top:.3rem}.booking-dates{display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap;margin:1.5rem 0}.selected-dates{display:flex;align-items:center;gap:1.1rem}.selected-dates div{display:grid;gap:.2rem}.selected-dates small{color:#65746b}.selected-dates strong{font-size:1rem}.month-navigation{display:flex;align-items:center;gap:1rem}.month-navigation button{width:2.4rem;height:2.4rem;border:1px solid #bcc8be;border-radius:50%;background:transparent;font-size:1.5rem}.month-navigation button:disabled{opacity:.3}.month-navigation strong{font-size:.9rem;text-align:center}.calendar-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem}.calendar-month h3{text-align:center;font-size:1.1rem;margin:0 0 1rem}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.calendar-grid .weekday{font-size:.75rem;text-align:center;color:#627166;padding:.5rem 0}.calendar-day{aspect-ratio:1.12;min-height:38px;border:0;background:white;border-radius:5px;color:#24372c;font-size:.9rem;cursor:pointer}.calendar-day:not(:disabled):hover{outline:2px solid #527f5d;outline-offset:-2px}.calendar-day:focus-visible{outline:3px solid #203c2a}.calendar-day:disabled{color:#a8aaa8;background:#e8e8e6;cursor:not-allowed}.calendar-day.range-start,.calendar-day.range-end{background:#416d4d;color:white;border-radius:6px}.calendar-day.in-range{background:#bed4c3;border-radius:0}.calendar-day.empty{visibility:hidden}.calendar-key{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.1rem;font-size:.82rem;margin:1.5rem 0 .5rem}.swatch{display:inline-block;height:14px;width:14px;border:1px solid #d9dfd8;border-radius:3px;margin-right:-.7rem}.swatch.available{background:white}.swatch.selected{background:#416d4d}.swatch.between{background:#bed4c3}.swatch.blocked{background:#e8e8e6}.guest-search{margin-top:1.6rem}.guest-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}.guest-grid label{display:grid;gap:.4rem;font-weight:600}.guest-grid input,.guest-grid select{width:100%;min-width:0;padding:.75rem;border:1px solid #b9c6ba;border-radius:7px;background:white}.journey-actions{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1.7rem}.secondary-action{border:1px solid #aebeb1;padding:.8rem 1.2rem;border-radius:6px;background:transparent;color:#244332}.cottage-choices{display:grid;gap:1.1rem;margin-top:1.4rem}.choice-card{display:grid;grid-template-columns:minmax(180px,38%) 1fr;overflow:hidden;border:1px solid #d3dcd2;border-radius:12px;background:white}.choice-media{min-height:215px;background:#e6eee6;display:flex}.choice-media img{height:100%;width:100%;object-fit:cover}.choice-media.two{display:grid;grid-template-columns:1fr 1fr}.choice-content{padding:1.3rem;display:flex;flex-direction:column;align-items:flex-start;gap:.6rem}.choice-content h3{font-size:1.6rem;margin:0}.choice-content p{margin:0}.choice-details{font-size:.87rem;color:#536557}.choice-content .button{margin-top:auto}.summary-layout{display:grid;grid-template-columns:1fr minmax(210px,.7fr);gap:1.6rem;margin-top:1.2rem}.summary-price{padding:1.3rem;border-radius:10px;background:#f0f3ec}.summary-price strong{font-size:1.3rem}.muted{font-size:.88rem;color:#657268}@media(max-width:730px){.journey-steps{gap:.2rem}.journey-steps span{font-size:.7rem;display:grid;justify-items:center;text-align:center}.calendar-pair{gap:.8rem}.calendar-day{min-height:28px;font-size:.78rem}.calendar-grid{gap:1px}.choice-card{grid-template-columns:1fr}.choice-media{max-height:230px}.summary-layout{grid-template-columns:1fr}.guest-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:470px){.calendar-pair{grid-template-columns:1fr}.guest-grid{grid-template-columns:1fr}}
 </style>
 <script>
- import {COTTAGES} from '../../lib/booking-search.mjs';
- const form=document.querySelector<HTMLFormElement>('#booking-search')!;
- const options=document.querySelector<HTMLElement>('#journey-options')!;
- const summary=document.querySelector<HTMLElement>('#journey-summary')!;
- const list=document.querySelector<HTMLElement>('#journey-cottage-list')!;
- const note=document.querySelector<HTMLElement>('#journey-notice')!;
- const progress=[...document.querySelectorAll<HTMLElement>('[data-progress]')];
- let choice:string[]=[];
- let search:{checkIn:string;checkOut:string;adults:number;children:number;rooms:number}|null=null;
- function step(n:number){form.hidden=n!==1;options.hidden=n!==2;summary.hidden=n!==3;for(const p of progress){if(Number(p.dataset.progress)===n)p.setAttribute('aria-current','step');else p.removeAttribute('aria-current');}}
- form.addEventListener('submit',event=>{
-  event.preventDefault();note.textContent='';
-  if(!form.reportValidity())return;
-  const data=new FormData(form);
-  const checkIn=String(data.get('checkIn')),checkOut=String(data.get('checkOut'));
-  const adults=Number(data.get('adults')),children=Number(data.get('children')),rooms=Number(data.get('rooms'));
-  const nights=(Date.parse(checkOut+'T00:00:00Z')-Date.parse(checkIn+'T00:00:00Z'))/86400000;
-  if(!Number.isInteger(nights)||nights<1||nights>27||checkIn<'2027-03-20'||checkOut>'2027-10-02'){note.textContent='Select 1–27 nights within 20 March to 2 October 2027.';return;}
-  if(!Number.isInteger(adults)||adults<1||!Number.isInteger(children)||children<0||!Number.isInteger(rooms)||rooms<0){note.textContent='Enter valid guest and bedroom counts.';return;}
-  search={checkIn,checkOut,adults,children,rooms};
-  const guests=adults+children;
-  const configs=[['geranium'],['honeysuckle'],['geranium','honeysuckle']];
-  list.replaceChildren();
-  for(const units of configs){
-   const capacity=units.reduce((n,u)=>n+COTTAGES[u as keyof typeof COTTAGES].capacity,0);
-   const bedrooms=units.reduce((n,u)=>n+COTTAGES[u as keyof typeof COTTAGES].bedrooms,0);
-   if(guests>capacity||rooms>bedrooms)continue;
-   const item=document.createElement('div');item.className='journey-choice';
-   const info=document.createElement('div');const heading=document.createElement('strong');
-   heading.textContent=units.map(u=>COTTAGES[u as keyof typeof COTTAGES].name).join(' + ');
-   const desc=document.createElement('small');desc.textContent=bedrooms+' bedrooms · sleeps up to '+capacity+' · availability not yet checked';
-   info.append(heading,desc);
-   const button=document.createElement('button');button.type='button';button.textContent='Select';button.addEventListener('click',()=>{
-    choice=units;const target=document.querySelector<HTMLElement>('#journey-summary-content')!;
-    target.replaceChildren();
-    const title=document.createElement('p');title.textContent=units.map(u=>COTTAGES[u as keyof typeof COTTAGES].name).join(' + ');
-    const dates=document.createElement('p');dates.textContent=checkIn+' to '+checkOut+' · '+nights+' nights · '+guests+' guests';
-    const pricing=document.createElement('p');pricing.textContent='Total: awaiting verified published price and availability';
-    target.append(title,dates,pricing);step(3);
-   });
-   item.append(info,button);list.append(item);
+ import { COTTAGES } from '../../lib/booking-search.mjs';
+ const $=(s:string)=>document.querySelector<HTMLElement>(s)!;
+ const MIN='2027-03-20',MAX='2027-10-02';
+ const fmt=(s:string)=>new Date(s+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+ const iso=(d:Date)=>d.toISOString().slice(0,10);
+ const startDate=new Date(MIN+'T12:00:00Z');
+ let month=2,checkIn='',checkOut='',selection:string[]=[];
+ let guest={adults:2,children:0,rooms:0};
+ const cardPhotos:Record<string,HTMLElement>={};
+ for(const unit of ['geranium','honeysuckle'])cardPhotos[unit]=$('[data-cottage-photo="'+unit+'"]');
+ function updateDates(){$('#checkin-label').textContent=checkIn?fmt(checkIn):'Choose a date';$('#checkout-label').textContent=checkOut?fmt(checkOut):'Choose a date';}
+ function show(n:number){for(let i=1;i<=4;i++){const p=$('#step-'+['','search','cottages','summary','details'][i]);p.hidden=i!==n;const nav=$('[data-progress="'+i+'"]');if(i===n)nav.setAttribute('aria-current','step');else nav.removeAttribute('aria-current');}$('#booking-message').textContent='';}
+ function renderCalendar(){
+  const pair=$('#calendar-pair');pair.replaceChildren();const months=[month,month+1];
+  const title=(m:number)=>new Date(Date.UTC(2027,m,1)).toLocaleDateString('en-GB',{month:'long',year:'numeric',timeZone:'UTC'});
+  $('#month-range').textContent=title(month)+' – '+title(month+1);
+  ($('#prev-month') as HTMLButtonElement).disabled=month<=2;
+  ($('#next-month') as HTMLButtonElement).disabled=month>=8;
+  for(const m of months){
+   const begin=new Date(Date.UTC(2027,m,1)),count=new Date(Date.UTC(2027,m+1,0)).getUTCDate();
+   const box=document.createElement('div');box.className='calendar-month';
+   const heading=document.createElement('h3');heading.textContent=title(m);box.append(heading);
+   const grid=document.createElement('div');grid.className='calendar-grid';grid.setAttribute('role','group');grid.setAttribute('aria-label',title(m));
+   for(const w of ['M','T','W','T','F','S','S']){const e=document.createElement('span');e.className='weekday';e.textContent=w;grid.append(e);}
+   const pad=(begin.getUTCDay()+6)%7;
+   for(let i=0;i<pad;i++){const e=document.createElement('span');e.className='calendar-day empty';grid.append(e);}
+   for(let d=1;d<=count;d++){
+    const date=iso(new Date(Date.UTC(2027,m,d))),button=document.createElement('button');button.type='button';button.className='calendar-day';button.textContent=String(d);
+    button.setAttribute('aria-label',fmt(date));button.disabled=date<MIN||date>MAX;
+    if(date===checkIn)button.classList.add('range-start');
+    if(date===checkOut)button.classList.add('range-end');
+    if(checkIn&&checkOut&&date>checkIn&&date<checkOut)button.classList.add('in-range');
+    if(date===checkIn)button.setAttribute('aria-pressed','true');
+    if(date===checkOut)button.setAttribute('aria-pressed','true');
+    button.addEventListener('click',()=>{if(!checkIn||checkOut||date<=checkIn){checkIn=date;checkOut='';}else{checkOut=date;}updateDates();renderCalendar();});
+    grid.append(button);
+   }
+   box.append(grid);pair.append(box);
   }
-  if(!list.children.length){note.textContent='No cottage combination meets that guest and bedroom count.';return;}
-  step(2);
+ }
+ $('#prev-month').addEventListener('click',()=>{month=Math.max(2,month-1);renderCalendar()});
+ $('#next-month').addEventListener('click',()=>{month=Math.min(8,month+1);renderCalendar()});
+ const form=document.querySelector<HTMLFormElement>('#booking-search')!;
+ form.addEventListener('submit',e=>{
+  e.preventDefault();if(!form.reportValidity())return;
+  if(!checkIn||!checkOut){$('#booking-message').textContent='Please select check-in and check-out dates.';return;}
+  const nights=(Date.parse(checkOut)-Date.parse(checkIn))/86400000;
+  if(nights<1||nights>27){$('#booking-message').textContent='Please choose a stay of up to 27 nights.';return;}
+  const f=new FormData(form);guest={adults:Number(f.get('adults')),children:Number(f.get('children')),rooms:Number(f.get('rooms'))};
+  if(!Number.isInteger(guest.adults)||!Number.isInteger(guest.children)||guest.adults<1||guest.children<0){$('#booking-message').textContent='Check the guest numbers.';return;}
+  const total=guest.adults+guest.children;
+  $('#search-recap').textContent=fmt(checkIn)+' – '+fmt(checkOut)+' · '+nights+' nights · '+total+' guests';
+  const choices=$('#cottage-choices');choices.replaceChildren();
+  for(const units of [['geranium'],['honeysuckle'],['geranium','honeysuckle']]){
+   const cap=units.reduce((v,u)=>v+COTTAGES[u as keyof typeof COTTAGES].capacity,0);
+   const beds=units.reduce((v,u)=>v+COTTAGES[u as keyof typeof COTTAGES].bedrooms,0);
+   if(total>cap||guest.rooms>beds)continue;
+   const card=document.createElement('article');card.className='choice-card';
+   const photo=document.createElement('div');photo.className='choice-media'+(units.length===2?' two':'');
+   for(const unit of units){const img=cardPhotos[unit]?.querySelector('img')?.cloneNode(true);if(img)photo.append(img);}
+   const content=document.createElement('div');content.className='choice-content';
+   const h=document.createElement('h3');h.textContent=units.map(u=>COTTAGES[u as keyof typeof COTTAGES].name).join(' + ');
+   const p=document.createElement('p');p.textContent=units.length===2?'Enjoy both cottages with family or friends.':units[0]==='geranium'?'A characterful detached cottage and private garden.':'A spacious converted barn with room to relax.';
+   const details=document.createElement('p');details.className='choice-details';details.textContent=beds+' bedrooms · Sleeps '+cap+' · Availability not yet confirmed';
+   const button=document.createElement('button');button.type='button';button.className='button';button.textContent='Select '+(units.length===2?'both cottages':units[0]);
+   button.addEventListener('click',()=>{selection=units;renderSummary();show(3);});
+   content.append(h,p,details,button);card.append(photo,content);choices.append(card);
+  }
+  if(!choices.children.length){$('#booking-message').textContent='No cottage combination accommodates this group. Please adjust guests or bedrooms.';return;}show(2);
  });
- document.querySelector('#journey-back')?.addEventListener('click',()=>step(1));
- document.querySelector('#journey-summary-back')?.addEventListener('click',()=>step(2));
+ function renderSummary(){const parent=$('#summary-details');parent.replaceChildren();const lines=[
+  ['Your cottage',selection.map(u=>COTTAGES[u as keyof typeof COTTAGES].name).join(' + ')],
+  ['Check-in',fmt(checkIn)],['Check-out',fmt(checkOut)],
+  ['Length of stay',String((Date.parse(checkOut)-Date.parse(checkIn))/86400000)+' nights'],
+  ['Guests',guest.adults+' adults · '+guest.children+' children'],
+  ['Bedrooms',String(selection.reduce((n,u)=>n+COTTAGES[u as keyof typeof COTTAGES].bedrooms,0))]
+ ];for(const [label,value] of lines){const p=document.createElement('p');const strong=document.createElement('strong');strong.textContent=label+': ';p.append(strong,document.createTextNode(value));parent.append(p);}}
+ document.querySelectorAll<HTMLButtonElement>('[data-back]').forEach(b=>b.addEventListener('click',()=>show(Number(b.dataset.back))));
+ $('#to-details').addEventListener('click',()=>show(4));
+ renderCalendar();show(1);updateDates();
 </script>
