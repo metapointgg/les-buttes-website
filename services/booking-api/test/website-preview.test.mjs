@@ -64,6 +64,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/clearPublishedPricing\(\)/);
   assert.match(discoveryScript,/fetch\(readBase\+'\/availability'/);
   assert.match(discoveryScript,/fetch\(readBase\+'\/published-pricing'/);
+  assert.match(discoveryScript,/fetch\(readBase\+'\/quote\?'/);
   assert.doesNotMatch(discoveryScript,/\/requests['`]/); // never send a booking request
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
   assert.match(discoveryScript,/const readBase=localPreview\?/);
@@ -130,7 +131,7 @@ test('local master bridge binds only loopback, enforces staging table, and has n
   assert.match(script,/HOST='127\.0\.0\.1',PORT=4328/);
   assert.match(script,/environment!=='staging'/);
   assert.match(script,/req\.method!=='GET'/);
-  assert.match(script,/\['\/availability','\/published-pricing'\]\.includes\(req\.url\)/);
+  assert.match(script,/\['\/availability','\/published-pricing','\/quote'\]\.includes\(parsed\.pathname\)/);
   assert.match(script,/publishedPricingSnapshots/);
   assert.match(script,/GetCommand/);
   assert.match(script,/ORIGINS\.has\(origin\)/);
