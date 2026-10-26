@@ -45,7 +45,7 @@ export function publishedQuote(unit:CottageChoice,start:string,end:string,filter
  if(!publishedPrices||!liveMaster)throw Error('publishedPricingUnavailable');
  if(!matchingCottages(filters).includes(unit)||!referenceAllows(unit,start,end))throw Error('occupied');
  const nights=nightsInRange(start,end);
- const selected=unit==='both'?COTTAGES:[unit];
+ const selected:CottageUnit[]=unit==='both'?[...COTTAGES]:[unit];
  const units=selected.map(u=>{
   const c=publishedPrices!.cottages[u];
   let pence=0;
@@ -157,8 +157,10 @@ export function matchingOptions(filters:SearchFilters,start?:string,end?:string)
   });
 }
 export function dayPrice(unit:CottageUnit,date:string):number|null{
-  const rows=preview.nights[unit].filter(x=>date>=x.from&&date<=x.to);
-  return rows.length===1?rows[0].gbp:null;
+  const bands=publishedPrices?.cottages[unit].value.bands;
+  if(!bands)return null;
+  const rows=bands.filter(x=>date>=x.start&&date<x.end);
+  return rows.length===1?Number(rows[0].nightlyGBP):null;
 }
 export function daysForMonth(unit:CottageUnit,month:string):CalendarDay[]{
   if(!/^\d{4}-\d{2}$/.test(month))throw Error('invalidDates');
