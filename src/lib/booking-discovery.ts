@@ -1,5 +1,5 @@
 import preview from '../data/booking-preview-2027.json';
-import {previewBookingQuote} from './booking-preview';
+
 
 export type CottageUnit='geranium'|'honeysuckle';
 export type CottageChoice=CottageUnit|'both';
@@ -13,6 +13,58 @@ export type MasterAvailability={
   blocked:Record<CottageUnit,Array<{from:string;to:string}>>
 };
 let liveMaster:MasterAvailability|null=null;
+type PublishedBand={season:string;start:string;end:string;nightlyGBP:string;minNights:number};
+type PublishedCottage={unit:CottageUnit;version:number;value:{unit:CottageUnit;seasonStart:string;seasonEnd:string;maxNights:number;bands:PublishedBand[]}};
+type PublishedSnapshot={mode:'STAGING_PUBLISHED_PRICING_READ_ONLY';capturedAt:string;cottages:Record<CottageUnit,PublishedCottage>};
+let publishedPrices:PublishedSnapshot|null=null;
+export function clearPublishedPricing(){publishedPrices=null;}
+export function publishedPricingConnected(){return publishedPrices!==null;}
+export function setPublishedPricing(data:unknown){
+ if(!data||typeof data!=='object')throw Error('publishedPricingUnavailable');
+ const p=data as PublishedSnapshot;
+ if(p.mode!=='STAGING_PUBLISHED_PRICING_READ_ONLY'||!Number.isFinite(Date.parse(p.capturedAt))||
+    Math.abs(Date.now()-Date.parse(p.capturedAt))>120000)throw Error('publishedPricingUnavailable');
+ for(const u of COTTAGES){
+  const c=p.cottages?.[u],v=c?.value;
+  if(!c||c.unit!==u||!Number.isSafeInteger(c.version)||c.version<1||
+     v?.unit!==u||v.seasonStart!==preview.firstNight||v.seasonEnd!==preview.lastCheckout||
+     v.maxNights!==27||v.bands?.length!==5)throw Error('publishedPricingUnavailable');
+  let boundary=preview.firstNight;
+  for(const b of v.bands){
+   if(b.start!==boundary||b.end<=b.start||b.end>preview.lastCheckout||
+      !Number.isInteger(b.minNights)||b.minNights<1||!/^\\d+(?:\\.\\d{1,2})?$/.test(b.nightlyGBP)||
+      Number(b.nightlyGBP)<=0)throw Error('publishedPricingUnavailable');
+   boundary=b.end;
+  }
+  if(boundary!==preview.lastCheckout)throw Error('publishedPricingUnavailable');
+ }
+ publishedPrices=p;
+}
+export function publishedQuote(unit:CottageChoice,start:string,end:string,filters:SearchFilters){
+ if(!publishedPrices||!liveMaster)throw Error('publishedPricingUnavailable');
+ if(!matchingCottages(filters).includes(unit)||!referenceAllows(unit,start,end))throw Error('occupied');
+ const nights=nightsInRange(start,end);
+ const selected=unit==='both'?COTTAGES:[unit];
+ const units=selected.map(u=>{
+  const c=publishedPrices!.cottages[u];
+  let pence=0;
+  for(const date of nights){
+   const b=c.value.bands.find(x=>date>=x.start&&date<x.end);
+   if(!b)throw Error('publishedPricingUnavailable');
+   pence+=Math.round(Number(b.nightlyGBP)*100);
+  }
+  return {unit:u,priceGBP:pence/100,version:c.version};
+ });
+ const minimum=Math.max(...selected.flatMap(u=>nights.map(date=>{
+  const b=publishedPrices!.cottages[u].value.bands.find(x=>date>=x.start&&date<x.end);
+  if(!b)throw Error('publishedPricingUnavailable');
+  return b.minNights;
+ })));
+ return {start,end,nights:nights.length,adults:filters.adults,children:filters.children,
+  units,totalGBP:units.reduce((sum,x)=>sum+x.priceGBP,0),minimumNights:minimum,
+  meetsMinimum:nights.length>=minimum,status:'PUBLISHED_STAGING_PREVIEW' as const};
+}
+
 // Fail closed: no 2026 snapshot fallback may masquerade as a live master.
 export function masterConnected(){return liveMaster!==null;}
 export function masterCheckedAt(){return liveMaster?.capturedAt??null;}
