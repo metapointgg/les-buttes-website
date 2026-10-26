@@ -3,8 +3,9 @@
 // metadata remain on your own computer. No booking writes are possible.
 import {createServer} from 'node:http';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
-import {DynamoDBDocumentClient,QueryCommand} from '@aws-sdk/lib-dynamodb';
+import {DynamoDBDocumentClient,QueryCommand,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {masterOccupied} from './master-occupied.mjs';
+import {publishedPricingSnapshots} from './published-pricing-reader.mjs';
 
 const HOST='127.0.0.1',PORT=4328;
 const ORIGINS=new Set(['http://localhost:4321','http://127.0.0.1:4321']);
@@ -16,6 +17,7 @@ if(environment!=='staging'||!/^les-buttes-booking-staging-BookingTable-[A-Za-z0-
 const client=new DynamoDBClient({region:'eu-west-2'});
 const awsDb=DynamoDBDocumentClient.from(client);
 const db={send:command=>awsDb.send(new QueryCommand(command.input))};
+const priceDb={send:input=>awsDb.send(new GetCommand(input))};
 const server=createServer(async(req,res)=>{
   const origin=req.headers.origin;
   const hostname=req.headers.host;
@@ -30,11 +32,13 @@ const server=createServer(async(req,res)=>{
     'Vary':'Origin',
     'X-Content-Type-Options':'nosniff'
   };
-  if(req.method!=='GET'||req.url!=='/availability'){
+  if(req.method!=='GET'||!['/availability','/published-pricing'].includes(req.url)){
     res.writeHead(404,headers);res.end('{"error":"Not found"}');return;
   }
   try{
-    const result=await masterOccupied({db,table});
+    const result=req.url==='/published-pricing'
+      ? await publishedPricingSnapshots({db:priceDb,table})
+      : await masterOccupied({db,table});
     res.writeHead(200,headers);res.end(JSON.stringify(result));
   }catch(error){
     console.error('Read-only master availability failed:',error?.name??'Error');
