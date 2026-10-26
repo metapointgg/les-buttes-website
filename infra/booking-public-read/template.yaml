@@ -50,6 +50,12 @@ Resources:
             ApiId: !Ref ReadApi
             Path: /published-pricing
             Method: GET
+        ServerQuote:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ReadApi
+            Path: /quote
+            Method: GET
 Outputs:
   StagingReadUrl:
     Description: Unauthenticated, origin-restricted staging read API. Do not place in production site builds.
