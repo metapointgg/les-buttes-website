@@ -1,3 +1,4 @@
+import {previewBookingQuote} from './booking-preview';
 import preview from '../data/booking-preview-2027.json';
 
 
