@@ -12,7 +12,9 @@ test('isolated staging read API has no booking writes or private read projection
  assert.match(template,/BOOKING_ENVIRONMENT: staging/);
  assert.match(lambda,/requestOrigin!==origin/);
  assert.match(lambda,/method!=='GET'/);
- assert.match(lambda,/\['\/availability','\/published-pricing'\]/);
+ assert.match(lambda,/\['\/availability','\/published-pricing','\/quote'\]/);
+ assert.match(template,/Path: \/quote/);
+ assert.match(browser,/verifyServerQuote/);
  assert.doesNotMatch(lambda,/SendEmailCommand|PutCommand|UpdateCommand|DeleteCommand|TransactWriteCommand/);
  assert.match(browser,/const readBase=localPreview\?/);
  assert.match(browser,/publishedQuote/);
