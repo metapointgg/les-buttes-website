@@ -6,6 +6,7 @@ import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,QueryCommand,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {masterOccupied} from './master-occupied.mjs';
 import {publishedPricingSnapshots} from './published-pricing-reader.mjs';
+import {quoteFromSnapshots} from './public-quote.mjs';
 
 const HOST='127.0.0.1',PORT=4328;
 const ORIGINS=new Set(['http://localhost:4321','http://127.0.0.1:4321']);
@@ -32,13 +33,20 @@ const server=createServer(async(req,res)=>{
     'Vary':'Origin',
     'X-Content-Type-Options':'nosniff'
   };
-  if(req.method!=='GET'||!['/availability','/published-pricing'].includes(req.url)){
+  const parsed=new URL(req.url,'http://127.0.0.1:4328');
+  if(req.method!=='GET'||!['/availability','/published-pricing','/quote'].includes(parsed.pathname)){
     res.writeHead(404,headers);res.end('{"error":"Not found"}');return;
   }
   try{
-    const result=req.url==='/published-pricing'
+    const result=parsed.pathname==='/published-pricing'
       ? await publishedPricingSnapshots({db:priceDb,table})
-      : await masterOccupied({db,table});
+      : parsed.pathname==='/availability'
+      ? await masterOccupied({db,table})
+      : quoteFromSnapshots({availability:await masterOccupied({db,table}),
+          pricing:await publishedPricingSnapshots({db:priceDb,table}),
+          unit:parsed.searchParams.get('unit'),start:parsed.searchParams.get('start'),
+          end:parsed.searchParams.get('end'),adults:Number(parsed.searchParams.get('adults')),
+          children:Number(parsed.searchParams.get('children'))});
     res.writeHead(200,headers);res.end(JSON.stringify(result));
   }catch(error){
     console.error('Read-only master availability failed:',error?.name??'Error');
