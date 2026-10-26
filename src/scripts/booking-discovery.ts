@@ -18,6 +18,9 @@ if(widget){
   const prev=widget.querySelector<HTMLButtonElement>('[data-prev-month]')!;
   const next=widget.querySelector<HTMLButtonElement>('[data-next-month]')!;
   const localPreview=['localhost','127.0.0.1'].includes(window.location.hostname);
+  // Staging API must be explicitly configured at build time. Never use it on the public site.
+  const stagedReadApi=String(import.meta.env.PUBLIC_BOOKING_STAGING_READ_URL??'').trim().replace(/\/$/,'');
+  const readBase=localPreview?(stagedReadApi||'http://127.0.0.1:4328'):'';
   let fetchSequence=0;
   const lang=widget.dataset.locale==='fr'?'fr-FR':widget.dataset.locale==='nl'?'nl-NL':'en-GB';
   const money=(v:number)=>new Intl.NumberFormat(lang,{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(v);
@@ -75,16 +78,16 @@ if(widget){
   async function refreshMaster(){
     const request=++fetchSequence;
     // Never put staging credentials in a web bundle or contact users' local ports on hosted sites.
-    if(!localPreview){clearMasterAvailability();clearPublishedPricing();return false;}
+    if(!readBase){clearMasterAvailability();clearPublishedPricing();return false;}
     try{
-      const response=await fetch('http://127.0.0.1:4328/availability',{
+      const response=await fetch(readBase+'/availability',{
         method:'GET',cache:'no-store',signal:AbortSignal.timeout(8000)
       });
       if(!response.ok)throw Error('masterUnavailable');
       const data:unknown=await response.json();
       if(request!==fetchSequence)return false;
       setMasterAvailability(data);
-      const pricesResponse=await fetch('http://127.0.0.1:4328/published-pricing',{
+      const pricesResponse=await fetch(readBase+'/published-pricing',{
         method:'GET',cache:'no-store',signal:AbortSignal.timeout(8000)
       });
       if(!pricesResponse.ok)throw Error('publishedPricingUnavailable');
