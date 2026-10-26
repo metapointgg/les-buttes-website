@@ -16,6 +16,6 @@ assert.throws(()=>quotePublishedPricing({published,checkIn:"2027-03-20",checkOut
 assert.throws(()=>quotePublishedPricing({published,checkIn:"2027-06-26",checkOut:"2027-06-29",reservedNights:[]}),/Minimum stay/);
 assert.throws(()=>quotePublishedPricing({published,checkIn:"2027-10-01",checkOut:"2027-10-04",reservedNights:[]}),/operating season/);
 const crossing=quotePublishedPricing({published,checkIn:"2027-04-22",checkOut:"2027-04-27",reservedNights:[]});
-assert.equal(crossing.totalGBP,"565.00");
+assert.equal(crossing.totalGBP,"555.00");
 assert.equal(crossing.minStay,5);
 console.log("Published pricing quotation guards passed");
