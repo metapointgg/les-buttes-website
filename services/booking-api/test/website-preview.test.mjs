@@ -59,8 +59,11 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discovery,/data-discovery-calendars/);
   assert.match(discovery,/data-discovery-summary/);
   assert.match(discovery,/disabled aria-disabled="true"/);
-  assert.match(discoveryScript,/indicativeSelection/);
+  assert.match(discoveryScript,/publishedQuote/);
+  assert.match(discoveryScript,/setPublishedPricing\(prices\)/);
+  assert.match(discoveryScript,/clearPublishedPricing\(\)/);
   assert.match(discoveryScript,/fetch\('http:\/\/127\.0\.0\.1:4328\/availability'/);
+  assert.match(discoveryScript,/fetch\('http:\/\/127\.0\.0\.1:4328\/published-pricing'/);
   assert.doesNotMatch(discoveryScript,/\/requests['`]/); // never send a booking request
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
   assert.match(discovery,/data-preview-guest-details/);
@@ -126,7 +129,9 @@ test('local master bridge binds only loopback, enforces staging table, and has n
   assert.match(script,/HOST='127\.0\.0\.1',PORT=4328/);
   assert.match(script,/environment!=='staging'/);
   assert.match(script,/req\.method!=='GET'/);
-  assert.match(script,/req\.url!=='\/availability'/);
+  assert.match(script,/\['\/availability','\/published-pricing'\]\.includes\(req\.url\)/);
+  assert.match(script,/publishedPricingSnapshots/);
+  assert.match(script,/GetCommand/);
   assert.match(script,/ORIGINS\.has\(origin\)/);
   assert.match(script,/masterOccupied/);
   assert.doesNotMatch(script,/TransactWriteCommand|UpdateCommand|PutCommand|DeleteCommand|SendEmailCommand/);
