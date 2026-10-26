@@ -56,6 +56,25 @@ if(widget){
     try{return publishedQuote(choice,arrival.value,departure.value,filters);}
     catch{return null;}
   };
+  // Verify totals and occupancy against freshly read master data on the server.
+  // The guest-facing preview remains no-write; this is not a reservation.
+  async function verifyServerQuote(){
+    const local=getQuote();
+    if(!local||!local.meetsMinimum||!readBase||!choice)return false;
+    const params=new URLSearchParams({unit:choice,start:arrival.value,end:departure.value,
+      adults:String(filters.adults),children:String(filters.children)});
+    try{
+      const response=await fetch(readBase+'/quote?'+params,{method:'GET',cache:'no-store',
+        signal:AbortSignal.timeout(10000)});
+      if(!response.ok)return false;
+      const checked=await response.json();
+      if(checked.status!=='STAGING_VERIFIED_READ_ONLY'||checked.totalGBP!==local.totalGBP||
+        checked.start!==arrival.value||checked.end!==departure.value||
+        checked.units?.length!==local.units.length)return false;
+      return checked.units.every((v:{unit:string;version:number;priceGBP:number},i:number)=>
+        v.unit===local.units[i].unit&&v.version===local.units[i].version&&v.priceGBP===local.units[i].priceGBP);
+    }catch{return false;}
+  }
   const updateNext=()=>{
     const q=getQuote();
     reviewNext.disabled=!q||!q.meetsMinimum;
@@ -300,14 +319,17 @@ if(widget){
     if(!await refreshMaster()){updateResults();return;}
     updateResults();
     const quote=getQuote();
-    if(!quote||!quote.meetsMinimum)return;
+    if(!quote||!quote.meetsMinimum||!await verifyServerQuote()){
+      calendarMessage.textContent='Unable to verify current pricing and availability. Please try again.';
+      return;
+    }
     setStep(3);
   });
   onClick('[data-continue-details]',async()=>{
     if(!await refreshMaster()){updateResults();setStep(2);return;}
     updateResults();
     const q=getQuote();
-    if(!q||!q.meetsMinimum){setStep(2);return;}
+    if(!q||!q.meetsMinimum||!await verifyServerQuote()){setStep(2);return;}
     fill('[data-details-cottage]',q.units.map(item=>item.unit==='geranium'?'Geranium':'Honeysuckle').join(' + '));
     fill('[data-details-stay]',rangeLabel(q.start,q.end)+' · '+q.nights+' '+tr('nightWord'));
     fill('[data-details-guests]',String(q.adults+q.children));
