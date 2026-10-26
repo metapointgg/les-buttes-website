@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Plan your stay | Les Buttes Holiday Cottages" description="Explore a stay in Geranium or Honeysuckle at Les Buttes, Guernsey.">
+<section class="section paper">
+ <div class="wrap" style="max-width:920px">
+  <p class="eyebrow">Your stay at Les Buttes</p>
+  <h1>Find your cottage</h1>
+  <p>Choose dates and guests, then explore Geranium, Honeysuckle or both. This preview is not yet connected to live reservations and cannot accept bookings.</p>
+  <div id="booking-journey" class="booking-journey" data-ready="false">
+   <nav aria-label="Booking steps" class="journey-progress"><span data-progress="1" aria-current="step">1. Search</span><span data-progress="2">2. Cottages</span><span data-progress="3">3. Summary</span><span data-progress="4">4. Details</span></nav>
+   <form id="booking-search" class="journey-section">
+    <h2>When would you like to stay?</h2>
+    <div class="journey-fields">
+     <label>Check-in<input type="date" name="checkIn" required min="2027-03-20" max="2027-10-01"/></label>
+     <label>Check-out<input type="date" name="checkOut" required min="2027-03-21" max="2027-10-02"/></label>
+     <label>Adults<input type="number" name="adults" required min="1" max="10" value="2"/></label>
+     <label>Children<input type="number" name="children" required min="0" max="9" value="0"/></label>
+     <label>Bedrooms needed<input type="number" name="rooms" min="0" max="5" value="0"/><small>Optional; 0 means no preference</small></label>
+    </div>
+    <button class="button" type="submit">Explore cottages</button>
+   </form>
+   <section class="journey-section" id="journey-options" hidden aria-live="polite">
+    <h2>Choose your cottage</h2>
+    <p>These combinations meet your guest and bedroom requirements. Availability and prices cannot be confirmed until the booking master connection is enabled.</p>
+    <div id="journey-cottage-list"></div>
+    <button type="button" id="journey-back">Edit search</button>
+   </section>
+   <section class="journey-section" id="journey-summary" hidden aria-live="polite">
+    <h2>Your stay summary</h2>
+    <div id="journey-summary-content"></div>
+    <p>Booking prices, minimum stays and reserved dates must be checked against the published booking master before a request can proceed.</p>
+    <button type="button" id="journey-summary-back">Change cottages</button>
+   </section>
+   <section class="journey-section" id="journey-details" hidden>
+    <h2>Guest details and confirmation</h2>
+    <p>Booking requests will become available only after server-side availability, quote validation and safe guest-data processing are implemented.</p>
+   </section>
+   <p id="journey-notice" role="status" aria-live="polite"></p>
+  </div>
+ </div>
+</section>
+</BaseLayout>
+<style>
+.booking-journey{margin-top:1.5rem}.journey-progress{display:flex;flex-wrap:wrap;gap:.7rem;margin-bottom:1.5rem}.journey-progress span{padding:.45rem .8rem;border:1px solid #d3d9d1;border-radius:20px;font-size:.9rem}.journey-progress [aria-current=step]{background:#bed4c3;color:#183c27;border-color:#759780}.journey-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin:1rem 0 1.5rem}.journey-fields label{display:grid;gap:.3rem}.journey-fields input{max-width:100%;width:100%;box-sizing:border-box;padding:.7rem;border:1px solid #9eaaa0;border-radius:6px}.journey-fields small{font-size:.8rem}.journey-section{border:1px solid #d3d9d1;border-radius:12px;padding:1.5rem}.journey-choice{border:1px solid #d3d9d1;border-radius:8px;padding:1rem;margin-bottom:.7rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}.journey-choice strong{display:block}
+</style>
+<script>
+ import {COTTAGES} from '../../lib/booking-search.mjs';
+ const form=document.querySelector<HTMLFormElement>('#booking-search')!;
+ const options=document.querySelector<HTMLElement>('#journey-options')!;
+ const summary=document.querySelector<HTMLElement>('#journey-summary')!;
+ const list=document.querySelector<HTMLElement>('#journey-cottage-list')!;
+ const note=document.querySelector<HTMLElement>('#journey-notice')!;
+ const progress=[...document.querySelectorAll<HTMLElement>('[data-progress]')];
+ let choice:string[]=[];
+ let search:{checkIn:string;checkOut:string;adults:number;children:number;rooms:number}|null=null;
+ function step(n:number){form.hidden=n!==1;options.hidden=n!==2;summary.hidden=n!==3;for(const p of progress){if(Number(p.dataset.progress)===n)p.setAttribute('aria-current','step');else p.removeAttribute('aria-current');}}
+ form.addEventListener('submit',event=>{
+  event.preventDefault();note.textContent='';
+  if(!form.reportValidity())return;
+  const data=new FormData(form);
+  const checkIn=String(data.get('checkIn')),checkOut=String(data.get('checkOut'));
+  const adults=Number(data.get('adults')),children=Number(data.get('children')),rooms=Number(data.get('rooms'));
+  const nights=(Date.parse(checkOut+'T00:00:00Z')-Date.parse(checkIn+'T00:00:00Z'))/86400000;
+  if(!Number.isInteger(nights)||nights<1||nights>27||checkIn<'2027-03-20'||checkOut>'2027-10-02'){note.textContent='Select 1–27 nights within 20 March to 2 October 2027.';return;}
+  if(!Number.isInteger(adults)||adults<1||!Number.isInteger(children)||children<0||!Number.isInteger(rooms)||rooms<0){note.textContent='Enter valid guest and bedroom counts.';return;}
+  search={checkIn,checkOut,adults,children,rooms};
+  const guests=adults+children;
+  const configs=[['geranium'],['honeysuckle'],['geranium','honeysuckle']];
+  list.replaceChildren();
+  for(const units of configs){
+   const capacity=units.reduce((n,u)=>n+COTTAGES[u as keyof typeof COTTAGES].capacity,0);
+   const bedrooms=units.reduce((n,u)=>n+COTTAGES[u as keyof typeof COTTAGES].bedrooms,0);
+   if(guests>capacity||rooms>bedrooms)continue;
+   const item=document.createElement('div');item.className='journey-choice';
+   const info=document.createElement('div');const heading=document.createElement('strong');
+   heading.textContent=units.map(u=>COTTAGES[u as keyof typeof COTTAGES].name).join(' + ');
+   const desc=document.createElement('small');desc.textContent=bedrooms+' bedrooms · sleeps up to '+capacity+' · availability not yet checked';
+   info.append(heading,desc);
+   const button=document.createElement('button');button.type='button';button.textContent='Select';button.addEventListener('click',()=>{
+    choice=units;const target=document.querySelector<HTMLElement>('#journey-summary-content')!;
+    target.replaceChildren();
+    const title=document.createElement('p');title.textContent=units.map(u=>COTTAGES[u as keyof typeof COTTAGES].name).join(' + ');
+    const dates=document.createElement('p');dates.textContent=checkIn+' to '+checkOut+' · '+nights+' nights · '+guests+' guests';
+    const pricing=document.createElement('p');pricing.textContent='Total: awaiting verified published price and availability';
+    target.append(title,dates,pricing);step(3);
+   });
+   item.append(info,button);list.append(item);
+  }
+  if(!list.children.length){note.textContent='No cottage combination meets that guest and bedroom count.';return;}
+  step(2);
+ });
+ document.querySelector('#journey-back')?.addEventListener('click',()=>step(1));
+ document.querySelector('#journey-summary-back')?.addEventListener('click',()=>step(2));
+</script>
