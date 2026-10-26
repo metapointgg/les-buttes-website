@@ -62,10 +62,11 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/publishedQuote/);
   assert.match(discoveryScript,/setPublishedPricing\(prices\)/);
   assert.match(discoveryScript,/clearPublishedPricing\(\)/);
-  assert.match(discoveryScript,/fetch\('http:\/\/127\.0\.0\.1:4328\/availability'/);
-  assert.match(discoveryScript,/fetch\('http:\/\/127\.0\.0\.1:4328\/published-pricing'/);
+  assert.match(discoveryScript,/fetch\(readBase\+'\/availability'/);
+  assert.match(discoveryScript,/fetch\(readBase\+'\/published-pricing'/);
   assert.doesNotMatch(discoveryScript,/\/requests['`]/); // never send a booking request
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
+  assert.match(discoveryScript,/const readBase=localPreview\?/);
   assert.match(discovery,/data-preview-guest-details/);
   assert.match(discovery,/name="email"/);
   assert.match(discovery,/disabled aria-disabled="true"/);
