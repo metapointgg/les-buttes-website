@@ -33,7 +33,7 @@ export function setPublishedPricing(data:unknown){
   let boundary=preview.firstNight;
   for(const b of v.bands){
    if(b.start!==boundary||b.end<=b.start||b.end>preview.lastCheckout||
-      !Number.isInteger(b.minNights)||b.minNights<1||!/^\\d+(?:\\.\\d{1,2})?$/.test(b.nightlyGBP)||
+      !Number.isInteger(b.minNights)||b.minNights<1||!/^\d+(?:\.\d{1,2})?$/.test(b.nightlyGBP)||
       Number(b.nightlyGBP)<=0)throw Error('publishedPricingUnavailable');
    boundary=b.end;
   }
