@@ -33,6 +33,11 @@ Resources:
     Properties:
       AliasName: alias/les-buttes-booking-guest-staging
       TargetKeyId: !Ref GuestContactKey
+  PrivateWorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes-real-guest-staging
+      RetentionInDays: 14
   PrivateGuestWorkerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -72,6 +77,7 @@ Resources:
       Timeout: 5
       ReservedConcurrentExecutions: 1
       Role: !GetAtt PrivateGuestWorkerRole.Arn
+      DependsOn: PrivateWorkerLogGroup
       Environment:
         Variables:
           BOOKING_ENVIRONMENT: staging
