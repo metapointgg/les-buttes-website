@@ -713,6 +713,28 @@ content:
       - { name: successTextFr, label: "Success message (French)", type: text, description: "Optional French translation. English is used if empty." }
       - { name: endpoint, label: Signup API endpoint, description: Technical setting. This is the AWS Lambda Function URL used to store sign-ups., type: string }
 
+  - name: booking-terms
+    label: Booking terms (draft)
+    type: file
+    path: src/data/booking-terms.json
+    format: json
+    fields:
+      - name: status
+        label: Publication status
+        type: select
+        required: true
+        options:
+          values:
+            - { value: DRAFT, label: Draft (not available for bookings) }
+            - { value: PUBLISHED, label: Published (requires release verification) }
+      - { name: version, label: Terms version, type: number, required: true }
+      - { name: termsText, label: Booking terms (English), type: text }
+      - { name: cancellationText, label: Cancellation policy (English), type: text }
+      - { name: termsTextFr, label: Booking terms (French), type: text }
+      - { name: cancellationTextFr, label: Cancellation policy (French), type: text }
+      - { name: termsTextNl, label: Booking terms (Dutch), type: text }
+      - { name: cancellationTextNl, label: Cancellation policy (Dutch), type: text }
+
   - name: design
     label: Design settings
     type: file
