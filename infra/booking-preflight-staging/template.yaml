@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: PRIVATE staging guest preflight. Read-only booking master, CMS terms and SecureString Turnstile secret. No booking writes or public endpoint.
+Parameters:
+  ExistingStagingTable:
+    Type: String
+    AllowedPattern: '^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$'
+  EnablePrivatePreflight:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['false', 'true']
+  AllowedOrigin:
+    Type: String
+    Default: http://localhost:4321
+    AllowedPattern: '^https?://[A-Za-z0-9._:-]+$'
+  TurnstileHostname:
+    Type: String
+    Default: localhost
+    AllowedPattern: '^[a-zA-Z0-9.-]+$'
+Conditions:
+  PrivatePreflightEnabled: !Equals [!Ref EnablePrivatePreflight, 'true']
+Resources:
+  TurnstileSecretKey:
+    Type: AWS::KMS::Key
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: Dedicated KMS key for private Les Buttes staging Turnstile SecureString
+      EnableKeyRotation: true
+      PendingWindowInDays: 30
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AccountKeyAdministration
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+  TurnstileSecretKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/les-buttes-booking-turnstile-staging
+      TargetKeyId: !Ref TurnstileSecretKey
+  PreflightLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes-booking-preflight-staging
+      RetentionInDays: 14
+  PreflightRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ReadOnlyGuestPreflight
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: PreflightLogs
+                Effect: Allow
+                Action: ['logs:CreateLogStream','logs:PutLogEvents']
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/les-buttes-booking-preflight-staging:*'
+              - Sid: ReadBookingMasterOnly
+                Effect: Allow
+                Action: ['dynamodb:GetItem','dynamodb:Query']
+                Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}'
+              - Sid: ReadExactTurnstileSecretOnly
+                Effect: Allow
+                Action: 'ssm:GetParameter'
+                Resource: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/staging/turnstile-siteverify-secret'
+              - Sid: DecryptExactTurnstileSecretViaSSMOnly
+                Effect: Allow
+                Action: 'kms:Decrypt'
+                Resource: !GetAtt TurnstileSecretKey.Arn
+                Condition:
+                  StringEquals:
+                    'kms:ViaService': !Sub 'ssm.${AWS::Region}.amazonaws.com'
+                    'kms:EncryptionContext:PARAMETER_ARN': !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/staging/turnstile-siteverify-secret'
+  PreflightFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: PreflightLogGroup
+    Properties:
+      FunctionName: les-buttes-booking-preflight-staging
+      Runtime: nodejs22.x
+      Handler: guest-preflight-private-entry.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 15
+      ReservedConcurrentExecutions: 1
+      Role: !GetAtt PreflightRole.Arn
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKING_REAL_GUEST_WRITES: 'false'
+          BOOKING_SUBMISSION_PREFLIGHT_ENABLED: !If [PrivatePreflightEnabled, 'true', 'false']
+          BOOKINGS_TABLE: !Ref ExistingStagingTable
+          BOOKING_ALLOWED_ORIGIN: !Ref AllowedOrigin
+          BOOKING_TURNSTILE_HOSTNAME: !Ref TurnstileHostname
+          BOOKING_TURNSTILE_SECRET_PARAMETER: /les-buttes/booking/staging/turnstile-siteverify-secret
+      # No Events, FunctionUrlConfig, API Gateway, SES, booking write, or public access.
+Outputs:
+  PreflightFunctionName:
+    Value: !Ref PreflightFunction
+  TurnstileSecretKeyArn:
+    Value: !GetAtt TurnstileSecretKey.Arn
+  ParameterName:
+    Value: /les-buttes/booking/staging/turnstile-siteverify-secret
