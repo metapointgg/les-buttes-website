@@ -7,6 +7,11 @@ The synthetic localhost submission endpoint must stay synthetic only. No product
 - The tests enforce absent/stale policy rejection, independent optional marketing consent, occupancy capacity and guest input validation.
 - These are preparatory validation rules, **not a live privacy, policy, or booking service**.
 
+## New isolated foundation (not deployed)
+- `real-booking-storage.mjs` prepares a metadata-only booking row, KMS-encrypted guest contact row and an idempotency marker, all as **unexecuted** transactional items. The encryption callback must be supplied by the eventual private Lambda service. No AWS route, IAM grant or persistence is introduced by this module. The forthcoming service must atomically couple these records to conflict-safe date holds and server-side verified quotes.
+- `test/real-booking-storage.test.mjs` checks PII separation, encryption failure and idempotency-key behavior.
+- Owner-facing policy text and cancellation wording will be managed through the CMS later. A published, immutable policy version and digest must still be available before accepting real guests.
+
 ## Required implementation before any real guest information is accepted
 1. Approve actual guest booking terms and cancellation policy, business details, check-in/out times and data protection notice. Publish immutable terms/cancellation versions and digests through booking master. Do not invent policy wording or claim policies are approved.
 2. Create an isolated real-request API behind an explicit disabled-by-default feature flag; do not adapt the synthetic handler to store real guest details by changing its flag.
