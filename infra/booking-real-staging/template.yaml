@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Isolated real-guest booking foundation STAGING ONLY; no public submission route or guest writes.
+Parameters:
+  ExistingStagingTable:
+    Type: String
+    AllowedPattern: '^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$'
+  EnableRealGuestWrites:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['false']
+    Description: Intentionally locked off until guest privacy, policies, payment and API controls are complete.
+Resources:
+  GuestContactKey:
+    Type: AWS::KMS::Key
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: Les Buttes isolated staging encrypted booking guest data
+      EnableKeyRotation: true
+      PendingWindowInDays: 30
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: RootKeyAdministration
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+  GuestContactKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/les-buttes-booking-guest-staging
+      TargetKeyId: !Ref GuestContactKey
+  PrivateGuestWorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StagingGuestPrivateData
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: CloudWatchLogs
+                Effect: Allow
+                Action: ['logs:CreateLogStream','logs:PutLogEvents']
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/les-buttes-real-guest-staging:*'
+              - Sid: EncryptGuestContact
+                Effect: Allow
+                Action: ['kms:Encrypt','kms:GenerateDataKey']
+                Resource: !GetAtt GuestContactKey.Arn
+              - Sid: RestrictedBookingTableRecords
+                Effect: Allow
+                Action: ['dynamodb:GetItem','dynamodb:Query']
+                Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}'
+              # Intentionally no DynamoDB writes or kms:Decrypt yet.
+  DisabledGuestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: les-buttes-real-guest-staging
+      Runtime: nodejs22.x
+      Handler: disabled-real-guest-handler.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 128
+      Timeout: 5
+      ReservedConcurrentExecutions: 1
+      Role: !GetAtt PrivateGuestWorkerRole.Arn
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKING_REAL_GUEST_WRITES: 'false'
+          BOOKINGS_TABLE: !Ref ExistingStagingTable
+          GUEST_CONTACT_KMS_KEY_ARN: !GetAtt GuestContactKey.Arn
+      # No Events, public URL, API Gateway, SES or Step Functions attached.
+Outputs:
+  KeyArn:
+    Value: !GetAtt GuestContactKey.Arn
+  DisabledFunctionName:
+    Value: !Ref DisabledGuestFunction
