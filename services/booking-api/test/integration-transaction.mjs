@@ -10,6 +10,7 @@ const table=process.env.SYNTHETIC_TRANSACTION_TABLE;
 if(!/^les-buttes-booking-transaction-test-[A-Za-z0-9-]+$/.test(table??'')||
  process.env.BOOKING_ENVIRONMENT!=='staging'||process.env.BOOKING_REAL_GUEST_WRITES==='true')
  throw Error('Isolated transaction test table and staging flags required');
+process.env.BOOKING_TRANSACTION_ISOLATED_TEST='true';
 const client=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
 const spans=[['low','2027-03-20','2027-04-24',3],['shoulder','2027-04-24','2027-06-26',5],['peak','2027-06-26','2027-08-28',7],['shoulder','2027-08-28','2027-09-25',5],['low','2027-09-25','2027-10-02',3]];
 const rates=(peak)=>({version:1,value:{bands:spans.map(([season,start,end,minNights])=>
