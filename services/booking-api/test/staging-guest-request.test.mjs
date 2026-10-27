@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createStagingGuestRequest} from '../staging-guest-request.mjs';
 const spans=[['low','2027-03-20','2027-04-24',3],['shoulder','2027-04-24','2027-06-26',5],['peak','2027-06-26','2027-08-28',7],['shoulder','2027-08-28','2027-09-25',5],['low','2027-09-25','2027-10-02',3]];
-const pricing={cottages:Object.fromEntries([['geranium',155,3],['honeysuckle',140,1]].map(([unit,peak,version])=>[unit,{version,value:{bands:spans.map(([season,start,end,minNights])=>({season,start,end,minNights,nightlyGBP:String(season==='peak'?peak:100)}))}}]))};
-const availability={blocked:{geranium:[],honeysuckle:[]}};
+const pricing={mode:'STAGING_PUBLISHED_PRICING_READ_ONLY',cottages:Object.fromEntries([['geranium',155,3],['honeysuckle',140,1]].map(([unit,peak,version])=>[unit,{version,value:{bands:spans.map(([season,start,end,minNights])=>({season,start,end,minNights,nightlyGBP:String(season==='peak'?peak:100)}))}}]))};
+const availability={mode:'LIVE_STAGING_MASTER_READ_ONLY',blocked:{geranium:[],honeysuckle:[]}};
 const payload={unit:'both',start:'2027-07-10',end:'2027-07-17',adults:6,children:1,
  firstName:'Someone',lastName:'Example',email:'real-input@example.com',telephone:'+44 7700 900001',
  notes:'Private guest note',turnstileToken:'synthetic-valid-token'};
