@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Separate synthetic-only guest submission staging API, disabled by default; NEVER deploy as production.
+Parameters:
+  ExistingStagingTable:
+    Type: String
+    AllowedPattern: '^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$'
+  PreviewOrigin:
+    Type: String
+    Default: http://localhost:4321
+    AllowedValues: ['http://localhost:4321']
+  TurnstileSecretParameter:
+    Type: String
+    Description: Existing SSM SecureString parameter name, never the secret itself
+    AllowedPattern: '^/les-buttes/staging/turnstile/[A-Za-z0-9_-]+$'
+  EnableSyntheticWrites:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['false','true']
+Conditions:
+  EnableWrite: !Equals [!Ref EnableSyntheticWrites,'true']
+Resources:
+  GuestApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref PreviewOrigin]
+        AllowMethods: ['POST','OPTIONS']
+        AllowHeaders: ['content-type']
+        MaxAge: 0
+  GuestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: staging-guest-handler.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 12
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKING_STAGING_GUEST_WRITES: !If [EnableWrite,'true','false']
+          BOOKINGS_TABLE: !Ref ExistingStagingTable
+          ALLOWED_PREVIEW_ORIGIN: !Ref PreviewOrigin
+          TURNSTILE_SECRET_PARAMETER: !Ref TurnstileSecretParameter
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: ['dynamodb:Query','dynamodb:GetItem']
+              Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}'
+            - !If
+              - EnableWrite
+              - Effect: Allow
+                Action: ['dynamodb:PutItem']
+                Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}'
+              - !Ref AWS::NoValue
+            - Effect: Allow
+              Action: ['ssm:GetParameter']
+              Resource: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${TurnstileSecretParameter}'
+      Events:
+        Submit:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GuestApi
+            Path: /request
+            Method: POST
+Outputs:
+  StagingSubmissionUrl:
+    Value: !Sub 'https://${GuestApi}.execute-api.${AWS::Region}.amazonaws.com'
