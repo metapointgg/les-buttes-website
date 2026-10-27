@@ -59,3 +59,24 @@ test('disabled environment and production table are rejected',async()=>{
  finally{if(old===undefined)delete process.env.BOOKING_REAL_GUEST_WRITES;else process.env.BOOKING_REAL_GUEST_WRITES=old;
  if(prior===undefined)delete process.env.BOOKING_ENVIRONMENT;else process.env.BOOKING_ENVIRONMENT=prior;}
 });
+
+test('isolated test table requires matching explicit test flag and table identity',async()=>{
+ const prior={env:process.env.BOOKING_ENVIRONMENT,flag:process.env.BOOKING_TRANSACTION_ISOLATED_TEST,
+  table:process.env.SYNTHETIC_TRANSACTION_TABLE};
+ const isolated='les-buttes-booking-transaction-test-SyntheticTransactionTable-EXAMPLE123';
+ try{
+  process.env.BOOKING_ENVIRONMENT='staging';
+  process.env.SYNTHETIC_TRANSACTION_TABLE=isolated;
+  delete process.env.BOOKING_TRANSACTION_ISOLATED_TEST;
+  await assert.rejects(planRealBookingTransaction({...args(),tableName:isolated}),/Staging booking master/);
+  process.env.BOOKING_TRANSACTION_ISOLATED_TEST='true';
+  const plan=await planRealBookingTransaction({...args(),tableName:isolated});
+  assert.equal(plan.transactWrite.TransactItems[0].Put.TableName,isolated);
+  await assert.rejects(planRealBookingTransaction({...args(),tableName:isolated+'-other'}),/Staging booking master/);
+ }finally{
+  for(const [key,val] of Object.entries({BOOKING_ENVIRONMENT:prior.env,
+   BOOKING_TRANSACTION_ISOLATED_TEST:prior.flag,SYNTHETIC_TRANSACTION_TABLE:prior.table})){
+   if(val===undefined)delete process.env[key];else process.env[key]=val;
+  }
+ }
+});
