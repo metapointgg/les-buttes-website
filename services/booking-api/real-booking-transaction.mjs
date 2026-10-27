@@ -4,6 +4,10 @@ import {quoteFromSnapshots} from './public-quote.mjs';
 import {buildEncryptedRealBookingItems} from './real-booking-storage.mjs';
 
 const TABLE=/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/;
+const TEST_TABLE=/^les-buttes-booking-transaction-test-SyntheticTransactionTable-[A-Za-z0-9]+$/;
+const allowedTable=table=>TABLE.test(table??'') ||
+ (process.env.BOOKING_TRANSACTION_ISOLATED_TEST==='true' && TEST_TABLE.test(table??'') &&
+  process.env.SYNTHETIC_TRANSACTION_TABLE===table);
 const DAY=86400000;
 const datesBetween=(start,nights)=>Array.from({length:nights},(_,i)=>
  new Date(Date.parse(start+'T00:00:00Z')+i*DAY).toISOString().slice(0,10));
@@ -12,7 +16,7 @@ export async function planRealBookingTransaction({
  prepared,availability,pricing,encrypt,tableName,nowEpoch=Math.floor(Date.now()/1000),
  contactRetentionDays=90,holdHours=24
 }){
- if(process.env.BOOKING_ENVIRONMENT!=='staging' || !TABLE.test(tableName??''))
+ if(process.env.BOOKING_ENVIRONMENT!=='staging' || !allowedTable(tableName))
   throw Error('Staging booking master required');
  if(process.env.BOOKING_REAL_GUEST_WRITES==='true')
   throw Error('Real guest writes must remain disabled for dry-run planning');
