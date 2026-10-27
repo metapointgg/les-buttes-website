@@ -350,6 +350,7 @@ if(widget){
     submitButton.disabled=false;
     submitButton.removeAttribute('aria-disabled');
     submitButton.textContent='Submit synthetic staging request';
+    widget.querySelector<HTMLElement>('.discover-request-note')?.setAttribute('hidden','');
     challenge.hidden=false;
     const script=document.createElement('script');
     script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
