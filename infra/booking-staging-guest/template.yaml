@@ -52,7 +52,7 @@ Resources:
             - !If
               - EnableWrite
               - Effect: Allow
-                Action: ['dynamodb:PutItem']
+                Action: ['dynamodb:PutItem','dynamodb:UpdateItem']
                 Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}'
               - !Ref AWS::NoValue
             - Effect: Allow
