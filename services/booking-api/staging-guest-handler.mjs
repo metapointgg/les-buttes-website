@@ -3,6 +3,7 @@ import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,QueryCommand,GetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {SSMClient,GetParameterCommand} from '@aws-sdk/client-ssm';
 import {createStagingGuestRequest} from './staging-guest-request.mjs';
+import {syntheticQuotaItems} from './staging-guest-quota.mjs';
 import {masterOccupied} from './master-occupied.mjs';
 import {publishedPricingSnapshots} from './published-pricing-reader.mjs';
 const table=process.env.BOOKINGS_TABLE;
@@ -14,11 +15,15 @@ const response=(statusCode,body,origin)=>({statusCode,headers:{
  'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
  ...(origin===corsOrigin?{'Access-Control-Allow-Origin':corsOrigin,'Vary':'Origin'}:{})
  },body:JSON.stringify(body)});
-async function verifyTurnstile(token,ip){
+async function readSecret(){
  const name=process.env.TURNSTILE_SECRET_PARAMETER;
- if(!/^\/les-buttes\/staging\/turnstile\/[A-Za-z0-9_-]+$/.test(name??''))return false;
+ if(!/^\/les-buttes\/staging\/turnstile\/[A-Za-z0-9_-]+$/.test(name??''))throw Error('Secret unavailable');
  const secret=(await ssm.send(new GetParameterCommand({Name:name,WithDecryption:true}))).Parameter?.Value;
- if(!secret||secret.length<10)return false;
+ if(!secret||secret.length<10)throw Error('Secret unavailable');
+ return secret;
+}
+async function verifyTurnstile(token,ip){
+ const secret=await readSecret();
  const params=new URLSearchParams({secret,response:token});
  if(ip)params.set('remoteip',ip);
  const reply=await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify',{method:'POST',
@@ -44,8 +49,12 @@ export async function handler(event){
     availability:await masterOccupied({db:{send:x=>client.send(new QueryCommand(x.input))},table}),
     pricing:await publishedPricingSnapshots({db:{send:x=>client.send(new GetCommand(x))},table})
    }),
-   writeHold:async hold=>client.send(new TransactWriteCommand({TransactItems:
-    hold.items.map(x=>({Put:{...x.Put,TableName:table}})),ClientRequestToken:hold.meta.id}))
+   writeHold:async hold=>{
+    const secret=await readSecret();
+    const quota=syntheticQuotaItems({table,ip:event.requestContext?.http?.sourceIp,secret});
+    return client.send(new TransactWriteCommand({TransactItems:[
+     ...quota,...hold.items.map(x=>({Put:{...x.Put,TableName:table}}))],ClientRequestToken:hold.meta.id}));
+   }
   });
   return response(201,result,origin);
  }catch(error){
