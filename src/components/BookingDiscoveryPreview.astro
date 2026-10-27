@@ -166,7 +166,9 @@ const properties=[
           </div>
           <p class="journey-validation-status" data-details-validation role="status" aria-live="polite"></p>
           <p class="journey-terms-pending">{t.termsPending}</p>
-          <button type="button" class="button discover-request" disabled aria-disabled="true">{t.previewSubmit}</button>
+          <div data-staging-turnstile hidden></div>
+          <button type="button" class="button discover-request" data-staging-submit disabled aria-disabled="true">{t.previewSubmit}</button>
+          <p data-staging-submission-feedback role="status" aria-live="polite"></p>
           <p class="discover-request-note">{t.previewNoSubmit}</p>
         </form>
         <aside class="journey-booking-recap">
