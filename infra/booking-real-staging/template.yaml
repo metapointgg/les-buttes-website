@@ -10,6 +10,105 @@ Parameters:
     Default: 'false'
     AllowedValues: ['false']
     Description: Intentionally locked off until guest privacy, policies, payment and API controls are complete.
+  SyntheticTestTable:
+    Type: String
+    Default: 'none'
+    AllowedPattern: '^(none|les-buttes-booking-transaction-test-SyntheticTransactionTable-[A-Za-z0-9]+)  GuestContactKey:
+    Type: AWS::KMS::Key
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: Les Buttes isolated staging encrypted booking guest data
+      EnableKeyRotation: true
+      PendingWindowInDays: 30
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: RootKeyAdministration
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+  GuestContactKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/les-buttes-booking-guest-staging
+      TargetKeyId: !Ref GuestContactKey
+  PrivateWorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes-real-guest-staging
+      RetentionInDays: 14
+  PrivateGuestWorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StagingGuestPrivateData
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: CloudWatchLogs
+                Effect: Allow
+                Action: ['logs:CreateLogStream','logs:PutLogEvents']
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/les-buttes-real-guest-staging:*'
+              - Sid: EncryptGuestContact
+                Effect: Allow
+                Action: ['kms:Encrypt','kms:GenerateDataKey']
+                Resource: !GetAtt GuestContactKey.Arn
+              - Sid: RestrictedBookingTableRecords
+                Effect: Allow
+                Action: ['dynamodb:GetItem','dynamodb:Query']
+                Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}'
+              - !If
+                - PrivateIntegrationEnabled
+                - Sid: IsolatedSyntheticTestTableOnly
+                  Effect: Allow
+                  Action: ['dynamodb:TransactWriteItems','dynamodb:PutItem','dynamodb:DeleteItem','dynamodb:GetItem','dynamodb:Scan']
+                  Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${SyntheticTestTable}'
+                - !Ref AWS::NoValue
+              # No writes to booking master or kms:Decrypt.
+
+  DisabledGuestFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: PrivateWorkerLogGroup
+    Properties:
+      FunctionName: les-buttes-real-guest-staging
+      Runtime: nodejs22.x
+      Handler: private-integration-handler.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 128
+      Timeout: 45
+      ReservedConcurrentExecutions: 1
+      Role: !GetAtt PrivateGuestWorkerRole.Arn
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKING_REAL_GUEST_WRITES: 'false'
+          BOOKINGS_TABLE: !Ref ExistingStagingTable
+          GUEST_CONTACT_KMS_KEY_ARN: !GetAtt GuestContactKey.Arn
+          SYNTHETIC_TRANSACTION_TABLE: !Ref SyntheticTestTable
+          BOOKING_PRIVATE_INTEGRATION_TESTS_ENABLED: !If [PrivateIntegrationEnabled, 'true', 'false']
+      # No Events, public URL, API Gateway, SES or Step Functions attached.
+Outputs:
+  KeyArn:
+    Value: !GetAtt GuestContactKey.Arn
+  DisabledFunctionName:
+    Value: !Ref DisabledGuestFunction
+
+  EnablePrivateIntegrationTests:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['false','true']
+Conditions:
+  PrivateIntegrationEnabled: !Equals [!Ref EnablePrivateIntegrationTests, 'true']
 Resources:
   GuestContactKey:
     Type: AWS::KMS::Key
