@@ -17,7 +17,7 @@ Run `npm test`, `node --test services/booking-api/test/staging-guest-request.tes
 ## Release gates (not completed)
 
 1. Configure Cloudflare Turnstile for localhost and create an SSM SecureString named like `/les-buttes/staging/turnstile/secret`. Do **not** put this in a Git file or SAM parameter value.
-2. Add a server-side per-client/per-period request quota (WAF with verified forwarding or atomic DynamoDB counter), alongside Turnstile, **before setting EnableSyntheticWrites=true**. Origin/CORS is not authentication.
+2. The staging request quota is now implemented as two DynamoDB counter updates **within the same atomic transaction as the booking hold**: 3 accepted holds per source and 20 total per UTC hour. Source identifiers are HMAC-hashed; invalid source information fails closed. Origin/CORS is not authentication. Validate quota tests and deployment permissions before enabling writes.
 3. Review CloudFormation stack changes, separate IAM, cost and throttling; then deploy the guest endpoint in a new staging stack. No existing production changes.
 4. Set localhost-only `PUBLIC_BOOKING_STAGING_SUBMIT_URL` and `PUBLIC_BOOKING_STAGING_TURNSTILE_SITE_KEY` in local .env.local, restart Astro.
 5. Test request, management listing, approval/decline, conflicts, quota, CAPTCHA failures, expiry, and absence of submitted contact information in DynamoDB/CloudWatch.
