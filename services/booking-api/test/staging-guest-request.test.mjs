@@ -48,6 +48,8 @@ test('verified synthetic request discards all guest input, including notes',asyn
   const external=await check(payload,{origin:'https://www.lesbuttes.com'});
   assert.equal(external.writes.length,0);
  }finally{
-  [env.BOOKING_ENVIRONMENT,env.BOOKING_STAGING_GUEST_WRITES,env.ALLOWED_PREVIEW_ORIGIN]=before;
+  for(const [index,key] of ['BOOKING_ENVIRONMENT','BOOKING_STAGING_GUEST_WRITES','ALLOWED_PREVIEW_ORIGIN'].entries()){
+   if(before[index]===undefined)delete env[key];else env[key]=before[index];
+  }
  }
 });
