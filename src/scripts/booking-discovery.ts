@@ -336,9 +336,38 @@ if(widget){
     fill('[data-details-price]',money(q.totalGBP));
     setStep(4);
   });
-  // Preview details never leave the browser: no POST/fetch, booking request, session
-  // storage, analytics event, payment handler or confirmation exists in this step.
-  // The draft has no submission endpoint; validation is for local preview feedback only.
+  // Synthetic-only, explicit localhost staging preview. Never enable on a hosted website.
+  const submitBase=localPreview?String(import.meta.env.PUBLIC_BOOKING_STAGING_SUBMIT_URL??'').trim().replace(/\/$/,''):'';
+  const siteKey=localPreview?String(import.meta.env.PUBLIC_BOOKING_STAGING_TURNSTILE_SITE_KEY??'').trim():'';
+  const submitEnabled=Boolean(localPreview&&submitBase.startsWith('https://')&&siteKey);
+  let turnstileWidget:string|undefined;
+  let turnstileToken='';
+  let submitting=false;
+  const submitButton=detailsForm.querySelector<HTMLButtonElement>('[data-staging-submit]')!;
+  const submitFeedback=widget.querySelector<HTMLElement>('[data-staging-submission-feedback]')!;
+  const challenge=widget.querySelector<HTMLElement>('[data-staging-turnstile]')!;
+  if(submitEnabled){
+    submitButton.disabled=false;
+    submitButton.removeAttribute('aria-disabled');
+    submitButton.textContent='Submit synthetic staging request';
+    challenge.hidden=false;
+    const script=document.createElement('script');
+    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async=true;
+    script.addEventListener('load',()=>{
+      const turnstile=(window as unknown as {turnstile?:{
+        render:(node:HTMLElement,options:Record<string,unknown>)=>string;
+        reset:(id:string)=>void;
+      }}).turnstile;
+      if(!turnstile)return;
+      turnstileWidget=turnstile.render(challenge,{sitekey:siteKey,action:'lesbuttes-staging-booking',
+        callback:(token:string)=>{turnstileToken=token;},
+        'expired-callback':()=>{turnstileToken='';},
+        'error-callback':()=>{turnstileToken='';}});
+    });
+    document.head.appendChild(script);
+  }
+
   const emailField=detailsForm.elements.namedItem('email') as HTMLInputElement;
   const phoneField=detailsForm.elements.namedItem('telephone') as HTMLInputElement;
   const validation=widget.querySelector<HTMLElement>('[data-details-validation]');
@@ -352,9 +381,40 @@ if(widget){
   }
   emailField.addEventListener('input',validateContact);
   phoneField.addEventListener('input',validateContact);
-  detailsForm.addEventListener('submit',event=>{event.preventDefault();validateContact();});
-  const disabledConfirm=detailsForm.querySelector<HTMLButtonElement>('[disabled]');
-  if(disabledConfirm)disabledConfirm.disabled=true;
+  submitButton.addEventListener('click',async()=>{
+    if(!submitEnabled||submitting)return;
+    validateContact();
+    if(!detailsForm.reportValidity()||!turnstileToken||!choice){
+      submitFeedback.textContent='Please complete your details and the verification check.';return;
+    }
+    if(!await refreshMaster()||!await verifyServerQuote()){
+      submitFeedback.textContent='Dates or pricing may have changed. Please review your selection.';return;
+    }
+    submitting=true;submitButton.disabled=true;
+    submitFeedback.textContent='Submitting synthetic staging request…';
+    const guest=(name:string)=>(detailsForm.elements.namedItem(name) as HTMLInputElement|HTMLTextAreaElement).value;
+    try{
+      const reply=await fetch(submitBase+'/request',{method:'POST',headers:{'Content-Type':'application/json'},
+        cache:'no-store',signal:AbortSignal.timeout(15000),body:JSON.stringify({
+          unit:choice,start:arrival.value,end:departure.value,adults:filters.adults,children:filters.children,
+          firstName:guest('firstName'),lastName:guest('lastName'),email:guest('email'),
+          telephone:guest('telephone'),notes:guest('notes'),turnstileToken
+        })});
+      const result=await reply.json();
+      if(!reply.ok||result.synthetic!==true||result.status!=='REQUESTED')throw Error(result.error||'Request not accepted');
+      // Never echo or retain guest contact details. This is a staging test, not a real reservation.
+      submitFeedback.textContent='Synthetic test request '+result.reference+' received. No real booking or payment was created.';
+      submitButton.textContent='Synthetic request submitted';
+    }catch(error){
+      submitFeedback.textContent=error instanceof Error?error.message:'Request unsuccessful. Please retry.';
+      submitButton.disabled=false;
+    }finally{
+      submitting=false;turnstileToken='';
+      const turnstile=(window as unknown as {turnstile?:{reset:(id:string)=>void}}).turnstile;
+      if(turnstileWidget&&turnstile)turnstile.reset(turnstileWidget);
+    }
+  });
+  detailsForm.addEventListener('submit',event=>event.preventDefault());
 
   arrival.addEventListener('change',()=>{if(arrival.value){departure.min=plusDays(arrival.value,7);}});
   void search();
