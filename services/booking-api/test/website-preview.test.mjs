@@ -72,8 +72,15 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discovery,/name="email"/);
   assert.match(discovery,/disabled aria-disabled="true"/);
   assert.doesNotMatch(discovery,/data-api=/);
-  // Validation is now allowed, but preview submission must still be prevented.
-  assert.ok(discoveryScript.includes("detailsForm.addEventListener('submit',event=>{event.preventDefault();validateContact();})"));
+  // Localhost-only synthetic staging submission requires both an explicit URL and Turnstile.
+  // The HTML remains disabled for hosted sites, and browser form submit is prevented.
+  assert.match(discoveryScript,/detailsForm\.addEventListener\('submit',event=>event\.preventDefault\(\)\)/);
+  assert.match(discoveryScript,/const submitBase=localPreview\?/);
+  assert.match(discoveryScript,/const siteKey=localPreview\?/);
+  assert.match(discoveryScript,/submitEnabled=Boolean\(localPreview&&submitBase\.startsWith\('https:\/\/'\)&&siteKey\)/);
+  assert.match(discoveryScript,/turnstileToken/);
+  assert.match(discoveryScript,/result\.synthetic!==true/);
+  assert.match(discovery,/data-staging-submit disabled aria-disabled="true"/);
   assert.match(discovery,/type="email" name="email"[^>]*required/);
   assert.match(discovery,/type="tel" name="telephone"[^>]*pattern=/);
   assert.match(page,/data-mode="live"/);
