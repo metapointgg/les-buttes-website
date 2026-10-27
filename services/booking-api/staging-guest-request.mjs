@@ -11,6 +11,10 @@ export async function createStagingGuestRequest({payload,origin,ip,verifyTurnsti
  const {unit,start,end,adults,children,turnstileToken}=payload;
  if(!['geranium','honeysuckle','both'].includes(unit)||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(start??'')||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(end??''))throw Error('Invalid stay');
  if(!Number.isInteger(adults)||!Number.isInteger(children)||adults<1||children<0||adults+children>10)throw Error('Invalid party');
+ const first=Date.parse(start+'T00:00:00Z'),last=Date.parse(end+'T00:00:00Z');
+ const nights=(last-first)/86400000;
+ if(!Number.isInteger(nights)||nights<7||nights>27||nights%7!==0||
+    new Date(first).getUTCDay()!==6||new Date(last).getUTCDay()!==6)throw Error('Saturday-to-Saturday weekly booking required');
  if(typeof turnstileToken!=='string'||turnstileToken.length<10||turnstileToken.length>2048)throw Error('Verification required');
  // Accept real-looking typed details for UX validation, but discard them before all storage.
  if(typeof payload.firstName!=='string'||payload.firstName.trim().length<1||payload.firstName.length>80||
