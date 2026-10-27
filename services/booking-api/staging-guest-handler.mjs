@@ -1,19 +1,23 @@
 // Separate Lambda: no guest emails, payments or confirmation. Staging synthetic only.
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,QueryCommand,GetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
+import {SSMClient,GetParameterCommand} from '@aws-sdk/client-ssm';
 import {createStagingGuestRequest} from './staging-guest-request.mjs';
 import {masterOccupied} from './master-occupied.mjs';
 import {publishedPricingSnapshots} from './published-pricing-reader.mjs';
 const table=process.env.BOOKINGS_TABLE;
 const region='eu-west-2';
 const client=DynamoDBDocumentClient.from(new DynamoDBClient({region}));
+const ssm=new SSMClient({region});
 const corsOrigin=process.env.ALLOWED_PREVIEW_ORIGIN;
 const response=(statusCode,body,origin)=>({statusCode,headers:{
  'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
  ...(origin===corsOrigin?{'Access-Control-Allow-Origin':corsOrigin,'Vary':'Origin'}:{})
  },body:JSON.stringify(body)});
 async function verifyTurnstile(token,ip){
- const secret=process.env.TURNSTILE_SECRET;
+ const name=process.env.TURNSTILE_SECRET_PARAMETER;
+ if(!/^\/les-buttes\/staging\/turnstile\/[A-Za-z0-9_-]+$/.test(name??''))return false;
+ const secret=(await ssm.send(new GetParameterCommand({Name:name,WithDecryption:true}))).Parameter?.Value;
  if(!secret||secret.length<10)return false;
  const params=new URLSearchParams({secret,response:token});
  if(ip)params.set('remoteip',ip);
