@@ -1,7 +1,6 @@
 // Private, explicitly gated, SYNTHETIC-ONLY KMS + DynamoDB integration test.
 // No API trigger or customer input. Never use the shared booking master.
 import {randomUUID} from 'node:crypto';
-import {KMSClient,EncryptCommand} from '@aws-sdk/client-kms';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,TransactWriteCommand,GetCommand,DeleteCommand,ScanCommand} from '@aws-sdk/lib-dynamodb';
 import {prepareRealBookingStorage} from './real-booking-storage.mjs';
@@ -27,6 +26,7 @@ export async function runPrivateIntegrationTest({db,kms,table,keyArn,nowEpoch=Ma
  if(count.Count!==0||count.LastEvaluatedKey)throw Error('Test table is not empty');
  const ref=randomUUID(),other=randomUUID(),run=randomUUID();
  const encrypt=async(data,context)=>{
+  const {EncryptCommand}=await import('@aws-sdk/client-kms');
   const res=await kms.send(new EncryptCommand({KeyId:keyArn,Plaintext:data,EncryptionContext:context}));
   if(res.KeyId!==keyArn||!res.CiphertextBlob)throw Error('KMS encrypt failed');
   return Buffer.from(res.CiphertextBlob);
@@ -88,6 +88,7 @@ export async function handler(event){
  try{
   process.env.BOOKING_TRANSACTION_ISOLATED_TEST='true';
   const db=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
+  const {KMSClient}=await import('@aws-sdk/client-kms');
   const kms=new KMSClient({region:'eu-west-2'});
   const result=await runPrivateIntegrationTest({db,kms,table,keyArn});
   return {statusCode:200,body:JSON.stringify(result)};
