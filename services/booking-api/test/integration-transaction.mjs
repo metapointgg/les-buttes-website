@@ -35,6 +35,7 @@ async function transact(plan){
  return client.send(new TransactWriteCommand({...plan.transactWrite,ClientRequestToken:plan.reference}));
 }
 let owned=[];
+let committedReference=null;
 try{
  const initial=await client.send(new ScanCommand({TableName:table,Select:'COUNT'}));
  check(initial.Count===0&&!initial.LastEvaluatedKey,'Test table must be empty before starting');
@@ -43,6 +44,7 @@ try{
  owned=first.transactWrite.TransactItems.map(x=>({PK:x.Put.Item.PK,SK:x.Put.Item.SK}));
  check(owned.length===17,'Expected 17 conditional items');
  await transact(first);
+ committedReference=one;
  check((await get('BOOKING#'+one,'META'))?.id===one,'Missing committed booking');
  check((await get('GUEST#'+one,'CONTACT'))?.keyType==='AWS_KMS','Missing mock ciphertext record');
  check((await get('UNIT#geranium','DATE#2027-07-10'))?.id===one,'Missing date hold');
@@ -61,11 +63,19 @@ try{
  // Cleanup deletes only keys captured from the first synthetic transaction.
  // Concurrent or foreign records cannot be deleted; table must have been initially empty.
  for(const key of owned){
+  if(!committedReference)break;
   try{
+   let condition,values;
+   if(key.PK.startsWith('UNIT#')||key.PK.startsWith('BOOKING#')){
+    condition='id = :ref';values={':ref':committedReference};
+   }else if(key.PK.startsWith('GUEST#')){
+    condition='context.bookingId = :ref';values={':ref':committedReference};
+   }else{
+    condition='bookingId = :ref';values={':ref':committedReference};
+   }
    await client.send(new DeleteCommand({TableName:table,Key:key,
-    ConditionExpression:'id = :ref OR (attribute_not_exists(id) AND (begins_with(PK,:booking) OR begins_with(PK,:guest) OR begins_with(PK,:idem)))',
-    ExpressionAttributeValues:{':ref':key.PK.startsWith('UNIT#')?undefined:undefined,':booking':'BOOKING#',':guest':'GUEST#',':idem':'IDEMPOTENCY#'}}));
-  }catch(e){process.stderr.write('Cleanup failed; inspect isolated table manually before reuse: '+e.name+'\n');}
+    ConditionExpression:condition,ExpressionAttributeValues:values}));
+  }catch(e){process.stderr.write('Cleanup failed; inspect isolated table before reuse: '+e.name+'\\n');}
  }
  const remaining=await client.send(new ScanCommand({TableName:table,Select:'COUNT'}));
  check(remaining.Count===0&&!remaining.LastEvaluatedKey,'Synthetic table cleanup incomplete');
