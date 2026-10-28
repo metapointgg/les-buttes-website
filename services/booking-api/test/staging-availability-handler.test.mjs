@@ -51,3 +51,34 @@ test('fails closed on database error',async()=>{
   assert.equal(response.statusCode,503);
   assert.equal(JSON.parse(response.body).error,'Availability unavailable');
 });
+
+test('reads all DynamoDB pages and combines adjacent occupied nights',async()=>{
+  const calls=[];
+  const db={send:async command=>{
+    const input=command.input;
+    calls.push(input);
+    assert.equal(input.ConsistentRead,true);
+    assert.equal(input.ProjectionExpression,'PK, SK, expiresAt');
+    const unit=input.ExpressionAttributeValues[':unit'];
+    if(unit==='UNIT#honeysuckle')return {Items:[]};
+    if(!input.ExclusiveStartKey)return {
+      Items:[{SK:'DATE#2027-08-28'}],LastEvaluatedKey:{PK:unit,SK:'DATE#2027-08-28'}
+    };
+    return {Items:[{SK:'DATE#2027-08-29'}]};
+  }};
+  const response=await make({db})(event);
+  assert.equal(response.statusCode,200);
+  const data=JSON.parse(response.body);
+  assert.deepEqual(data.blocked.geranium,[{from:'2027-08-28',to:'2027-08-30'}]);
+  assert.deepEqual(data.blocked.honeysuckle,[]);
+  assert.equal(calls.length,3);
+});
+
+test('ignores expired slots instead of incorrectly blocking dates',async()=>{
+  const db={send:async()=>({Items:[{SK:'DATE#2027-08-28',expiresAt:1}]})};
+  const response=await make({db})(event);
+  assert.equal(response.statusCode,200);
+  const data=JSON.parse(response.body);
+  assert.deepEqual(data.blocked.geranium,[]);
+  assert.deepEqual(data.blocked.honeysuckle,[]);
+});
