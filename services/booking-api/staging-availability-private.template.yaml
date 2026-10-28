@@ -17,9 +17,9 @@ Resources:
     Properties:
       StageName: '$default'
       Auth:
-        DefaultAuthorizer: ReviewerJwt
+        DefaultAuthorizer: ManagementJwt
         Authorizers:
-          ReviewerJwt:
+          ManagementJwt:
             JwtConfiguration:
               issuer: !Ref CognitoIssuer
               audience:
@@ -37,7 +37,7 @@ Resources:
         Variables:
           BOOKING_ENVIRONMENT: staging
           BOOKINGS_TABLE: !Ref StagingBookingTableName
-      # Limit concurrent reviewer reads to protect the staging booking master.
+      # Limit concurrent authenticated management reads to protect the staging booking master.
       ReservedConcurrentExecutions: 2
       Policies:
         - Version: '2012-10-17'
@@ -53,8 +53,8 @@ Resources:
             Path: /api/staging/availability
             Method: GET
             Auth:
-              Authorizer: ReviewerJwt
+              Authorizer: ManagementJwt
 Outputs:
   PrivateStagingAvailabilityUrl:
-    Description: Reviewer-only staging API; do not use as a production public endpoint
+    Description: Authenticated management-only staging API; do not use as a production public endpoint
     Value: !Sub 'https://${PrivateStagingAvailabilityApi}.execute-api.${AWS::Region}.amazonaws.com/api/staging/availability'
