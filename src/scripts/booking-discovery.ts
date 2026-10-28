@@ -348,7 +348,7 @@ if(widget){
   const login=widget.querySelector<HTMLButtonElement>('[data-reviewer-sign-in]');
   const logout=widget.querySelector<HTMLButtonElement>('[data-reviewer-sign-out]');
   if(login&&logout){
-    const eligible=window.location.hostname==='d123fnjf47zmyp.cloudfront.net';
+    const eligible=hostedReadOnlyEnabled;
     login.hidden=!eligible||Boolean(reviewerToken());
     logout.hidden=!eligible||!reviewerToken();
     login.addEventListener('click',()=>{void reviewerSignIn();});
