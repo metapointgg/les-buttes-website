@@ -21,3 +21,12 @@ When `PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED=true` is explicitly set in a **pr
 5. Obtain explicit approval before enabling the hosted read-only flag or deploying any infrastructure.
 
 **Production:** unchanged. **Booking acceptance:** disabled.
+
+## Verified AWS authentication baseline (read-only inspection, 28 October 2026)
+- The existing **cottage-management** HTTP API `i2irz87c82` uses API Gateway JWT authorizer `q9ukxh`, named `CognitoAuthorizer`, with issuer `https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa` and audience `2mjmimjh7oc8h00d4nngrc1akj`.
+- API Gateway authorizers are **API-scoped**: the existing authorizer ID cannot simply be attached to a different API. For a separate staging availability API, provision an equivalent JWT authorizer using the same issuer and audience, or explicitly review adding a protected route to the existing management API.
+- The existing booking, guest-submission and public-read staging APIs have routes with `AuthorizationType: NONE`. **Do not attach the new Lambda to any of these unauthenticated routes.**
+- The handler additionally requires the exact Cognito `cognito:groups` membership `booking-staging-reviewers`. Confirm that the configured Cognito app client actually emits this claim in the **token type accepted by the HTTP API JWT authorizer**. If not, use a verified server-side group/role check; never fall back to a request header.
+- Restrict the new Lambda execution role to `dynamodb:Query` on `arn:aws:dynamodb:eu-west-2:145608514666:table/les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK`. No `Scan`, `PutItem`, `UpdateItem`, `DeleteItem`, or wildcard table resource. The existing query reads table partitions, not a secondary index.
+- Explicitly provision the Lambda integration and `GET /api/staging/availability` route with JWT authorization, plus a scoped Lambda invoke permission for the exact API/stage/route. Do not deploy from this document; infrastructure changes require approval.
+- CloudFront same-origin routing must preserve `Authorization` to the gateway while preventing caching of authenticated responses. A browser fetch without credentials currently fails closed; implement and test the reviewer sign-in/token flow before enabling the website flag.
