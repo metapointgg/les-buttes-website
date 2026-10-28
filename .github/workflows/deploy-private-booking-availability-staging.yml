@@ -17,13 +17,12 @@ jobs:
     if: ${{ github.event.inputs.confirm_staging_only == 'DEPLOY-STAGING' && github.ref == 'refs/heads/feature/direct-booking-requests-27-night' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    environment: booking-staging
     steps:
       - uses: actions/checkout@v4
       - name: Configure restricted staging deployment credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.BOOKING_STAGING_DEPLOY_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
           aws-region: eu-west-2
           role-session-name: booking-private-availability-staging
       - name: Verify AWS account and target stack
