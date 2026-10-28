@@ -10,6 +10,10 @@ assert.match(discovery,/127\.0\.0\.1:4328\/availability/,'Local master bridge mu
 for(const language of ['','fr/','nl/']){
   const output='dist/'+language+'book/index.html';
   assert.ok(existsSync(output),'Missing booking page: '+output);
+  const html=readFileSync(output,'utf8');
+  assert.doesNotMatch(html,/data-mode=["']live["']/i,'Live booking form unexpectedly present: '+output);
+  assert.doesNotMatch(html,/data-booking-form(?:\\s|>)/i,'Submission form unexpectedly present: '+output);
+  assert.match(html,/<meta[^>]*name=["']robots["'][^>]*noindex|<meta[^>]*content=["'][^"']*noindex[^"']*["'][^>]*name=["']robots["']/i,'Booking preview must remain noindex: '+output);
 }
 console.log('Staging readiness: static booking pages verified in EN/FR/NL.');
 console.log('Staging readiness: guest submission is gated; hosted master availability is NOT connected.');
