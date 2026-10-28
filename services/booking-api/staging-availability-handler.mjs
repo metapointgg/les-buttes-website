@@ -28,23 +28,16 @@ export function createStagingAvailabilityHandler({db,table,environment,authorise
   };
 }
 
-// The exported Lambda entrypoint remains fail-closed until an authorised integration
-// supplies a trusted authorizer context. It cannot be enabled by client-side settings.
-const table=process.env.BOOKINGS_TABLE;
-const environment=process.env.BOOKING_ENVIRONMENT;
-// Defer loading AWS SDK until an authorised request actually reads the master.
-// This also allows pure handler tests without installing deployment-only SDK packages.
-let sdkPromise;
-const loadSdk=()=>sdkPromise??=Promise.all([
-  import('@aws-sdk/client-dynamodb'),import('@aws-sdk/lib-dynamodb')
-]).then(([{DynamoDBClient},{DynamoDBDocumentClient,QueryCommand}])=>({
-  documentDb:DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'})),QueryCommand
-}));
-const db={send:async command=>{
-  const {documentDb,QueryCommand}=await loadSdk();
-  return documentDb.send(new QueryCommand(command.input));
-}};
-export const handler=createStagingAvailabilityHandler({
-  db,table,environment,
-  authorised:event=>event.requestContext?.authorizer?.lambda?.bookingStagingReviewer===true
-});
+// AWS SDK is loaded only when Lambda executes, so unit tests can inject a fake DB
+// without requiring deployment-only dependencies in the website build.
+export async function handler(event){
+  const [{DynamoDBClient},{DynamoDBDocumentClient,QueryCommand}]=await Promise.all([
+    import('@aws-sdk/client-dynamodb'),import('@aws-sdk/lib-dynamodb')
+  ]);
+  const documentDb=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
+  const db={send:command=>documentDb.send(new QueryCommand(command.input))};
+  return createStagingAvailabilityHandler({
+    db,table:process.env.BOOKINGS_TABLE,environment:process.env.BOOKING_ENVIRONMENT,
+    authorised:e=>e.requestContext?.authorizer?.lambda?.bookingStagingReviewer===true
+  })(event);
+}
