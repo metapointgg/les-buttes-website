@@ -10,7 +10,17 @@ const headers={
 const respond=(statusCode,body)=>({statusCode,headers,body:JSON.stringify(body)});
 const validTable=(name)=>/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/.test(name??'');
 
-export function createStagingAvailabilityHandler({db,table,environment,authorised=()=>false}){
+// API Gateway must validate the Cognito JWT before populating requestContext.authorizer.jwt.
+// Membership in the dedicated reviewer group is required in addition to authentication.
+export function isStagingReviewer(event){
+  const claims=event?.requestContext?.authorizer?.jwt?.claims;
+  if(!claims||typeof claims!=='object')return false;
+  const groups=claims['cognito:groups'];
+  const members=Array.isArray(groups)?groups:typeof groups==='string'?groups.split(','):[];
+  return members.some(group=>group.trim()==='booking-staging-reviewers');
+}
+
+export function createStagingAvailabilityHandler({db,table,environment,authorised=isStagingReviewer}){
   return async function handler(event={}){
     if(environment!=='staging'||!validTable(table))return respond(503,{error:'Staging unavailable'});
     // An API Gateway authorizer must set this flag only after validating a reviewer.
@@ -32,7 +42,7 @@ export function createStagingAvailabilityHandler({db,table,environment,authorise
 // without requiring deployment-only dependencies in the website build.
 export async function handler(event){
   // Reject unauthorised requests before initialising an AWS client or reading the master.
-  const authorised=event?.requestContext?.authorizer?.lambda?.bookingStagingReviewer===true;
+  const authorised=isStagingReviewer(event);
   const method=event?.requestContext?.http?.method??event?.httpMethod;
   const path=event?.rawPath??event?.path;
   if(!authorised)return respond(403,{error:'Forbidden'});
@@ -47,7 +57,7 @@ export async function handler(event){
     const db={send:command=>documentDb.send(new QueryCommand(command.input))};
     return createStagingAvailabilityHandler({
       db,table:process.env.BOOKINGS_TABLE,environment:process.env.BOOKING_ENVIRONMENT,
-      authorised:e=>e.requestContext?.authorizer?.lambda?.bookingStagingReviewer===true
+      authorised:isStagingReviewer
     })(event);
   }catch(error){
     console.error('Staging availability initialisation failed:',error?.name??'Error');
