@@ -11,19 +11,17 @@ const respond=(statusCode,body)=>({statusCode,headers,body:JSON.stringify(body)}
 const validTable=(name)=>/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/.test(name??'');
 
 // API Gateway must validate the Cognito JWT before populating requestContext.authorizer.jwt.
-// Membership in the dedicated reviewer group is required in addition to authentication.
-export function isStagingReviewer(event){
+// Any authenticated user from the configured Cognito app client may read staging availability.
+export function isAuthenticatedManagementUser(event){
   const claims=event?.requestContext?.authorizer?.jwt?.claims;
   if(!claims||typeof claims!=='object')return false;
-  const groups=claims['cognito:groups'];
-  const members=Array.isArray(groups)?groups:typeof groups==='string'?groups.split(','):[];
-  return members.some(group=>group.trim()==='booking-staging-reviewers');
+  return typeof claims.sub==='string' && claims.sub.length>0;
 }
 
-export function createStagingAvailabilityHandler({db,table,environment,authorised=isStagingReviewer}){
+export function createStagingAvailabilityHandler({db,table,environment,authorised=isAuthenticatedManagementUser}){
   return async function handler(event={}){
     if(environment!=='staging'||!validTable(table))return respond(503,{error:'Staging unavailable'});
-    // An API Gateway authorizer must set this flag only after validating a reviewer.
+    // An API Gateway authorizer must set this flag only after validating the Cognito JWT.
     // Never trust a caller-supplied HTTP header, query parameter, or body field.
     if(!authorised(event))return respond(403,{error:'Forbidden'});
     if((event.requestContext?.http?.method??event.httpMethod)!=='GET'||
@@ -42,7 +40,7 @@ export function createStagingAvailabilityHandler({db,table,environment,authorise
 // without requiring deployment-only dependencies in the website build.
 export async function handler(event){
   // Reject unauthorised requests before initialising an AWS client or reading the master.
-  const authorised=isStagingReviewer(event);
+  const authorised=isAuthenticatedManagementUser(event);
   const method=event?.requestContext?.http?.method??event?.httpMethod;
   const path=event?.rawPath??event?.path;
   if(!authorised)return respond(403,{error:'Forbidden'});
@@ -57,7 +55,7 @@ export async function handler(event){
     const db={send:command=>documentDb.send(new QueryCommand(command.input))};
     return createStagingAvailabilityHandler({
       db,table:process.env.BOOKINGS_TABLE,environment:process.env.BOOKING_ENVIRONMENT,
-      authorised:isStagingReviewer
+      authorised:isAuthenticatedManagementUser
     })(event);
   }catch(error){
     console.error('Staging availability initialisation failed:',error?.name??'Error');
