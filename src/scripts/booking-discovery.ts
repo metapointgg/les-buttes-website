@@ -66,7 +66,8 @@ if(widget){
   };
   const updateNext=()=>{
     const q=getQuote();
-    reviewNext.disabled=!q||!q.meetsDraftMinimum;
+    reviewNext.disabled=!masterConnected() ? false : !q||!q.meetsDraftMinimum;
+    reviewNext.setAttribute('aria-disabled',String(!masterConnected()));
     const note=widget.querySelector<HTMLElement>('[data-selection-feedback]');
     if(note)note.textContent=!masterConnected()?tr('masterOffline'):
       !q?tr('datesNeeded'):!q.meetsDraftMinimum?tr('tooShort'):tr('minimumOkay');
@@ -298,7 +299,12 @@ if(widget){
   onClick('[data-back-to-cottages]',()=>setStep(2));
   onClick('[data-back-to-review]',()=>setStep(3));
   onClick('[data-continue-review]',async()=>{
-    if(!await refreshMaster()){updateResults();return;}
+    if(!await refreshMaster()){
+      updateResults();
+      const note=widget.querySelector<HTMLElement>('[data-selection-feedback]');
+      if(note){note.textContent=tr('masterOffline');note.scrollIntoView({behavior:'smooth',block:'center'});}
+      return;
+    }
     updateResults();
     const quote=getQuote();
     if(!quote||!quote.meetsDraftMinimum)return;
