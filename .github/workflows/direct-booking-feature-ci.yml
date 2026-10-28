@@ -31,6 +31,18 @@ jobs:
           done
       - name: Verify staging safety gates
         run: node scripts/check-booking-staging-readiness.mjs
+      - name: Install AWS SAM CLI for offline template validation
+        uses: aws-actions/setup-sam@v2
+      - name: Validate private staging availability infrastructure (no deployment)
+        run: |
+          set -euo pipefail
+          sam validate --lint --template-file services/booking-api/staging-availability-private.template.yaml --region eu-west-2
+      - name: Build private staging availability Lambda (no deployment)
+        run: |
+          set -euo pipefail
+          sam build --template-file services/booking-api/staging-availability-private.template.yaml --build-dir .aws-sam/private-availability-build --region eu-west-2
+          test -s .aws-sam/private-availability-build/template.yaml
+          test -s .aws-sam/private-availability-build/PrivateStagingAvailabilityFunction/staging-availability-handler.mjs
       - name: Upload validated static website
         uses: actions/upload-artifact@v4
         with:
