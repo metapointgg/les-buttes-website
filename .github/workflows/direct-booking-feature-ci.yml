@@ -29,6 +29,8 @@ jobs:
             test -s "$page"
             echo "Verified $page"
           done
+      - name: Verify staging safety gates
+        run: node scripts/check-booking-staging-readiness.mjs
       - name: Upload validated static website
         uses: actions/upload-artifact@v4
         with:
