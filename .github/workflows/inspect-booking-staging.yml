@@ -31,7 +31,7 @@ jobs:
           aws cloudformation describe-stacks --region eu-west-2 \
             --query "Stacks[?contains(StackName, 'booking') && contains(StackName, 'staging')].[StackName,StackStatus]" --output table
           stacks="$(aws cloudformation list-stacks --region eu-west-2 \
-            --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE UPDATE_IN_PROGRESS UPDATE_ROLLBACK_IN_PROGRESS \
+            --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE UPDATE_IN_PROGRESS UPDATE_ROLLBACK_IN_PROGRESS REVIEW_IN_PROGRESS CREATE_IN_PROGRESS CREATE_FAILED UPDATE_FAILED UPDATE_ROLLBACK_FAILED \
             --query "StackSummaries[?contains(StackName, 'booking') && contains(StackName, 'staging')].StackName" --output text)"
           if [[ -z "$stacks" ]]; then
             echo "::warning::No matching staging booking stack found."
