@@ -82,3 +82,16 @@ test('ignores expired slots instead of incorrectly blocking dates',async()=>{
   assert.deepEqual(data.blocked.geranium,[]);
   assert.deepEqual(data.blocked.honeysuckle,[]);
 });
+
+test('public Lambda entrypoint denies unauthorised requests without loading AWS SDK',async()=>{
+  const {handler}=await import('../staging-availability-handler.mjs');
+  const response=await handler({rawPath:'/api/staging/availability',requestContext:{http:{method:'GET'}}});
+  assert.equal(response.statusCode,403);
+  assert.equal(response.headers['Cache-Control'],'no-store, max-age=0');
+});
+
+test('public Lambda entrypoint rejects wrong route before AWS SDK loading',async()=>{
+  const {handler}=await import('../staging-availability-handler.mjs');
+  const response=await handler({...event,rawPath:'/api/staging/other'});
+  assert.equal(response.statusCode,404);
+});
