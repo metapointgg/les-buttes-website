@@ -31,13 +31,26 @@ export function createStagingAvailabilityHandler({db,table,environment,authorise
 // AWS SDK is loaded only when Lambda executes, so unit tests can inject a fake DB
 // without requiring deployment-only dependencies in the website build.
 export async function handler(event){
-  const [{DynamoDBClient},{DynamoDBDocumentClient,QueryCommand}]=await Promise.all([
-    import('@aws-sdk/client-dynamodb'),import('@aws-sdk/lib-dynamodb')
-  ]);
-  const documentDb=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
-  const db={send:command=>documentDb.send(new QueryCommand(command.input))};
-  return createStagingAvailabilityHandler({
-    db,table:process.env.BOOKINGS_TABLE,environment:process.env.BOOKING_ENVIRONMENT,
-    authorised:e=>e.requestContext?.authorizer?.lambda?.bookingStagingReviewer===true
-  })(event);
+  // Reject unauthorised requests before initialising an AWS client or reading the master.
+  const authorised=event?.requestContext?.authorizer?.lambda?.bookingStagingReviewer===true;
+  const method=event?.requestContext?.http?.method??event?.httpMethod;
+  const path=event?.rawPath??event?.path;
+  if(!authorised)return respond(403,{error:'Forbidden'});
+  if(method!=='GET'||path!=='/api/staging/availability')return respond(404,{error:'Not found'});
+  if(process.env.BOOKING_ENVIRONMENT!=='staging'||!validTable(process.env.BOOKINGS_TABLE))
+    return respond(503,{error:'Staging unavailable'});
+  try{
+    const [{DynamoDBClient},{DynamoDBDocumentClient,QueryCommand}]=await Promise.all([
+      import('@aws-sdk/client-dynamodb'),import('@aws-sdk/lib-dynamodb')
+    ]);
+    const documentDb=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
+    const db={send:command=>documentDb.send(new QueryCommand(command.input))};
+    return createStagingAvailabilityHandler({
+      db,table:process.env.BOOKINGS_TABLE,environment:process.env.BOOKING_ENVIRONMENT,
+      authorised:e=>e.requestContext?.authorizer?.lambda?.bookingStagingReviewer===true
+    })(event);
+  }catch(error){
+    console.error('Staging availability initialisation failed:',error?.name??'Error');
+    return respond(503,{error:'Availability unavailable'});
+  }
 }
