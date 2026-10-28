@@ -1,5 +1,8 @@
 name: Deploy private booking availability staging
 on:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+    paths: ['.github/workflows/deploy-private-booking-availability-staging.yml']
   workflow_dispatch:
     inputs:
       confirm_staging_only:
@@ -14,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
-    if: ${{ github.event.inputs.confirm_staging_only == 'DEPLOY-STAGING' && github.ref == 'refs/heads/feature/direct-booking-requests-27-night' }}
+    if: ${{ github.ref == 'refs/heads/feature/direct-booking-requests-27-night' && (github.event_name == 'push' || github.event.inputs.confirm_staging_only == 'DEPLOY-STAGING') }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
