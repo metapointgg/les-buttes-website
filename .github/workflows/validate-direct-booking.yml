@@ -36,6 +36,12 @@ jobs:
           echo "Build revision: $(git rev-parse HEAD)" > dist/BUILD-REVISION.txt
           echo "Built at: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> dist/BUILD-REVISION.txt
           echo "Booking pages verified for English, French and Dutch." >> "$GITHUB_STEP_SUMMARY"
+          echo "## Booking page output" >> "$GITHUB_STEP_SUMMARY"
+          for page in dist/book/index.html dist/fr/book/index.html dist/nl/book/index.html; do
+            printf '%s: %s bytes\\n' "$page" "$(wc -c < "$page")" >> "$GITHUB_STEP_SUMMARY"
+          done
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum > dist/BUILD-SHA256SUMS.txt
+          echo "Generated SHA-256 manifest for staging artifact integrity." >> "$GITHUB_STEP_SUMMARY"
       - name: Preserve built website for staging review
         if: ${{ success() }}
         uses: actions/upload-artifact@v4
