@@ -25,6 +25,14 @@ jobs:
         run: npm ci
       - name: Build and validate links
         run: npm test
+      - name: Preserve built website for staging review
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: les-buttes-direct-booking-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
       - name: Notify result
         if: ${{ always() }}
         env:
