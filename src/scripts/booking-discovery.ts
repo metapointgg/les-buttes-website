@@ -18,6 +18,12 @@ if(widget){
   const prev=widget.querySelector<HTMLButtonElement>('[data-prev-month]')!;
   const next=widget.querySelector<HTMLButtonElement>('[data-next-month]')!;
   const localPreview=['localhost','127.0.0.1'].includes(window.location.hostname);
+  // A hosted preview may use only a same-origin, read-only availability proxy.
+  // Keep this disabled until the staging API is authenticated and explicitly configured.
+  const hostedReadOnlyEnabled=import.meta.env.PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true';
+  const hostedReadOnlyPath='/api/staging/availability';
+  const availabilityUrl=localPreview?'http://127.0.0.1:4328/availability':
+    hostedReadOnlyEnabled?hostedReadOnlyPath:null;
   let fetchSequence=0;
   const lang=widget.dataset.locale==='fr'?'fr-FR':widget.dataset.locale==='nl'?'nl-NL':'en-GB';
   const money=(v:number)=>new Intl.NumberFormat(lang,{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(v);
@@ -75,9 +81,9 @@ if(widget){
   async function refreshMaster(){
     const request=++fetchSequence;
     // Never put staging credentials in a web bundle or contact users' local ports on hosted sites.
-    if(!localPreview){clearMasterAvailability();return false;}
+    if(!availabilityUrl){clearMasterAvailability();return false;}
     try{
-      const response=await fetch('http://127.0.0.1:4328/availability',{
+      const response=await fetch(availabilityUrl,{
         method:'GET',cache:'no-store',signal:AbortSignal.timeout(8000)
       });
       if(!response.ok)throw Error('masterUnavailable');
