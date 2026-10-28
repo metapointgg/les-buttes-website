@@ -1,0 +1,38 @@
+name: Direct booking feature CI (no deployment)
+on:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: booking-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Astro build, link checks, booking API and discovery tests
+        run: npm test
+      - name: Check booking pages generated in all languages
+        run: |
+          set -euo pipefail
+          for page in dist/book/index.html dist/fr/book/index.html dist/nl/book/index.html; do
+            test -s "$page"
+            echo "Verified $page"
+          done
+      - name: Upload validated static website
+        uses: actions/upload-artifact@v4
+        with:
+          name: direct-booking-site-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error
