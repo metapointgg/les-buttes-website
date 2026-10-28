@@ -15,7 +15,7 @@ jobs:
       - name: Assume existing AWS GitHub role
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-github-deploy
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-github-staging-inspect
           aws-region: eu-west-2
       - name: Verify account and inspect staging stacks
         shell: bash
