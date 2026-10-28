@@ -1,0 +1,70 @@
+name: Deploy private booking availability staging
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_staging_only:
+        description: 'Type DEPLOY-STAGING to confirm a staging-only deployment'
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: les-buttes-private-availability-staging
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: ${{ github.event.inputs.confirm_staging_only == 'DEPLOY-STAGING' && github.ref == 'refs/heads/feature/direct-booking-requests-27-night' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: booking-staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure restricted staging deployment credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.BOOKING_STAGING_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-2
+          role-session-name: booking-private-availability-staging
+      - name: Verify AWS account and target stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = "145608514666"
+          aws cloudformation describe-stacks --stack-name les-buttes-private-availability-staging --query 'Stacks[0].StackStatus' --output text 2>/dev/null || true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: aws-actions/setup-sam@v2
+      - name: Build and validate real Lambda package
+        shell: bash
+        run: |
+          set -euo pipefail
+          sam validate --lint --template-file services/booking-api/staging-availability-private.template.yaml --region eu-west-2
+          sam build --template-file services/booking-api/staging-availability-private.template.yaml --build-dir .aws-sam/private-availability-deploy --region eu-west-2
+          test -s .aws-sam/private-availability-deploy/PrivateStagingAvailabilityFunction/staging-availability-handler.mjs
+          test -d .aws-sam/private-availability-deploy/PrivateStagingAvailabilityFunction/node_modules/@aws-sdk/client-dynamodb
+      - name: Package and deploy staging stack only
+        shell: bash
+        run: |
+          set -euo pipefail
+          sam deploy \
+            --template-file .aws-sam/private-availability-deploy/template.yaml \
+            --stack-name les-buttes-private-availability-staging \
+            --s3-bucket les-buttes-cottage-manag-artifacts-145608514666-eu-west-2 \
+            --s3-prefix booking-private-staging/sam \
+            --region eu-west-2 \
+            --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+            --parameter-overrides StagingBookingTableName=les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+      - name: Confirm staging endpoint rejects anonymous requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="$(aws cloudformation describe-stacks --stack-name les-buttes-private-availability-staging --query "Stacks[0].Outputs[?OutputKey=='PrivateStagingAvailabilityUrl'].OutputValue | [0]" --output text)"
+          test -n "$endpoint"
+          code="$(curl --silent --output /dev/null --write-out '%{http_code}' "$endpoint")"
+          echo "Anonymous staging availability response: $code"
+          test "$code" = "401" || test "$code" = "403"
+          echo "Private availability endpoint: $endpoint" >> "$GITHUB_STEP_SUMMARY"
