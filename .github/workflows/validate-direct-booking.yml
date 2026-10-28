@@ -1,0 +1,45 @@
+name: Validate direct-booking website (no deployment)
+on:
+  push:
+    branches: [chore/staging-preflight-inspection-20261028]
+    paths: ['.github/workflows/validate-direct-booking.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout direct booking feature
+        uses: actions/checkout@v4
+        with:
+          ref: feature/direct-booking-requests-27-night
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build and validate links
+        run: npm test
+      - name: Notify result
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RESULT: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Les Buttes direct booking website build"
+          body="$(printf 'Website build and validation: %s\n\nRun: %s\nSource branch: feature/direct-booking-requests-27-night\n\nNo deployment or production changes performed.\n' "$RESULT" "$RUN_URL")"
+          existing="$(gh issue list --repo "$REPO" --state open --search "$title in:title" --json number,title --jq '.[] | select(.title == "Les Buttes direct booking website build") | .number' | head -n 1)"
+          if [[ -n "$existing" ]]; then
+            gh issue comment "$existing" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" --title "$title" --body "$body"
+          fi
