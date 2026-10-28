@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  issues: write
 jobs:
   inspect:
     runs-on: ubuntu-latest
@@ -42,3 +43,28 @@ jobs:
               --query "Summaries[].{Name:ChangeSetName,Status:Status,Execution:ExecutionStatus,Created:CreationTime}" --output table
             echo "::endgroup::"
           done
+
+      - name: Notify on staging inspection failure
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          BRANCH: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Les Buttes staging inspection failed"
+          body="$(printf 'A staging-only inspection run failed.\n\nRun: %s\nBranch: %s\nCommit: %s\n\nInspect the run logs before making changes. No deployment is authorised by this alert.\n' "$RUN_URL" "$BRANCH" "$GITHUB_SHA")"
+          existing="$(gh issue list --repo "$REPO" --state open --search "$title in:title" --json number,title --jq '.[] | select(.title == "Les Buttes staging inspection failed") | .number' | head -n 1)"
+          if [[ -n "$existing" ]]; then
+            gh issue comment "$existing" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" --title "$title" --body "$body"
+          fi
+      - name: Record inspection result
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          echo "Inspection workflow: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_STEP_SUMMARY"
