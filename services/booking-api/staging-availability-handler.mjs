@@ -1,7 +1,5 @@
 // Private staging-only, GET-only Lambda handler. No public route or IAM is created here.
 // Authentication must be enforced upstream before any deployment.
-import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
-import {DynamoDBDocumentClient,QueryCommand} from '@aws-sdk/lib-dynamodb';
 import {masterOccupied} from './master-occupied.mjs';
 
 const headers={
@@ -34,9 +32,18 @@ export function createStagingAvailabilityHandler({db,table,environment,authorise
 // supplies a trusted authorizer context. It cannot be enabled by client-side settings.
 const table=process.env.BOOKINGS_TABLE;
 const environment=process.env.BOOKING_ENVIRONMENT;
-const client=new DynamoDBClient({region:'eu-west-2'});
-const documentDb=DynamoDBDocumentClient.from(client);
-const db={send:command=>documentDb.send(new QueryCommand(command.input))};
+// Defer loading AWS SDK until an authorised request actually reads the master.
+// This also allows pure handler tests without installing deployment-only SDK packages.
+let sdkPromise;
+const loadSdk=()=>sdkPromise??=Promise.all([
+  import('@aws-sdk/client-dynamodb'),import('@aws-sdk/lib-dynamodb')
+]).then(([{DynamoDBClient},{DynamoDBDocumentClient,QueryCommand}])=>({
+  documentDb:DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'})),QueryCommand
+}));
+const db={send:async command=>{
+  const {documentDb,QueryCommand}=await loadSdk();
+  return documentDb.send(new QueryCommand(command.input));
+}};
 export const handler=createStagingAvailabilityHandler({
   db,table,environment,
   authorised:event=>event.requestContext?.authorizer?.lambda?.bookingStagingReviewer===true
