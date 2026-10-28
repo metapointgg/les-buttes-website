@@ -25,6 +25,17 @@ jobs:
         run: npm ci
       - name: Build and validate links
         run: npm test
+      - name: Verify booking pages and record source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/book/index.html
+          test -s dist/fr/book/index.html
+          test -s dist/nl/book/index.html
+          echo "Source commit: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Build revision: $(git rev-parse HEAD)" > dist/BUILD-REVISION.txt
+          echo "Built at: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> dist/BUILD-REVISION.txt
+          echo "Booking pages verified for English, French and Dutch." >> "$GITHUB_STEP_SUMMARY"
       - name: Preserve built website for staging review
         if: ${{ success() }}
         uses: actions/upload-artifact@v4
