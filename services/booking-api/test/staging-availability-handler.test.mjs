@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createStagingAvailabilityHandler,isStagingReviewer} from '../staging-availability-handler.mjs';
+import {createStagingAvailabilityHandler,isAuthenticatedManagementUser} from '../staging-availability-handler.mjs';
 
 const table='les-buttes-booking-staging-BookingTable-Test123';
-const event={requestContext:{http:{method:'GET'},authorizer:{jwt:{claims:{'cognito:groups':'booking-staging-reviewers'}}}},rawPath:'/api/staging/availability'};
+const event={requestContext:{http:{method:'GET'},authorizer:{jwt:{claims:{sub:'user-123'}}}},rawPath:'/api/staging/availability'};
 const make=(options={})=>{
   const db={send:async command=>{
     const unit=command.input.ExpressionAttributeValues[':unit'];
@@ -11,15 +11,15 @@ const make=(options={})=>{
   }};
   return createStagingAvailabilityHandler({
     db,table,environment:'staging',
-    authorised:isStagingReviewer,
+    authorised:isAuthenticatedManagementUser,
     ...options
   });
 };
 
-test('denies requests without trusted reviewer authorizer context',async()=>{
+test('denies requests without trusted authenticated authorizer context',async()=>{
   const handler=make();
   for(const request of [{}, {rawPath:event.rawPath,requestContext:{http:{method:'GET'}}},
-    {...event,requestContext:{...event.requestContext,authorizer:{jwt:{claims:{'cognito:groups':'booking-staging-reviewers-fake'}}}}}]){
+    {...event,requestContext:{...event.requestContext,authorizer:{jwt:{claims:{sub:''}}}}}]){
     const response=await handler(request);
     assert.equal(response.statusCode,403);
   }
@@ -96,10 +96,10 @@ test('public Lambda entrypoint rejects wrong route before AWS SDK loading',async
   assert.equal(response.statusCode,404);
 });
 
-test('requires exact reviewer group in verified API Gateway JWT context',()=>{
-  assert.equal(isStagingReviewer(event),true);
-  assert.equal(isStagingReviewer({...event,requestContext:{authorizer:{jwt:{claims:{'cognito:groups':'other, booking-staging-reviewers'}}}}}),true);
-  assert.equal(isStagingReviewer({headers:{Authorization:'Bearer forged'},requestContext:{authorizer:{lambda:{bookingStagingReviewer:true}}}}),false);
-  assert.equal(isStagingReviewer({requestContext:{authorizer:{jwt:{claims:{'cognito:groups':'booking-staging-reviewers-admin'}}}}}),false);
-  assert.equal(isStagingReviewer({requestContext:{authorizer:{jwt:{claims:{'cognito:groups':['booking-staging-reviewers']}}}}}),true);
+test('requires verified API Gateway JWT subject, not a caller-supplied header or group',()=>{
+  assert.equal(isAuthenticatedManagementUser(event),true);
+  assert.equal(isAuthenticatedManagementUser({requestContext:{authorizer:{jwt:{claims:{sub:'another-user'}}}}}),true);
+  assert.equal(isAuthenticatedManagementUser({headers:{Authorization:'Bearer forged'},requestContext:{authorizer:{lambda:{sub:'forged'}}}}),false);
+  assert.equal(isAuthenticatedManagementUser({requestContext:{authorizer:{jwt:{claims:{'cognito:groups':'booking-staging-reviewers'}}}}}),false);
+  assert.equal(isAuthenticatedManagementUser({requestContext:{authorizer:{jwt:{claims:{sub:''}}}}}),false);
 });
