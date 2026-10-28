@@ -37,6 +37,8 @@ Resources:
         Variables:
           BOOKING_ENVIRONMENT: staging
           BOOKINGS_TABLE: !Ref StagingBookingTableName
+      # Limit concurrent reviewer reads to protect the staging booking master.
+      ReservedConcurrentExecutions: 2
       Policies:
         - Version: '2012-10-17'
           Statement:
