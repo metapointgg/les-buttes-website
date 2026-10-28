@@ -20,7 +20,12 @@ if(widget){
   const localPreview=['localhost','127.0.0.1'].includes(window.location.hostname);
   // A hosted preview may use only a same-origin, read-only availability proxy.
   // Keep this disabled until the staging API is authenticated and explicitly configured.
-  const hostedReadOnlyEnabled=import.meta.env.PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true';
+  // Never permit a production hostname to enable the private staging proxy by mistake.
+  // An explicit hostname allowlist is required in addition to the feature flag.
+  const stagingHosts=(import.meta.env.PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS??'')
+    .split(',').map((host:string)=>host.trim().toLowerCase()).filter(Boolean);
+  const hostedReadOnlyEnabled=import.meta.env.PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true' &&
+    stagingHosts.includes(window.location.hostname.toLowerCase()) && !localPreview;
   const hostedReadOnlyPath='/api/staging/availability';
   const availabilityUrl=localPreview?'http://127.0.0.1:4328/availability':
     hostedReadOnlyEnabled?hostedReadOnlyPath:null;
