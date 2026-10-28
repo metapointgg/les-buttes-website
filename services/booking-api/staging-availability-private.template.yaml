@@ -28,6 +28,8 @@ Resources:
   PrivateStagingAvailabilityFunction:
     Type: AWS::Serverless::Function
     Properties:
+      # Keep Lambda inside the existing staging-only deployment IAM resource scope.
+      FunctionName: les-buttes-private-availability-staging-reader
       Runtime: nodejs22.x
       Handler: staging-availability-handler.handler
       CodeUri: ./
