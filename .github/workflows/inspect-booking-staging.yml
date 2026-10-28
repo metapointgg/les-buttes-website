@@ -1,0 +1,44 @@
+name: Inspect booking staging CloudFormation (read only)
+on:
+  push:
+    branches: [chore/staging-preflight-inspection-20261028]
+    paths: ['.github/workflows/inspect-booking-staging.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Assume existing AWS GitHub role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-github-deploy
+          aws-region: eu-west-2
+      - name: Verify account and inspect staging stacks
+        shell: bash
+        run: |
+          set -euo pipefail
+          account="$(aws sts get-caller-identity --query Account --output text)"
+          if [[ "$account" != "145608514666" ]]; then
+            echo "::error::Unexpected AWS account"
+            exit 1
+          fi
+          echo "AWS account verified; inspecting CloudFormation only."
+          aws cloudformation describe-stacks --region eu-west-2 \
+            --query "Stacks[?contains(StackName, 'booking') && contains(StackName, 'staging')].[StackName,StackStatus]" --output table
+          stacks="$(aws cloudformation list-stacks --region eu-west-2 \
+            --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE UPDATE_IN_PROGRESS UPDATE_ROLLBACK_IN_PROGRESS \
+            --query "StackSummaries[?contains(StackName, 'booking') && contains(StackName, 'staging')].StackName" --output text)"
+          if [[ -z "$stacks" ]]; then
+            echo "::warning::No matching staging booking stack found."
+            exit 0
+          fi
+          for stack in $stacks; do
+            echo "::group::Change sets for $stack"
+            aws cloudformation list-change-sets --region eu-west-2 --stack-name "$stack" \
+              --query "Summaries[].{Name:ChangeSetName,Status:Status,Execution:ExecutionStatus,Created:CreationTime}" --output table
+            echo "::endgroup::"
+          done
