@@ -34,8 +34,8 @@ jobs:
             --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE UPDATE_IN_PROGRESS UPDATE_ROLLBACK_IN_PROGRESS REVIEW_IN_PROGRESS CREATE_IN_PROGRESS CREATE_FAILED UPDATE_FAILED UPDATE_ROLLBACK_FAILED ROLLBACK_FAILED ROLLBACK_IN_PROGRESS ROLLBACK_COMPLETE \
             --query "StackSummaries[?(contains(StackName, 'booking') || contains(StackName, 'private-availability')) && contains(StackName, 'staging')].StackName" --output text)"
           # A successful inspection must not silently accept failed staging stacks.
-          failed="$(aws cloudformation list-stacks --region eu-west-2 \\
-            --stack-status-filter CREATE_FAILED UPDATE_FAILED UPDATE_ROLLBACK_FAILED ROLLBACK_FAILED DELETE_FAILED IMPORT_ROLLBACK_FAILED \\
+          failed="$(aws cloudformation list-stacks --region eu-west-2 \
+            --stack-status-filter CREATE_FAILED UPDATE_FAILED UPDATE_ROLLBACK_FAILED ROLLBACK_FAILED DELETE_FAILED IMPORT_ROLLBACK_FAILED \
             --query "StackSummaries[?((contains(StackName, 'booking') || contains(StackName, 'private-availability')) && contains(StackName, 'staging'))].StackName" --output text)"
           if [[ -n "$failed" ]]; then
             echo "::error::Failed staging CloudFormation stack(s): $failed"
