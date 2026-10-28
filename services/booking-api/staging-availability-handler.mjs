@@ -12,7 +12,7 @@ const headers={
 const respond=(statusCode,body)=>({statusCode,headers,body:JSON.stringify(body)});
 const validTable=(name)=>/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/.test(name??'');
 
-export function createStagingAvailabilityHandler({db,table,environment,authorised=false}){
+export function createStagingAvailabilityHandler({db,table,environment,authorised=()=>false}){
   return async function handler(event={}){
     if(environment!=='staging'||!validTable(table))return respond(503,{error:'Staging unavailable'});
     // An API Gateway authorizer must set this flag only after validating a reviewer.
