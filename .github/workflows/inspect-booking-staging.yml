@@ -62,6 +62,24 @@ jobs:
           else
             gh issue create --repo "$REPO" --title "$title" --body "$body"
           fi
+      - name: Notify on staging inspection success
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          BRANCH: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Les Buttes staging inspection passed"
+          body="$(printf 'Read-only staging inspection completed successfully.\n\nRun: %s\nBranch: %s\nCommit: %s\n\nThis does not authorise deployment or execution of pending change sets.\n' "$RUN_URL" "$BRANCH" "$GITHUB_SHA")"
+          existing="$(gh issue list --repo "$REPO" --state open --search "$title in:title" --json number,title --jq '.[] | select(.title == "Les Buttes staging inspection passed") | .number' | head -n 1)"
+          if [[ -n "$existing" ]]; then
+            gh issue comment "$existing" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" --title "$title" --body "$body"
+          fi
       - name: Record inspection result
         if: ${{ always() }}
         shell: bash
