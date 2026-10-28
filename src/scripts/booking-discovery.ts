@@ -1,3 +1,4 @@
+import {reviewerSignIn,reviewerToken,reviewerSignOut} from './booking-staging-auth';
 import {canPickCheckout,clearMasterAvailability,daysForMonth,indicativeSelection,masterCheckedAt,masterConnected,matchingOptions,nightsInRange,plusDays,possibleNight,setMasterAvailability,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
 
 const widget=document.querySelector<HTMLElement>('[data-discovery]');
@@ -88,9 +89,11 @@ if(widget){
     const request=++fetchSequence;
     // Never put staging credentials in a web bundle or contact users' local ports on hosted sites.
     if(!availabilityUrl){clearMasterAvailability();return false;}
+    const token=hostedReadOnlyEnabled?reviewerToken():null;
+    if(hostedReadOnlyEnabled&&!token){clearMasterAvailability();fill('[data-master-status]','Reviewer sign-in required to check availability.');return false;}
     try{
       const response=await fetch(availabilityUrl,{
-        method:'GET',cache:'no-store',signal:AbortSignal.timeout(8000)
+        method:'GET',cache:'no-store',headers:token?{Authorization:'Bearer '+token}:{},signal:AbortSignal.timeout(8000)
       });
       if(!response.ok)throw Error('masterUnavailable');
       const data:unknown=await response.json();
@@ -342,5 +345,14 @@ if(widget){
   if(disabledConfirm)disabledConfirm.disabled=true;
 
   arrival.addEventListener('change',()=>{if(arrival.value){departure.min=plusDays(arrival.value,7);}});
+  const login=widget.querySelector<HTMLButtonElement>('[data-reviewer-sign-in]');
+  const logout=widget.querySelector<HTMLButtonElement>('[data-reviewer-sign-out]');
+  if(login&&logout){
+    const eligible=window.location.hostname==='d123fnjf47zmyp.cloudfront.net';
+    login.hidden=!eligible||Boolean(reviewerToken());
+    logout.hidden=!eligible||!reviewerToken();
+    login.addEventListener('click',()=>{void reviewerSignIn();});
+    logout.addEventListener('click',()=>{reviewerSignOut();location.reload();});
+  }
   void search();
 }
