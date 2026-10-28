@@ -67,7 +67,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
           aws-region: eu-west-2
-      # Staging IAM permissions cover CloudFormation-generated role and Lambda names.
+      # Staging IAM permissions cover generated role and Lambda names and Lambda tagging.
       - name: Verify AWS account
         run: test "$(aws sts get-caller-identity --query Account --output text)" = "145608514666"
       - uses: aws-actions/setup-sam@v2
