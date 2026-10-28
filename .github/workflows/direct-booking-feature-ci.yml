@@ -67,7 +67,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
           aws-region: eu-west-2
-      # SAM transform permission is restricted to the AWS-managed Serverless transform.
+      # IAM permissions now include CloudFormation's shortened staging-only role name.
       - name: Verify AWS account
         run: test "$(aws sts get-caller-identity --query Account --output text)" = "145608514666"
       - uses: aws-actions/setup-sam@v2
