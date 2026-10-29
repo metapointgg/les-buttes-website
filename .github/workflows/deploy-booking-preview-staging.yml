@@ -23,7 +23,8 @@ jobs:
       - name: Build read-only booking preview
         env:
           PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'
-          PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED: 'false'
+          PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED: 'true'
+          PUBLIC_BOOKING_AVAILABILITY_URL: 'https://ktmv4x1i3b.execute-api.eu-west-2.amazonaws.com/availability'
           PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS: 'd123fnjf47zmyp.cloudfront.net'
         run: |
           set -euo pipefail
