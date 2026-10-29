@@ -23,7 +23,7 @@ jobs:
       - name: Build read-only booking preview
         env:
           PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'
-          PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED: 'true'
+          PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED: 'false'
           PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS: 'd123fnjf47zmyp.cloudfront.net'
         run: |
           set -euo pipefail
@@ -48,4 +48,4 @@ jobs:
           aws s3 sync dist/ s3://les-buttes-booking-preview-staging-145608514666/ --delete --only-show-errors
           aws cloudfront create-invalidation --distribution-id E3A3ONLRMX3AKJ --paths '/*'
           echo "Staging preview: https://d123fnjf47zmyp.cloudfront.net/" >> "$GITHUB_STEP_SUMMARY"
-          echo "Guest submissions and payments are disabled. Availability uses reviewer-authenticated read-only staging API." >> "$GITHUB_STEP_SUMMARY"
+          echo "Guest submissions and payments are disabled. Public availability endpoint pending; no guest sign-in, submissions or payments." >> "$GITHUB_STEP_SUMMARY"
