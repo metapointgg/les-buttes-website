@@ -25,7 +25,7 @@ if(widget){
   const hostedReadOnlyEnabled=import.meta.env.PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true' &&
     allowedHosts.includes(window.location.hostname.toLowerCase()) && !localPreview;
   const availabilityUrl=localPreview?'http://127.0.0.1:4328/availability':
-    hostedReadOnlyEnabled?'/api/public/availability':null;
+    hostedReadOnlyEnabled?(import.meta.env.PUBLIC_BOOKING_AVAILABILITY_URL??null):null;
   let fetchSequence=0;
   const lang=widget.dataset.locale==='fr'?'fr-FR':widget.dataset.locale==='nl'?'nl-NL':'en-GB';
   const money=(v:number)=>new Intl.NumberFormat(lang,{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(v);
