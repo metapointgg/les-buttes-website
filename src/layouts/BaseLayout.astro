@@ -235,7 +235,6 @@ gtag('config', '${googleAnalyticsId}');`}></script>
     <main id="main-content"><slot/></main>
     <Footer/>
     <NewsletterSignup/>
-    <script>import {completeReviewerCallback} from '../scripts/booking-staging-auth';void completeReviewerCallback();</script>
     {googleAnalyticsId && <script is:inline set:html={analyticsTrackingScript}></script>}
   </body>
 </html>
