@@ -1,4 +1,3 @@
-import {reviewerSignIn,reviewerToken,reviewerSignOut} from './booking-staging-auth';
 import {canPickCheckout,clearMasterAvailability,daysForMonth,indicativeSelection,masterCheckedAt,masterConnected,matchingOptions,nightsInRange,plusDays,possibleNight,setMasterAvailability,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
 
 const widget=document.querySelector<HTMLElement>('[data-discovery]');
@@ -19,17 +18,14 @@ if(widget){
   const prev=widget.querySelector<HTMLButtonElement>('[data-prev-month]')!;
   const next=widget.querySelector<HTMLButtonElement>('[data-next-month]')!;
   const localPreview=['localhost','127.0.0.1'].includes(window.location.hostname);
-  // A hosted preview may use only a same-origin, read-only availability proxy.
-  // Keep this disabled until the staging API is authenticated and explicitly configured.
-  // Never permit a production hostname to enable the private staging proxy by mistake.
-  // An explicit hostname allowlist is required in addition to the feature flag.
-  const stagingHosts=(import.meta.env.PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS??'')
+  // Guest availability uses a separate public, date-only endpoint; no sign-in.
+  // Explicit host allowlist prevents the staging calendar from leaking into production.
+  const allowedHosts=(import.meta.env.PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS??'')
     .split(',').map((host:string)=>host.trim().toLowerCase()).filter(Boolean);
   const hostedReadOnlyEnabled=import.meta.env.PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true' &&
-    stagingHosts.includes(window.location.hostname.toLowerCase()) && !localPreview;
-  const hostedReadOnlyPath='/api/staging/availability';
+    allowedHosts.includes(window.location.hostname.toLowerCase()) && !localPreview;
   const availabilityUrl=localPreview?'http://127.0.0.1:4328/availability':
-    hostedReadOnlyEnabled?hostedReadOnlyPath:null;
+    hostedReadOnlyEnabled?'/api/public/availability':null;
   let fetchSequence=0;
   const lang=widget.dataset.locale==='fr'?'fr-FR':widget.dataset.locale==='nl'?'nl-NL':'en-GB';
   const money=(v:number)=>new Intl.NumberFormat(lang,{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(v);
@@ -89,11 +85,9 @@ if(widget){
     const request=++fetchSequence;
     // Never put staging credentials in a web bundle or contact users' local ports on hosted sites.
     if(!availabilityUrl){clearMasterAvailability();return false;}
-    const token=hostedReadOnlyEnabled?reviewerToken():null;
-    if(hostedReadOnlyEnabled&&!token){clearMasterAvailability();fill('[data-master-status]','Reviewer sign-in required to check availability.');return false;}
     try{
       const response=await fetch(availabilityUrl,{
-        method:'GET',cache:'no-store',headers:token?{Authorization:'Bearer '+token}:{},signal:AbortSignal.timeout(8000)
+        method:'GET',cache:'no-store',signal:AbortSignal.timeout(8000)
       });
       if(!response.ok)throw Error('masterUnavailable');
       const data:unknown=await response.json();
@@ -345,14 +339,5 @@ if(widget){
   if(disabledConfirm)disabledConfirm.disabled=true;
 
   arrival.addEventListener('change',()=>{if(arrival.value){departure.min=plusDays(arrival.value,7);}});
-  const login=widget.querySelector<HTMLButtonElement>('[data-reviewer-sign-in]');
-  const logout=widget.querySelector<HTMLButtonElement>('[data-reviewer-sign-out]');
-  if(login&&logout){
-    const eligible=hostedReadOnlyEnabled;
-    login.hidden=!eligible||Boolean(reviewerToken());
-    logout.hidden=!eligible||!reviewerToken();
-    login.addEventListener('click',()=>{void reviewerSignIn();});
-    logout.addEventListener('click',()=>{reviewerSignOut();location.reload();});
-  }
   void search();
 }
