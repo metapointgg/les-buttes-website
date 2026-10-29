@@ -62,7 +62,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/indicativeSelection/);
   assert.match(discoveryScript,/localPreview\?'http:\/\/127\.0\.0\.1:4328\/availability'/);
   assert.match(discoveryScript,/PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true'/);
-  assert.match(discoveryScript,/hostedReadOnlyEnabled\?'\/api\/public\/availability':null/);
+  assert.match(discoveryScript,/hostedReadOnlyEnabled\?\(import\.meta\.env\.PUBLIC_BOOKING_AVAILABILITY_URL\?\?null\):null/);
   assert.match(discoveryScript,/if\(!availabilityUrl\)\{clearMasterAvailability\(\);return false;\}/);
   assert.doesNotMatch(discoveryScript,/\/requests['`]/); // never send a booking request
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
