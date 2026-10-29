@@ -7,7 +7,7 @@ assert.match(page,/PUBLIC_BOOKING_REQUESTS_ENABLED==='true'/,'Guest submissions 
 assert.match(page,/Boolean\(apiUrl&&turnstileKey\)/,'Guest submissions require API and Turnstile configuration');
 assert.match(discovery,/if\(!availabilityUrl\)\{clearMasterAvailability\(\);return false;\}/,'Hosted preview must fail closed without a configured availability source');
 assert.match(discovery,/PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true'/,'Hosted read-only availability must be explicitly gated');
-assert.match(discovery,/hostedReadOnlyEnabled\?'\/api\/public\/availability':null/,'Hosted availability must use a separate public read-only path');
+assert.match(discovery,/hostedReadOnlyEnabled\?\(import\.meta\.env\.PUBLIC_BOOKING_AVAILABILITY_URL\?\?null\):null/,'Hosted availability must use a separate public read-only path');
 assert.match(discovery,/127\.0\.0\.1:4328\/availability/,'Local master bridge must remain explicit');
 for(const language of ['','fr/','nl/']){
   const output='dist/'+language+'book/index.html';
