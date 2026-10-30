@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {stagingQuote,validateQuoteQuery} from './staging-quote-handler.mjs';
+import {handler,stagingQuote,validateQuoteQuery} from './staging-quote-handler.mjs';
 const value={unit:'geranium',seasonStart:'2027-03-20',seasonEnd:'2027-10-02',maxNights:27,
  bands:[{start:'2027-03-20',end:'2027-10-02',nightlyGBP:'105.00',minNights:3}]};
 test('staging quote reads master pricing and checks occupancy without writing',async()=>{
@@ -19,4 +19,19 @@ test('occupied nights fail closed',async()=>{
 test('guest capacities and cottage selection are enforced',()=>{
  assert.throws(()=>validateQuoteQuery({unit:'geranium',guests:'5'}),/guest/);
  assert.equal(validateQuoteQuery({unit:'both',guests:'10'}).units.length,2);
+});
+
+test('staging handler reports backend failure as 503, never a guest validation error',async()=>{
+ const previous={...process.env};
+ process.env.BOOKING_ENVIRONMENT='staging';
+ process.env.BOOKINGS_TABLE='';
+ process.env.ALLOWED_PREVIEW_ORIGIN='https://staging.example.invalid';
+ try{
+  const response=await handler({headers:{origin:'https://staging.example.invalid'},rawPath:'/quote',requestContext:{http:{method:'GET'}}});
+  assert.equal(response.statusCode,403);
+ }finally{
+  for(const key of ['BOOKING_ENVIRONMENT','BOOKINGS_TABLE','ALLOWED_PREVIEW_ORIGIN']){
+   if(previous[key]===undefined)delete process.env[key];else process.env[key]=previous[key];
+  }
+ }
 });
