@@ -11,10 +11,10 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "3.800.0",
-    "@aws-sdk/lib-dynamodb": "3.800.0",
-    "@aws-sdk/client-ses": "3.800.0",
-    "@aws-sdk/client-ssm": "3.800.0",
-    "@aws-sdk/client-sns": "3.800.0"
+    "@aws-sdk/client-dynamodb": "3.1145.0",
+    "@aws-sdk/lib-dynamodb": "3.1145.0",
+    "@aws-sdk/client-ses": "3.1145.0",
+    "@aws-sdk/client-ssm": "3.1145.0",
+    "@aws-sdk/client-sns": "3.1145.0"
   }
 }
