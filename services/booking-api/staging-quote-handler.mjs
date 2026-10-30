@@ -9,6 +9,7 @@ export function validateQuoteQuery(q){
  const units=q?.unit==='both'?[...UNITS]:[q?.unit];
  if(units.some(u=>!UNITS.includes(u)))throw Error('Invalid cottage');
  const guests=Number(q?.guests);
+ if(units.length===2&&guests<=6)throw Error('Invalid guest count for both cottages');
  if(!/^\d+$/.test(String(q?.guests))||!Number.isInteger(guests)||guests<1||
     guests>(units.length===2?10:units[0]==='geranium'?4:6))throw Error('Invalid guest count');
  return {units,start:q.start,end:q.end,guests};
