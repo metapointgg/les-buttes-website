@@ -1,0 +1,57 @@
+name: Deploy isolated staging quote API (manual only)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_staging_only:
+        description: 'Type STAGING-QUOTE-ONLY to authorise isolated staging deployment'
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: les-buttes-isolated-staging-quote
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/feature/direct-booking-requests-27-night' && inputs.confirm_staging_only == 'STAGING-QUOTE-ONLY'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: aws-actions/setup-sam@v2
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_STAGING_DEPLOY_ROLE_ARN }}
+          aws-region: eu-west-2
+      - name: Verify staging account and immutable target
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
+          aws dynamodb describe-table --table-name 'les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK' --query 'Table.TableStatus' --output text | grep -qx ACTIVE
+      - name: Install dependencies and test
+        working-directory: services/booking-api
+        run: |
+          npm ci
+          npm run check
+          npm test
+      - name: Validate and package staging template
+        run: |
+          sam validate --lint --template-file infra/booking-staging-quote/template.yaml
+          sam build --template-file infra/booking-staging-quote/template.yaml --build-dir .aws-sam/isolated-quote
+      - name: Create changeset only (no automatic deployment)
+        run: |
+          sam deploy --template-file .aws-sam/isolated-quote/template.yaml \
+            --stack-name les-buttes-isolated-quote-staging \
+            --region eu-west-2 \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+              ExistingStagingTable=les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK \
+              PreviewOrigin=https://d123fnjf47zmyp.cloudfront.net \
+            --resolve-s3 \
+            --no-execute-changeset \
+            --no-fail-on-empty-changeset
