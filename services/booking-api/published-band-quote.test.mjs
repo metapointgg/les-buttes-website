@@ -14,6 +14,7 @@ test('fails closed for gaps, invalid prices, out-of-season and non-Saturday stay
  assert.throws(()=>quotePublishedBands('geranium','2027-04-03','2027-04-10',{...pricing,bands:[]}));
  assert.throws(()=>quotePublishedBands('geranium','2027-04-03','2027-04-10',{...pricing,bands:[{...pricing.bands[0],nightlyGBP:'abc'}]}));
  assert.throws(()=>quotePublishedBands('geranium','2027-04-04','2027-04-11',pricing),/Saturday/);
+ assert.throws(()=>quotePublishedBands('geranium','2027-02-30','2027-03-06',pricing),/Invalid quote selection/);
  assert.throws(()=>quotePublishedBands('geranium','2027-03-13','2027-03-20',pricing),/season/);
  assert.throws(()=>quotePublishedBands('geranium','2027-04-03','2027-05-01',pricing),/length/);
 });
