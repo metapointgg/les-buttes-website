@@ -13,6 +13,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ../../services/booking-api/
+      Architectures:
+        - arm64
       Handler: staging-quote-handler.handler
       Runtime: nodejs22.x
       MemorySize: 256
