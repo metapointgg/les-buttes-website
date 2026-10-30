@@ -15,8 +15,29 @@ export function validateConfig({kind,unit='all',value}){
   if(JSON.stringify(value).length>20000)throw Error('Configuration too large');
   if(kind==='pricing'){
     if(unit==='all')throw Error('Pricing must be cottage-specific');
-    if(!Array.isArray(value.ranges)||!value.ranges.length)throw Error('Pricing ranges required');
-    for(const x of value.ranges)if(!ISO.test(x.from)||!ISO.test(x.to)||x.from>x.to||!Number.isInteger(x.nightlyGBP)||x.nightlyGBP<=0||x.nightlyGBP>10000)throw Error('Invalid pricing range');
+    // The published 2027 pricing document uses bands with [start,end) boundaries
+    // and decimal-string GBP amounts; retain support for the older ranges format.
+    const bands=Array.isArray(value.bands)?value.bands:null;
+    if(bands){
+      if(!bands.length||!ISO.test(value.seasonStart)||!ISO.test(value.seasonEnd)||
+        !Number.isInteger(value.maxNights)||value.maxNights<1||value.maxNights>27)
+        throw Error('Invalid published pricing season');
+      let cursor=value.seasonStart;
+      for(const band of bands){
+        const amount=typeof band.nightlyGBP==='string'&&/^\\d+(?:\\.\\d{1,2})?$/.test(band.nightlyGBP)
+          ?Number(band.nightlyGBP):NaN;
+        if(!ISO.test(band.start)||!ISO.test(band.end)||band.start!==cursor||
+          band.end<=band.start||band.end>value.seasonEnd||
+          !Number.isFinite(amount)||amount<=0||amount>10000||
+          !Number.isInteger(band.minNights)||band.minNights<1||band.minNights>value.maxNights)
+          throw Error('Invalid published pricing band');
+        cursor=band.end;
+      }
+      if(cursor!==value.seasonEnd)throw Error('Published pricing season has a gap');
+    }else{
+      if(!Array.isArray(value.ranges)||!value.ranges.length)throw Error('Pricing ranges required');
+      for(const x of value.ranges)if(!ISO.test(x.from)||!ISO.test(x.to)||x.from>x.to||!Number.isInteger(x.nightlyGBP)||x.nightlyGBP<=0||x.nightlyGBP>10000)throw Error('Invalid pricing range');
+    }
   }
   if(kind==='stay-rules'){
     if(!Array.isArray(value.ranges)||!value.ranges.length)throw Error('Stay restrictions required');
