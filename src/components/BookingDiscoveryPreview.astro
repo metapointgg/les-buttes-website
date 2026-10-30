@@ -158,8 +158,8 @@ const properties=[
         <form data-preview-guest-details class="journey-details-form" autocomplete="off">
           <h3>{t.primaryGuest}</h3>
           <div class="journey-guest-fields">
-            <label>{t.firstName}<input type="text" name="firstName" autocomplete="off" maxlength="80"/></label>
-            <label>{t.lastName}<input type="text" name="lastName" autocomplete="off" maxlength="80"/></label>
+            <label>{t.firstName}<input type="text" name="firstName" autocomplete="given-name" maxlength="80" required/></label>
+            <label>{t.lastName}<input type="text" name="lastName" autocomplete="family-name" maxlength="80" required/></label>
             <label>{t.emailAddress}<input type="email" name="email" autocomplete="email" maxlength="254" required/></label>
             <label>{t.phoneNumber}<input type="tel" name="telephone" autocomplete="tel" maxlength="40" inputmode="tel" pattern="[+0-9() .-]{7,40}" required/></label>
             <label class="journey-full">{t.guestNotes}<textarea name="notes" rows="3" maxlength="1000"></textarea></label>
