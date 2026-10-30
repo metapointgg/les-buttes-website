@@ -321,17 +321,22 @@ if(widget){
   // Preview details never leave the browser: no POST/fetch, booking request, session
   // storage, analytics event, payment handler or confirmation exists in this step.
   // The draft has no submission endpoint; validation is for local preview feedback only.
+  const firstNameField=detailsForm.elements.namedItem('firstName') as HTMLInputElement;
+  const lastNameField=detailsForm.elements.namedItem('lastName') as HTMLInputElement;
   const emailField=detailsForm.elements.namedItem('email') as HTMLInputElement;
   const phoneField=detailsForm.elements.namedItem('telephone') as HTMLInputElement;
   const validation=widget.querySelector<HTMLElement>('[data-details-validation]');
   function validateContact(){
+    const nameValid=firstNameField.value.trim().length>0&&lastNameField.value.trim().length>0;
     const emailValid=emailField.validity.valid;
     const phoneValid=phoneField.validity.valid && phoneField.value.replace(/\D/g,'').length>=7;
     phoneField.setCustomValidity(phoneField.value&&phoneField.value.replace(/\D/g,'').length<7?'Enter a valid contact number.':'');
-    if(validation)validation.textContent=!emailField.value&&!phoneField.value?'':!emailValid?'Enter a valid email address.':!phoneValid?'Enter a valid contact number.':'';
+    if(validation)validation.textContent=!firstNameField.value&&!lastNameField.value&&!emailField.value&&!phoneField.value?'':!nameValid?'Enter the primary guest’s first and last name.':!emailValid?'Enter a valid email address.':!phoneValid?'Enter a valid contact number.':'';
     emailField.setAttribute('aria-invalid',String(Boolean(emailField.value)&&!emailValid));
     phoneField.setAttribute('aria-invalid',String(Boolean(phoneField.value)&&!phoneValid));
   }
+  firstNameField.addEventListener('input',validateContact);
+  lastNameField.addEventListener('input',validateContact);
   emailField.addEventListener('input',validateContact);
   phoneField.addEventListener('input',validateContact);
   detailsForm.addEventListener('submit',event=>{event.preventDefault();validateContact();});
