@@ -24,7 +24,7 @@ export function validateConfig({kind,unit='all',value}){
         throw Error('Invalid published pricing season');
       let cursor=value.seasonStart;
       for(const band of bands){
-        const amount=typeof band.nightlyGBP==='string'&&/^\\d+(?:\\.\\d{1,2})?$/.test(band.nightlyGBP)
+        const amount=typeof band.nightlyGBP==='string'&&/^\d+(?:\.\d{1,2})?$/.test(band.nightlyGBP)
           ?Number(band.nightlyGBP):NaN;
         if(!ISO.test(band.start)||!ISO.test(band.end)||band.start!==cursor||
           band.end<=band.start||band.end>value.seasonEnd||
