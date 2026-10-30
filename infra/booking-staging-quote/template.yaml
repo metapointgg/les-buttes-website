@@ -8,8 +8,6 @@ Parameters:
   PreviewOrigin:
     Type: String
     AllowedPattern: '^https://[a-zA-Z0-9.-]+$'
-Conditions:
-  IsNeverProduction: !Equals ['staging', 'staging']
 Resources:
   StagingQuoteFunction:
     Type: AWS::Serverless::Function
