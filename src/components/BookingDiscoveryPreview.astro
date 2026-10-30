@@ -165,7 +165,7 @@ const properties=[
             <label class="journey-full">{t.guestNotes}<textarea name="notes" rows="3" maxlength="1000"></textarea></label>
           </div>
           <p class="journey-validation-status" data-details-validation role="status" aria-live="polite"></p>
-          <label class="journey-full booking-consent"><input type="checkbox" name="consent" required/><span>I agree that this is a booking request, subject to availability, the booking terms and owner approval. No payment will be taken at this stage.</span></label>
+          <label class="journey-full booking-consent"><input type="checkbox" name="consent" required/><span>{t.consentRequest}</span></label>
           <p class="journey-terms-pending">{t.termsPending}</p>
           <button type="button" class="button discover-request" disabled aria-disabled="true">{t.previewSubmit}</button>
           <p class="discover-request-note">{t.previewNoSubmit}</p>
