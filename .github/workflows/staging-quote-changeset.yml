@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies and test
         working-directory: services/booking-api
         run: |
-          npm ci
+          npm install --no-audit --no-fund
           npm run check
           npm test
       - name: Validate and package staging template
