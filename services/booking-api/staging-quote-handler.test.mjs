@@ -19,6 +19,7 @@ test('occupied nights fail closed',async()=>{
 test('guest capacities and cottage selection are enforced',()=>{
  assert.throws(()=>validateQuoteQuery({unit:'geranium',guests:'5'}),/guest/);
  assert.equal(validateQuoteQuery({unit:'both',guests:'10'}).units.length,2);
+ assert.throws(()=>validateQuoteQuery({unit:'both',guests:'6'}),/guest/);
 });
 
 test('staging handler reports backend failure as 503, never a guest validation error',async()=>{
