@@ -35,3 +35,14 @@ test('staging handler reports backend failure as 503, never a guest validation e
   }
  }
 });
+
+test('expired holds do not block quotes but permanent slots and non-expiring holds do',async()=>{
+ let slot={SK:'DATE#2027-04-05',expiresAt:1};
+ const db={send:async c=>c.input.Key?{Item:{value}}:{Items:[slot]}};
+ const q={unit:'geranium',start:'2027-04-03',end:'2027-04-10',guests:'2'};
+ assert.equal((await stagingQuote(q,{db,table:'staging'})).totalGBP,'735.00');
+ slot={SK:'DATE#2027-04-05',expiresAt:0};
+ await assert.rejects(stagingQuote(q,{db,table:'staging'}),/unavailable/);
+ slot={SK:'DATE#2027-04-05',expiresAt:Math.floor(Date.now()/1000)+3600};
+ await assert.rejects(stagingQuote(q,{db,table:'staging'}),/unavailable/);
+});
