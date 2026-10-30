@@ -29,3 +29,13 @@ test('publication requires approval and writes immutable history plus CAS curren
  await publishSetting(db,'master',{...base,expectedVersion:'old'});
  assert.equal(seen.TransactItems[1].Put.ConditionExpression,'#version = :expected');
 });
+
+test('accepts the published 2027 pricing-band schema and rejects gaps',()=>{
+ const value={seasonStart:'2027-03-20',seasonEnd:'2027-04-24',maxNights:27,bands:[
+  {start:'2027-03-20',end:'2027-04-03',nightlyGBP:'105.00',minNights:3},
+  {start:'2027-04-03',end:'2027-04-24',nightlyGBP:'115.00',minNights:5}
+ ]};
+ assert.equal(validateConfig({kind:'pricing',unit:'geranium',value}),true);
+ assert.throws(()=>validateConfig({kind:'pricing',unit:'geranium',value:{...value,bands:[value.bands[0],{...value.bands[1],start:'2027-04-04'}]}}),/band/);
+ assert.throws(()=>validateConfig({kind:'pricing',unit:'geranium',value:{...value,bands:[{...value.bands[0],nightlyGBP:'0.00'},value.bands[1]]}}),/band/);
+});
