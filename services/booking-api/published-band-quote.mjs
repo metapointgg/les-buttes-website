@@ -2,7 +2,8 @@
 // Dates are UTC calendar dates; band end and checkout are exclusive.
 const ISO=/^\d{4}-\d{2}-\d{2}$/;
 export function quotePublishedBands(unit,start,end,pricing){
- if(!['geranium','honeysuckle'].includes(unit)||!ISO.test(start)||!ISO.test(end)||start>=end)
+ const realDate=d=>ISO.test(d)&&!Number.isNaN(Date.parse(d+'T00:00:00Z'))&&new Date(d+'T00:00:00Z').toISOString().slice(0,10)===d;
+ if(!['geranium','honeysuckle'].includes(unit)||!realDate(start)||!realDate(end)||start>=end)
   throw Error('Invalid quote selection');
  if(!pricing||pricing.unit!==unit||!Array.isArray(pricing.bands)||!pricing.bands.length||
     !ISO.test(pricing.seasonStart)||!ISO.test(pricing.seasonEnd)||
