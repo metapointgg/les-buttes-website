@@ -2,6 +2,7 @@
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,GetCommand,QueryCommand} from '@aws-sdk/lib-dynamodb';
 import {quotePublishedBands} from './published-band-quote.mjs';
+import {slotBlocksAvailability} from './occupancy.mjs';
 const UNITS=['geranium','honeysuckle'];
 const DAY=86400000;
 export function validateQuoteQuery(q){
@@ -27,7 +28,7 @@ export async function stagingQuote(q,{db,table}){
     KeyConditionExpression:'PK = :pk AND SK BETWEEN :from AND :to',
     ExpressionAttributeValues:{':pk':'UNIT#'+unit,':from':'DATE#'+start,':to':'DATE#'+new Date(Date.parse(end+'T00:00:00Z')-DAY).toISOString().slice(0,10)},
     ProjectionExpression:'PK, SK, expiresAt',ExclusiveStartKey:cursor}));
-   if((response.Items??[]).some(row=>row.expiresAt===undefined||Number(row.expiresAt)>Math.floor(Date.now()/1000)))
+   if((response.Items??[]).some(row=>slotBlocksAvailability(row,Math.floor(Date.now()/1000))))
     throw Error('Requested dates unavailable');
    cursor=response.LastEvaluatedKey;
   }while(cursor);
