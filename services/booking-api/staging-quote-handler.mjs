@@ -51,7 +51,7 @@ export async function handler(event){
   return respond(200,await stagingQuote(event.queryStringParameters,{
    db,table:process.env.BOOKINGS_TABLE}));
  }catch(error){
-  if(/Invalid|Saturday|season|minimum|maximum|length|unavailable|outside|Below/.test(error.message))
+  if(/^(Invalid quote selection|Invalid cottage|Invalid guest count|Invalid stay length|Invalid published|Saturday arrival|Stay exceeds|Quote outside|Below published|Missing or ambiguous published nightly rate|Requested dates unavailable)/.test(error.message))
    return respond(422,{error:'Dates or selection cannot be quoted'});
   console.error('staging quote failed',error);
   return respond(503,{error:'Read-only booking data temporarily unavailable'});
