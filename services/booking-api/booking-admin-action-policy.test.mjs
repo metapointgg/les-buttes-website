@@ -30,3 +30,13 @@ test('cancellation requires a meaningful auditable reason',()=>{
     assert.equal(checkOwnerAction({...request,reason}).allowed,false);
   assert.equal(checkOwnerAction({...request,reason:'Guest requested cancellation; refund reviewed'}).allowed,true);
 });
+
+test('hold boundary is deterministic and rejects invalid evaluation clocks',()=>{
+ const request={identity:{role:'owner'},action:'approve',booking:{status:'REQUESTED',holdExpiresAt:200}};
+ assert.equal(checkOwnerAction({...request,nowEpoch:199}).allowed,true);
+ assert.equal(checkOwnerAction({...request,nowEpoch:200}).allowed,false);
+ assert.equal(checkOwnerAction({...request,nowEpoch:201}).allowed,false);
+ for(const nowEpoch of [NaN,Infinity,-1,1.5,'199',null]){
+   assert.equal(checkOwnerAction({...request,nowEpoch}).allowed,false);
+ }
+});
