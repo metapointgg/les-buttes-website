@@ -30,6 +30,7 @@ test('cancel requires reason and releases confirmed booking without payment conf
  assert.equal(result.to,'CANCELLED');
  assert.equal(sent.length,1);
  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':reason'],'Guest requested cancellation');
+ assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':recordExpiry'],100+90*86400);
 });
 test('rejects non-owner, unsupported approval, expired hold and mismatched booking',async()=>{
  const {sent,params}=make();
