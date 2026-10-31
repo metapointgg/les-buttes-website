@@ -27,6 +27,23 @@ export function bookingAdminReader({db,table,authorise,bookingIndex=null}){
       const result=await db.send(new GetCommand({TableName:table,Key:{PK:'BOOKING#'+id,SK:'META'},ConsistentRead:true}));
       return result.Item??null;
     },
+    async getBookingAudit(context,id,{limit=30,cursor=null}={}){
+      await requireAdmin(context);
+      if(!/^[0-9a-f-]{36}$/i.test(id))throw Error('Invalid reference');
+      if(!Number.isInteger(limit)||limit<1||limit>100)throw Error('Invalid page size');
+      const prefix='AUDIT#';
+      if(cursor!==null&&(!cursor||typeof cursor!=='object'||
+         cursor.PK!=='BOOKING#'+id||typeof cursor.SK!=='string'||!cursor.SK.startsWith(prefix)))
+        throw Error('Invalid cursor');
+      const result=await db.send(new QueryCommand({
+        TableName:table,ConsistentRead:true,
+        KeyConditionExpression:'PK = :pk AND begins_with(SK, :prefix)',
+        ExpressionAttributeValues:{':pk':'BOOKING#'+id,':prefix':prefix},
+        ScanIndexForward:false,Limit:limit,
+        ...(cursor?{ExclusiveStartKey:cursor}:{})
+      }));
+      return {items:result.Items??[],nextCursor:result.LastEvaluatedKey??null};
+    },
     async listBookings(context,{limit=30,cursor=null}={}){
       await requireAdmin(context);
       if(!Number.isInteger(limit)||limit<1||limit>100)throw Error('Invalid page size');
