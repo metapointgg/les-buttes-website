@@ -63,7 +63,7 @@ if(widget){
   };
   const updateNext=()=>{
     const q=getQuote();
-    reviewNext.disabled=!masterConnected() ? false : !q||!q.meetsDraftMinimum;
+    reviewNext.disabled=!masterConnected()||!q||!q.meetsDraftMinimum;
     reviewNext.setAttribute('aria-disabled',String(!masterConnected()));
     const note=widget.querySelector<HTMLElement>('[data-selection-feedback]');
     if(note)note.textContent=!masterConnected()?tr('masterOffline'):
