@@ -178,3 +178,34 @@ test('LB-04 conflicting and replayed owner actions fail closed',async()=>{
    }
  }
 });
+
+test('LB-06 staging configuration requires owner, approval and CAS version',async()=>{
+ const prior={issuer:process.env.MANAGEMENT_COGNITO_ISSUER,client:process.env.MANAGEMENT_COGNITO_CLIENT_ID,
+   env:process.env.BOOKING_ENVIRONMENT,table:process.env.BOOKINGS_TABLE};
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ process.env.BOOKING_ENVIRONMENT='staging';process.env.BOOKINGS_TABLE='booking-staging';
+ let writes=0;
+ const handler=createAdminHandler({reader:{},writeEnabled:()=>true,writeConfig:async args=>{
+  writes++;assert.equal(args.kind,'payments');assert.equal(args.expectedVersion,null);
+  return {version:'new'};
+ }});
+ const event={...verified,rawPath:'/admin/config/payments/all/publish',
+  body:JSON.stringify({value:{depositPercent:25,balanceDueDays:56},expectedVersion:null,approved:true}),
+  requestContext:{...verified.requestContext,http:{method:'POST'}}};
+ try{
+  assert.equal((await handler(event)).statusCode,200);
+  assert.equal((await handler({...event,body:'{"value":{}}'})).statusCode,400);
+  const viewer={...event,requestContext:{...event.requestContext,authorizer:{jwt:{claims:{
+    ...verified.requestContext.authorizer.jwt.claims,'cognito:groups':['lesbuttes-viewer']
+  }}}}};
+  assert.equal((await handler(viewer)).statusCode,403);
+  process.env.BOOKING_ENVIRONMENT='production';
+  assert.equal((await handler(event)).statusCode,503);
+  assert.equal(writes,1);
+ }finally{
+  for(const [key,name] of [['issuer','MANAGEMENT_COGNITO_ISSUER'],['client','MANAGEMENT_COGNITO_CLIENT_ID'],
+    ['env','BOOKING_ENVIRONMENT'],['table','BOOKINGS_TABLE']]){
+    if(prior[key]===undefined)delete process.env[name];else process.env[name]=prior[key];
+  }
+ }
+});
