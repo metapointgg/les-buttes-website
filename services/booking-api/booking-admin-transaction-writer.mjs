@@ -70,7 +70,11 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    update+=', reservationStatus = :reservationStatus';
    values[':reservationStatus']=action==='approve'?'AWAITING_PAYMENT':decision.to;
  }
- let condition='#status = :expected AND id = :id AND #source = :direct AND reservationStatus = :expectedReservation';
+ let condition='#status = :expected AND id = :id AND #source = :direct AND reservationStatus = :expectedReservation AND #units = :observedUnits AND #start = :observedStart AND #end = :observedEnd';
+ names['#units']='units'; names['#start']='start'; names['#end']='end';
+ values[':observedUnits']=booking.units;
+ values[':observedStart']=booking.start;
+ values[':observedEnd']=booking.end;
  names['#source']='source';
  values[':direct']='direct';
  values[':expectedReservation']=action==='cancel'?'CONFIRMED':'PENDING_REVIEW';
@@ -95,8 +99,8 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
        ExpressionAttributeValues:{':id':bookingId,':now':nowEpoch,':nextExpiry':nowEpoch+48*3600}}});
    }else{
      items.push({Delete:{TableName:table,Key:key,
-       ConditionExpression:'id = :id',
-       ExpressionAttributeValues:{':id':bookingId}}});
+       ConditionExpression:action==='decline'?'id = :id AND expiresAt > :now':'id = :id',
+       ExpressionAttributeValues:action==='decline'?{':id':bookingId,':now':nowEpoch}:{':id':bookingId}}});
    }
  }
  items.push({Put:{TableName:table,Item:audit,ConditionExpression:'attribute_not_exists(PK)'}});
