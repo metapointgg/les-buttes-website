@@ -80,8 +80,8 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/response.status!==202/);
   assert.match(discoveryScript,/await checkAuthoritativeQuote\(\)/);
   // Numeric GBP totals must be accepted; a double-escaped digit class rejects every quote.
-  assert.ok(discoveryScript.includes(String.raw`!/\\^\\d` )===false);
-  assert.ok(discoveryScript.includes(String.raw`/^\\d+(?:\\.\\d{1,2})?$/`));
+  assert.ok(!discoveryScript.includes(String.raw`/^\\\\d+`));
+  assert.ok(discoveryScript.includes(String.raw`/^\d+(?:\.\d{1,2})?$/`));
 
   assert.match(discovery,/type="email" name="email"[^>]*required/);
   assert.match(discovery,/type="tel" name="telephone"[^>]*pattern=/);
