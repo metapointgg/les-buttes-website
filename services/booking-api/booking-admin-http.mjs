@@ -2,6 +2,9 @@
 // Cognito JWT authorizer. Do not expose directly or attach unauthenticated routes.
 import {createReadOnlyAdminReader} from './booking-admin-reader.mjs';
 import {checkOwnerAction} from './booking-admin-action-policy.mjs';
+import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
+import {DynamoDBDocumentClient,GetCommand} from '@aws-sdk/lib-dynamodb';
+import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 const groups=(claims)=>{
  const raw=claims?.['cognito:groups']??[];
  return Array.isArray(raw)?raw:typeof raw==='string'?raw.split(',').map(v=>v.trim()):[];
@@ -106,9 +109,22 @@ export function createAdminHandler({reader,writeAction,writeEnabled=()=>false}){
 let deployedHandler;
 export async function handler(event){
  if(!deployedHandler){
-   deployedHandler=createAdminHandler({reader:createReadOnlyAdminReader({
-     authorise:async request=>identityFromGateway(request)
-   })});
+   const staging=process.env.BOOKING_ENVIRONMENT==='staging'&&
+     process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')&&
+     process.env.MANAGEMENT_WRITES_ENABLED==='true';
+   const table=process.env.BOOKINGS_TABLE;
+   const db=staging?DynamoDBDocumentClient.from(new DynamoDBClient({}),
+     {marshallOptions:{removeUndefinedValues:true}}):null;
+   deployedHandler=createAdminHandler({
+     reader:createReadOnlyAdminReader({authorise:async request=>identityFromGateway(request)}),
+     writeEnabled:()=>staging,
+     writeAction:staging?async args=>executeOwnerTransition({
+       ...args,db,table,
+       readBooking:async bookingId=>(await db.send(new GetCommand({
+         TableName:table,Key:{PK:'BOOKING#'+bookingId,SK:'META'},ConsistentRead:true
+       }))).Item??null
+     }):undefined
+   });
  }
  return deployedHandler(event);
 }
