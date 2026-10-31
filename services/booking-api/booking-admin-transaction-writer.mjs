@@ -75,6 +75,10 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  values[':observedUnits']=booking.units;
  values[':observedStart']=booking.start;
  values[':observedEnd']=booking.end;
+ if(action==='approve'){
+   condition+=' AND quote = :observedQuote';
+   values[':observedQuote']=booking.quote;
+ }
  names['#source']='source';
  values[':direct']='direct';
  values[':expectedReservation']=action==='cancel'?'CONFIRMED':'PENDING_REVIEW';
