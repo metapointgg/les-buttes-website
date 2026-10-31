@@ -65,6 +65,12 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    condition+=' AND holdExpiresAt = :observedExpiry AND holdExpiresAt > :now';
    values[':observedExpiry']=booking.holdExpiresAt;
  }
+ const transitionId=randomUUID();
+ const audit={PK:'BOOKING#'+bookingId,SK:'AUDIT#'+new Date(nowEpoch*1000).toISOString()+'#'+transitionId,
+   id:transitionId,bookingId,action,from:decision.from,to:decision.to,
+   actor:identity.subject,recordedAt:new Date(nowEpoch*1000).toISOString(),
+   ...(action==='cancel'?{reason:reason.trim()}:{}),
+   ...(action==='approve'?{approvedAmountGBP:approval.amountPence/100}: {})};
  const items=[{Update:{TableName:table,Key:decision.metadataKey,
    UpdateExpression:update,ConditionExpression:condition,
    ExpressionAttributeNames:names,ExpressionAttributeValues:values}}];
@@ -80,6 +86,7 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
        ExpressionAttributeValues:{':id':bookingId}}});
    }
  }
- await db.send(new TransactWriteCommand({TransactItems:items,ClientRequestToken:randomUUID()}));
- return {id:bookingId,from:decision.from,to:decision.to,affectedNights:decision.slots.length};
+ items.push({Put:{TableName:table,Item:audit,ConditionExpression:'attribute_not_exists(PK)'}});
+ await db.send(new TransactWriteCommand({TransactItems:items,ClientRequestToken:transitionId}));
+ return {id:bookingId,from:decision.from,to:decision.to,affectedNights:decision.slots.length,auditId:transitionId};
 }
