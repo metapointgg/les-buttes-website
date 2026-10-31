@@ -17,6 +17,9 @@ test('decline atomically releases all nights with metadata hold and status condi
  assert.equal(sent.length,1);
  assert.equal(sent[0].TransactItems.length,3);
  assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/holdExpiresAt > :now/);
+ assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/holdExpiresAt = :observedExpiry/);
+ assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/id = :id/);
+ assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':observedExpiry'],200);
  assert.equal(sent[0].TransactItems[1].Delete.ConditionExpression,'id = :id');
  assert.equal(sent[0].TransactItems[2].Delete.Key.SK,'DATE#2027-08-29');
 });
@@ -35,4 +38,10 @@ test('rejects non-owner, unsupported approval, expired hold and mismatched booki
  await assert.rejects(executeOwnerTransition({...params,action:'decline',nowEpoch:200}),/expired/);
  await assert.rejects(executeOwnerTransition({...params,action:'decline',readBooking:async()=>({...base,id:'22222222-2222-4222-8222-222222222222'})}),/mismatch/);
  assert.equal(sent.length,0);
+});
+
+test('DynamoDB transaction failure does not return a successful transition',async()=>{
+ const {params}=make();
+ params.db={send:async()=>{throw Error('TransactionCanceledException');}};
+ await assert.rejects(executeOwnerTransition({...params,action:'decline'}),/TransactionCanceledException/);
 });
