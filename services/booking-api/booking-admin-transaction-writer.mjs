@@ -33,7 +33,11 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  const names={'#status':'status'};
  const values={':expected':decision.from,':next':decision.to,':now':nowEpoch,
    ':updatedAt':new Date(nowEpoch*1000).toISOString(),':id':bookingId};
- let update='SET #status = :next, updatedAt = :updatedAt';
+ if(typeof identity.subject!=='string'||identity.subject.trim().length<1)
+   throw Error('Owner subject required for audit');
+ values[':actor']=identity.subject;
+ values[':action']=action;
+ let update='SET #status = :next, updatedAt = :updatedAt, lastManagementActor = :actor, lastManagementAction = :action';
  if(action==='approve'){
    update+=', holdExpiresAt = :nextExpiry, approvedAmountGBP = :amount, paymentUrl = :paymentUrl';
    values[':nextExpiry']=nowEpoch+48*3600;
