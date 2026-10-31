@@ -21,3 +21,14 @@ test('fails closed on invalid allocation, dates and expired hold',()=>{
  assert.equal(prepareOwnerTransition({...request,nowEpoch:200}).allowed,false);
  assert.equal(prepareOwnerTransition({...request,booking:{...booking,id:'bad'}}).allowed,false);
 });
+
+test('invalid or absent booking dates fail closed without throwing',()=>{
+ for(const [start,end] of [[undefined,'2027-09-04'],['2027-08-28',undefined],
+   [null,'2027-09-04'],['not-a-date','2027-09-04'],
+   ['2027-02-30','2027-03-07'],['2027-13-01','2027-13-08']]){
+   assert.doesNotThrow(()=>{
+     const decision=prepareOwnerTransition({...request,booking:{...booking,start,end}});
+     assert.equal(decision.allowed,false);
+   });
+ }
+});
