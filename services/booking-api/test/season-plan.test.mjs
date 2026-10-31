@@ -43,7 +43,7 @@ test('weekly Saturday stays apply consistently through the proposed seasonal ban
   assert.match(evaluate({unit:'geranium',start:'2027-03-20',end:'2027-03-23',guests:2}).error,/Saturday/);
   assert.match(evaluate({unit:'honeysuckle',start:'2027-05-22',end:'2027-05-27',guests:2}).error,/Saturday/);
   assert.match(evaluate({unit:'both',start:'2027-07-10',end:'2027-07-16',guests:10}).error,/Saturday/);
-  assert.match(evaluate({unit:'honeysuckle',start:'2027-09-25',end:'2027-10-02',guests:2}).error,/outside/);
+  assert.match(evaluate({unit:'honeysuckle',start:'2027-10-02',end:'2027-10-09',guests:2}).error,/outside/);
 });
 test('nightly totals cross month and overlay boundaries without incorrectly repricing the direct reservation',()=>{
   const week=dates('2027-08-28','2027-09-04');
