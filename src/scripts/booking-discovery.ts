@@ -388,6 +388,8 @@ if(widget){
   if(requestEnabled&&confirmButton){
     challengeSlot.setAttribute('data-turnstile-slot','');
     confirmButton.before(challengeSlot);
+    confirmButton.type='submit';
+    confirmButton.setAttribute('aria-disabled','false');
     const renderChallenge=()=>{
       const turnstile=(window as typeof window & {turnstile?:{render:(element:HTMLElement,options:{sitekey:string})=>string}}).turnstile;
       if(!turnstile)return false;
@@ -395,6 +397,12 @@ if(widget){
       return true;
     };
     if(!renderChallenge()){
+      // Load Turnstile only for an explicitly approved request-enabled build.
+      const challengeScript=document.createElement('script');
+      challengeScript.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      challengeScript.async=true;
+      challengeScript.defer=true;
+      document.head.append(challengeScript);
       let attempts=0;
       const timer=window.setInterval(()=>{
         if(renderChallenge()||++attempts>=60)window.clearInterval(timer);
