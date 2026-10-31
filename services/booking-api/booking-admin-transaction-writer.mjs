@@ -27,9 +27,10 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    update+=', reservationStatus = :reservationStatus';
    values[':reservationStatus']=decision.to;
  }
- let condition='#status = :expected';
+ let condition='#status = :expected AND id = :id';
  if(action==='decline'){
-   condition+=' AND holdExpiresAt > :now';
+   condition+=' AND holdExpiresAt = :observedExpiry AND holdExpiresAt > :now';
+   values[':observedExpiry']=booking.holdExpiresAt;
  }
  const items=[{Update:{TableName:table,Key:decision.metadataKey,
    UpdateExpression:update,ConditionExpression:condition,
