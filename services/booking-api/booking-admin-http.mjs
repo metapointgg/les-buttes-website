@@ -42,6 +42,19 @@ export function createAdminHandler({reader}){
        const data=match[3]?await reader.getConfigHistory(event,match[1],match[2]):await reader.getConfig(event,match[1],match[2]);
        return reply(200,data);
      }
+     match=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/audit$/i);
+     if(match){
+       const limit=Number(event.queryStringParameters?.limit??30);
+       const cursorRaw=event.queryStringParameters?.cursor;
+       let cursor=null;
+       if(cursorRaw){
+         try{cursor=JSON.parse(Buffer.from(cursorRaw,'base64url').toString('utf8'));}
+         catch{ return reply(400,{error:'Invalid cursor'}); }
+       }
+       const page=await reader.getBookingAudit(event,match[1],{limit,cursor});
+       return reply(200,{items:page.items,
+         nextCursor:page.nextCursor?Buffer.from(JSON.stringify(page.nextCursor)).toString('base64url'):null});
+     }
      match=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})$/i);
      if(match){const data=await reader.getBooking(event,match[1]);return reply(data?200:404,data??{error:'Not found'});}
      if(path==='/admin/bookings'){
