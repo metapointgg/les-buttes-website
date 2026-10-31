@@ -44,6 +44,12 @@ if(widget){
   const bookingApi=(import.meta.env.PUBLIC_BOOKING_REQUEST_API_URL??'').trim().replace(/\/$/,'');
   const liveQuoteEnabled=import.meta.env.PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED==='true'&&
     Boolean(bookingApi)&&!localPreview;
+  // Submission is separately gated and cannot be enabled by an API URL alone.
+  // The private staging API is never an acceptable browser endpoint.
+  const requestEnabled=import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&
+    liveQuoteEnabled&&import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY&&
+    import.meta.env.PUBLIC_BOOKING_REQUESTS_APPROVED==='true';
+
   let authoritativeQuote:{key:string;totalGBP:string}|null=null;
   const quoteKey=()=>JSON.stringify([choice,arrival.value,departure.value,filters.adults+filters.children]);
   async function checkAuthoritativeQuote(){
@@ -374,9 +380,74 @@ if(widget){
   emailField.addEventListener('input',validateContact);
   phoneField.addEventListener('input',validateContact);
   consentField.addEventListener('change',validateContact);
-  detailsForm.addEventListener('submit',event=>{event.preventDefault();validateContact();});
-  const disabledConfirm=detailsForm.querySelector<HTMLButtonElement>('[disabled]');
-  if(disabledConfirm)disabledConfirm.disabled=true;
+  const confirmButton=detailsForm.querySelector<HTMLButtonElement>('[disabled]');
+  const status=validation;
+  let submitting=false;
+  const siteKey=import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY??'';
+  const challengeSlot=document.createElement('div');
+  if(requestEnabled&&confirmButton){
+    challengeSlot.setAttribute('data-turnstile-slot','');
+    confirmButton.before(challengeSlot);
+    const renderChallenge=()=>{
+      const turnstile=(window as typeof window & {turnstile?:{render:(element:HTMLElement,options:{sitekey:string})=>string}}).turnstile;
+      if(!turnstile)return false;
+      turnstile.render(challengeSlot,{sitekey:siteKey});
+      return true;
+    };
+    if(!renderChallenge()){
+      let attempts=0;
+      const timer=window.setInterval(()=>{
+        if(renderChallenge()||++attempts>=60)window.clearInterval(timer);
+      },150);
+    }
+    confirmButton.disabled=false;
+  }
+  detailsForm.addEventListener('submit',async event=>{
+    event.preventDefault();
+    validateContact();
+    if(!requestEnabled||!confirmButton||submitting)return;
+    if(!detailsForm.reportValidity()||!consentField.checked||
+       !firstNameField.value.trim()||!lastNameField.value.trim()||
+       phoneField.value.replace(/\\D/g,'').length<7)return;
+    submitting=true;
+    confirmButton.disabled=true;
+    try{
+      if(!await refreshMaster())throw Error('Availability is currently unavailable.');
+      const q=getQuote();
+      if(!q||!q.meetsDraftMinimum||!await checkAuthoritativeQuote()||
+         authoritativeQuote?.key!==quoteKey())throw Error('The selected dates or price are no longer available.');
+      const turnstile=(window as typeof window & {turnstile?:{getResponse:()=>string;reset:()=>void}}).turnstile;
+      const token=turnstile?.getResponse()??'';
+      if(!token)throw Error('Please complete the verification challenge.');
+      const response=await fetch(bookingApi+'/requests',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          unit:choice,start:arrival.value,end:departure.value,
+          guests:filters.adults+filters.children,
+          name:firstNameField.value.trim()+' '+lastNameField.value.trim(),
+          email:emailField.value.trim(),telephone:phoneField.value.trim(),
+          consent:true,notes:'',website:'',turnstileToken:token
+        })
+      });
+      if(response.status!==202)throw Error(response.status===409?
+        'These dates have just become unavailable. Please select another stay.':
+        'Your booking request could not be submitted. Please try again.');
+      const result=await response.json() as {received?:boolean;reference?:string};
+      if(result.received!==true||!result.reference)throw Error('A booking reference was not returned.');
+      detailsForm.replaceChildren();
+      const message=document.createElement('p');
+      message.setAttribute('role','status');
+      message.textContent='Your booking request has been received (reference '+result.reference+
+        '). It is awaiting owner approval and is not yet confirmed. No payment has been taken.';
+      detailsForm.append(message);
+    }catch(error){
+      if(status)status.textContent=error instanceof Error?error.message:'Unable to submit the request.';
+      const turnstile=(window as typeof window & {turnstile?:{reset:()=>void}}).turnstile;
+      turnstile?.reset();
+      confirmButton.disabled=false;
+    }finally{submitting=false;}
+  });
+  if(!requestEnabled&&confirmButton)confirmButton.disabled=true;
 
   arrival.addEventListener('change',()=>{if(arrival.value){departure.min=plusDays(arrival.value,7);}});
   void search();
