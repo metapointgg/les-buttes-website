@@ -84,3 +84,30 @@ test('preflight cancellation requires owner reason and never mutates booking',as
    if(previousClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;else process.env.MANAGEMENT_COGNITO_CLIENT_ID=previousClient;
  }
 });
+
+test('LB-03 audit endpoint is GET-only, authenticated and paginates safely',async()=>{
+ const previousIssuer=process.env.MANAGEMENT_COGNITO_ISSUER;
+ const previousClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ const id='11111111-1111-4111-8111-111111111111';
+ const cursor={PK:'BOOKING#'+id,SK:'AUDIT#2026-10-31T12:00:00.000Z#x'};
+ const handler=createAdminHandler({reader:{getBookingAudit:async(_,ref,args)=>{
+   assert.equal(ref,id);
+   assert.equal(args.limit,5);
+   return {items:[{action:'decline'}],nextCursor:cursor};
+ }}});
+ const url='/admin/bookings/'+id+'/audit';
+ try{
+   const result=await handler({...verified,rawPath:url,queryStringParameters:{limit:'5'}});
+   assert.equal(result.statusCode,200);
+   assert.equal(JSON.parse(result.body).items[0].action,'decline');
+   assert.ok(JSON.parse(result.body).nextCursor);
+   assert.equal((await handler({...verified,rawPath:url,queryStringParameters:{limit:'5',cursor:'not-json'}})).statusCode,400);
+   assert.equal((await handler({...verified,rawPath:url,requestContext:{...verified.requestContext,http:{method:'POST'}}})).statusCode,405);
+   assert.equal((await handler({requestContext:{http:{method:'GET'}},rawPath:url})).statusCode,403);
+ }finally{
+   if(previousIssuer===undefined)delete process.env.MANAGEMENT_COGNITO_ISSUER;else process.env.MANAGEMENT_COGNITO_ISSUER=previousIssuer;
+   if(previousClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;else process.env.MANAGEMENT_COGNITO_CLIENT_ID=previousClient;
+ }
+});
