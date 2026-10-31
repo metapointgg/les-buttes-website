@@ -5,6 +5,7 @@ import {checkOwnerAction} from './booking-admin-action-policy.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
+import {publishOwnerConfiguration,rollbackOwnerConfiguration} from './booking-admin-config-writer.mjs';
 const groups=(claims)=>{
  const raw=claims?.['cognito:groups']??[];
  return Array.isArray(raw)?raw:typeof raw==='string'?raw.split(',').map(v=>v.trim()):[];
@@ -21,7 +22,7 @@ export function identityFromGateway(event,{issuer=process.env.MANAGEMENT_COGNITO
  return role?{subject:claims.sub,role}:null;
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
-export function createAdminHandler({reader,writeAction,writeEnabled=()=>false}){
+export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=()=>false}){
  return async event=>{
    try{
      const method=event?.requestContext?.http?.method;
@@ -31,6 +32,28 @@ export function createAdminHandler({reader,writeAction,writeEnabled=()=>false}){
      const path=event.rawPath??'';
      if(method==='POST'){
        const match=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/actions\/(approve|decline|cancel)$/i);
+       const configMatch=path.match(/^\/admin\/config\/(pricing|stay-rules|cancellation|payments|business|arrival-departure|terms)\/(geranium|honeysuckle|all)\/(publish|rollback)$/);
+       if(configMatch){
+         if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+         if(process.env.BOOKING_ENVIRONMENT!=='staging'||!process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||
+           !writeEnabled()||typeof writeConfig!=='function')return reply(503,{error:'Management writes disabled'});
+         if(event.isBase64Encoded||typeof event.body!=='string'||event.body.length>22000)return reply(400,{error:'Invalid request'});
+         let payload;
+         try{payload=JSON.parse(event.body);}catch{return reply(400,{error:'Invalid request'});}
+         if(!payload||typeof payload!=='object'||Array.isArray(payload))return reply(400,{error:'Invalid request'});
+         const keys=configMatch[3]==='publish'?['value','expectedVersion','approved']:['historicalVersion','expectedVersion','approved'];
+         if(Object.keys(payload).some(k=>!keys.includes(k))||payload.approved!==true||
+           !Object.hasOwn(payload,'expectedVersion'))return reply(400,{error:'Explicit approval and expected version required'});
+         try{
+           return reply(200,await writeConfig({identity:id,kind:configMatch[1],unit:configMatch[2],
+             operation:configMatch[3],...payload}));
+         }catch(e){
+           if(e?.name==='TransactionCanceledException')return reply(409,{error:'Configuration changed; refresh and retry'});
+           if(/Invalid|Unknown|required|too large|restriction|range|band|tier|season|approval|not found/.test(e?.message??''))
+             return reply(400,{error:'Invalid configuration'});
+           throw e;
+         }
+       }
        if(!match)return reply(405,{error:'Method not allowed'});
        if(id.role!=='owner')return reply(403,{error:'Forbidden'});
        if(process.env.BOOKING_ENVIRONMENT!=='staging'||!process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||
@@ -125,6 +148,7 @@ export async function handler(event){
    deployedHandler=createAdminHandler({
      reader:createReadOnlyAdminReader({authorise:async request=>identityFromGateway(request)}),
      writeEnabled:()=>staging,
+     writeConfig:staging?async ({operation,...args})=>operation==='rollback'?rollbackOwnerConfiguration({db,table,...args}):publishOwnerConfiguration({db,table,...args}):undefined,
      writeAction:staging?async args=>executeOwnerTransition({
        ...args,db,table,
        readBooking:async bookingId=>(await db.send(new GetCommand({
