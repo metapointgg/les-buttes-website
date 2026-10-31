@@ -42,7 +42,7 @@ async function selectBooking(id){
    ['Quoted price',booking.quote?.totalGBP===undefined?'Not available':'£'+booking.quote.totalGBP],
    ['Hold expires',booking.holdExpiresAt?new Date(booking.holdExpiresAt*1000).toLocaleString('en-GB'):'Not applicable']])
    row(detail,label,value??'—');
-  $('owner-actions').hidden=false;
+  $('owner-actions').hidden=state.role!=='owner';
   $('decline').disabled=!allowedAction(booking,'decline');
   $('cancel').disabled=!allowedAction(booking,'cancel');
   $('reason').value='';
@@ -82,10 +82,16 @@ $('connect').addEventListener('click',()=>{
  const api=safeStagingApi($('api').value.trim());
  const token=$('token').value.trim();
  if(!api||!token){message('Enter a valid eu-west-2 staging API URL and access token.',true);return;}
- state.api=api;state.token=token;$('token').value='';loadBookings();
+ state.api=api;state.token=token;
+ try{
+  const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+  const groups=claims['cognito:groups']||[];
+  state.role=Array.isArray(groups)&&groups.includes('lesbuttes-owner')?'owner':'viewer';
+ }catch{state.role='viewer';}
+ $('token').value='';loadBookings();
 });
 $('disconnect').addEventListener('click',()=>{
- state.api=null;state.token=null;state.bookings=[];state.cursor=null;state.selected=null;
+ state.api=null;state.token=null;state.bookings=[];state.cursor=null;state.selected=null;state.role='viewer';
  $('bookings').replaceChildren();$('detail').replaceChildren();$('audit').replaceChildren();
  $('owner-actions').hidden=true;$('more').hidden=true;$('more-audit').hidden=true;message('Disconnected.');
 });
