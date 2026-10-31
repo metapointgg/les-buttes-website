@@ -284,6 +284,14 @@ Resources:
             Action: ['dynamodb:GetItem', 'dynamodb:TransactWriteItems', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem', 'dynamodb:PutItem']
             Resource: !GetAtt BookingTable.Arn
       Events:
+        PostConfigAction:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ManagementApi
+            Path: /admin/config/{kind}/{unit}/{operation}
+            Method: POST
+            Auth:
+              Authorizer: ManagementCognito
         PostBookingAction:
           Type: HttpApi
           Properties:
