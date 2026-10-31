@@ -15,8 +15,8 @@ export function prepareOwnerTransition({identity,action,booking,reason,nowEpoch=
  const nights=(end-start)/86400000;
  if(!/^\d{4}-\d{2}-\d{2}$/.test(booking.start)||!/^\d{4}-\d{2}-\d{2}$/.test(booking.end)||
     !Number.isInteger(nights)||nights<1||nights>27||
-    new Date(start).toISOString().slice(0,10)!==booking.start||
-    new Date(end).toISOString().slice(0,10)!==booking.end)
+    validDate(start)!==booking.start||
+    validDate(end)!==booking.end)
    return {allowed:false,reason:'Invalid stay dates'};
  const slots=booking.units.flatMap(unit=>Array.from({length:nights},(_,i)=>({
    PK:'UNIT#'+unit,SK:'DATE#'+new Date(start+i*86400000).toISOString().slice(0,10)
