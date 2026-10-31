@@ -92,8 +92,15 @@ export function createAdminHandler({reader,writeAction,writeEnabled=()=>false}){
      if(match){const data=await reader.getBooking(event,match[1]);return reply(data?200:404,data??{error:'Not found'});}
      if(path==='/admin/bookings'){
        const limit=Number(event.queryStringParameters?.limit??30);
-       const data=await reader.listBookings(event,{limit});
-       return reply(200,data);
+       const cursorRaw=event.queryStringParameters?.cursor;
+       let cursor=null;
+       if(cursorRaw){
+         try{cursor=JSON.parse(Buffer.from(cursorRaw,'base64url').toString('utf8'));}
+         catch{return reply(400,{error:'Invalid cursor'});}
+       }
+       const data=await reader.listBookings(event,{limit,cursor});
+       return reply(200,{items:data.items,
+         nextCursor:data.nextCursor?Buffer.from(JSON.stringify(data.nextCursor)).toString('base64url'):null});
      }
      return reply(404,{error:'Not found'});
    }catch(e){
