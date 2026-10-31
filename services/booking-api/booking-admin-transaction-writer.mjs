@@ -48,6 +48,10 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    update+=', cancelReason = :reason, cancelledAt = :updatedAt';
    values[':reason']=reason.trim();
  }
+ if(action==='cancel'){
+   update+=', expiresAt = :recordExpiry';
+   values[':recordExpiry']=nowEpoch+90*86400;
+ }
  if(booking.source==='direct'){
    update+=', reservationStatus = :reservationStatus';
    values[':reservationStatus']=action==='approve'?'AWAITING_PAYMENT':decision.to;
