@@ -68,7 +68,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/PUBLIC_BOOKING_REQUESTS_APPROVED==='true'/);
   assert.match(discoveryScript,/PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED==='true'/);
   assert.match(discoveryScript,/PUBLIC_BOOKING_TURNSTILE_SITE_KEY/);
-  assert.match(discoveryScript,/bookingApi+'\/requests'/);
+  assert.ok(discoveryScript.includes("bookingApi+'/requests'"));
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
   assert.match(discovery,/data-preview-guest-details/);
   assert.match(discovery,/name="email"/);
