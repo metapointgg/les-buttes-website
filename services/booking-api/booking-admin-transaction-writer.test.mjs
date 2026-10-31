@@ -76,6 +76,8 @@ test('approval atomically extends metadata and all cottage-night holds',async()=
   assert.equal(items.length,4);
   assert.equal(items[3].Put.Item.action,'approve');
   assert.equal(items[3].Put.Item.approvedAmountGBP,250);
+  assert.match(items[0].Update.ConditionExpression,/quote = :observedQuote/);
+  assert.deepEqual(items[0].Update.ExpressionAttributeValues[':observedQuote'],{totalGBP:250});
   assert.equal(items[0].Update.ExpressionAttributeValues[':nextExpiry'],100+48*3600);
   assert.equal(items[1].Update.ExpressionAttributeValues[':nextExpiry'],100+48*3600);
   assert.match(items[1].Update.ConditionExpression,/expiresAt > :now/);
