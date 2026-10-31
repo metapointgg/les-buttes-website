@@ -16,6 +16,10 @@ test('viewer and admin roles cannot change booking state',()=>{
 test('wrong state, expired hold and unsupported confirmation are denied',()=>{
   assert.equal(checkOwnerAction({identity:{role:'owner'},action:'approve',booking:booking('CONFIRMED')}).allowed,false);
   assert.equal(checkOwnerAction({identity:{role:'owner'},action:'approve',booking:{status:'REQUESTED',holdExpiresAt:1}}).allowed,false);
+  for(const holdExpiresAt of [undefined,null,'not-a-number',NaN]){
+    assert.equal(checkOwnerAction({identity:{role:'owner'},action:'approve',booking:{status:'REQUESTED',holdExpiresAt}}).allowed,false);
+    assert.equal(checkOwnerAction({identity:{role:'owner'},action:'decline',booking:{status:'REQUESTED',holdExpiresAt}}).allowed,false);
+  }
   assert.equal(checkOwnerAction({identity:{role:'owner'},action:'confirm',booking:booking('APPROVED_AWAITING_PAYMENT')}).allowed,false);
   assert.equal(checkOwnerAction({identity:{role:'owner'},action:'__proto__',booking:booking('REQUESTED')}).allowed,false);
 });
