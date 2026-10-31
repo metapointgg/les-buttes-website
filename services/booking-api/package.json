@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "check": "node --check index.mjs && node --check admin.mjs && node --check monitor-airbnb.mjs && node --check export-availability-snapshot.mjs && node --check master-occupied.mjs && node --check preview-master-server.mjs && node --check booking-settings.mjs && node --check booking-admin-reader.mjs && node --check booking-admin-http.mjs && node --check staging-availability-handler.mjs && node --check public-availability-handler.mjs && node --check published-band-quote.mjs && node --check staging-quote-handler.mjs",
+    "check": "node --check index.mjs && node --check admin.mjs && node --check monitor-airbnb.mjs && node --check export-availability-snapshot.mjs && node --check master-occupied.mjs && node --check preview-master-server.mjs && node --check booking-settings.mjs && node --check booking-admin-reader.mjs && node --check booking-admin-http.mjs && node --check booking-admin-action-policy.mjs && node --check booking-admin-transaction-policy.mjs && node --check booking-admin-transaction-writer.mjs && node --check staging-availability-handler.mjs && node --check public-availability-handler.mjs && node --check published-band-quote.mjs && node --check staging-quote-handler.mjs",
     "test": "node --test"
   },
   "dependencies": {
