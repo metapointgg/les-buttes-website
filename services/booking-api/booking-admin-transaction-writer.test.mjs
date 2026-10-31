@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 const id='11111111-1111-4111-8111-111111111111';
-const base={id,status:'REQUESTED',holdExpiresAt:200,source:'direct',
+const base={id,status:'REQUESTED',holdExpiresAt:200,source:'direct',GSI1PK:'BOOKING_REQUESTS',reservationStatus:'PENDING_REVIEW',
  units:['geranium'],start:'2027-08-28',end:'2027-08-30'};
 const owner={role:'owner',subject:'owner-1'};
 const make=(booking=base)=>{
@@ -33,7 +33,7 @@ test('decline atomically releases all nights with metadata hold and status condi
  assert.equal(sent[0].TransactItems[2].Delete.Key.SK,'DATE#2027-08-29');
 });
 test('cancel requires reason and releases confirmed booking without payment confirmation',async()=>{
- const {sent,params}=make({...base,status:'CONFIRMED'});
+ const {sent,params}=make({...base,status:'CONFIRMED',reservationStatus:'CONFIRMED'});
  await assert.rejects(executeOwnerTransition({...params,action:'cancel'}),/reason/);
  const result=await executeOwnerTransition({...params,action:'cancel',reason:'Guest requested cancellation'});
  assert.equal(result.to,'CANCELLED');
@@ -102,4 +102,19 @@ test('refuses an owner transition without an authenticated subject',async()=>{
  const {sent,params}=make();
  await assert.rejects(executeOwnerTransition({...params,action:'decline',identity:{role:'owner'}}),/subject required/);
  assert.equal(sent.length,0);
+});
+
+test('LB-01 rejects legacy blocks and inconsistent reservation classifications',async()=>{
+ for(const booking of [
+   {...base,source:'airbnb'},
+   {...base,source:undefined},
+   {...base,GSI1PK:undefined},
+   {...base,reservationStatus:'AWAITING_PAYMENT'},
+   {...base,status:'CONFIRMED',reservationStatus:'PENDING_REVIEW'}
+ ]){
+   const {sent,params}=make(booking);
+   const action=booking.status==='CONFIRMED'?'cancel':'decline';
+   await assert.rejects(executeOwnerTransition({...params,action,reason:'Guest requested cancellation'}));
+   assert.equal(sent.length,0);
+ }
 });
