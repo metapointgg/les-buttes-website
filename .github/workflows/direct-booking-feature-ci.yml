@@ -44,6 +44,18 @@ jobs:
           sam build --template-file services/booking-api/staging-availability-private.template.yaml --build-dir .aws-sam/private-availability-build --region eu-west-2
           test -s .aws-sam/private-availability-build/template.yaml
           test -s .aws-sam/private-availability-build/PrivateStagingAvailabilityFunction/staging-availability-handler.mjs
+      - name: Validate isolated staging quote infrastructure (no deployment)
+        run: |
+          set -euo pipefail
+          sam validate --lint --template-file infra/booking-staging-quote/template.yaml --region eu-west-2
+      - name: Build isolated staging quote Lambda (no deployment)
+        run: |
+          set -euo pipefail
+          sam build --template-file infra/booking-staging-quote/template.yaml --build-dir .aws-sam/isolated-quote --region eu-west-2
+          test -s .aws-sam/isolated-quote/template.yaml
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/staging-quote-handler.mjs
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/published-band-quote.mjs
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/occupancy.mjs
       - name: Upload validated static website
         uses: actions/upload-artifact@v4
         with:
