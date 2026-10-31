@@ -18,13 +18,43 @@ export function identityFromGateway(event,{issuer=process.env.MANAGEMENT_COGNITO
  return role?{subject:claims.sub,role}:null;
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
-export function createAdminHandler({reader}){
+export function createAdminHandler({reader,writeAction,writeEnabled=()=>false}){
  return async event=>{
    try{
-     if(event?.requestContext?.http?.method!=='GET')return reply(405,{error:'Method not allowed'});
+     const method=event?.requestContext?.http?.method;
+     if(method!=='GET'&&method!=='POST')return reply(405,{error:'Method not allowed'});
      const id=identityFromGateway(event);
      if(!id)return reply(403,{error:'Forbidden'});
      const path=event.rawPath??'';
+     if(method==='POST'){
+       const match=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/actions\/(approve|decline|cancel)$/i);
+       if(!match)return reply(405,{error:'Method not allowed'});
+       if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+       if(process.env.BOOKING_ENVIRONMENT!=='staging'||!process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||
+          !writeEnabled()||typeof writeAction!=='function')
+         return reply(503,{error:'Management writes disabled'});
+       if(event.isBase64Encoded||typeof event.body!=='string'||event.body.length>4096)
+         return reply(400,{error:'Invalid request'});
+       let payload;
+       try{payload=JSON.parse(event.body);}catch{return reply(400,{error:'Invalid request'});}
+       if(!payload||typeof payload!=='object'||Array.isArray(payload))
+         return reply(400,{error:'Invalid request'});
+       if(match[2]==='approve')
+         return reply(503,{error:'Approval requires verified payment integration'});
+       if(Object.keys(payload).some(k=>k!=='reason')||
+          typeof payload.reason!=='string'||payload.reason.trim().length<5||payload.reason.length>1000)
+         return reply(400,{error:'A recorded reason is required'});
+       try{
+         const result=await writeAction({identity:id,bookingId:match[1],action:match[2],reason:payload.reason});
+         return reply(200,result);
+       }catch(e){
+         if(e?.name==='TransactionCanceledException')return reply(409,{error:'Booking changed; refresh and retry'});
+         if(/Forbidden/.test(e?.message??''))return reply(403,{error:'Forbidden'});
+         if(/Invalid|expired|mismatch|requires|Only authoritative|Confirmed direct|status/.test(e?.message??''))
+           return reply(409,{error:'Booking is no longer eligible for this action'});
+         throw e;
+       }
+     }
      // Read-only preflight: no state mutation and no payment confirmation.
      // The future write API must use separate routes and IAM permissions.
      const preflight=path.split('/').length===7 && path.startsWith('/admin/bookings/') && path.endsWith('/preflight') ? (()=>{ const parts=path.split('/'); return /^[0-9a-f-]{36}$/i.test(parts[3]) && parts[4]==='actions' && ['approve','decline','cancel'].includes(parts[5]) ? [path,parts[3],parts[5]] : null; })() : null;
