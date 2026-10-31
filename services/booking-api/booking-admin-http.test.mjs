@@ -61,3 +61,26 @@ test('owner preflight is read-only and rejects viewer, missing reason and confir
    if(oldClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;else process.env.MANAGEMENT_COGNITO_CLIENT_ID=oldClient;
  }
 });
+
+test('preflight cancellation requires owner reason and never mutates booking',async()=>{
+ const previousIssuer=process.env.MANAGEMENT_COGNITO_ISSUER;
+ const previousClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ const bookingId='11111111-1111-4111-8111-111111111111';
+ let reads=0;
+ const handler=createAdminHandler({reader:{getBooking:async()=>{reads++;return {status:'CONFIRMED'};}}});
+ const url='/admin/bookings/'+bookingId+'/actions/cancel/preflight';
+ try{
+   const missing=await handler({...verified,rawPath:url});
+   assert.equal(missing.statusCode,403);
+   assert.equal(JSON.parse(missing.body).allowed,false);
+   const allowed=await handler({...verified,rawPath:url,queryStringParameters:{reason:'Guest requested cancellation'}});
+   assert.equal(allowed.statusCode,200);
+   assert.deepEqual(JSON.parse(allowed.body),{allowed:true,from:'CONFIRMED',to:'CANCELLED'});
+   assert.equal(reads,2);
+ }finally{
+   if(previousIssuer===undefined)delete process.env.MANAGEMENT_COGNITO_ISSUER;else process.env.MANAGEMENT_COGNITO_ISSUER=previousIssuer;
+   if(previousClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;else process.env.MANAGEMENT_COGNITO_CLIENT_ID=previousClient;
+ }
+});
