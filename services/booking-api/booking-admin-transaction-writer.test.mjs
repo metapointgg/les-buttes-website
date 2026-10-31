@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 const id='11111111-1111-4111-8111-111111111111';
-const base={id,status:'REQUESTED',holdExpiresAt:200,source:'direct',GSI1PK:'BOOKING_REQUESTS',reservationStatus:'PENDING_REVIEW',GSI1PK:'BOOKING_REQUESTS',reservationStatus:'PENDING_REVIEW',
+const base={id,status:'REQUESTED',holdExpiresAt:200,source:'direct',GSI1PK:'BOOKING_REQUESTS',reservationStatus:'PENDING_REVIEW',
  units:['geranium'],start:'2027-08-28',end:'2027-08-30'};
 const owner={role:'owner',subject:'owner-1'};
 const make=(booking=base)=>{
@@ -29,7 +29,10 @@ test('decline atomically releases all nights with metadata hold and status condi
  assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/holdExpiresAt = :observedExpiry/);
  assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/id = :id/);
  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':observedExpiry'],200);
- assert.equal(sent[0].TransactItems[1].Delete.ConditionExpression,'id = :id');
+ assert.equal(sent[0].TransactItems[1].Delete.ConditionExpression,'id = :id AND expiresAt > :now');
+ assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/#units = :observedUnits/);
+ assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/#start = :observedStart/);
+ assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/#end = :observedEnd/);
  assert.equal(sent[0].TransactItems[2].Delete.Key.SK,'DATE#2027-08-29');
 });
 test('cancel requires reason and releases confirmed booking without payment confirmation',async()=>{
@@ -117,4 +120,25 @@ test('LB-01 rejects legacy blocks and inconsistent reservation classifications',
    await assert.rejects(executeOwnerTransition({...params,action,reason:'Guest requested cancellation'}));
    assert.equal(sent.length,0);
  }
+});
+
+test('LB-02 cancellation checks allocation but permits slots without an expiry',async()=>{
+ const {sent,params}=make({...base,status:'CONFIRMED',reservationStatus:'CONFIRMED'});
+ await executeOwnerTransition({...params,action:'cancel',reason:'Guest requested cancellation'});
+ const tx=sent[0].TransactItems;
+ assert.equal(tx[1].Delete.ConditionExpression,'id = :id');
+ assert.deepEqual(tx[0].Update.ExpressionAttributeValues[':observedUnits'],['geranium']);
+ assert.equal(tx[0].Update.ExpressionAttributeValues[':observedStart'],'2027-08-28');
+ assert.equal(tx[0].Update.ExpressionAttributeValues[':observedEnd'],'2027-08-30');
+});
+test('LB-02 transaction cancellation propagates without reporting a successful audit',async()=>{
+ const {params}=make();
+ let calls=0;
+ params.db={send:async command=>{
+   calls++;
+   assert.equal(command.input.TransactItems.length,4);
+   throw Object.assign(new Error('Conditional check failed'),{name:'TransactionCanceledException'});
+ }};
+ await assert.rejects(executeOwnerTransition({...params,action:'decline'}),/Conditional check failed/);
+ assert.equal(calls,1);
 });
