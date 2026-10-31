@@ -63,7 +63,7 @@ if(widget){
       if(!response.ok)return false;
       const result=await response.json() as {available?:boolean;quote?:{currency?:string;totalGBP?:string}};
       if(result.available!==true||result.quote?.currency!=='GBP'||
-         !/^\\d+(?:\\.\\d{1,2})?$/.test(result.quote.totalGBP??''))return false;
+         !/^\d+(?:\.\d{1,2})?$/.test(result.quote.totalGBP??''))return false;
       if(key!==quoteKey())return false;
       authoritativeQuote={key,totalGBP:result.quote.totalGBP!};
       return true;
