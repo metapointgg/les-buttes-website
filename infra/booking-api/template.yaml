@@ -281,7 +281,7 @@ Resources:
       Policies:
         - Statement:
             Effect: Allow
-            Action: ['dynamodb:GetItem', 'dynamodb:TransactWriteItems']
+            Action: ['dynamodb:GetItem', 'dynamodb:TransactWriteItems', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem', 'dynamodb:PutItem']
             Resource: !GetAtt BookingTable.Arn
       Events:
         PostBookingAction:
