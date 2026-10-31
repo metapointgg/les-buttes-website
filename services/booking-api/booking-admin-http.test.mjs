@@ -111,3 +111,42 @@ test('LB-03 audit endpoint is GET-only, authenticated and paginates safely',asyn
    if(previousClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;else process.env.MANAGEMENT_COGNITO_CLIENT_ID=previousClient;
  }
 });
+
+test('LB-04 write route is disabled by default and only owner may use staging flag',async()=>{
+ const previous={issuer:process.env.MANAGEMENT_COGNITO_ISSUER,client:process.env.MANAGEMENT_COGNITO_CLIENT_ID,
+   env:process.env.BOOKING_ENVIRONMENT,table:process.env.BOOKINGS_TABLE};
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ process.env.BOOKING_ENVIRONMENT='staging';
+ process.env.BOOKINGS_TABLE='les-buttes-booking-staging';
+ const id='11111111-1111-4111-8111-111111111111';
+ const url='/admin/bookings/'+id+'/actions/decline';
+ let writes=0;
+ const handler=createAdminHandler({reader:{},writeEnabled:()=>true,writeAction:async args=>{
+   writes++;assert.equal(args.identity.role,'owner');assert.equal(args.action,'decline');
+   return {id,from:'REQUESTED',to:'DECLINED'};
+ }});
+ const event={...verified,rawPath:url,body:JSON.stringify({reason:'Owner rejected booking'}),
+   requestContext:{...verified.requestContext,http:{method:'POST'}}};
+ try{
+   const disabled=createAdminHandler({reader:{},writeAction:async()=>{writes++;}});
+   assert.equal((await disabled(event)).statusCode,503);
+   const viewer={...event,requestContext:{...event.requestContext,authorizer:{jwt:{claims:{
+     ...verified.requestContext.authorizer.jwt.claims,'cognito:groups':['lesbuttes-viewer']
+   }}}}};
+   assert.equal((await handler(viewer)).statusCode,403);
+   assert.equal((await handler({...event,rawPath:url.replace('decline','approve')})).statusCode,503);
+   assert.equal((await handler({...event,body:'{}'})).statusCode,400);
+   assert.equal((await handler({...event,body:JSON.stringify({reason:'Owner rejected booking',extra:1})})).statusCode,400);
+   assert.equal((await handler(event)).statusCode,200);
+   assert.equal(writes,1);
+   process.env.BOOKING_ENVIRONMENT='production';
+   assert.equal((await handler(event)).statusCode,503);
+   assert.equal(writes,1);
+ }finally{
+   for(const [key,name] of [['issuer','MANAGEMENT_COGNITO_ISSUER'],['client','MANAGEMENT_COGNITO_CLIENT_ID'],
+     ['env','BOOKING_ENVIRONMENT'],['table','BOOKINGS_TABLE']]){
+     if(previous[key]===undefined)delete process.env[name];else process.env[name]=previous[key];
+   }
+ }
+});
