@@ -15,6 +15,16 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  const decision=prepareOwnerTransition({identity,action,booking,reason,nowEpoch});
  if(!decision.allowed)throw Error(decision.reason);
  if(booking.id!==bookingId)throw Error('Booking identity mismatch');
+ // The management writer is for website-created direct requests only.
+ // Legacy manual blocks and imported reservations have different lifecycles.
+ if(booking.source!=='direct'||!booking.GSI1PK||booking.GSI1PK!=='BOOKING_REQUESTS')
+   throw Error('Only authoritative direct booking requests may be managed');
+ if(action==='approve'||action==='decline'){
+   if(booking.reservationStatus!=='PENDING_REVIEW')
+     throw Error('Direct request reservation status mismatch');
+ }
+ if(action==='cancel'&&booking.reservationStatus!=='CONFIRMED')
+   throw Error('Confirmed direct reservation status required');
  if(action==='approve'){
    if(!approval||!Number.isSafeInteger(approval.amountPence)||approval.amountPence<=0)
      throw Error('Approval requires a positive amount in pence');
@@ -60,7 +70,10 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    update+=', reservationStatus = :reservationStatus';
    values[':reservationStatus']=action==='approve'?'AWAITING_PAYMENT':decision.to;
  }
- let condition='#status = :expected AND id = :id';
+ let condition='#status = :expected AND id = :id AND #source = :direct AND reservationStatus = :expectedReservation';
+ names['#source']='source';
+ values[':direct']='direct';
+ values[':expectedReservation']=action==='cancel'?'CONFIRMED':'PENDING_REVIEW';
  if(action==='approve'||action==='decline'){
    condition+=' AND holdExpiresAt = :observedExpiry AND holdExpiresAt > :now';
    values[':observedExpiry']=booking.holdExpiresAt;
