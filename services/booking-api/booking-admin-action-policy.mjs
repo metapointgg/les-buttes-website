@@ -9,8 +9,11 @@ export function checkOwnerAction({identity,action,booking}={}){
   if(!identity||identity.role!=='owner')return {allowed:false,reason:'Forbidden'};
   if(!Object.hasOwn(actions,action))return {allowed:false,reason:'Unsupported action'};
   if(!booking||booking.status!==actions[action].from)return {allowed:false,reason:'Invalid booking state'};
-  if(booking.holdExpiresAt&&['approve','decline'].includes(action)&&booking.holdExpiresAt<=Math.floor(Date.now()/1000))
-    return {allowed:false,reason:'Booking hold expired'};
+  if(['approve','decline'].includes(action)){
+    // A missing, malformed or elapsed hold is never evidence of availability.
+    if(!Number.isSafeInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000))
+      return {allowed:false,reason:'Booking hold missing or expired'};
+  }
   return {allowed:true,from:actions[action].from,to:actions[action].to};
 }
 // Payment confirmation is intentionally NOT a management action: only a
