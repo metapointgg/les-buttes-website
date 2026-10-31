@@ -36,3 +36,28 @@ test('admin route is read-only, requires JWT and never approves on GET',async()=
   if(origClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;else process.env.MANAGEMENT_COGNITO_CLIENT_ID=origClient;
  }
 });
+
+test('owner preflight is read-only and rejects viewer, missing reason and confirmation',async()=>{
+ const oldIssuer=process.env.MANAGEMENT_COGNITO_ISSUER,oldClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ const bookingId='11111111-1111-4111-8111-111111111111';
+ const calls=[];
+ const handler=createAdminHandler({reader:{
+   getBooking:async()=>{calls.push('read');return {status:'REQUESTED',holdExpiresAt:Math.floor(Date.now()/1000)+3600};}
+ }});
+ try{
+   const url='/admin/bookings/'+bookingId+'/actions/approve/preflight';
+   const owner=await handler({...verified,rawPath:url});
+   assert.equal(owner.statusCode,200);
+   assert.equal(JSON.parse(owner.body).allowed,true);
+   const viewer={...verified,requestContext:{...verified.requestContext,authorizer:{jwt:{claims:{...verified.requestContext.authorizer.jwt.claims,'cognito:groups':['lesbuttes-viewer']}}}}};
+   assert.equal((await handler({...viewer,rawPath:url})).statusCode,403);
+   assert.equal((await handler({...verified,rawPath:url.replace('approve','confirm')})).statusCode,404);
+   assert.equal((await handler({...verified,requestContext:{...verified.requestContext,http:{method:'POST'}},rawPath:url})).statusCode,405);
+   assert.equal(calls.length,2);
+ }finally{
+   if(oldIssuer===undefined)delete process.env.MANAGEMENT_COGNITO_ISSUER;else process.env.MANAGEMENT_COGNITO_ISSUER=oldIssuer;
+   if(oldClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;else process.env.MANAGEMENT_COGNITO_CLIENT_ID=oldClient;
+ }
+});
