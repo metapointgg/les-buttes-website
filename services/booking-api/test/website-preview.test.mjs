@@ -69,6 +69,14 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED==='true'/);
   assert.match(discoveryScript,/PUBLIC_BOOKING_TURNSTILE_SITE_KEY/);
   assert.ok(discoveryScript.includes("bookingApi+'/requests'"));
+  // The preview button is inert by default, but must become a real submit control
+  // when the explicitly approved request feature is enabled.
+  assert.match(discovery,/type="button" class="button discover-request" disabled aria-disabled="true"/);
+  assert.ok(discoveryScript.includes("confirmButton.type='submit'"));
+  assert.ok(discoveryScript.includes("confirmButton.setAttribute('aria-disabled','false')"));
+  assert.ok(discoveryScript.includes("if(requestEnabled&&confirmButton)"));
+  assert.ok(discoveryScript.includes("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"));
+
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
   assert.match(discovery,/data-preview-guest-details/);
   assert.match(discovery,/name="email"/);
