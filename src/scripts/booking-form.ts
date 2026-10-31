@@ -110,8 +110,14 @@ document.querySelectorAll<HTMLFormElement>('[data-booking-form]').forEach(form=>
     const p=Object.fromEntries(parts.filter(part=>['year','month','day'].includes(part.type)).map(part=>[part.type,part.value]));
     const localToday=p.year+'-'+p.month+'-'+p.day;
     const nights=dateDays(f.start,f.end);
-    if(!Number.isInteger(nights)||nights<1||nights>27||f.start<localToday){notice(messages.invalid);return false;}
-    if(!Number.isInteger(f.guests)||f.guests<1||f.guests>(caps[f.unit]??0)){notice(messages.over);return false;}
+    // Match the server-side booking policy before checking availability or posting a request.
+    const saturday=(date:string)=>Number.isFinite(Date.parse(date+'T00:00:00Z'))&&
+      new Date(date+'T00:00:00Z').getUTCDay()===6;
+    if(!Number.isInteger(nights)||nights<7||nights>27||nights%7!==0||
+       !saturday(f.start)||!saturday(f.end)||f.start<localToday){
+      notice(messages.invalid);return false;
+    }
+    if(!Number.isInteger(f.guests)||f.guests<1||f.guests>(caps[f.unit]??0)||f.unit==='both'&&f.guests<=6){notice(messages.over);return false;}
     return true;
   };
   async function checkAvailability(){
