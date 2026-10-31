@@ -68,7 +68,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/PUBLIC_BOOKING_REQUESTS_APPROVED==='true'/);
   assert.match(discoveryScript,/PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED==='true'/);
   assert.match(discoveryScript,/PUBLIC_BOOKING_TURNSTILE_SITE_KEY/);
-  assert.match(discoveryScript,/bookingApi+'\\/requests'/);
+  assert.match(discoveryScript,/bookingApi+'\/requests'/);
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
   assert.match(discovery,/data-preview-guest-details/);
   assert.match(discovery,/name="email"/);
@@ -76,7 +76,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.doesNotMatch(discovery,/data-api=/);
   // Validation is now allowed, but preview submission must still be prevented.
   assert.match(discoveryScript,/detailsForm.addEventListener\\('submit',async event=>/);
-  assert.match(discoveryScript,/if\\(!requestEnabled&&confirmButton\\)confirmButton.disabled=true/);
+  assert.match(discoveryScript,/if\(!requestEnabled&&confirmButton\)confirmButton.disabled=true/);
   assert.match(discoveryScript,/response.status!==202/);
   assert.match(discoveryScript,/await checkAuthoritativeQuote\\(\\)/);
   assert.match(discovery,/type="email" name="email"[^>]*required/);
@@ -163,7 +163,7 @@ test('hidden booking journey has four separate navigable steps and cannot confir
   assert.match(script,/getQuote\(\)/);
   assert.match(script,/await refreshMaster\(\)/);
   assert.doesNotMatch(script,/sessionStorage|localStorage|navigator\\.sendBeacon/);
-  assert.match(script,/if\\(!requestEnabled&&confirmButton\\)confirmButton.disabled=true/);
+  assert.match(script,/if\(!requestEnabled&&confirmButton\)confirmButton.disabled=true/);
   assert.match(script,/await checkAuthoritativeQuote\\(\\)/);
   assert.match(page,/data-preview-guest-details[^>]*autocomplete="off"/);
   assert.match(page,/disabled aria-disabled="true"/);
