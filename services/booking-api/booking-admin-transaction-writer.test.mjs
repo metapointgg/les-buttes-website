@@ -13,9 +13,16 @@ const make=(booking=base)=>{
 test('decline atomically releases all nights with metadata hold and status conditions',async()=>{
  const {sent,params}=make();
  const result=await executeOwnerTransition({...params,action:'decline'});
- assert.deepEqual(result,{id,from:'REQUESTED',to:'DECLINED',affectedNights:2});
+ assert.equal(result.id,id);
+ assert.equal(result.from,'REQUESTED');
+ assert.equal(result.to,'DECLINED');
+ assert.equal(result.affectedNights,2);
+ assert.match(result.auditId,/^[0-9a-f-]{36}$/);
  assert.equal(sent.length,1);
- assert.equal(sent[0].TransactItems.length,3);
+ assert.equal(sent[0].TransactItems.length,4);
+ assert.equal(sent[0].TransactItems[3].Put.Item.actor,'owner-1');
+ assert.equal(sent[0].TransactItems[3].Put.Item.action,'decline');
+ assert.equal(sent[0].TransactItems[3].Put.ConditionExpression,'attribute_not_exists(PK)');
  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':actor'],'owner-1');
  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':action'],'decline');
  assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/holdExpiresAt > :now/);
@@ -34,6 +41,7 @@ test('cancel requires reason and releases confirmed booking without payment conf
  assert.equal(sent.length,1);
  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':reason'],'Guest requested cancellation');
  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':recordExpiry'],100+90*86400);
+ assert.equal(sent[0].TransactItems[3].Put.Item.reason,'Guest requested cancellation');
 });
 test('rejects non-owner, unsupported approval, expired hold and mismatched booking',async()=>{
  const {sent,params}=make();
@@ -62,7 +70,9 @@ test('approval atomically extends metadata and all cottage-night holds',async()=
   assert.equal(result.affectedNights,2);
   assert.equal(sent.length,1);
   const items=sent[0].TransactItems;
-  assert.equal(items.length,3);
+  assert.equal(items.length,4);
+  assert.equal(items[3].Put.Item.action,'approve');
+  assert.equal(items[3].Put.Item.approvedAmountGBP,250);
   assert.equal(items[0].Update.ExpressionAttributeValues[':nextExpiry'],100+48*3600);
   assert.equal(items[1].Update.ExpressionAttributeValues[':nextExpiry'],100+48*3600);
   assert.match(items[1].Update.ConditionExpression,/expiresAt > :now/);
