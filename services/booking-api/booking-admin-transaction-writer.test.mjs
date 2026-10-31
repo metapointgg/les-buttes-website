@@ -16,6 +16,8 @@ test('decline atomically releases all nights with metadata hold and status condi
  assert.deepEqual(result,{id,from:'REQUESTED',to:'DECLINED',affectedNights:2});
  assert.equal(sent.length,1);
  assert.equal(sent[0].TransactItems.length,3);
+ assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':actor'],'owner-1');
+ assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':action'],'decline');
  assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/holdExpiresAt > :now/);
  assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/holdExpiresAt = :observedExpiry/);
  assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/id = :id/);
@@ -28,6 +30,7 @@ test('cancel requires reason and releases confirmed booking without payment conf
  await assert.rejects(executeOwnerTransition({...params,action:'cancel'}),/reason/);
  const result=await executeOwnerTransition({...params,action:'cancel',reason:'Guest requested cancellation'});
  assert.equal(result.to,'CANCELLED');
+ assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':action'],'cancel');
  assert.equal(sent.length,1);
  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':reason'],'Guest requested cancellation');
  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':recordExpiry'],100+90*86400);
@@ -55,6 +58,7 @@ test('approval atomically extends metadata and all cottage-night holds',async()=
   const result=await executeOwnerTransition({...params,action:'approve',
    approval:{amountPence:25000,paymentUrl:'https://test.invalid/pay/abc'}});
   assert.equal(result.to,'APPROVED_AWAITING_PAYMENT');
+  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':action'],'approve');
   assert.equal(result.affectedNights,2);
   assert.equal(sent.length,1);
   const items=sent[0].TransactItems;
@@ -82,4 +86,10 @@ test('approval refuses mismatched amount without audit reason or unapproved URL'
   if(previous===undefined)delete process.env.BOOKING_ENVIRONMENT;
   else process.env.BOOKING_ENVIRONMENT=previous;
  }
+});
+
+test('refuses an owner transition without an authenticated subject',async()=>{
+ const {sent,params}=make();
+ await assert.rejects(executeOwnerTransition({...params,action:'decline',identity:{role:'owner'}}),/subject required/);
+ assert.equal(sent.length,0);
 });
