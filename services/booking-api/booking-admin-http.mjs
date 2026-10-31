@@ -1,6 +1,7 @@
 // Staging-only administration Lambda handler. Must be deployed behind API Gateway
 // Cognito JWT authorizer. Do not expose directly or attach unauthenticated routes.
 import {createReadOnlyAdminReader} from './booking-admin-reader.mjs';
+import {checkOwnerAction} from './booking-admin-action-policy.mjs';
 const groups=(claims)=>{
  const raw=claims?.['cognito:groups']??[];
  return Array.isArray(raw)?raw:typeof raw==='string'?raw.split(',').map(v=>v.trim()):[];
@@ -24,6 +25,18 @@ export function createAdminHandler({reader}){
      const id=identityFromGateway(event);
      if(!id)return reply(403,{error:'Forbidden'});
      const path=event.rawPath??'';
+     // Read-only preflight: no state mutation and no payment confirmation.
+     // The future write API must use separate routes and IAM permissions.
+     let preflight=path.match(/^\\/admin\\/bookings\\/([0-9a-f-]{36})\\/actions\\/(approve|decline|cancel)\\/preflight$/i);
+     if(preflight){
+       const record=await reader.getBooking(event,preflight[1]);
+       if(!record)return reply(404,{error:'Not found'});
+       const decision=checkOwnerAction({identity:id,action:preflight[2],booking:record,
+         reason:event.queryStringParameters?.reason});
+       return reply(decision.allowed?200:403,{allowed:decision.allowed,
+         ...(decision.allowed?{from:decision.from,to:decision.to}:{reason:decision.reason})});
+     }
+
      let match=path.match(/^\/admin\/config\/(pricing|stay-rules|cancellation|payments|business|arrival-departure|terms)\/(geranium|honeysuckle|all)(\/versions)?$/);
      if(match){
        const data=match[3]?await reader.getConfigHistory(event,match[1],match[2]):await reader.getConfig(event,match[1],match[2]);
