@@ -7,7 +7,7 @@ test('owner may request only permitted lifecycle transitions',()=>{
     ['approve','REQUESTED','APPROVED_AWAITING_PAYMENT'],
     ['decline','REQUESTED','DECLINED'],
     ['cancel','CONFIRMED','CANCELLED']
-  ])assert.deepEqual(checkOwnerAction({identity:{role:'owner'},action,booking:booking(from)}),{allowed:true,from,to});
+  ])assert.deepEqual(checkOwnerAction({identity:{role:'owner'},action,booking:booking(from),reason:'Owner-approved cancellation after reconciliation'}),{allowed:true,from,to});
 });
 test('viewer and admin roles cannot change booking state',()=>{
   for(const role of ['viewer','admin',undefined])
@@ -22,4 +22,11 @@ test('wrong state, expired hold and unsupported confirmation are denied',()=>{
   }
   assert.equal(checkOwnerAction({identity:{role:'owner'},action:'confirm',booking:booking('APPROVED_AWAITING_PAYMENT')}).allowed,false);
   assert.equal(checkOwnerAction({identity:{role:'owner'},action:'__proto__',booking:booking('REQUESTED')}).allowed,false);
+});
+
+test('cancellation requires a meaningful auditable reason',()=>{
+  const request={identity:{role:'owner'},action:'cancel',booking:booking('CONFIRMED')};
+  for(const reason of [undefined,'','  ','no', 'x'.repeat(1001)])
+    assert.equal(checkOwnerAction({...request,reason}).allowed,false);
+  assert.equal(checkOwnerAction({...request,reason:'Guest requested cancellation; refund reviewed'}).allowed,true);
 });
