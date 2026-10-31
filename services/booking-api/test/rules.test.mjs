@@ -48,7 +48,7 @@ test('both cottages are only offered for parties exceeding six',()=>{
 });
 test('unconfigured booking rules fail closed',()=>{
   process.env.BOOKING_RULES_JSON='{}';
-  assert.equal(validBooking({unit:'geranium',start:'2027-08-01',end:'2027-08-08',guests:2}).serverError,true);
+  assert.equal(validBooking({unit:'geranium',start:'2027-08-07',end:'2027-08-14',guests:2}).serverError,true);
 });
 
 test('Guernsey local date follows BST and GMT, not AWS UTC',()=>{
