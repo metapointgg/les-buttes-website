@@ -150,3 +150,31 @@ test('LB-04 write route is disabled by default and only owner may use staging fl
    }
  }
 });
+
+test('LB-04 conflicting and replayed owner actions fail closed',async()=>{
+ const previous={issuer:process.env.MANAGEMENT_COGNITO_ISSUER,client:process.env.MANAGEMENT_COGNITO_CLIENT_ID,
+   env:process.env.BOOKING_ENVIRONMENT,table:process.env.BOOKINGS_TABLE};
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ process.env.BOOKING_ENVIRONMENT='staging';
+ process.env.BOOKINGS_TABLE='les-buttes-booking-staging';
+ let attempts=0;
+ const handler=createAdminHandler({reader:{},writeEnabled:()=>true,writeAction:async()=>{
+   attempts++;
+   if(attempts===1)return {to:'DECLINED'};
+   throw Object.assign(new Error('stale state'),{name:'TransactionCanceledException'});
+ }});
+ const event={...verified,rawPath:'/admin/bookings/11111111-1111-4111-8111-111111111111/actions/decline',
+   body:JSON.stringify({reason:'Owner declined request'}),
+   requestContext:{...verified.requestContext,http:{method:'POST'}}};
+ try{
+   assert.equal((await handler(event)).statusCode,200);
+   assert.equal((await handler(event)).statusCode,409);
+   assert.equal(attempts,2);
+ }finally{
+   for(const [key,name] of [['issuer','MANAGEMENT_COGNITO_ISSUER'],['client','MANAGEMENT_COGNITO_CLIENT_ID'],
+     ['env','BOOKING_ENVIRONMENT'],['table','BOOKINGS_TABLE']]){
+     if(previous[key]===undefined)delete process.env[name];else process.env[name]=previous[key];
+   }
+ }
+});
