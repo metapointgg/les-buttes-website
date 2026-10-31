@@ -13,7 +13,7 @@ const make=(booking=base)=>{
 test('decline atomically releases all nights with metadata hold and status conditions',async()=>{
  const {sent,params}=make();
  const result=await executeOwnerTransition({...params,action:'decline'});
- assert.deepEqual(result,{id,from:'REQUESTED',to:'DECLINED',releasedNights:2});
+ assert.deepEqual(result,{id,from:'REQUESTED',to:'DECLINED',affectedNights:2});
  assert.equal(sent.length,1);
  assert.equal(sent[0].TransactItems.length,3);
  assert.match(sent[0].TransactItems[0].Update.ConditionExpression,/holdExpiresAt > :now/);
@@ -34,7 +34,7 @@ test('cancel requires reason and releases confirmed booking without payment conf
 test('rejects non-owner, unsupported approval, expired hold and mismatched booking',async()=>{
  const {sent,params}=make();
  await assert.rejects(executeOwnerTransition({...params,identity:{role:'admin'},action:'decline'}),/Forbidden/);
- await assert.rejects(executeOwnerTransition({...params,action:'approve'}),/not enabled/);
+ await assert.rejects(executeOwnerTransition({...params,action:'approve'}),/positive amount/);
  await assert.rejects(executeOwnerTransition({...params,action:'decline',nowEpoch:200}),/expired/);
  await assert.rejects(executeOwnerTransition({...params,action:'decline',readBooking:async()=>({...base,id:'22222222-2222-4222-8222-222222222222'})}),/mismatch/);
  assert.equal(sent.length,0);
@@ -44,4 +44,41 @@ test('DynamoDB transaction failure does not return a successful transition',asyn
  const {params}=make();
  params.db={send:async()=>{throw Error('TransactionCanceledException');}};
  await assert.rejects(executeOwnerTransition({...params,action:'decline'}),/TransactionCanceledException/);
+});
+
+test('approval atomically extends metadata and all cottage-night holds',async()=>{
+ const previous=process.env.BOOKING_ENVIRONMENT;
+ process.env.BOOKING_ENVIRONMENT='staging';
+ try{
+  const {sent,params}=make({...base,quote:{totalGBP:250}});
+  const result=await executeOwnerTransition({...params,action:'approve',
+   approval:{amountPence:25000,paymentUrl:'https://test.invalid/pay/abc'}});
+  assert.equal(result.to,'APPROVED_AWAITING_PAYMENT');
+  assert.equal(result.affectedNights,2);
+  assert.equal(sent.length,1);
+  const items=sent[0].TransactItems;
+  assert.equal(items.length,3);
+  assert.equal(items[0].Update.ExpressionAttributeValues[':nextExpiry'],100+48*3600);
+  assert.equal(items[1].Update.ExpressionAttributeValues[':nextExpiry'],100+48*3600);
+  assert.match(items[1].Update.ConditionExpression,/expiresAt > :now/);
+  assert.equal(items[0].Update.ExpressionAttributeValues[':reservationStatus'],'AWAITING_PAYMENT');
+ }finally{
+  if(previous===undefined)delete process.env.BOOKING_ENVIRONMENT;
+  else process.env.BOOKING_ENVIRONMENT=previous;
+ }
+});
+test('approval refuses mismatched amount without audit reason or unapproved URL',async()=>{
+ const previous=process.env.BOOKING_ENVIRONMENT;
+ process.env.BOOKING_ENVIRONMENT='staging';
+ try{
+  const {sent,params}=make({...base,quote:{totalGBP:250}});
+  await assert.rejects(executeOwnerTransition({...params,action:'approve',
+   approval:{amountPence:24000,paymentUrl:'https://test.invalid/pay/abc'}}),/audit reason/);
+  await assert.rejects(executeOwnerTransition({...params,action:'approve',
+   approval:{amountPence:25000,paymentUrl:'https://evil.example/pay'}}),/approved HTTPS/);
+  assert.equal(sent.length,0);
+ }finally{
+  if(previous===undefined)delete process.env.BOOKING_ENVIRONMENT;
+  else process.env.BOOKING_ENVIRONMENT=previous;
+ }
 });
