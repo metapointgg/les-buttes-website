@@ -39,6 +39,31 @@ if(widget){
   const indicators=Array.from(widget.querySelectorAll<HTMLElement>('[data-journey-indicator]'));
   const reviewNext=widget.querySelector<HTMLButtonElement>('[data-continue-review]')!;
   const detailsForm=widget.querySelector<HTMLFormElement>('[data-preview-guest-details]')!;
+  // A server-authoritative quote is mandatory before advancing from review.
+  // The existing staging read-only master never authorises a request or payment.
+  const bookingApi=(import.meta.env.PUBLIC_BOOKING_REQUEST_API_URL??'').trim().replace(/\/$/,'');
+  const liveQuoteEnabled=import.meta.env.PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED==='true'&&
+    Boolean(bookingApi)&&!localPreview;
+  let authoritativeQuote:{key:string;totalGBP:string}|null=null;
+  const quoteKey=()=>JSON.stringify([choice,arrival.value,departure.value,filters.adults+filters.children]);
+  async function checkAuthoritativeQuote(){
+    authoritativeQuote=null;
+    if(!liveQuoteEnabled||!choice||!masterConnected()||!weekly(arrival.value,departure.value))return false;
+    const key=quoteKey();
+    const params=new URLSearchParams({unit:choice,start:arrival.value,end:departure.value,
+      guests:String(filters.adults+filters.children)});
+    try{
+      const response=await fetch(bookingApi+'/availability?'+params,{cache:'no-store',headers:{Accept:'application/json'}});
+      if(!response.ok)return false;
+      const result=await response.json() as {available?:boolean;quote?:{currency?:string;totalGBP?:string}};
+      if(result.available!==true||result.quote?.currency!=='GBP'||
+         !/^\\d+(?:\\.\\d{1,2})?$/.test(result.quote.totalGBP??''))return false;
+      if(key!==quoteKey())return false;
+      authoritativeQuote={key,totalGBP:result.quote.totalGBP!};
+      return true;
+    }catch{return false;}
+  }
+
   const setStep=(step:number)=>{
     activeStep=step;
     for(const screen of screens)screen.hidden=Number(screen.dataset.bookingStep)!==step;
@@ -305,6 +330,10 @@ if(widget){
     updateResults();
     const quote=getQuote();
     if(!quote||!quote.meetsDraftMinimum)return;
+    if(liveQuoteEnabled&&!await checkAuthoritativeQuote()){
+      feedback.textContent='An authoritative quote is unavailable. Please try again later.';
+      return;
+    }
     setStep(3);
   });
   onClick('[data-continue-details]',async()=>{
@@ -312,10 +341,14 @@ if(widget){
     updateResults();
     const q=getQuote();
     if(!q||!q.meetsDraftMinimum){setStep(2);return;}
+    if(liveQuoteEnabled&&!await checkAuthoritativeQuote()){
+      feedback.textContent='An authoritative quote is unavailable. Please try again later.';
+      setStep(2);return;
+    }
     fill('[data-details-cottage]',q.units.map(item=>item.unit==='geranium'?'Geranium':'Honeysuckle').join(' + '));
     fill('[data-details-stay]',rangeLabel(q.start,q.end)+' · '+q.nights+' '+tr('nightWord'));
     fill('[data-details-guests]',String(q.adults+q.children));
-    fill('[data-details-price]',money(q.indicativeDirectTotalGBP));
+    fill('[data-details-price]',liveQuoteEnabled&&authoritativeQuote?.key===quoteKey()?money(Number(authoritativeQuote.totalGBP)):money(q.indicativeDirectTotalGBP));
     setStep(4);
   });
   // Preview details never leave the browser: no POST/fetch, booking request, session
