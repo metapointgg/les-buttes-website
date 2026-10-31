@@ -21,7 +21,7 @@ export function prepareOwnerTransition({identity,action,booking,reason,nowEpoch=
  const slots=booking.units.flatMap(unit=>Array.from({length:nights},(_,i)=>({
    PK:'UNIT#'+unit,SK:'DATE#'+new Date(start+i*86400000).toISOString().slice(0,10)
  })));
- // Metadata plus every cottage-night must fit in one DynamoDB transaction.
- if(slots.length+1>100)return {allowed:false,reason:'Transaction exceeds DynamoDB limit'};
+ // Metadata, audit record and every cottage-night must fit in one DynamoDB transaction.
+ if(slots.length+2>100)return {allowed:false,reason:'Transaction exceeds DynamoDB limit'};
  return {...decision,slots,metadataKey:{PK:'BOOKING#'+booking.id,SK:'META'},nowEpoch};
 }
