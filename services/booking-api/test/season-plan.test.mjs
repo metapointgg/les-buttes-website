@@ -35,18 +35,15 @@ test('proposed Option B schedule covers every one of 196 2027 cottage nights wit
   const outOfSeason=plan.rates.periods.filter(p=>p.start<from||p.end>=to);
   assert.deepEqual(outOfSeason,[]);
 });
-test('Easter, May half term and summer minimum stays follow proposed 3/5/7-night bands',()=>{
-  assert.ok(evaluate({unit:'both',start:'2027-03-20',end:'2027-03-23',guests:10}).nights);
-  assert.match(evaluate({unit:'geranium',start:'2027-03-26',end:'2027-03-30',guests:2}).error,/shorter/);
-  assert.ok(evaluate({unit:'geranium',start:'2027-03-26',end:'2027-03-31',guests:2}).nights);
-  assert.ok(evaluate({unit:'honeysuckle',start:'2027-05-10',end:'2027-05-13',guests:2}).nights);
-  assert.match(evaluate({unit:'honeysuckle',start:'2027-05-22',end:'2027-05-26',guests:2}).error,/shorter/);
-  assert.ok(evaluate({unit:'honeysuckle',start:'2027-05-22',end:'2027-05-27',guests:2}).nights);
-  assert.match(evaluate({unit:'both',start:'2027-07-10',end:'2027-07-16',guests:10}).error,/shorter/);
-  assert.ok(evaluate({unit:'both',start:'2027-07-10',end:'2027-07-17',guests:10}).nights);
-  assert.ok(evaluate({unit:'geranium',start:'2027-09-04',end:'2027-09-09',guests:2}).nights);
-  assert.ok(evaluate({unit:'geranium',start:'2027-09-20',end:'2027-09-23',guests:2}).nights);
-  assert.match(evaluate({unit:'honeysuckle',start:'2027-09-30',end:'2027-10-03',guests:2}).error,/outside/);
+test('weekly Saturday stays apply consistently through the proposed seasonal bands',()=>{
+  for(const start of ['2027-03-20','2027-05-22','2027-07-10','2027-09-04']){
+    const end=new Date(parseDate(start)+7*DAY).toISOString().slice(0,10);
+    assert.equal(evaluate({unit:'both',start,end,guests:10}).nights.length,7);
+  }
+  assert.match(evaluate({unit:'geranium',start:'2027-03-20',end:'2027-03-23',guests:2}).error,/Saturday/);
+  assert.match(evaluate({unit:'honeysuckle',start:'2027-05-22',end:'2027-05-27',guests:2}).error,/Saturday/);
+  assert.match(evaluate({unit:'both',start:'2027-07-10',end:'2027-07-16',guests:10}).error,/Saturday/);
+  assert.match(evaluate({unit:'honeysuckle',start:'2027-09-25',end:'2027-10-02',guests:2}).error,/outside/);
 });
 test('nightly totals cross month and overlay boundaries without incorrectly repricing the direct reservation',()=>{
   const week=dates('2027-08-28','2027-09-04');
