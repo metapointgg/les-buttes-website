@@ -1,0 +1,110 @@
+name: Direct booking feature CI (no deployment)
+on:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: booking-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Astro build, link checks, booking API and discovery tests
+        run: npm test
+      - name: Check booking pages generated in all languages
+        run: |
+          set -euo pipefail
+          for page in dist/book/index.html dist/fr/book/index.html dist/nl/book/index.html; do
+            test -s "$page"
+            echo "Verified $page"
+          done
+      - name: Verify staging safety gates
+        run: node scripts/check-booking-staging-readiness.mjs
+      - name: Install AWS SAM CLI for offline template validation
+        uses: aws-actions/setup-sam@v2
+      - name: Validate private staging availability infrastructure (no deployment)
+        run: |
+          set -euo pipefail
+          sam validate --lint --template-file services/booking-api/staging-availability-private.template.yaml --region eu-west-2
+      - name: Build private staging availability Lambda (no deployment)
+        run: |
+          set -euo pipefail
+          sam build --template-file services/booking-api/staging-availability-private.template.yaml --build-dir .aws-sam/private-availability-build --region eu-west-2
+          test -s .aws-sam/private-availability-build/template.yaml
+          test -s .aws-sam/private-availability-build/PrivateStagingAvailabilityFunction/staging-availability-handler.mjs
+      - name: Validate isolated staging quote infrastructure (no deployment)
+        run: |
+          set -euo pipefail
+          sam validate --lint --template-file infra/booking-staging-quote/template.yaml --region eu-west-2
+      - name: Build isolated staging quote Lambda (no deployment)
+        run: |
+          set -euo pipefail
+          sam build --template-file infra/booking-staging-quote/template.yaml --build-dir .aws-sam/isolated-quote --region eu-west-2
+          test -s .aws-sam/isolated-quote/template.yaml
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/staging-quote-handler.mjs
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/published-band-quote.mjs
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/occupancy.mjs
+      - name: Upload validated static website
+        uses: actions/upload-artifact@v4
+        with:
+          name: direct-booking-site-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error
+
+  deploy-private-availability-staging:
+    name: Deploy private availability to AWS staging
+    needs: validate
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/direct-booking-requests-27-night' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: les-buttes-private-availability-staging
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
+          aws-region: eu-west-2
+      # Staging IAM permissions include generated names, Lambda tagging, API/stage tagging and CloudFormation template summary.
+      - name: Verify AWS account
+        run: test "$(aws sts get-caller-identity --query Account --output text)" = "145608514666"
+      - uses: aws-actions/setup-sam@v2
+      - name: Build and deploy private staging endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          sam build --template-file services/booking-api/staging-availability-private.template.yaml --build-dir .aws-sam/private-availability-deploy --region eu-west-2
+          test -d .aws-sam/private-availability-deploy/PrivateStagingAvailabilityFunction/node_modules/@aws-sdk/client-dynamodb
+          sam deploy \
+            --template-file .aws-sam/private-availability-deploy/template.yaml \
+            --stack-name les-buttes-private-availability-staging \
+            --s3-bucket les-buttes-cottage-manag-artifacts-145608514666-eu-west-2 \
+            --s3-prefix booking-private-staging/sam \
+            --region eu-west-2 \
+            --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+            --parameter-overrides StagingBookingTableName=les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+      - name: Check anonymous access is rejected
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="$(aws cloudformation describe-stacks --stack-name les-buttes-private-availability-staging --query "Stacks[0].Outputs[?OutputKey=='PrivateStagingAvailabilityUrl'].OutputValue | [0]" --output text)"
+          code="$(curl --silent --output /dev/null --write-out '%{http_code}' "$endpoint")"
+          echo "Anonymous response: $code"
+          test "$code" = "401" || test "$code" = "403"
+          echo "Staging API endpoint: $endpoint" >> "$GITHUB_STEP_SUMMARY"

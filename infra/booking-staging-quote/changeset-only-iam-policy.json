@@ -1,0 +1,45 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "QuoteStackChangeSetOnly",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateStack",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:DescribeStacks",
+        "cloudformation:GetTemplateSummary",
+        "cloudformation:DeleteChangeSet"
+      ],
+      "Resource": "arn:aws:cloudformation:eu-west-2:145608514666:stack/les-buttes-isolated-quote-staging/*"
+    },
+    {
+      "Sid": "QuoteSamTransform",
+      "Effect": "Allow",
+      "Action": "cloudformation:CreateChangeSet",
+      "Resource": "arn:aws:cloudformation:eu-west-2:aws:transform/Serverless-2016-10-31"
+    },
+    {
+      "Sid": "QuoteArtifacts",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::les-buttes-cottage-manag-artifacts-145608514666-eu-west-2/booking-isolated-quote-staging/sam/*"
+    },
+    {
+      "Sid": "QuoteBucketLocation",
+      "Effect": "Allow",
+      "Action": "s3:GetBucketLocation",
+      "Resource": "arn:aws:s3:::les-buttes-cottage-manag-artifacts-145608514666-eu-west-2"
+    },
+    {
+      "Sid": "QuotePreflightSimulation",
+      "Effect": "Allow",
+      "Action": "iam:SimulatePrincipalPolicy",
+      "Resource": "arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy"
+    }
+  ]
+}

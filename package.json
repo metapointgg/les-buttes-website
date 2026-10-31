@@ -11,7 +11,9 @@
     "preview": "astro preview",
     "check": "astro check",
     "test:links": "node scripts/check-links.mjs",
-    "test": "npm run build && npm run test:links"
+    "test": "npm run build && npm run test:links && npm run test:booking && npm run test:discovery",
+    "test:booking": "node --check services/booking-api/index.mjs && node --check services/booking-api/admin.mjs && node --check services/booking-api/export-availability-snapshot.mjs && node --check services/booking-api/master-occupied.mjs && node --check services/booking-api/preview-master-server.mjs && node --check services/booking-api/preview-direct-quote.mjs && node --check services/booking-api/reconcile-airbnb.mjs && node --check services/booking-api/preview-airbnb.mjs && node --check services/booking-api/monitor-airbnb.mjs && node --test services/booking-api/test/*.test.mjs",
+    "test:discovery": "node --test src/test/booking-discovery.test.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -19,5 +21,7 @@
     "sharp": "^0.34.4",
     "typescript": "^5.9.2"
   },
-  "engines": { "node": ">=20.11" }
+  "engines": {
+    "node": ">=20.11"
+  }
 }

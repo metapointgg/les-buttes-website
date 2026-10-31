@@ -1,0 +1,407 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Les Buttes direct booking request API - intentionally disabled until configuration is complete.
+
+Parameters:
+  BookingEnvironment:
+    Type: String
+    AllowedValues: ['staging', 'production']
+    Default: staging
+  StagingApiToken:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: Required 24+ character secret for every staging request; never required by production.
+  AllowedOrigin:
+    Type: String
+    Default: https://lesbuttes.com
+  AllowedWwwOrigin:
+    Type: String
+    Default: https://www.lesbuttes.com
+  BookingRequestsEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+  BookingRulesJson:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: Name of SSM String parameter containing explicitly approved date/minimum stay JSON.
+  BookingRatesJson:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: Name of SSM String parameter containing GBP nightly rates and approval status.
+  CalendarToken:
+    Type: String
+    NoEcho: true
+    MinLength: 24
+    Description: Random bearer token required to read the no-PII Airbnb iCal feeds.
+  TurnstileSecret:
+    Type: String
+    NoEcho: true
+    Description: Cloudflare Turnstile private server verification secret.
+  NotifyFrom:
+    Type: String
+    Default: ''
+    Description: Verified SES sender for host notifications.
+  NotifyTo:
+    Type: String
+    Default: ''
+    Description: Host email receiving new booking requests.
+
+  BookingRequestsIndexEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: One-time staging index opt-in. Keep true on ALL subsequent staging stack updates.
+  ManagementPreviewEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: Explicit opt-in for staging-only Cognito-protected read-only API; requires permanent staging booking index opt-in.
+  ManagementWritesEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: Explicit staging-only owner decline/cancel opt-in; approval remains blocked until payment verification.
+  ManagementCognitoPoolId:
+    Type: String
+    Default: ''
+    Description: Existing staging Cognito user-pool identifier; must be configured before enabling.
+  ManagementCognitoClientId:
+    Type: String
+    Default: ''
+    Description: Existing public staging Cognito app-client ID with code flow and PKCE; no secret.
+  ManagementAllowedOrigin:
+    Type: String
+    Default: http://127.0.0.1:5173
+    Description: Exact authorised management PWA origin for staging CORS.
+
+  CalendarMonitorEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: Explicit opt-in for staging-only automated Airbnb calendar checking.
+  CalendarMonitorAlertEmail:
+    Type: String
+    Default: ''
+    Description: Recipient must confirm SNS email subscription before alerts are delivered.
+  CalendarMonitorStart:
+    Type: String
+    Default: '2027-03-20'
+    Description: Inclusive first occupied night compared with Airbnb in staging.
+  CalendarMonitorEnd:
+    Type: String
+    Default: '2027-10-02'
+    Description: Exclusive departure date for Airbnb comparisons.
+  GeraniumAirbnbUrlSsmPath:
+    Type: String
+    Default: '/les-buttes/booking/staging/airbnb/geranium-url'
+    AllowedPattern: '/les-buttes/booking/staging/airbnb/[a-z0-9-]+'
+    Description: Name only, not value; actual private URL is an SSM SecureString.
+  HoneysuckleAirbnbUrlSsmPath:
+    Type: String
+    Default: '/les-buttes/booking/staging/airbnb/honeysuckle-url'
+    AllowedPattern: '/les-buttes/booking/staging/airbnb/[a-z0-9-]+'
+    Description: Name only, not value; actual private URL is an SSM SecureString.
+
+Rules:
+  ManagementRequiresIndex:
+    RuleCondition: !Equals [!Ref ManagementPreviewEnabled, 'true']
+    Assertions:
+      - Assert: !Equals [!Ref BookingRequestsIndexEnabled, 'true']
+        AssertDescription: A staging management API requires BookingRequestsIndexEnabled=true.
+      - Assert: !Not [!Equals [!Ref ManagementCognitoPoolId, '']]
+        AssertDescription: Supply staging Cognito user pool ID.
+      - Assert: !Not [!Equals [!Ref ManagementCognitoClientId, '']]
+        AssertDescription: Supply staging public Cognito client ID.
+
+Conditions:
+  BookingRequestsIndexCondition: !And
+    - !Equals [!Ref BookingEnvironment, 'staging']
+    - !Equals [!Ref BookingRequestsIndexEnabled, 'true']
+  ManagementPreviewEnabledCondition: !And
+    - !Condition BookingRequestsIndexCondition
+    - !Equals [!Ref ManagementPreviewEnabled, 'true']
+    - !Not [!Equals [!Ref ManagementCognitoPoolId, '']]
+    - !Not [!Equals [!Ref ManagementCognitoClientId, '']]
+  ManagementWritesEnabledCondition: !And
+    - !Condition ManagementPreviewEnabledCondition
+    - !Equals [!Ref ManagementWritesEnabled, 'true']
+  MonitoringEnabledCondition: !And
+    - !Equals [!Ref CalendarMonitorEnabled, 'true']
+    - !Equals [!Ref BookingEnvironment, 'staging']
+
+Resources:
+  BookingTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: !If
+        - BookingRequestsIndexCondition
+        - - {AttributeName: PK, AttributeType: S}
+          - {AttributeName: SK, AttributeType: S}
+          - {AttributeName: GSI1PK, AttributeType: S}
+          - {AttributeName: GSI1SK, AttributeType: S}
+        - - {AttributeName: PK, AttributeType: S}
+          - {AttributeName: SK, AttributeType: S}
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes: !If
+        - BookingRequestsIndexCondition
+        - - IndexName: BookingRequestsIndex
+            KeySchema:
+              - {AttributeName: GSI1PK, KeyType: HASH}
+              - {AttributeName: GSI1SK, KeyType: RANGE}
+            Projection:
+              ProjectionType: INCLUDE
+              NonKeyAttributes: [id, start, end, units, status, guests, requestedAt]
+        - !Ref AWS::NoValue
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  BookingApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref AllowedOrigin, !Ref AllowedWwwOrigin]
+        AllowMethods: ['GET', 'POST', 'OPTIONS']
+        AllowHeaders: ['content-type']
+        MaxAge: 300
+
+  BookingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: index.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 12
+      Environment:
+        Variables:
+          BOOKINGS_TABLE: !Ref BookingTable
+          BOOKING_ENVIRONMENT: !Ref BookingEnvironment
+          STAGING_API_TOKEN: !Ref StagingApiToken
+          ALLOWED_ORIGIN: !Ref AllowedOrigin
+          BOOKING_REQUESTS_ENABLED: !Ref BookingRequestsEnabled
+          BOOKING_RULES_JSON: !Ref BookingRulesJson
+          BOOKING_RATES_JSON: !Ref BookingRatesJson
+          TURNSTILE_SECRET: !Ref TurnstileSecret
+          CALENDAR_TOKEN: !Ref CalendarToken
+          NOTIFY_FROM: !Ref NotifyFrom
+          NOTIFY_TO: !Ref NotifyTo
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookingTable
+        - Statement:
+            Effect: Allow
+            Action: ['ses:SendEmail']
+            Resource: '*'
+      Events:
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BookingApi
+            Path: /{proxy+}
+            Method: ANY
+
+  # Entire management surface is staging-only and opt-in.
+  # It uses the SAME BookingTable as BookingFunction, with strictly read-only IAM.
+  ManagementApi:
+    Condition: ManagementPreviewEnabledCondition
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref ManagementAllowedOrigin]
+        AllowMethods: ['GET', 'POST', 'OPTIONS']
+        AllowHeaders: ['authorization', 'content-type']
+        MaxAge: 300
+      Auth:
+        Authorizers:
+          ManagementCognito:
+            IdentitySource: '$request.header.Authorization'
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${ManagementCognitoPoolId}
+              audience: [!Ref ManagementCognitoClientId]
+
+  ManagementReadOnlyFunction:
+    Condition: ManagementPreviewEnabledCondition
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: booking-admin-http.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 12
+      Environment:
+        Variables:
+          BOOKINGS_TABLE: !Ref BookingTable
+          BOOKING_REQUESTS_INDEX: BookingRequestsIndex
+          MANAGEMENT_COGNITO_CLIENT_ID: !Ref ManagementCognitoClientId
+          MANAGEMENT_COGNITO_ISSUER: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${ManagementCognitoPoolId}
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action: ['dynamodb:GetItem', 'dynamodb:Query']
+            Resource:
+              - !GetAtt BookingTable.Arn
+              - !Sub '${BookingTable.Arn}/index/BookingRequestsIndex'
+      Events:
+        GetBookingAdmin:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ManagementApi
+            Path: /admin/{proxy+}
+            Method: GET
+            Auth:
+              Authorizer: ManagementCognito
+
+  # Separate write-role Lambda: read-only management function retains GetItem/Query only.
+  # No POST route or write IAM exists unless staging owner explicitly opts in.
+  ManagementWriteFunction:
+    Condition: ManagementWritesEnabledCondition
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: booking-admin-http.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 12
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKINGS_TABLE: !Ref BookingTable
+          BOOKING_REQUESTS_INDEX: BookingRequestsIndex
+          MANAGEMENT_WRITES_ENABLED: 'true'
+          MANAGEMENT_COGNITO_CLIENT_ID: !Ref ManagementCognitoClientId
+          MANAGEMENT_COGNITO_ISSUER: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${ManagementCognitoPoolId}
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action: ['dynamodb:GetItem', 'dynamodb:TransactWriteItems', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem', 'dynamodb:PutItem']
+            Resource: !GetAtt BookingTable.Arn
+      Events:
+        PostBookingAction:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ManagementApi
+            Path: /admin/bookings/{bookingId}/actions/{action}
+            Method: POST
+            Auth:
+              Authorizer: ManagementCognito
+
+  CalendarMonitorCheckpointTable:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+
+  CalendarMonitorAlertTopic:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Les Buttes booking staging calendar alerts
+
+  CalendarMonitorEmailSubscription:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CalendarMonitorAlertTopic
+      Protocol: email
+      Endpoint: !Ref CalendarMonitorAlertEmail
+
+  CalendarMonitorFailureAlarm:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Staging Airbnb calendar monitor failed; manual calendar review required.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CalendarMonitorFunction
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref CalendarMonitorAlertTopic
+
+  CalendarMonitorFunction:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: monitor-airbnb.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 90
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: !Ref BookingEnvironment
+          BOOKINGS_TABLE: !Ref BookingTable
+          MONITOR_STATE_TABLE: !Ref CalendarMonitorCheckpointTable
+          MONITOR_SNS_TOPIC_ARN: !Ref CalendarMonitorAlertTopic
+          MONITOR_FROM_DATE: !Ref CalendarMonitorStart
+          MONITOR_TO_DATE: !Ref CalendarMonitorEnd
+          MONITOR_GERANIUM_SSM: !Ref GeraniumAirbnbUrlSsmPath
+          MONITOR_HONEYSUCKLE_SSM: !Ref HoneysuckleAirbnbUrlSsmPath
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action: ['dynamodb:Query', 'dynamodb:BatchGetItem']
+            Resource: !GetAtt BookingTable.Arn
+        - Statement:
+            Effect: Allow
+            Action: ['dynamodb:GetItem', 'dynamodb:PutItem']
+            Resource: !GetAtt CalendarMonitorCheckpointTable.Arn
+        - Statement:
+            Effect: Allow
+            Action: ['ssm:GetParameter']
+            Resource:
+              - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${GeraniumAirbnbUrlSsmPath}
+              - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${HoneysuckleAirbnbUrlSsmPath}
+        - Statement:
+            Effect: Allow
+            Action: ['sns:Publish']
+            Resource: !Ref CalendarMonitorAlertTopic
+      Events:
+        EveryFourHours:
+          Type: Schedule
+          Properties:
+            Schedule: rate(4 hours)
+            Enabled: true
+            Description: Review live Airbnb calendars against isolated Les Buttes staging booking dates every four hours; never auto-edit bookings.
+
+Outputs:
+  ManagementApiUrl:
+    Condition: ManagementPreviewEnabledCondition
+    Description: Staging-only Cognito-protected management API (no browser AWS keys).
+    Value: !Sub https://${ManagementApi}.execute-api.${AWS::Region}.amazonaws.com
+
+
+  CalendarMonitorFunctionName:
+    Condition: MonitoringEnabledCondition
+    Description: Lambda to invoke a one-off staging-only Airbnb calendar audit.
+    Value: !Ref CalendarMonitorFunction
+  CalendarMonitorAlertTopicArn:
+    Condition: MonitoringEnabledCondition
+    Description: SNS topic for Airbnb availability review; email subscription requires recipient confirmation.
+    Value: !Ref CalendarMonitorAlertTopic
+  ApiUrl:
+    Description: API root for PUBLIC_BOOKING_API_URL at website build time (do not configure until ready).
+    Value: !Sub https://${BookingApi}.execute-api.${AWS::Region}.amazonaws.com
+  BookingTableName:
+    Description: Private DynamoDB table name for the host admin CLI.
+    Value: !Ref BookingTable

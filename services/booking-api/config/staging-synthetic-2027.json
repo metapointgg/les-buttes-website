@@ -1,0 +1,44 @@
+{
+  "_warning": "SYNTHETIC STAGING TEST DATA ONLY. Never use these guest rates or periods on the public site.",
+  "rules": {
+    "openSeasons": [
+      {
+        "start": "2027-03-20",
+        "end": "2027-10-01"
+      }
+    ],
+    "minimumStays": [
+      {
+        "start": "2027-03-20",
+        "end": "2027-05-31",
+        "nights": 3
+      },
+      {
+        "start": "2027-06-01",
+        "end": "2027-06-30",
+        "nights": 5
+      },
+      {
+        "start": "2027-07-01",
+        "end": "2027-08-31",
+        "nights": 7
+      },
+      {
+        "start": "2027-09-01",
+        "end": "2027-10-01",
+        "nights": 5
+      }
+    ]
+  },
+  "rates": {
+    "status": "APPROVED_FOR_STAGING_TESTS",
+    "periods": [
+      {
+        "start": "2027-03-20",
+        "end": "2027-10-01",
+        "geranium": 100,
+        "honeysuckle": 120
+      }
+    ]
+  }
+}

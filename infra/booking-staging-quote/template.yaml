@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Les Buttes staging-only, read-only published booking quote API. Separate from existing preview stack.
+Parameters:
+  ExistingStagingTable:
+    Type: String
+    AllowedPattern: '^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$'
+  PreviewOrigin:
+    Type: String
+    AllowedPattern: '^https://[a-zA-Z0-9.-]+$'
+Resources:
+  StagingQuoteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../../services/booking-api/
+      Handler: staging-quote-handler.handler
+      Runtime: nodejs22.x
+      MemorySize: 256
+      Timeout: 12
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKINGS_TABLE: !Ref ExistingStagingTable
+          ALLOWED_PREVIEW_ORIGIN: !Ref PreviewOrigin
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:Query
+              Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}'
+      Events:
+        Quote:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref StagingQuoteApi
+            Path: /quote
+            Method: GET
+  StagingQuoteApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref PreviewOrigin
+        AllowMethods:
+          - GET
+        AllowHeaders:
+          - content-type
+        MaxAge: 60
+Outputs:
+  StagingQuoteUrl:
+    Description: Staging-only read API, not for production website builds.
+    Value: !Sub 'https://${StagingQuoteApi}.execute-api.${AWS::Region}.amazonaws.com/quote'

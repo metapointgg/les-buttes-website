@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Private, read-only Les Buttes booking-master staging availability
+Parameters:
+  StagingBookingTableName:
+    Type: String
+    AllowedPattern: '^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$'
+  CognitoIssuer:
+    Type: String
+    Default: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa
+  CognitoAudience:
+    Type: String
+    Default: 2mjmimjh7oc8h00d4nngrc1akj
+Resources:
+  PrivateStagingAvailabilityApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: '$default'
+      Auth:
+        DefaultAuthorizer: ManagementJwt
+        Authorizers:
+          ManagementJwt:
+            JwtConfiguration:
+              issuer: !Ref CognitoIssuer
+              audience:
+                - !Ref CognitoAudience
+            IdentitySource: '$request.header.Authorization'
+  PrivateStagingAvailabilityFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: staging-availability-handler.handler
+      CodeUri: ./
+      Timeout: 10
+      MemorySize: 128
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKINGS_TABLE: !Ref StagingBookingTableName
+      # Limit concurrent authenticated management reads to protect the staging booking master.
+      ReservedConcurrentExecutions: 2
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:Query
+              Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${StagingBookingTableName}'
+      Events:
+        ReadOnlyAvailability:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PrivateStagingAvailabilityApi
+            Path: /api/staging/availability
+            Method: GET
+            Auth:
+              Authorizer: ManagementJwt
+Outputs:
+  PrivateStagingAvailabilityUrl:
+    Description: Authenticated management-only staging API; do not use as a production public endpoint
+    Value: !Sub 'https://${PrivateStagingAvailabilityApi}.execute-api.${AWS::Region}.amazonaws.com/api/staging/availability'

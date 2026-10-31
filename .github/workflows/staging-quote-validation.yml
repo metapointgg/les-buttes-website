@@ -1,0 +1,36 @@
+name: Validate isolated staging quote package
+on:
+  push:
+    branches:
+      - feature/direct-booking-requests-27-night
+    paths:
+      - 'infra/booking-staging-quote/**'
+      - 'services/booking-api/**'
+      - '.github/workflows/staging-quote-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: aws-actions/setup-sam@v2
+      - name: Check isolated quotation source
+        working-directory: services/booking-api
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+      - name: Validate isolated staging template
+        run: sam validate --lint --template-file infra/booking-staging-quote/template.yaml
+      - name: Build isolated staging quote Lambda without deployment
+        run: |
+          sam build --template-file infra/booking-staging-quote/template.yaml --build-dir .aws-sam/isolated-quote
+          test -s .aws-sam/isolated-quote/template.yaml
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/staging-quote-handler.mjs
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/published-band-quote.mjs
+          test -s .aws-sam/isolated-quote/StagingQuoteFunction/occupancy.mjs
