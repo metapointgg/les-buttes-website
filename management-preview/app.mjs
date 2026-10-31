@@ -88,14 +88,58 @@ $('connect').addEventListener('click',()=>{
   const groups=claims['cognito:groups']||[];
   state.role=Array.isArray(groups)&&groups.includes('lesbuttes-owner')?'owner':'viewer';
  }catch{state.role='viewer';}
- $('token').value='';loadBookings();
+ $('configuration-panel').hidden=state.role!=='owner';$('token').value='';loadBookings();
 });
 $('disconnect').addEventListener('click',()=>{
  state.api=null;state.token=null;state.bookings=[];state.cursor=null;state.selected=null;state.role='viewer';
  $('bookings').replaceChildren();$('detail').replaceChildren();$('audit').replaceChildren();
- $('owner-actions').hidden=true;$('more').hidden=true;$('more-audit').hidden=true;message('Disconnected.');
+ $('owner-actions').hidden=true;$('configuration-panel').hidden=true;$('more').hidden=true;$('more-audit').hidden=true;message('Disconnected.');
 });
 $('more').addEventListener('click',()=>loadBookings(true));
 $('more-audit').addEventListener('click',()=>loadAudit(true));
 $('decline').addEventListener('click',()=>performAction('decline'));
 $('cancel').addEventListener('click',()=>performAction('cancel'));
+
+const configPath=()=>'/admin/config/'+$('config-kind').value+'/'+$('config-unit').value;
+let currentConfigVersion=null;
+$('config-load').addEventListener('click',async()=>{
+ try{
+  const record=await request(configPath());
+  currentConfigVersion=record?.version??null;
+  $('config-version').textContent='Current version: '+(currentConfigVersion||'Not published');
+  $('config-value').value=JSON.stringify(record?.value??{},null,2);
+  $('config-approve').checked=false;
+ }catch(e){message(e.message,true);}
+});
+$('config-history').addEventListener('click',async()=>{
+ try{
+  const versions=await request(configPath()+'/versions');
+  $('config-versions').replaceChildren();
+  for(const record of versions){
+   const entry=node('div','','audit-entry');
+   entry.append(node('strong',record.version),node('p','Published by '+(record.approvedBy||'owner')));
+   const restore=node('button','Prepare rollback','secondary');
+   restore.addEventListener('click',()=>{
+    $('config-value').value=JSON.stringify(record.value,null,2);
+    $('config-approve').checked=false;
+    message('Historical version loaded into editor. Review and publish as a new version.');
+   });
+   entry.append(restore);$('config-versions').append(entry);
+  }
+ }catch(e){message(e.message,true);}
+});
+$('config-publish').addEventListener('click',async()=>{
+ if(!$('config-approve').checked){message('Explicit owner approval is required.',true);return;}
+ let value;
+ try{value=JSON.parse($('config-value').value);}catch{message('Configuration must be valid JSON.',true);return;}
+ if(!window.confirm('Publish this configuration to the staging booking master?'))return;
+ $('config-publish').disabled=true;
+ try{
+  const result=await request(configPath()+'/publish',{method:'POST',
+    body:{value,expectedVersion:currentConfigVersion,approved:true}});
+  currentConfigVersion=result.version;
+  $('config-version').textContent='Current version: '+result.version;
+  $('config-approve').checked=false;message('Configuration published to staging.');
+ }catch(e){message(e.message,true);}
+ finally{$('config-publish').disabled=false;}
+});
