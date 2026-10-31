@@ -24,6 +24,12 @@ export function validBooking(input){
   const {unit,start,end,guests}=input;
   const nights=dates(start,end);
   if(!nights||!Object.hasOwn(unitNames,unit)||!Number.isInteger(guests)||guests<1||guests>capacities[unit])return {error:'Invalid dates or guest count (maximum stay: 27 nights)'};
+  if(new Date(parseDate(start)).getUTCDay()!==6||
+     new Date(parseDate(end)).getUTCDay()!==6||
+     nights.length%7!==0)
+    return {error:'Bookings must be Saturday to Saturday in complete weeks'};
+  if(unit==='both'&&guests<=6)
+    return {error:'Both cottages require more than six guests'};
   if(parseDate(start)<parseDate(guernseyToday()))return {error:'Arrival date is in the past'};
   let rules;
   try{rules=JSON.parse(process.env.BOOKING_RULES_JSON||'{}');}catch{return {error:'Booking rules not configured',serverError:true};}
