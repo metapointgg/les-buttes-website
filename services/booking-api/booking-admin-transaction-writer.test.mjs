@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 const id='11111111-1111-4111-8111-111111111111';
-const base={id,status:'REQUESTED',holdExpiresAt:200,source:'direct',GSI1PK:'BOOKING_REQUESTS',reservationStatus:'PENDING_REVIEW',
+const base={id,status:'REQUESTED',holdExpiresAt:200,source:'direct',GSI1PK:'BOOKING_REQUESTS',reservationStatus:'PENDING_REVIEW',GSI1PK:'BOOKING_REQUESTS',reservationStatus:'PENDING_REVIEW',
  units:['geranium'],start:'2027-08-28',end:'2027-08-30'};
 const owner={role:'owner',subject:'owner-1'};
 const make=(booking=base)=>{
