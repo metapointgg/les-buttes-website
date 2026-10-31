@@ -27,7 +27,7 @@ export function createAdminHandler({reader}){
      const path=event.rawPath??'';
      // Read-only preflight: no state mutation and no payment confirmation.
      // The future write API must use separate routes and IAM permissions.
-     const preflight=path.split('/').length===8 && path.startsWith('/admin/bookings/') && path.endsWith('/preflight') ? /^\/admin\/bookings\/([0-9a-f-]{36})\/actions\/(approve|decline|cancel)\/preflight/.exec(path) : null;
+     const preflight=path.split('/').length===7 && path.startsWith('/admin/bookings/') && path.endsWith('/preflight') ? (()=>{ const parts=path.split('/'); return /^[0-9a-f-]{36}$/i.test(parts[3]) && parts[4]==='actions' && ['approve','decline','cancel'].includes(parts[5]) ? [path,parts[3],parts[5]] : null; })() : null;
      if(preflight){
        const record=await reader.getBooking(event,preflight[1]);
        if(!record)return reply(404,{error:'Not found'});
