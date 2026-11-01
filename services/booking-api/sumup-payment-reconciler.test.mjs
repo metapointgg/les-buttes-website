@@ -81,9 +81,9 @@ test('LB-08 lost DynamoDB response recovers only matching atomic confirmation cl
   const sk=command.input.Key.SK;
   assert.equal(command.input.ConsistentRead,true);
   if(sk==='PAYMENT#CHECKOUT')return {Item:registered};
-  if(sk==='CONFIRMATION')return {Item:{bookingId:id,checkoutId:registered.checkoutId}};
+  if(sk==='CONFIRMATION')return {Item:{bookingId:id,checkoutId:registered.checkoutId,amountPence:163000,currency:'GBP'}};
   return {Item:writes?{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
-   paymentTransactionId:'transaction-12345'}:booking};
+   paymentTransactionId:'transaction-12345',paidAt:'2027-01-01T00:00:00.000Z'}:booking};
  }};
  const result=await reconcileVerifiedPayment({db,table:'booking-staging',bookingId:id,
   merchantCode:'merchant-1',fetchCheckout:async()=>provider,nowEpoch:1800000000});
@@ -98,10 +98,25 @@ test('LB-08 rejects transaction claim associated with another booking',async()=>
   if(sk==='PAYMENT#CHECKOUT')return {Item:registered};
   if(sk==='CONFIRMATION')return {Item:{bookingId:'another',checkoutId:registered.checkoutId}};
   return {Item:writes?{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
-   paymentTransactionId:'transaction-12345'}:booking};
+   paymentTransactionId:'transaction-12345',paidAt:'2027-01-01T00:00:00.000Z'}:booking};
  }};
  await assert.rejects(reconcileVerifiedPayment({db,table:'booking-staging',bookingId:id,
   merchantCode:'merchant-1',fetchCheckout:async()=>provider,nowEpoch:1800000000}),
   /TransactionCanceledException/);
+ assert.equal(writes,1);
+});
+
+test('LB-08 uncertain outcome rejects claim with mismatched amount',async()=>{
+ let writes=0;
+ const db={send:async command=>{
+  if(command instanceof TransactWriteCommand){writes++;throw Error('Socket disconnected');}
+  const sk=command.input.Key.SK;
+  if(sk==='PAYMENT#CHECKOUT')return {Item:registered};
+  if(sk==='CONFIRMATION')return {Item:{bookingId:id,checkoutId:registered.checkoutId,amountPence:1,currency:'GBP'}};
+  return {Item:writes?{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
+   paymentTransactionId:'transaction-12345',paidAt:'2027-01-01T00:00:00.000Z'}:booking};
+ }};
+ await assert.rejects(reconcileVerifiedPayment({db,table:'booking-staging',bookingId:id,
+  merchantCode:'merchant-1',fetchCheckout:async()=>provider,nowEpoch:1800000000}),/Socket disconnected/);
  assert.equal(writes,1);
 });
