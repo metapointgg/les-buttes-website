@@ -41,7 +41,7 @@ export function preparePaymentConfirmation({booking,registered,evidence,nowEpoch
   ConditionExpression:'id = :id AND expiresAt = :expiry AND expiresAt > :now',
   ExpressionAttributeValues:{':id':booking.id,':expiry':booking.holdExpiresAt,':now':nowEpoch}}});
  items.push({Put:{Item:{PK:'PAYMENT_TRANSACTION#'+evidence.transactionId,SK:'CONFIRMATION',
-  bookingId:booking.id,checkoutId:registered.checkoutId,recordedAt:stamp},
+  bookingId:booking.id,checkoutId:registered.checkoutId,amountPence:registered.amountPence,currency:'GBP',recordedAt:stamp},
   ConditionExpression:'attribute_not_exists(PK)'}});
  items.push({Put:{Item:{PK:'BOOKING#'+booking.id,SK:'AUDIT#'+stamp+'#'+eventId,
   id:eventId,bookingId:booking.id,action:'payment_confirmed',from:booking.status,to:'CONFIRMED',
