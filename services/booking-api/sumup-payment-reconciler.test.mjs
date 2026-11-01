@@ -65,11 +65,43 @@ test('LB-08 rejects changed or expired booking before transaction',async()=>{
 test('LB-08 duplicate replay cannot produce a successful response if transaction fails',async()=>{
  const s=setup({writeError:new Error('TransactionCanceledException')});
  await assert.rejects(run(s),/TransactionCanceledException/);
- assert.equal(s.commands.length,3);
+ assert.equal(s.commands.length,5);
 });
 test('LB-08 prevents production table access before reading or calling provider',async()=>{
  const s=setup();
  await assert.rejects(run(s,{table:'les-buttes-bookings-production'}),/not configured/);
  assert.equal(s.commands.length,0);
  assert.equal(s.providerCalls,0);
+});
+
+test('LB-08 lost DynamoDB response recovers only matching atomic confirmation claim',async()=>{
+ let writes=0;
+ const db={send:async command=>{
+  if(command instanceof TransactWriteCommand){writes++;throw Error('Socket disconnected');}
+  const sk=command.input.Key.SK;
+  assert.equal(command.input.ConsistentRead,true);
+  if(sk==='PAYMENT#CHECKOUT')return {Item:registered};
+  if(sk==='CONFIRMATION')return {Item:{bookingId:id,checkoutId:registered.checkoutId}};
+  return {Item:writes?{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
+   paymentTransactionId:'transaction-12345'}:booking};
+ }};
+ const result=await reconcileVerifiedPayment({db,table:'booking-staging',bookingId:id,
+  merchantCode:'merchant-1',fetchCheckout:async()=>provider,nowEpoch:1800000000});
+ assert.equal(result.status,'ALREADY_CONFIRMED');
+ assert.equal(writes,1);
+});
+test('LB-08 rejects transaction claim associated with another booking',async()=>{
+ let writes=0;
+ const db={send:async command=>{
+  if(command instanceof TransactWriteCommand){writes++;throw Error('TransactionCanceledException');}
+  const sk=command.input.Key.SK;
+  if(sk==='PAYMENT#CHECKOUT')return {Item:registered};
+  if(sk==='CONFIRMATION')return {Item:{bookingId:'another',checkoutId:registered.checkoutId}};
+  return {Item:writes?{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
+   paymentTransactionId:'transaction-12345'}:booking};
+ }};
+ await assert.rejects(reconcileVerifiedPayment({db,table:'booking-staging',bookingId:id,
+  merchantCode:'merchant-1',fetchCheckout:async()=>provider,nowEpoch:1800000000}),
+  /TransactionCanceledException/);
+ assert.equal(writes,1);
 });
