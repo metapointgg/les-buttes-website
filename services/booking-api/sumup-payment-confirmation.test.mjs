@@ -19,6 +19,8 @@ test('LB-08 confirmation atomically changes booking and seven nights, deduplicat
   assert.match(slot.Update.ConditionExpression,/expiresAt = :expiry/);
  }
  assert.equal(items[9].Put.Item.PK,'PAYMENT_TRANSACTION#transaction-12345');
+ assert.equal(items[9].Put.Item.amountPence,163000);
+ assert.equal(items[9].Put.Item.currency,'GBP');
  assert.equal(items[9].Put.ConditionExpression,'attribute_not_exists(PK)');
  assert.equal(items[10].Put.Item.action,'payment_confirmed');
 });
