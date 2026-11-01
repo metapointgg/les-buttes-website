@@ -25,3 +25,7 @@ On webhook, redirect, expiry, or retry, retrieve `GET /v0.1/checkouts/{checkout_
 - Complete LB-08 provider verification and synthetic end-to-end testing before any guest-facing flow.
 
 Source: https://developer.sumup.com/api/checkouts/create/ and https://developer.sumup.com/online-payments/checkouts/hosted-checkout/
+
+## Checkout persistence implementation (1 November)
+
+`sumup-checkout-store.mjs` now uses a two-operation DynamoDB transaction: a condition check on the authoritative booking metadata (approved/awaiting payment and matching amount) and a conditional immutable `PAYMENT#CHECKOUT` record. Reads are strongly consistent. Duplicate attempts can be classified as REGISTERED/CONFLICT/UNREGISTERED. No HTTP route or provider call invokes this yet; the missing orchestration must handle uncertain network responses and query SumUp by checkout reference before any new attempt, to prevent orphaned provider checkouts. The current one-checkout-per-booking key intentionally prevents silent replacement of an existing checkout; renewal requires an explicit policy and implementation.
