@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {processPaymentNotification} from './sumup-payment-notification.mjs';
+import {processPaymentNotification,processSignedInternalPaymentTrigger} from './sumup-payment-notification.mjs';
 const bookingId='11111111-1111-4111-8111-111111111111';
 test('disabled notification handler never invokes reconciliation',async()=>{
  let calls=0;
@@ -27,4 +27,18 @@ test('forged paid status or amount is rejected without a reconciliation call',as
 test('invalid booking references fail closed',async()=>{
  await assert.rejects(processPaymentNotification({notification:{bookingId:'bad'},
   reconcile:async()=>{},enabled:true}),/Invalid notification/);
+});
+
+test('signed internal trigger dispatches only after authentication',async()=>{
+ const {createHmac}=await import('node:crypto');
+ const secret='a-secure-internal-only-32-character-secret';
+ const body=JSON.stringify({bookingId,issuedAt:1800000000});
+ const signature=createHmac('sha256',secret).update(body).digest('hex');
+ let calls=0;
+ const reconcile=async input=>{calls++;assert.deepEqual(input,{bookingId});return {status:'CONFIRMED'};};
+ const args={body,signature,secret,reconcile,nowEpoch:1800000000,enabled:true};
+ assert.equal((await processSignedInternalPaymentTrigger(args)).status,'CONFIRMED');
+ assert.equal(calls,1);
+ await assert.rejects(processSignedInternalPaymentTrigger({...args,signature:'0'.repeat(64)}),/Unauthorised/);
+ assert.equal(calls,1);
 });
