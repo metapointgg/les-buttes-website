@@ -50,5 +50,5 @@ test('LB-07 provider conflicts and unsafe environment fail closed',async()=>{
  await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async()=>checkout},lookupProviderByReference:async()=>[checkout,checkout]}),/Multiple provider/);
  await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
-  sumup:{createCheckout:async()=>checkout},lookupProviderByReference:async()=>[{...checkout,amountPence:10}]}),/mismatch/);
+  sumup:{createCheckout:async()=>checkout},lookupProviderByReference:async()=>[{...checkout,amountPence:10}]}),/manual reconciliation/);
 });
