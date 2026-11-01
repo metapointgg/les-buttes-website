@@ -31,8 +31,33 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
  });
  // A retry after a lost response will fail its conditions; it must not emit another audit entry.
  // No ambiguous transaction cancellation is treated as success without an authoritative reread.
- await db.send(new TransactWriteCommand({TransactItems:items,
-  ClientRequestToken:prepared.eventId}));
+ try {
+  await db.send(new TransactWriteCommand({TransactItems:items,
+   ClientRequestToken:prepared.eventId}));
+ } catch(error) {
+  // A network failure may occur after DynamoDB commits. Never blindly retry or
+  // report success without fresh, strongly consistent transaction and booking reads.
+  // A matching immutable claim is written atomically with the booking and its slots.
+  let observedBooking,claim;
+  try {
+   observedBooking=(await db.send(new GetCommand({TableName:table,Key:key,
+    ConsistentRead:true}))).Item;
+   claim=(await db.send(new GetCommand({TableName:table,
+    Key:{PK:'PAYMENT_TRANSACTION#'+evidence.transactionId,SK:'CONFIRMATION'},
+    ConsistentRead:true}))).Item;
+  } catch {
+   throw error; // Uncertain outcome: caller must reconcile manually; never confirm.
+  }
+  if(observedBooking?.id===bookingId&&
+     observedBooking.status==='CONFIRMED'&&
+     observedBooking.reservationStatus==='CONFIRMED'&&
+     observedBooking.paymentTransactionId===evidence.transactionId&&
+     claim?.bookingId===bookingId&&claim?.checkoutId===registered.checkoutId) {
+   return {status:'ALREADY_CONFIRMED',bookingId,transactionId:evidence.transactionId,
+    affectedNights:prepared.affectedNights};
+  }
+  throw error;
+ }
  return {status:'CONFIRMED',bookingId,transactionId:evidence.transactionId,
   affectedNights:prepared.affectedNights,auditId:prepared.eventId};
 }
