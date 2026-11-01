@@ -39,3 +39,7 @@ Source: https://developer.sumup.com/api/checkouts/create/ and https://developer.
 ## Durable creation claim (1 November)
 
 `sumup-creation-claim.mjs` now conditionally creates `PAYMENT#CREATION_CLAIM` before any external checkout creation. The claim is deliberately non-expiring: a provider timeout may have created a checkout, so automatic retry is prohibited. The orchestration requires an actor, checks for existing claims, and marks the claim `RECONCILE_REQUIRED` after a provider checkout is observed. On uncertain outcomes, manual reconciliation is required. This closes the basic simultaneous-invocation race but is not yet a complete recovery workflow. No production or staging endpoint invokes it.
+
+## Recovery inspection
+
+`sumup-checkout-recovery.mjs` provides a read-only operator classification: NOT_STARTED, REGISTERED, CLAIM_UNRESOLVED, PROVIDER_FOUND_UNREGISTERED, PROVIDER_CONFLICT or CONFLICT. It never retries checkout creation, alters the claim, marks payment successful, or releases a URL. The provider reference lookup remains an injected interface requiring verification against SumUp before activation. Recovery is deliberately manual until that prerequisite and the checkout state machine are proven.
