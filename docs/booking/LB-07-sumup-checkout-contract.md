@@ -29,3 +29,9 @@ Source: https://developer.sumup.com/api/checkouts/create/ and https://developer.
 ## Checkout persistence implementation (1 November)
 
 `sumup-checkout-store.mjs` now uses a two-operation DynamoDB transaction: a condition check on the authoritative booking metadata (approved/awaiting payment and matching amount) and a conditional immutable `PAYMENT#CHECKOUT` record. Reads are strongly consistent. Duplicate attempts can be classified as REGISTERED/CONFLICT/UNREGISTERED. No HTTP route or provider call invokes this yet; the missing orchestration must handle uncertain network responses and query SumUp by checkout reference before any new attempt, to prevent orphaned provider checkouts. The current one-checkout-per-booking key intentionally prevents silent replacement of an existing checkout; renewal requires an explicit policy and implementation.
+
+## Fail-closed orchestration (1 November, subsequent commit)
+
+`sumup-checkout-orchestrator.mjs` derives a deterministic reference, checks the local immutable record, requires an **authoritative provider lookup by checkout reference before creating anything**, reuses a matching pending remote checkout, and stores it atomically. If registration fails, the payment URL is withheld and a reconciliation error is returned. Unit tests cover remote duplicates, unavailable provider, mismatched amounts and storage failure.
+
+**Integration blocker:** `lookupProviderByReference` is an injected interface, not yet implemented against a verified SumUp sandbox API. If SumUp cannot reliably list or retrieve checkouts by reference, the orchestration must not be enabled; use a durable local creation intent and explicit recovery procedure instead. This is not a guarantee of provider idempotency and does not eliminate the narrow race between concurrent initial requests; the production design must add an atomic per-booking creation claim before external checkout creation.
