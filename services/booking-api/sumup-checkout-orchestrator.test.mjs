@@ -9,9 +9,9 @@ test('LB-07 deterministic reference, provider-first lookup, and atomic registrat
  let created=0,lookups=0,transactions=0;
  const db={send:async command=>{
   if(command.input.Key)return {};
-  transactions++;return {};
+  if(command.input.TransactItems)transactions++;return {};
  }};
- const result=await createAndRegisterCheckout({db,table,bookingId,amountPence:163000,
+ const result=await createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async input=>{created++;assert.equal(input.reference,reference);return checkout;}},
   lookupProviderByReference:async ref=>{lookups++;assert.equal(ref,reference);return [];}});
  assert.equal(result.status,'REGISTERED');
@@ -21,7 +21,7 @@ test('LB-07 deterministic reference, provider-first lookup, and atomic registrat
 test('LB-07 provider lookup failure prevents creating a second checkout',async()=>{
  let created=0;
  const db={send:async()=>({})};
- await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,
+ await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async()=>{created++;return checkout;}},
   lookupProviderByReference:async()=>{throw Error('Provider unavailable');}}),/Provider unavailable/);
  assert.equal(created,0);
@@ -29,7 +29,7 @@ test('LB-07 provider lookup failure prevents creating a second checkout',async()
 test('LB-07 remote pending checkout is reused and never duplicated',async()=>{
  let created=0;
  const db={send:async command=>command.input.Key?{}:{}};
- const result=await createAndRegisterCheckout({db,table,bookingId,amountPence:163000,
+ const result=await createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async()=>{created++;return checkout;}},
   lookupProviderByReference:async()=>[checkout]});
  assert.equal(result.status,'REGISTERED');assert.equal(created,0);
@@ -37,17 +37,18 @@ test('LB-07 remote pending checkout is reused and never duplicated',async()=>{
 test('LB-07 failed registration never releases an unregistered payment URL',async()=>{
  const db={send:async command=>{
   if(command.input.Key)return {};
-  throw Error('DynamoDB transaction failed');
+  if(command.input.TransactItems)throw Error('DynamoDB transaction failed');
+  return {};
  }};
- await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,
+ await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async()=>checkout},lookupProviderByReference:async()=>[]}),/requires reconciliation/);
 });
 test('LB-07 provider conflicts and unsafe environment fail closed',async()=>{
  const db={send:async()=>({})};
- await assert.rejects(createAndRegisterCheckout({db,table:'booking-production',bookingId,amountPence:163000,
+ await assert.rejects(createAndRegisterCheckout({db,table:'booking-production',bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async()=>checkout},lookupProviderByReference:async()=>[]}),/unavailable/);
- await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,
+ await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async()=>checkout},lookupProviderByReference:async()=>[checkout,checkout]}),/Multiple provider/);
- await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,
+ await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async()=>checkout},lookupProviderByReference:async()=>[{...checkout,amountPence:10}]}),/mismatch/);
 });
