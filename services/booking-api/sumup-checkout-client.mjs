@@ -48,6 +48,7 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
   return response.json();
  };
  return {
+  async retrieveMerchantProfile(){return call('/v0.1/me');},
   async createCheckout(input){
    const request=buildCheckoutRequest({...input,merchantCode});
    const response=await call(CHECKOUT,{method:'POST',body:JSON.stringify(request)});
