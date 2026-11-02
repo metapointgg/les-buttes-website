@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {GetParameterCommand} from '@aws-sdk/client-ssm';
 import {loadSandboxSumUpCredentials,checkSandboxSumUpConnectivity} from './sumup-sandbox-runtime.mjs';
-const apiKey='sup_sk_test_local-synthetic-not-real';
+const apiKey='sup_sk_local-synthetic-not-real';
 const merchantCode='ABCDEF12';
 const ssm={send:async command=>{
  assert.ok(command instanceof GetParameterCommand);
@@ -21,10 +21,10 @@ test('LB-08 connectivity uses only GET and returns no credentials or merchant pr
  let count=0;
  const fetchImpl=async(url,options)=>{
   count++;
-  assert.equal(url,'https://api.sumup.com/v0.1/me');
+  assert.equal(url,'https://api.sumup.com/v1/merchants/'+merchantCode);
   assert.equal(options.method??'GET','GET');
   assert.equal(options.headers.Authorization,'Bearer '+apiKey);
-  return {ok:true,json:async()=>({merchant_code:merchantCode,email:'private@example.invalid'})};
+  return {ok:true,json:async()=>({merchant_code:merchantCode,sandbox:true,email:'private@example.invalid'})};
  };
  const output=await checkSandboxSumUpConnectivity({ssm,fetchImpl});
  assert.equal(count,1);assert.equal(output.connected,true);
@@ -37,9 +37,14 @@ test('LB-08 fails closed on mismatched merchant or failed API response',async()=
  await assert.rejects(checkSandboxSumUpConnectivity({ssm,fetchImpl:async()=>({
   ok:false,status:401})}),/SumUp API request failed: 401/);
 });
-test('LB-08 rejects non-staging region and live API keys',async()=>{
+test('LB-08 rejects non-staging region and public keys',async()=>{
  await assert.rejects(loadSandboxSumUpCredentials({ssm,region:'us-east-1'}),/unavailable/);
  const liveSsm={send:async command=>({Parameter:{Value:command.input.Name.endsWith('api-key')?
-  'sup_sk_live_not-allowed':merchantCode}})};
+  'sup_pk_not-a-secret':merchantCode}})};
  await assert.rejects(loadSandboxSumUpCredentials({ssm:liveSsm}),/secret API key missing or unexpected format/);
+});
+
+test('LB-08 refuses authenticated non-sandbox merchant without returning private data',async()=>{
+ await assert.rejects(checkSandboxSumUpConnectivity({ssm,fetchImpl:async()=>({
+  ok:true,json:async()=>({merchant_code:merchantCode,sandbox:false})})}),/not confirmed as sandbox/);
 });
