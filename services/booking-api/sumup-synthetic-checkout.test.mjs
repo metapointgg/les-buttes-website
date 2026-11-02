@@ -26,3 +26,16 @@ test('LB-08 synthetic checkout creates exactly one £1 checkout and never touche
  assert.equal(operations.filter(op=>op==='checkout').length,1);
  assert.equal(JSON.stringify(result).includes('sup_sk_mock'),false);
 });
+
+test('LB-08 refuses incomplete synthetic checkout response without reporting creation',async()=>{
+ const ssmFactory=()=>({send:async command=>({Parameter:{Value:
+  command.input.Name.endsWith('/api-key')?'sup_sk_mock':'ABCDEF12'}})});
+ for(const checkout of [{status:'PAID',checkoutId:'checkout-12345',
+  hostedCheckoutUrl:'https://checkout.sumup.com/test'},
+  {status:'PENDING',checkoutId:'checkout-12345',hostedCheckoutUrl:'https://example.invalid/test'},
+  {status:'PENDING',checkoutId:'',hostedCheckoutUrl:'https://checkout.sumup.com/test'}]){
+  await assert.rejects(runSyntheticCheckout({env,ssmFactory,
+   clientFactory:()=>({createCheckout:async()=>checkout})}),
+   /response failed safety verification/);
+ }
+});
