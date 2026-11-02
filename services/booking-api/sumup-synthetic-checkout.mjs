@@ -17,6 +17,10 @@ export async function runSyntheticCheckout({env=process.env,ssmFactory,clientFac
    amountPence:100,
    description:'Les Buttes synthetic staging checkout - not a guest booking'
   });
+  if(checkout?.status!=='PENDING'||!checkout?.checkoutId||
+     typeof checkout.hostedCheckoutUrl!=='string'||
+     !checkout.hostedCheckoutUrl.startsWith('https://checkout.sumup.com/'))
+   throw Error('Synthetic checkout response failed safety verification');
   return {created:true,environment:'staging',amountPence:100,currency:'GBP',
    checkoutId:checkout.checkoutId,status:checkout.status,
    hostedCheckoutUrl:checkout.hostedCheckoutUrl,
