@@ -11,9 +11,10 @@ export async function loadSandboxSumUpCredentials({ssm,region='eu-west-2'}={}){
  const key=await ssm.send(new GetParameterCommand({Name:PATHS.key,WithDecryption:true}));
  const merchant=await ssm.send(new GetParameterCommand({Name:PATHS.merchant,WithDecryption:false}));
  const apiKey=key?.Parameter?.Value,merchantCode=merchant?.Parameter?.Value;
- if(typeof apiKey!=='string'||!apiKey.startsWith('sup_sk_test_')||
-    typeof merchantCode!=='string'||!/^[A-Z0-9]{6,20}$/.test(merchantCode))
-  throw Error('Sandbox credentials missing or invalid');
+ if(typeof apiKey!=='string'||!apiKey.startsWith('sup_sk_test_'))
+  throw Error('Sandbox secret API key missing or unexpected format');
+ if(typeof merchantCode!=='string'||!/^[A-Z0-9]{6,20}$/.test(merchantCode))
+  throw Error('Sandbox merchant code missing or unexpected format');
  return {apiKey,merchantCode};
 }
 export async function checkSandboxSumUpConnectivity({ssm,region='eu-west-2',
