@@ -17,7 +17,7 @@ const checkout={bookingId:id,checkoutId:'checkout-12345678',reference:'booking-1
  currency:'GBP',amountPence:163000,status:'PENDING'};
 const provider={id:checkout.checkoutId,checkout_reference:checkout.reference,
  merchant_code:'ABCDEF12',amount:1630,currency:'GBP',status:'PAID',
- transactions:[{id:'transaction-12345',status:'SUCCESSFUL'}]};
+ transactions:[{id:'transaction-12345',status:'SUCCESSFUL',amount:1630,currency:'GBP',merchant_code:'ABCDEF12'}]};
 function harness(providerResponse=provider){
  const claims=new Set();let writes=0,providerReads=0;
  const db={send:async command=>{
