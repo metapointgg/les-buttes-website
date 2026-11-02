@@ -9,9 +9,9 @@ export async function runSandboxProbe({env=process.env,ssmFactory,probe=checkSan
  const ssm=ssmFactory?ssmFactory():new SSMClient({region:'eu-west-2'});
  try {
   const result=await probe({ssm,region:'eu-west-2'});
-  if(result?.connected!==true||result.merchantMatched!==true)
+  if(result?.connected!==true||result.merchantMatched!==true||result.sandboxVerified!==true)
    throw Error('Sandbox connectivity verification failed');
-  return {connected:true,region:'eu-west-2',environment:'staging',merchantMatched:true};
+  return {connected:true,region:'eu-west-2',environment:'staging',merchantMatched:true,sandboxVerified:true};
  } finally {
   ssm.destroy?.();
  }
@@ -30,6 +30,7 @@ export function classifySandboxProbeError(error){
  if(message.includes('SumUp API request failed: 401'))return 'SUMUP_UNAUTHORISED';
  if(message.includes('SumUp API request failed: 403'))return 'SUMUP_FORBIDDEN';
  if(message.includes('SumUp API request failed: 404'))return 'SUMUP_ENDPOINT_NOT_FOUND';
+ if(message.includes('SumUp merchant is not confirmed as sandbox'))return 'SUMUP_NOT_SANDBOX';
  if(message.includes('Sandbox merchant identity mismatch'))return 'SUMUP_MERCHANT_MISMATCH';
  if(message.includes('SumUp API request failed:'))return 'SUMUP_HTTP_FAILURE';
  if(message.includes('Explicit staging-only'))return 'STAGING_GUARD';
