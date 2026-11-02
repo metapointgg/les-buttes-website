@@ -38,9 +38,9 @@ if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
  try {
   const result=await runSandboxProbe();
   process.stdout.write(JSON.stringify(result)+'\n');
- } catch {
-  // AWS SDK and HTTP exception messages can contain sensitive context; never print them.
-  process.stderr.write('LB-08 sandbox probe failed. Check staging AWS identity, SSM permissions, parameter values and SumUp account access.\n');
+ } catch (error) {
+  // Report a fixed diagnostic category only; never print SDK messages or secrets.
+  process.stderr.write('LB-08 sandbox probe failed: '+classifySandboxProbeError(error)+'\n');
   process.exitCode=1;
  }
 }
