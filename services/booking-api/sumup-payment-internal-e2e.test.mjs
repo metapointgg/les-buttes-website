@@ -63,3 +63,36 @@ test('tampered signature causes no provider read or DynamoDB writes',async()=>{
   enabled:true,reconcile:h.reconcile}),/Unauthorised/);
  assert.equal(h.writes,0);assert.equal(h.providerReads,0);
 });
+
+test('simultaneous delivery wins one replay claim and runs reconciliation once',async()=>{
+ const claims=new Set();let reconciliations=0;
+ const db={send:async command=>{
+  assert.ok(command instanceof PutCommand);
+  // Yield before claiming to exercise concurrent invocations in the mock.
+  await Promise.resolve();
+  const key=command.input.Item.PK;
+  if(claims.has(key))throw Error('ConditionalCheckFailedException');
+  claims.add(key);return {};
+ }};
+ const reconcile=async()=>{reconciliations++;return {status:'CONFIRMED'};};
+ const args={body,signature,secret,db,table:'booking-staging',nowEpoch,enabled:true,reconcile};
+ const outcomes=await Promise.allSettled([
+  processSignedInternalPaymentTrigger(args),processSignedInternalPaymentTrigger(args)]);
+ assert.equal(outcomes.filter(v=>v.status==='fulfilled').length,1);
+ assert.equal(outcomes.filter(v=>v.status==='rejected').length,1);
+ assert.equal(reconciliations,1);
+ assert.equal(claims.size,1);
+});
+test('reconciliation failure consumes trigger claim and requires a fresh authorised action',async()=>{
+ const claims=new Set();let reconciliations=0;
+ const db={send:async command=>{
+  const key=command.input.Item.PK;
+  if(claims.has(key))throw Error('ConditionalCheckFailedException');
+  claims.add(key);return {};
+ }};
+ const args={body,signature,secret,db,table:'booking-staging',nowEpoch,enabled:true,
+  reconcile:async()=>{reconciliations++;throw Error('Provider unavailable');}};
+ await assert.rejects(processSignedInternalPaymentTrigger(args),/Provider unavailable/);
+ await assert.rejects(processSignedInternalPaymentTrigger(args),/ConditionalCheckFailedException/);
+ assert.equal(reconciliations,1);
+});
