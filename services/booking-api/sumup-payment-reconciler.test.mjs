@@ -10,7 +10,7 @@ const registered={bookingId:id,checkoutId:'checkout-12345678',reference:'booking
  amountPence:163000,currency:'GBP',status:'PENDING'};
 const provider={id:registered.checkoutId,checkout_reference:registered.reference,
  merchant_code:'merchant-1',currency:'GBP',amount:1630,status:'PAID',
- transactions:[{status:'SUCCESSFUL',id:'transaction-12345'}]};
+ transactions:[{status:'SUCCESSFUL',id:'transaction-12345',amount:1630,currency:'GBP',merchant_code:'merchant-1'}]};
 function setup({bookingRecord=booking,checkoutRecord=registered,providerRecord=provider,writeError}={}){
  const commands=[];
  const db={send:async command=>{
