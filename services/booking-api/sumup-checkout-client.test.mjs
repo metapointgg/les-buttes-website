@@ -20,8 +20,9 @@ test('LB-07 rejects mismatched checkout, untrusted hosted URL and paid response'
 });
 test('LB-07 sandbox client uses authenticated POST and read-only retrieval',async()=>{
  const calls=[];
- const client=createSumUpClient({enabled:true,apiKey:'sup_sk_test_mock',merchantCode:input.merchantCode,
+ const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:input.merchantCode,
   fetchImpl:async(url,options)=>{calls.push({url,options});
+   if(url.endsWith('/v1/merchants/MTEST123'))return {ok:true,json:async()=>({merchant_code:'MTEST123',sandbox:true})};
    return {ok:true,json:async()=>options?.method==='POST'?{
     id:'checkout-12345678',checkout_reference:input.reference,merchant_code:input.merchantCode,
     currency:'GBP',amount:1630.45,status:'PENDING',
@@ -30,10 +31,20 @@ test('LB-07 sandbox client uses authenticated POST and read-only retrieval',asyn
   }});
  const result=await client.createCheckout(input);
  assert.equal(result.status,'PENDING');
- assert.equal(calls[0].options.headers.Authorization,'Bearer sup_sk_test_mock');
- assert.equal(JSON.parse(calls[0].options.body).hosted_checkout.enabled,true);
+ assert.equal(calls[1].options.headers.Authorization,'Bearer sup_sk_mock');
+ assert.equal(JSON.parse(calls[1].options.body).hosted_checkout.enabled,true);
  assert.equal((await client.retrieveCheckout('checkout-12345678')).status,'PENDING');
- assert.match(calls[1].url,/\/v0.1\/checkouts\/checkout-12345678$/);
- assert.throws(()=>createSumUpClient({enabled:true,apiKey:'sup_sk_live_secret',merchantCode:input.merchantCode}),/Sandbox/);
- assert.throws(()=>createSumUpClient({enabled:false,apiKey:'sup_sk_test_mock',merchantCode:input.merchantCode}),/disabled/);
+ assert.match(calls[2].url,/\/v0.1\/checkouts\/checkout-12345678$/);
+ assert.throws(()=>createSumUpClient({enabled:true,apiKey:'sup_pk_public',merchantCode:input.merchantCode}),/Secret/);
+ assert.throws(()=>createSumUpClient({enabled:false,apiKey:'sup_sk_mock',merchantCode:input.merchantCode}),/disabled/);
+});
+
+test('LB-08 checkout never posts if authenticated merchant is not a sandbox',async()=>{
+ for(const merchant of [{merchant_code:'MTEST123',sandbox:false},{merchant_code:'OTHER123',sandbox:true},{}]){
+  const calls=[];
+  const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:input.merchantCode,
+   fetchImpl:async(url)=>{calls.push(url);return {ok:true,json:async()=>merchant};}});
+  await assert.rejects(client.createCheckout(input),/Sandbox merchant verification required/);
+  assert.deepEqual(calls,['https://api.sumup.com/v1/merchants/MTEST123']);
+ }
 });
