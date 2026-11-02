@@ -37,8 +37,8 @@ export function validateCheckoutResponse(checkout,request){
 }
 export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetch,enabled=false}={}){
  if(!enabled)throw Error('SumUp integration disabled');
- if(typeof apiKey!=='string'||!apiKey.startsWith('sup_sk_test_'))
-   throw Error('Sandbox API key required');
+ if(typeof apiKey!=='string'||!apiKey.startsWith('sup_sk_'))
+   throw Error('Secret API key required');
  if(typeof fetchImpl!=='function')throw Error('Fetch client missing');
  const call=async(path,options={})=>{
   const response=await fetchImpl(BASE+path,{...options,headers:{
@@ -50,6 +50,11 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
  return {
   async retrieveMerchantProfile(){return call('/v0.1/me');},
   async createCheckout(input){
+   // A generic secret key is NOT evidence of sandbox identity. Check the
+   // authoritative merchant immediately before any payment-capable POST.
+   const merchant=await call('/v1/merchants/'+encodeURIComponent(merchantCode));
+   if(merchant?.merchant_code!==merchantCode||merchant?.sandbox!==true)
+    throw Error('Sandbox merchant verification required');
    const request=buildCheckoutRequest({...input,merchantCode});
    const response=await call(CHECKOUT,{method:'POST',body:JSON.stringify(request)});
    return validateCheckoutResponse(response,request);
