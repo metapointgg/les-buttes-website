@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runSandboxProbe} from './sumup-sandbox-probe.mjs';
+import {runSandboxProbe,classifySandboxProbeError} from './sumup-sandbox-probe.mjs';
 const env={BOOKING_ENVIRONMENT:'staging',AWS_REGION:'eu-west-2',LB08_READONLY_SANDBOX_PROBE:'yes'};
 test('LB-08 CLI probe fails closed without explicit staging consent',async()=>{
  for(const bad of [{},{...env,AWS_REGION:'eu-west-1'},{...env,BOOKING_ENVIRONMENT:'production'},
@@ -23,4 +23,18 @@ test('LB-08 CLI probe always closes SSM connection on failed provider request',a
  await assert.rejects(runSandboxProbe({env,ssmFactory:()=>({destroy:()=>closed++}),
   probe:async()=>{throw Error('Sensitive provider response');}}),/Sensitive provider response/);
  assert.equal(closed,1);
+});
+
+test('LB-08 maps provider and AWS errors to safe diagnostics',()=>{
+ const cases=[
+  [{name:'AccessDeniedException'},'AWS_CREDENTIALS_OR_PERMISSIONS'],
+  [{name:'ParameterNotFound'},'SSM_PARAMETER_MISSING'],
+  [{message:'Sandbox credentials missing or invalid'},'SSM_PARAMETER_VALUE_INVALID'],
+  [{message:'SumUp API request failed: 401'},'SUMUP_UNAUTHORISED'],
+  [{message:'SumUp API request failed: 403'},'SUMUP_FORBIDDEN'],
+  [{message:'SumUp API request failed: 404'},'SUMUP_ENDPOINT_NOT_FOUND'],
+  [{message:'Sandbox merchant identity mismatch'},'SUMUP_MERCHANT_MISMATCH']
+ ];
+ for(const [error,expected] of cases)assert.equal(classifySandboxProbeError(error),expected);
+ assert.equal(classifySandboxProbeError({message:'sensitive-token-value'}),'UNCLASSIFIED_CONNECTIVITY_FAILURE');
 });
