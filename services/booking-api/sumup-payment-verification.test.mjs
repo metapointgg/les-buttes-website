@@ -6,7 +6,7 @@ const registered={bookingId:booking.id,checkoutId:'checkout-12345678',reference:
  merchantCode:'MTEST123',amountPence:163000,currency:'GBP'};
 const provider={id:registered.checkoutId,checkout_reference:registered.reference,
  merchant_code:registered.merchantCode,amount:1630,currency:'GBP',status:'PAID',
- transactions:[{id:'transaction-12345',status:'SUCCESSFUL'}]};
+ transactions:[{id:'transaction-12345',status:'SUCCESSFUL',amount:1630,currency:'GBP',merchant_code:'MTEST123'}]};
 const verify=(overrides={})=>verifySumUpPayment({registered,booking,provider,...overrides});
 test('LB-08 accepts only independently verified matching SumUp payment',()=>{
  const result=verify({now:new Date('2026-11-01T12:00:00.000Z')});
@@ -31,4 +31,11 @@ test('LB-08 rejects amount, merchant, currency, checkout and booking mismatches'
 });
 test('LB-08 rejects ambiguous transaction evidence',()=>{
  assert.equal(verify({provider:{...provider,transactions:[...provider.transactions,...provider.transactions]}}).verified,false);
+});
+
+test('LB-08 rejects transaction-level amount currency or merchant manipulation',()=>{
+ for(const fields of [{amount:1629},{currency:'EUR'},{merchant_code:'DIFFERENT'}, {amount:undefined}]){
+  const transaction={...provider.transactions[0],...fields};
+  assert.equal(verify({provider:{...provider,transactions:[transaction]}}).verified,false);
+ }
 });
