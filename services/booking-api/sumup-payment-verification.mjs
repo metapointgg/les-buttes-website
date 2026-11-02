@@ -31,6 +31,12 @@ export function verifySumUpPayment({registered,provider,booking,now=new Date()}=
  const tx=provider.transactions;
  if(!Array.isArray(tx)||tx.length!==1||tx[0]?.status!=='SUCCESSFUL'||
     !TX.test(tx[0]?.id??''))return fail('Successful provider transaction missing or ambiguous');
+ const payment=tx[0];
+ const paidAmount=Number(payment.amount);
+ if(payment.currency!=='GBP'||payment.merchant_code!==registered.merchantCode||
+    !Number.isFinite(paidAmount)||Math.round(paidAmount*100)!==expected||
+    Math.abs(paidAmount*100-expected)>0.000001)
+  return fail('Transaction amount currency or merchant mismatch');
  if(!(now instanceof Date)||Number.isNaN(now.getTime()))return fail('Invalid verification time');
  return {verified:true,checkoutId:registered.checkoutId,bookingId:booking.id,
    reference:registered.reference,amountPence:expected,currency:'GBP',
