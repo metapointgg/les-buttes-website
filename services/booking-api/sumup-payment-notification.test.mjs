@@ -36,9 +36,36 @@ test('signed internal trigger dispatches only after authentication',async()=>{
  const signature=createHmac('sha256',secret).update(body).digest('hex');
  let calls=0;
  const reconcile=async input=>{calls++;assert.deepEqual(input,{bookingId});return {status:'CONFIRMED'};};
- const args={body,signature,secret,reconcile,nowEpoch:1800000000,enabled:true};
+ const claims=[];
+ const db={send:async command=>{claims.push(command);return {};}};
+ const args={body,signature,secret,reconcile,db,table:'bookings-staging',nowEpoch:1800000000,enabled:true};
  assert.equal((await processSignedInternalPaymentTrigger(args)).status,'CONFIRMED');
  assert.equal(calls,1);
+ assert.equal(claims.length,1);
  await assert.rejects(processSignedInternalPaymentTrigger({...args,signature:'0'.repeat(64)}),/Unauthorised/);
  assert.equal(calls,1);
+});
+
+test('duplicate internal signed trigger does not dispatch reconciliation twice',async()=>{
+ const {createHmac}=await import('node:crypto');
+ const secret='a-secure-internal-only-32-character-secret';
+ const body=JSON.stringify({bookingId,issuedAt:1800000000});
+ const signature=createHmac('sha256',secret).update(body).digest('hex');
+ let claimed=false,calls=0;
+ const db={send:async()=>{if(claimed)throw Error('ConditionalCheckFailedException');claimed=true;}};
+ const args={body,signature,secret,db,table:'bookings-staging',nowEpoch:1800000000,
+  enabled:true,reconcile:async()=>{calls++;return {status:'CONFIRMED'};}};
+ await processSignedInternalPaymentTrigger(args);
+ await assert.rejects(processSignedInternalPaymentTrigger(args),/ConditionalCheckFailedException/);
+ assert.equal(calls,1);
+});
+test('replay storage missing prevents notification dispatch',async()=>{
+ const {createHmac}=await import('node:crypto');
+ const secret='a-secure-internal-only-32-character-secret';
+ const body=JSON.stringify({bookingId,issuedAt:1800000000});
+ const signature=createHmac('sha256',secret).update(body).digest('hex');
+ let calls=0;
+ await assert.rejects(processSignedInternalPaymentTrigger({body,signature,secret,
+  reconcile:async()=>{calls++;},nowEpoch:1800000000,enabled:true}),/replay protection unavailable/);
+ assert.equal(calls,0);
 });
