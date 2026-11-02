@@ -41,5 +41,5 @@ test('LB-08 rejects non-staging region and live API keys',async()=>{
  await assert.rejects(loadSandboxSumUpCredentials({ssm,region:'us-east-1'}),/unavailable/);
  const liveSsm={send:async command=>({Parameter:{Value:command.input.Name.endsWith('api-key')?
   'sup_sk_live_not-allowed':merchantCode}})};
- await assert.rejects(loadSandboxSumUpCredentials({ssm:liveSsm}),/missing or invalid/);
+ await assert.rejects(loadSandboxSumUpCredentials({ssm:liveSsm}),/secret API key missing or unexpected format/);
 });
