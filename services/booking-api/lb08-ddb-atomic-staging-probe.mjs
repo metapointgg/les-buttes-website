@@ -18,7 +18,7 @@ export async function probeAtomicStagingTransaction({env=process.env,clientFacto
  const puts=keys.map(key=>({Put:{TableName:env.BOOKINGS_TABLE,
   Item:{...key,kind:'LB08_ATOMIC_PROBE',runId,expiresAt:now+3600},
   ConditionExpression:'attribute_not_exists(PK)'}}));
- let committed=false,cleaned=false;
+ let committed=false,cleaned=false,verified=false;
  try{
   await db.send(new TransactWriteCommand({TransactItems:puts}));
   committed=true;
@@ -34,10 +34,7 @@ export async function probeAtomicStagingTransaction({env=process.env,clientFacto
    if(!replayRejected)throw error;
   }
   if(!replayRejected)throw Error('CRITICAL: duplicate transaction was accepted');
-  return {passed:true,region:'eu-west-2',tableName:env.BOOKINGS_TABLE,
-   syntheticRecordsWritten:2,stronglyConsistentReadback:true,
-   duplicateTransactionRejected:true,runId,
-   note:'Synthetic diagnostic transaction only; not a booking-confirmation integration test'};
+  verified=true;
  }finally{
   try{
    if(committed){
@@ -51,6 +48,10 @@ export async function probeAtomicStagingTransaction({env=process.env,clientFacto
   }
   // A cleanup failure propagates, rather than claiming success with residual records.
  }
+ return {passed:verified&&cleaned,region:'eu-west-2',tableName:env.BOOKINGS_TABLE,
+  syntheticRecordsWritten:2,stronglyConsistentReadback:true,
+  duplicateTransactionRejected:true,syntheticRecordsCleanedUp:cleaned,runId,
+  note:'Isolated diagnostic transaction only; not yet a booking confirmation test'};
 }
 if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
  try{process.stdout.write(JSON.stringify(await probeAtomicStagingTransaction(),null,2)+'\n');}
