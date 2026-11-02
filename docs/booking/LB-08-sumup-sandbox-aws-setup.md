@@ -33,3 +33,19 @@ The IAM design is documented in `docs/booking/LB-08-staging-iam-deployment-gate.
 ## Go/no-go
 
 Leave `PAYMENT_RECONCILIATION_ENABLED=false` and `PAYMENT_NOTIFICATIONS_ENABLED=false` until the dedicated AWS staging role and real SumUp sandbox tests have passed and activation is explicitly approved.
+
+## Execute read-only sandbox connectivity probe (local operator)
+
+After `npm ci` in `services/booking-api`, run the following **PowerShell** commands from a terminal with AWS credentials scoped to the staging account and permission to read exactly the two SSM parameters:
+
+```powershell
+$env:AWS_REGION = 'eu-west-2'
+$env:BOOKING_ENVIRONMENT = 'staging'
+$env:LB08_READONLY_SANDBOX_PROBE = 'yes'
+# Set AWS_PROFILE only if your normal AWS identity requires it.
+npm run probe:sumup:sandbox
+```
+
+Success is strictly redacted: `{"connected":true,"region":"eu-west-2","environment":"staging","merchantMatched":true}`. Failures print a generic message and return a non-zero exit code, so **do not paste any debug SDK logs or secret parameter values into tickets**. The command uses GET `/v0.1/me`, not POST; it does not create a checkout or charge a card.
+
+This does **not** test GBP payment acceptance, confirm Hosted Checkout settlement, or perform a DynamoDB write. The staging operator must confirm the correct AWS account independently (e.g. `aws sts get-caller-identity`) and must not invoke this against production credentials. The command is manually invoked only; no CI workflow runs it.
