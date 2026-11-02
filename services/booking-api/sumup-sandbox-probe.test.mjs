@@ -30,6 +30,8 @@ test('LB-08 maps provider and AWS errors to safe diagnostics',()=>{
   [{name:'AccessDeniedException'},'AWS_CREDENTIALS_OR_PERMISSIONS'],
   [{name:'ParameterNotFound'},'SSM_PARAMETER_MISSING'],
   [{message:'Sandbox credentials missing or invalid'},'SSM_PARAMETER_VALUE_INVALID'],
+  [{message:'Sandbox secret API key missing or unexpected format'},'SUMUP_SANDBOX_API_KEY_FORMAT'],
+  [{message:'Sandbox merchant code missing or unexpected format'},'SUMUP_SANDBOX_MERCHANT_CODE_FORMAT'],
   [{message:'SumUp API request failed: 401'},'SUMUP_UNAUTHORISED'],
   [{message:'SumUp API request failed: 403'},'SUMUP_FORBIDDEN'],
   [{message:'SumUp API request failed: 404'},'SUMUP_ENDPOINT_NOT_FOUND'],
