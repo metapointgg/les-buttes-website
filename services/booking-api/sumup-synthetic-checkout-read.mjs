@@ -16,8 +16,16 @@ export async function readSyntheticCheckout({env=process.env,ssmFactory,clientFa
   if(checkout?.id!==env.LB08_CHECKOUT_ID||checkout.merchant_code!==merchantCode||
      checkout.currency!=='GBP'||Number(checkout.amount)!==1)
    throw Error('Synthetic checkout evidence mismatch');
+  const transactions=Array.isArray(checkout.transactions)?checkout.transactions:[];
+  const evidence=transactions.map(tx=>({id:typeof tx.id==='string'?tx.id:null,
+   status:typeof tx.status==='string'?tx.status:null,
+   amountPence:Number.isFinite(Number(tx.amount))?Math.round(Number(tx.amount)*100):null,
+   currency:typeof tx.currency==='string'?tx.currency:null,
+   merchantMatched:tx.merchant_code===merchantCode,
+   hasAmount:tx.amount!==undefined,hasMerchantCode:tx.merchant_code!==undefined}));
   return {retrieved:true,checkoutId:checkout.id,status:checkout.status,
-   amountPence:100,currency:'GBP',merchantMatched:true,environment:'staging'};
+   amountPence:100,currency:'GBP',merchantMatched:true,environment:'staging',
+   transactionCount:transactions.length,transactions:evidence};
  }finally{ssm.destroy?.();}
 }
 if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
