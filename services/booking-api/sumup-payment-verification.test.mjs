@@ -39,3 +39,15 @@ test('LB-08 rejects transaction-level amount currency or merchant manipulation',
   assert.equal(verify({provider:{...provider,transactions:[transaction]}}).verified,false);
  }
 });
+
+test('LB-08 accepts sandbox-observed successful transaction ID format and GBP evidence',()=>{
+ const observed={...provider,id:'eb6a0f73-c344-42b4-95ec-70aa296d1496',
+  transactions:[{id:'ecebc6e9-5f74-4d39-be1f-caf2b26a7cd3',
+   status:'SUCCESSFUL',amount:1,currency:'GBP',merchant_code:registered.merchantCode}],
+  amount:1,status:'PAID'};
+ const evidence=verifySumUpPayment({
+  registered:{...registered,checkoutId:observed.id,amountPence:100},
+  booking:{...booking,approvedAmountGBP:1},provider:observed});
+ assert.equal(evidence.verified,true);
+ assert.equal(evidence.transactionId,'ecebc6e9-5f74-4d39-be1f-caf2b26a7cd3');
+});
