@@ -24,6 +24,8 @@ export function classifySandboxProbeError(error){
  if(name==='AccessDeniedException'||name==='AccessDenied'||name==='UnrecognizedClientException'||name==='CredentialsProviderError')
   return 'AWS_CREDENTIALS_OR_PERMISSIONS';
  if(name==='ParameterNotFound'||name==='ParameterVersionNotFound')return 'SSM_PARAMETER_MISSING';
+ if(message.includes('Sandbox secret API key missing or unexpected format'))return 'SUMUP_SANDBOX_API_KEY_FORMAT';
+ if(message.includes('Sandbox merchant code missing or unexpected format'))return 'SUMUP_SANDBOX_MERCHANT_CODE_FORMAT';
  if(message.includes('Sandbox credentials missing or invalid'))return 'SSM_PARAMETER_VALUE_INVALID';
  if(message.includes('SumUp API request failed: 401'))return 'SUMUP_UNAUTHORISED';
  if(message.includes('SumUp API request failed: 403'))return 'SUMUP_FORBIDDEN';
