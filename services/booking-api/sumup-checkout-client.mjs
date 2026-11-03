@@ -49,6 +49,27 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
  };
  return {
   async retrieveMerchantProfile(){return call('/v0.1/me');},
+  async inspectCheckoutReference(reference){
+   if(typeof reference!=='string'||!referencePattern.test(reference))
+    throw Error('Invalid checkout reference');
+   // Read-only diagnostic: paid checkouts are intentionally included, unlike
+   // listCheckoutsByReference which only returns reusable pending candidates.
+   const items=await call(CHECKOUT+'?checkout_reference='+encodeURIComponent(reference));
+   if(!Array.isArray(items)||items.length>10)
+    throw Error('Untrusted SumUp checkout reference response');
+   return items.map(item=>{
+    if(item?.checkout_reference!==reference||item.merchant_code!==merchantCode||
+       item.currency!=='GBP'||!Number.isFinite(Number(item.amount))||
+       !Number.isSafeInteger(Math.round(Number(item.amount)*100))||
+       typeof item.id!=='string'||!/^[A-Za-z0-9-]{8,100}$/.test(item.id)||
+       !['PENDING','PAID','FAILED','EXPIRED'].includes(item.status))
+     throw Error('Provider checkout reference evidence mismatch');
+    return {checkoutId:item.id,status:item.status,
+     amountPence:Math.round(Number(item.amount)*100),currency:'GBP',
+     merchantMatched:true,referenceMatched:true,
+     reusablePending:item.status==='PENDING'};
+   });
+  },
   async listCheckoutsByReference(reference){
    if(typeof reference!=='string'||!referencePattern.test(reference))
     throw Error('Invalid checkout reference');
