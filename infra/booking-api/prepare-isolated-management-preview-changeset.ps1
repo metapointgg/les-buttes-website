@@ -30,6 +30,10 @@ $root=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $template='services/booking-api/staging-management-preview-isolated.template.yaml'
 Write-Host 'Existing booking stack remains unchanged. JWT read-only management stack will be CREATE-only.'
 if(-not $Prepare){Write-Host 'Read-only preflight passed. Use -Prepare to create a NON-EXECUTED change set.';return}
+# Fail before any packaging/upload if the designated GitHub staging role cannot prepare/review.
+$iamPreflight=Join-Path $PSScriptRoot 'check-isolated-management-preview-iam.ps1'
+& $iamPreflight -Profile $Profile -Region $Region
+if(-not $?){throw 'IAM preflight did not succeed; refusing packaging and change-set creation.'}
 Push-Location $root
 try{
  & sam validate --lint --template-file $template
