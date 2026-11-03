@@ -44,6 +44,17 @@ jobs:
           sam build --template-file services/booking-api/staging-availability-private.template.yaml --build-dir .aws-sam/private-availability-build --region eu-west-2
           test -s .aws-sam/private-availability-build/template.yaml
           test -s .aws-sam/private-availability-build/PrivateStagingAvailabilityFunction/staging-availability-handler.mjs
+      - name: Diagnose isolated read-only management SAM build (no AWS access)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm --prefix services/booking-api ci --no-audit --no-fund
+          sam validate --template-file services/booking-api/staging-management-preview-isolated.template.yaml --region eu-west-2
+          sam build --template-file services/booking-api/staging-management-preview-isolated.template.yaml --build-dir .aws-sam/lb04-management-diagnostic --region eu-west-2
+          test -s .aws-sam/lb04-management-diagnostic/template.yaml
+          test -s .aws-sam/lb04-management-diagnostic/ManagementPreviewReadFunction/booking-admin-http.mjs
+          test -d .aws-sam/lb04-management-diagnostic/ManagementPreviewReadFunction/node_modules/@aws-sdk/client-dynamodb
+          echo 'LB-04 management SAM package validated. No change set created or executed.' >> "$GITHUB_STEP_SUMMARY"
       - name: Validate isolated staging quote infrastructure (no deployment)
         run: |
           set -euo pipefail
