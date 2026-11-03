@@ -48,3 +48,38 @@ test('LB-08 checkout never posts if authenticated merchant is not a sandbox',asy
   assert.deepEqual(calls,['https://api.sumup.com/v1/merchants/MTEST123']);
  }
 });
+
+test('LB-08 reference lookup filters by exact reference and validates merchant and hosted URL',async()=>{
+ const calls=[],reference='lb-1234567890abcdef';
+ const checkout={id:'eb6a0f73-c344-42b4-95ec-70aa296d1496',
+  checkout_reference:reference,merchant_code:'MTEST123',currency:'GBP',
+  amount:1,status:'PENDING',
+  hosted_checkout_url:'https://checkout.sumup.com/pay/c-eb6a0f73-c344-42b4-95ec-70aa296d1496'};
+ const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:'MTEST123',
+  fetchImpl:async url=>{calls.push(url);return {ok:true,json:async()=>[checkout]};}});
+ const list=await client.listCheckoutsByReference(reference);
+ assert.equal(calls.length,1);
+ assert.equal(calls[0],'https://api.sumup.com/v0.1/checkouts?checkout_reference='+reference);
+ assert.equal(list[0].reference,reference);
+ assert.equal(list[0].amountPence,100);
+ assert.equal(list[0].status,'PENDING');
+ assert.equal(list[0].hostedCheckoutUrl,checkout.hosted_checkout_url);
+});
+test('LB-08 reference lookup fails closed for malformed, wrong-merchant and incomplete provider records',async()=>{
+ const reference='lb-1234567890abcdef';
+ const base={id:'eb6a0f73-c344-42b4-95ec-70aa296d1496',
+  checkout_reference:reference,merchant_code:'MTEST123',
+  currency:'GBP',amount:1,status:'PENDING',
+  hosted_checkout_url:'https://checkout.sumup.com/pay/checkout-1234'};
+ for(const item of [{...base,merchant_code:'MOTHER'}, {...base,checkout_reference:'other'},
+  {...base,status:'PAID'}, {...base,hosted_checkout_url:undefined},
+  {...base,hosted_checkout_url:'https://example.invalid/checkout'}]){
+  const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:'MTEST123',
+   fetchImpl:async()=>({ok:true,json:async()=>[item]})});
+  await assert.rejects(client.listCheckoutsByReference(reference),/mismatch|hosted URL/);
+ }
+ const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:'MTEST123',
+  fetchImpl:async()=>({ok:true,json:async()=>({items:[]})})});
+ await assert.rejects(client.listCheckoutsByReference(reference),/Untrusted/);
+ await assert.rejects(client.listCheckoutsByReference('unsafe reference'),/Invalid/);
+});
