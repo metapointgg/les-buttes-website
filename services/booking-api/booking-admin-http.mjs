@@ -23,7 +23,7 @@ export function identityFromGateway(event,{issuer=process.env.MANAGEMENT_COGNITO
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
 export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=()=>false,
- approvalEnabled=()=>false}){
+ approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout}){
  return async event=>{
    try{
      const method=event?.requestContext?.http?.method;
@@ -52,6 +52,22 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
            if(e?.name==='TransactionCanceledException')return reply(409,{error:'Configuration changed; refresh and retry'});
            if(/Invalid|Unknown|required|too large|restriction|range|band|tier|season|approval|not found/.test(e?.message??''))
              return reply(400,{error:'Invalid configuration'});
+           throw e;
+         }
+       }
+       const checkoutMatch=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/checkout\/register$/i);
+       if(checkoutMatch){
+         if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+         if(process.env.BOOKING_ENVIRONMENT!=='staging'||
+            !process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||
+            !writeEnabled()||!checkoutEnabled()||typeof registerCheckout!=='function')
+           return reply(503,{error:'Checkout registration disabled'});
+         if(event.isBase64Encoded||event.body!=='{}')
+           return reply(400,{error:'Checkout registration does not accept payment details'});
+         try{return reply(200,await registerCheckout({bookingId:checkoutMatch[1],identity:id}));}
+         catch(e){
+           if(e?.name==='TransactionCanceledException'||/not eligible|unavailable|Conflicting|reconciliation|not verified|already claimed/.test(e?.message??''))
+             return reply(409,{error:'Checkout registration requires owner reconciliation'});
            throw e;
          }
        }
