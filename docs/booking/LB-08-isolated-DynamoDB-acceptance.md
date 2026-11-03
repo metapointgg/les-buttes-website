@@ -150,3 +150,13 @@ This isolated stack intentionally supersedes the earlier full-stack management-p
 CI reported SAM `E2015` on the isolated management template: the default Cognito issuer failed its own `AllowedPattern` because the YAML single-quoted regular expression contained double-escaped dots. The regex now uses a single backslash to escape each period. A regression test checks the declared default against the actual regex and rejects a wrong region or spoofed host. The management SAM validation then passed on commit `4dba933`.
 
 `lb08-isolated-management-changeset-review.mjs` is a new pure review policy specifically for the **CREATE-only** isolated management stack. It fails closed on missing resources, incomplete/unavailable change sets, any resource Modify/Remove/replacement, any public booking/database/monitoring/payment resource and unexpected IAM resource types. It only considers dedicated management API/Lambda and their expected supporting resources eligible for **manual inspection**. It does not execute or authorise a deployment. The existing full-stack change-set reviewer is not suitable for this separate stack.
+
+### Isolated CREATE-only change-set inspection connected (3 November 2026)
+
+Once a `lb08-management-isolated-YYYYMMDDHHMMSS` CloudFormation CREATE change set is prepared using `prepare-isolated-management-preview-changeset.ps1 -Prepare`, inspect it with:
+
+`powershell -File infra/booking-api/review-isolated-management-preview-changeset.ps1 -ChangeSetName lb08-management-isolated-YYYYMMDDHHMMSS -Profile default`
+
+The wrapper first verifies AWS account `145608514666`, `eu-west-2`, exact isolated-stack name and expected change-set name. It requests only `Status`, `ExecutionStatus` and `Changes` from CloudFormation, then invokes `lb08-isolated-management-review-cli.mjs`. The CLI handles PowerShell/Windows paths, rejects unprojected parameters or malformed responses, and fails on any change outside the CREATE-only read-management resource allowlist. Backend CI executes the CLI as an actual subprocess, including negative tests.
+
+**A clean result is not permission to deploy.** A human must still inspect the actual JWT authorizer, GET-only methods and IAM statements against the SAM template. This step does not execute or create a change set. The intended next AWS action, after green CI and review of the package build, is a CREATE-only preview using `-Prepare`; there is no requirement to update the existing booking stack.
