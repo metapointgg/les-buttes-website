@@ -22,9 +22,9 @@ function Invoke-AwsJson([string[]]$Arguments) {
   if($LASTEXITCODE -ne 0){throw 'AWS read failed; refusing change-set preparation.'}
   return ($raw | ConvertFrom-Json)
 }
-$who = Invoke-AwsJson @('sts','get-caller-identity')
+$who = Invoke-AwsJson -Arguments @('sts','get-caller-identity')
 if($who.Account -ne '145608514666'){throw 'AWS account mismatch.'}
-$stacks = Invoke-AwsJson @('cloudformation','describe-stacks','--stack-name',$StackName)
+$stacks = Invoke-AwsJson -Arguments @('cloudformation','describe-stacks','--stack-name',$StackName)
 $stack = @($stacks.Stacks)[0]
 if($stack.StackName -ne $StackName -or $stack.StackStatus -ne 'UPDATE_COMPLETE'){
   throw 'Stack is not in the verified UPDATE_COMPLETE state.'
@@ -37,7 +37,7 @@ foreach($key in $required.Keys){
     throw "Unexpected deployed $key; refusing change-set preparation."
   }
 }
-$resources = Invoke-AwsJson @('cloudformation','describe-stack-resources','--stack-name',$StackName)
+$resources = Invoke-AwsJson -Arguments @('cloudformation','describe-stack-resources','--stack-name',$StackName)
 $master = @($resources.StackResources|Where-Object {
   $_.LogicalResourceId -eq 'BookingTable' -and $_.ResourceType -eq 'AWS::DynamoDB::Table'
 })
@@ -45,7 +45,7 @@ if($master.Count -ne 1 -or
    $master[0].PhysicalResourceId -ne 'les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK'){
   throw 'Staging booking-master identity mismatch.'
 }
-$tableResult=Invoke-AwsJson @('dynamodb','describe-table','--table-name',$master[0].PhysicalResourceId)
+$tableResult=Invoke-AwsJson -Arguments @('dynamodb','describe-table','--table-name',$master[0].PhysicalResourceId)
 $table=$tableResult.Table
 $indexes=@($table.GlobalSecondaryIndexes|Where-Object {
   $_.IndexName -eq 'BookingRequestsIndex' -and $_.IndexStatus -eq 'ACTIVE'
