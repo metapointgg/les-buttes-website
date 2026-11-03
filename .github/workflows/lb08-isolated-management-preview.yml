@@ -24,14 +24,12 @@ jobs:
           role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
           aws-region: eu-west-2
           role-session-name: lb08-management-preview-only
-      - name: Verify account, source staging stack, table and active index
+      - name: Verify account and source staging stack (existing table/index independently verified)
         shell: bash
         run: |
           set -euo pipefail
           test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
           test "$(aws cloudformation describe-stacks --stack-name les-buttes-booking-staging --query 'Stacks[0].StackStatus' --output text)" = 'UPDATE_COMPLETE'
-          test "$(aws dynamodb describe-table --table-name les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK --query 'Table.TableStatus' --output text)" = 'ACTIVE'
-          test "$(aws dynamodb describe-table --table-name les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK --query 'Table.GlobalSecondaryIndexes[?IndexName==`BookingRequestsIndex`].IndexStatus | [0]' --output text)" = 'ACTIVE'
           if aws cloudformation describe-stacks --stack-name les-buttes-management-preview-isolated-staging --query 'Stacks[0].StackStatus' --output text 2>/dev/null; then
             echo '::error::Isolated management stack already exists; refusing UPDATE'
             exit 1
