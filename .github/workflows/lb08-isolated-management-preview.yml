@@ -1,5 +1,6 @@
 name: LB-08 isolated management CREATE-only change-set preview
 on:
+  workflow_dispatch:
   push:
     branches: [feature/direct-booking-requests-27-night]
     paths: ['.github/workflows/lb08-isolated-management-preview.yml']
@@ -84,3 +85,11 @@ jobs:
             node services/booking-api/lb08-isolated-management-review-cli.mjs
           echo "Review-only change set: $CHANGE_SET_NAME" >> "$GITHUB_STEP_SUMMARY"
           echo 'No change set was executed. Manual inspection of IAM and JWT still required.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Explain safe failure and next diagnostic action
+        if: failure()
+        shell: bash
+        run: |
+          echo '::warning::Isolated management CREATE-only preview failed. No change set was executed.'
+          echo 'Inspect the first failing step above and share the GitHub Actions run URL for exact diagnosis.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No sam deploy, cloudformation execute-change-set or production mutation is present.' >> "$GITHUB_STEP_SUMMARY"
