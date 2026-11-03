@@ -73,3 +73,13 @@ The approval/payment email requires `APPROVED_AWAITING_PAYMENT`, an authoritativ
 **Not yet an event consumer:** `applyVerifiedSesOutcome` takes an `authenticatedSns` internal safeguard, but that boolean is **not** cryptographic SNS authentication. The future trusted SNS adapter must validate AWS SNS signature and certificate, allowed topic ARN/account/region, event freshness and payload size before using this function; it must never expose that parameter to public HTTP callers. A trusted message-ID lookup is also needed. Do not interpret email delivery as payment confirmation. No real SNS subscriptions, outbox writes or emails were created.
 
 Tests cover delivery, bounce, complaint, late adverse outcome after delivery, duplicate notification, mismatched IDs/recipients, absent authentication, unsupported event, stale conditional updates and production table rejection. **Remaining LB-09 acceptance:** signed SNS intake, SES-message-ID lookup, real staging notifications, recovery workflows and owner-approved templates.
+
+## SES delivery/bounce/complaint correlation (3 November 2026)
+
+`booking-staging-ses-transport.mjs` now attaches `bookingId`, `emailType` and `templateId` as provider message tags. These tags correlate SES events with an immutable outbox identity, but **are not authentication**.
+
+`booking-ses-feedback.mjs` is a deliberately unexposed library function: the caller must first supply an SNS `Notification` envelope and a **real, independently implemented SNS signature-verification callback**. It fails before DynamoDB reads if the callback is missing or rejects the envelope. It then checks the SES provider message ID, recipient, booking ID, event type and template ID against the existing outbox record using a consistent DynamoDB read. Only a conditional `UpdateItem` modifies outbox delivery state. Delivery, bounce and complaint signals are idempotent; bounce/complaint can supersede delivery, but later delivery cannot clear a terminal failure. No booking or payment status is changed, and the reconciler cannot send emails.
+
+Network-free tests cover successful delivery, bounced/complained, replay, invalid signature, wrong SES message ID or recipient, and no provider acknowledgement. **Remaining security work before any endpoint deployment:** implement and test AWS SNS signature verification including certificate origin, signature and freshness; configure SES event publishing, subscriptions, DLQ/alarms and IAM; verify deliveries with a controlled recipient and customer wording. Do not expose this reconciler via an unauthenticated HTTP endpoint or treat SES tags as proof of identity.
+
+**Status:** LB-09 still unchecked; code only, no AWS subscriptions, email sends or production changes in this step.
