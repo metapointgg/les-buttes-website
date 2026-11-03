@@ -34,6 +34,6 @@ test('LB-09 SQS subscription preserves signed SNS envelope and isolates poison m
 test('LB-09 only forwards delivery, bounce and complaint from existing SES configuration set',()=>{
  assert.match(template,/Type: AWS::SES::ConfigurationSetEventDestination/);
  assert.match(template,/ConfigurationSetName: !Ref SesConfigurationSetName/);
- assert.match(template,/MatchingEventTypes:\s*\n\s*- delivery\s*\n\s*- bounce\s*\n\s*- complaint/);
+ assert.match(template,/MatchingEventTypes:\s*\n\s*- DELIVERY\s*\n\s*- BOUNCE\s*\n\s*- COMPLAINT/);
  assert.match(template,/SnsDestination:\s*\n\s*TopicARN: !Ref SesFeedbackTopic/);
 });
