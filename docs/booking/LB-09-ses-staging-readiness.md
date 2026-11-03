@@ -2,6 +2,8 @@
 
 **Verified 3 November 2026. Account 145608514666. No emails sent.**
 
+**Update:** subsequent live SESv2 `GetAccount` confirmed **ProductionAccessEnabled=true**, `SendingEnabled=true`, Max24HourSend=50,000 and MaxSendRate=14 in `us-east-1`. `lesbuttes.com` identity, DKIM and custom MAIL FROM are all `SUCCESS`. The earlier sandbox restriction in this document is now historical; the application staging allowlist and explicit opt-in still protect against accidental guest sends.
+
 ## US East (N. Virginia), `us-east-1` — configured identity; sandbox restriction
 
 SESv2 `GetEmailIdentity` confirms `lesbuttes.com` **VerifiedForSendingStatus=true**, `VerificationStatus=SUCCESS`, DKIM **SUCCESS** (signing enabled), and custom MAIL FROM domain `mail.lesbuttes.com` **SUCCESS**. This matches the user's AWS Health notification. `GetAccount` confirms `SendingEnabled=true`, **ProductionAccessEnabled=false**, `Max24HourSend=200`, `MaxSendRate=1` and `SentLast24Hours=0`.
@@ -39,3 +41,11 @@ Required **explicit** configuration (all disabled/invalid by default):
 `validateStagingSesMessage` also rejects non-allowlisted guest recipients, unexpected lifecycle event types, malformed booking references/template identifiers, empty/overlong bodies and subject-line CR/LF injection. The allowlist is a **local guard**, not proof that a recipient is verified in SES: the eventual SES client must also respect SES sandbox restrictions and obtain the required runtime authorisation.
 
 **Still outstanding for LB-09 acceptance:** SES SDK transport with explicitly selected client region, immutable outbox/idempotency and retry states, recipient verification or simulator-only tests, lifecycle templates, bounce/complaint handling, authorised staging send and delivery verification, then production access and owner sign-off. This step does not send email, change live SES settings or close LB-09.
+
+## Incremental implementation — explicit regional SES transport
+
+`services/booking-api/booking-staging-ses-transport.mjs` uses the installed AWS SDK `@aws-sdk/client-ses` and explicitly creates a `SESClient({region:'us-east-1'})` only after `validateStagingSesMessage` passes. Testable injected factories make all regression tests network-free. It sends text-only UTF-8 messages with one allowlisted recipient, returns the SES `MessageId` as `ACCEPTED_BY_SES_NOT_DELIVERED` (not delivered), and fails closed for missing provider acknowledgement or errors. It is not attached to a booking event or deployed Lambda, and has no live send path unless future staging wiring explicitly invokes it.
+
+**Important configuration clarification:** the existing `BOOKING_SES_SANDBOX_ACK` flag remains a conservative staging-test safeguard name for this release, but **AWS production access is now granted**; it is not evidence the AWS account remains sandboxed. It may be renamed in a separately tested change. The test-recipient allowlist is mandatory even after SES production access.
+
+Still required before acceptance: durable outbox/idempotency, bounce/complaint signal processing, lifecycle email templates, real staging delivery test with consented recipient, and separate production enablement/owner approval.
