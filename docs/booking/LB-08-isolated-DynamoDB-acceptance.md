@@ -37,3 +37,22 @@ After an approved stack deployment, independently run DescribeTable against `les
 7. Remove the isolated stack only after verifying there are no dependencies, retaining test outcomes in issue #46.
 
 **Status:** Infrastructure template prepared, no AWS deployment or booking-confirmation writes performed. Existing staging booking table and production remain untouched.
+
+### Full synthetic booking-confirmation runner (prepared; not executed)
+
+The isolated CloudFormation table is now deployed and ACTIVE. The acceptance runner is `services/booking-api/lb08-isolated-booking-acceptance.mjs`. It is **disabled by default**, requires the exact isolated table name and deliberately uses a synthetic provider response rather than creating another SumUp payment.
+
+Once CI for the runner passes, run from `services/booking-api` using:
+
+```powershell
+$env:AWS_REGION = 'eu-west-2'
+$env:BOOKING_ENVIRONMENT = 'staging'
+$env:BOOKINGS_TABLE = 'les-buttes-lb08-staging-isolated-acceptance'
+$env:LB08_ISOLATED_BOOKING_ACCEPTANCE = 'yes'
+npm run probe:lb08:isolated-confirmation
+```
+
+The test seeds an artificial one-pound booking for seven nights in **2099**, with `UNIT#geranium` keys **only in the dedicated isolated table**, then invokes the actual `reconcileVerifiedPayment` implementation with a synthetic paid-checkout fixture and unique fake transaction identifier. It verifies the confirmed booking, seven nights without hold expiries, immutable transaction claim, single audit record and replay rejection using strongly consistent DynamoDB reads. It then attempts a conditional deletion of all synthetic records it owns.
+
+**Do not substitute** the real staging booking table or the existing real SumUp sandbox transaction ID. On failure, inspect the isolated table for leftover `LB08_ISOLATED_ACCEPTANCE` items and avoid destroying the table until cleanup is verified. This test confirms transactional booking reconciliation with *simulated provider evidence*, not an independently paid guest booking.
+
