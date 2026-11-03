@@ -10,7 +10,10 @@ export const checkoutReference=bookingId=>{
 export async function createAndRegisterCheckout({db,table,bookingId,amountPence,sumup,
   lookupProviderByReference,actor,nowEpoch=Math.floor(Date.now()/1000)}={}){
  if(!db?.send||!table?.toLowerCase().includes('staging')||!sumup?.createCheckout||
-   typeof lookupProviderByReference!=='function')throw Error('Staging checkout orchestration unavailable');
+   (typeof lookupProviderByReference!=='function'&&
+    typeof sumup.listCheckoutsByReference!=='function'))
+  throw Error('Staging checkout orchestration unavailable');
+ const lookup=lookupProviderByReference??(reference=>sumup.listCheckoutsByReference(reference));
  if(!Number.isSafeInteger(amountPence)||amountPence<1)throw Error('Invalid checkout amount');
  if(typeof actor!=='string'||!actor.trim())throw Error('Owner identity required');
  const reference=checkoutReference(bookingId);
@@ -24,7 +27,7 @@ export async function createAndRegisterCheckout({db,table,bookingId,amountPence,
  if(priorClaim)throw Error('Checkout creation already claimed; manual reconciliation required');
  // SumUp creation is external to DynamoDB. Before any creation, query the
  // provider by deterministic reference. If the query fails, do not create.
- const remote=await lookupProviderByReference(reference);
+ const remote=await lookup(reference);
  if(remote&&remote.length>1)throw Error('Multiple provider checkouts require manual reconciliation');
  let checkout;
  // Acquire a permanent claim before any provider creation. No automatic expiry:
