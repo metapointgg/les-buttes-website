@@ -6,6 +6,10 @@ The production-shaped payment confirmation transaction uses `UNIT#geranium` and 
 
 The dedicated table is `les-buttes-lb08-staging-isolated-acceptance`, defined by `services/booking-api/lb08-isolated-acceptance-table.template.yaml`. It is a separate, disposable DynamoDB resource in `eu-west-2`, with `PK`/ `SK` keys, on-demand billing, and TTL. No application or production service may reference it. The template is **not deployed automatically**.
 
+### Superseded change set – do not execute
+
+The first preview on 3 November 2026 created change set `awscli-cloudformation-package-deploy-1793687930` for the **old, incompatible** table name. Do not execute it. Delete that old change set after reviewing its identity, then pull the corrected template (commit `e532b7a`) and create a new preview. Use only the newly reviewed change set. An old preview does not automatically pick up changes committed to Git.
+
 ### Operator deployment – only after explicit approval
 
 From repository root, review the exact change set prior to execution:
