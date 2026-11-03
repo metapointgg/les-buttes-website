@@ -6,6 +6,7 @@ import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 import {publishOwnerConfiguration,rollbackOwnerConfiguration} from './booking-admin-config-writer.mjs';
+import {checkoutRuntimeEnabled,registerCheckoutWithSandbox} from './booking-checkout-runtime.mjs';
 const groups=(claims)=>{
  const raw=claims?.['cognito:groups']??[];
  return Array.isArray(raw)?raw:typeof raw==='string'?raw.split(',').map(v=>v.trim()):[];
@@ -177,6 +178,8 @@ export async function handler(event){
      reader:createReadOnlyAdminReader({authorise:async request=>identityFromGateway(request)}),
      writeEnabled:()=>staging,
      approvalEnabled:()=>staging&&process.env.MANAGEMENT_APPROVAL_ENABLED==='true',
+     checkoutEnabled:()=>staging&&checkoutRuntimeEnabled(process.env),
+     registerCheckout:staging?async args=>registerCheckoutWithSandbox({db,...args}):undefined,
      writeConfig:staging?async ({operation,...args})=>operation==='rollback'?rollbackOwnerConfiguration({db,table,...args}):publishOwnerConfiguration({db,table,...args}):undefined,
      writeAction:staging?async args=>executeOwnerTransition({
        ...args,db,table,
