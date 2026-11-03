@@ -49,33 +49,41 @@ test('LB-08 checkout never posts if authenticated merchant is not a sandbox',asy
  }
 });
 
-test('LB-08 reference lookup filters by exact reference and validates merchant and hosted URL',async()=>{
+test('LB-08 reference lookup hydrates each result with authoritative checkout GET',async()=>{
  const calls=[],reference='lb-1234567890abcdef';
  const checkout={id:'eb6a0f73-c344-42b4-95ec-70aa296d1496',
   checkout_reference:reference,merchant_code:'MTEST123',currency:'GBP',
   amount:1,status:'PENDING',
   hosted_checkout_url:'https://checkout.sumup.com/pay/c-eb6a0f73-c344-42b4-95ec-70aa296d1496'};
  const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:'MTEST123',
-  fetchImpl:async url=>{calls.push(url);return {ok:true,json:async()=>[checkout]};}});
+  fetchImpl:async url=>{calls.push(url);return {ok:true,json:async()=>
+   url.includes('?checkout_reference=')?[{...checkout,hosted_checkout_url:undefined}]:checkout};}});
  const list=await client.listCheckoutsByReference(reference);
- assert.equal(calls.length,1);
+ assert.equal(calls.length,2);
  assert.equal(calls[0],'https://api.sumup.com/v0.1/checkouts?checkout_reference='+reference);
+ assert.equal(calls[1],'https://api.sumup.com/v0.1/checkouts/'+checkout.id);
  assert.equal(list[0].reference,reference);
  assert.equal(list[0].amountPence,100);
  assert.equal(list[0].status,'PENDING');
  assert.equal(list[0].hostedCheckoutUrl,checkout.hosted_checkout_url);
 });
-test('LB-08 reference lookup fails closed for malformed, wrong-merchant and incomplete provider records',async()=>{
+test('LB-08 reference lookup fails closed for mismatched provider list or detail',async()=>{
  const reference='lb-1234567890abcdef';
  const base={id:'eb6a0f73-c344-42b4-95ec-70aa296d1496',
   checkout_reference:reference,merchant_code:'MTEST123',
   currency:'GBP',amount:1,status:'PENDING',
   hosted_checkout_url:'https://checkout.sumup.com/pay/checkout-1234'};
  for(const item of [{...base,merchant_code:'MOTHER'}, {...base,checkout_reference:'other'},
+  {...base,status:'PAID'}]){
+  const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:'MTEST123',
+   fetchImpl:async url=>({ok:true,json:async()=>url.includes('?')?[item]:item})});
+  await assert.rejects(client.listCheckoutsByReference(reference),/mismatch/);
+ }
+ for(const detail of [{...base,merchant_code:'MOTHER'},
   {...base,status:'PAID'}, {...base,hosted_checkout_url:undefined},
   {...base,hosted_checkout_url:'https://example.invalid/checkout'}]){
   const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:'MTEST123',
-   fetchImpl:async()=>({ok:true,json:async()=>[item]})});
+   fetchImpl:async url=>({ok:true,json:async()=>url.includes('?')?[base]:detail})});
   await assert.rejects(client.listCheckoutsByReference(reference),/mismatch|hosted URL/);
  }
  const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:'MTEST123',
