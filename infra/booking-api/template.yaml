@@ -61,6 +61,16 @@ Parameters:
     AllowedValues: ['true', 'false']
     Default: 'false'
     Description: Explicit staging-only owner decline/cancel opt-in; approval remains blocked until payment verification.
+  ManagementApprovalEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: Staging-only owner approval; cannot create a checkout or send a payment link.
+  ManagementCheckoutEnabled:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+    Description: Staging-only checkout registration; leave false until IAM, Cognito and sandbox acceptance gates pass.
   ManagementCognitoPoolId:
     Type: String
     Default: ''
@@ -125,6 +135,9 @@ Conditions:
   ManagementWritesEnabledCondition: !And
     - !Condition ManagementPreviewEnabledCondition
     - !Equals [!Ref ManagementWritesEnabled, 'true']
+  ManagementCheckoutEnabledCondition: !And
+    - !Condition ManagementWritesEnabledCondition
+    - !Equals [!Ref ManagementCheckoutEnabled, 'true']
   MonitoringEnabledCondition: !And
     - !Equals [!Ref CalendarMonitorEnabled, 'true']
     - !Equals [!Ref BookingEnvironment, 'staging']
@@ -276,6 +289,8 @@ Resources:
           BOOKINGS_TABLE: !Ref BookingTable
           BOOKING_REQUESTS_INDEX: BookingRequestsIndex
           MANAGEMENT_WRITES_ENABLED: 'true'
+          MANAGEMENT_APPROVAL_ENABLED: !Ref ManagementApprovalEnabled
+          MANAGEMENT_CHECKOUT_ENABLED: 'false'
           MANAGEMENT_COGNITO_CLIENT_ID: !Ref ManagementCognitoClientId
           MANAGEMENT_COGNITO_ISSUER: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${ManagementCognitoPoolId}
       Policies:
@@ -297,6 +312,56 @@ Resources:
           Properties:
             ApiId: !Ref ManagementApi
             Path: /admin/bookings/{bookingId}/actions/{action}
+            Method: POST
+            Auth:
+              Authorizer: ManagementCognito
+
+  # Checkout creation has its own conditional Lambda and IAM role, isolated
+  # from read-only management and ordinary owner approval/decline operations.
+  # No route or execution role exists unless ManagementCheckoutEnabled=true
+  # AND the independent management write/preview staging gates are satisfied.
+  ManagementCheckoutFunction:
+    Condition: ManagementCheckoutEnabledCondition
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: booking-admin-http.handler
+      CodeUri: ../../services/booking-api/
+      MemorySize: 256
+      Timeout: 20
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          AWS_REGION: !Ref AWS::Region
+          BOOKING_ENVIRONMENT: staging
+          BOOKINGS_TABLE: !Ref BookingTable
+          BOOKING_REQUESTS_INDEX: BookingRequestsIndex
+          MANAGEMENT_WRITES_ENABLED: 'true'
+          MANAGEMENT_APPROVAL_ENABLED: 'false'
+          MANAGEMENT_CHECKOUT_ENABLED: 'true'
+          MANAGEMENT_COGNITO_CLIENT_ID: !Ref ManagementCognitoClientId
+          MANAGEMENT_COGNITO_ISSUER: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${ManagementCognitoPoolId}
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:TransactWriteItems
+              Resource: !GetAtt BookingTable.Arn
+            - Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/staging/sumup/api-key
+                - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/staging/sumup/merchant-code
+      Events:
+        RegisterCheckout:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ManagementApi
+            Path: /admin/bookings/{bookingId}/checkout/register
             Method: POST
             Auth:
               Authorizer: ManagementCognito
