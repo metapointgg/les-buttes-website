@@ -1,6 +1,8 @@
 // LB-08 safe CLI: receives ONLY Status/ExecutionStatus/Changes fields
 // from a projected CloudFormation describe-change-set response (no parameters).
 import {inspectManagementPreviewChangeSet} from './lb08-management-changeset-review.mjs';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
 export async function reviewFromStdin(input=process.stdin){
  let source='';
  for await(const chunk of input){
@@ -13,7 +15,7 @@ export async function reviewFromStdin(input=process.stdin){
  return inspectManagementPreviewChangeSet({status:data.Status,executionStatus:data.ExecutionStatus,
   changes:data.Changes});
 }
-if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
  try{
   const result=await reviewFromStdin();
   process.stdout.write(JSON.stringify(result,null,2)+'\n');
