@@ -40,7 +40,7 @@ try{
  if($LASTEXITCODE -ne 0){throw 'SAM lint failed.'}
  & sam build --template-file $template --build-dir .aws-sam/management-preview-isolated-build --profile $Profile --region $Region
  if($LASTEXITCODE -ne 0){throw 'SAM build failed.'}
- & sam package --template-file .aws-sam/management-preview-isolated-build/template.yaml --resolve-s3 --output-template-file .aws-sam/management-preview-isolated-packaged.yaml --profile $Profile --region $Region
+ & sam package --template-file .aws-sam/management-preview-isolated-build/template.yaml --s3-bucket les-buttes-cottage-manag-artifacts-145608514666-eu-west-2 --s3-prefix booking-management-preview-isolated/sam --output-template-file .aws-sam/management-preview-isolated-packaged.yaml --profile $Profile --region $Region
  if($LASTEXITCODE -ne 0){throw 'SAM package failed.'}
  $name='lb08-management-isolated-'+[DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
  & aws cloudformation create-change-set --stack-name $StackName --change-set-name $name --change-set-type CREATE --template-body 'file://.aws-sam/management-preview-isolated-packaged.yaml' --parameters ParameterKey=StagingBookingTableName,ParameterValue=les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --profile $Profile --region $Region --description 'JWT GET-only isolated management stack; review only; NO execution' --output json
