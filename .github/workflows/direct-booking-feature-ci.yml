@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm --prefix services/booking-api ci --no-audit --no-fund
+          npm --prefix services/booking-api install --no-package-lock --no-audit --no-fund
           sam validate --template-file services/booking-api/staging-management-preview-isolated.template.yaml --region eu-west-2
           sam build --template-file services/booking-api/staging-management-preview-isolated.template.yaml --build-dir .aws-sam/lb04-management-diagnostic --region eu-west-2
           test -s .aws-sam/lb04-management-diagnostic/template.yaml
