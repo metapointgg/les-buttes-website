@@ -8,7 +8,7 @@ Parameters:
     Description: Existing authoritative staging booking table; this stack never creates or modifies it.
   CognitoIssuer:
     Type: String
-    AllowedPattern: '^https://cognito-idp\\.eu-west-2\\.amazonaws\\.com/eu-west-2_[A-Za-z0-9]+$'
+    AllowedPattern: '^https://cognito-idp\.eu-west-2\.amazonaws\.com/eu-west-2_[A-Za-z0-9]+$'
     Default: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa
   CognitoAudience:
     Type: String
