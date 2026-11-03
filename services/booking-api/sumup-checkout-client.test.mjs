@@ -91,3 +91,26 @@ test('LB-08 reference lookup fails closed for mismatched provider list or detail
  await assert.rejects(client.listCheckoutsByReference(reference),/Untrusted/);
  await assert.rejects(client.listCheckoutsByReference('unsafe reference'),/Invalid/);
 });
+
+test('LB-08 read-only reference inspection recognises paid sandbox checkout',async()=>{
+ const reference='lb08_existing_123',id='eb6a0f73-c344-42b4-95ec-70aa296d1496';
+ let calls=0;
+ const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',merchantCode:'MTEST123',
+  fetchImpl:async url=>{calls++;assert.equal(url,
+   'https://api.sumup.com/v0.1/checkouts?checkout_reference='+reference);
+   return {ok:true,json:async()=>[{id,checkout_reference:reference,
+    merchant_code:'MTEST123',currency:'GBP',amount:1,status:'PAID'}]};}});
+ const items=await client.inspectCheckoutReference(reference);
+ assert.equal(calls,1);assert.equal(items.length,1);
+ assert.deepEqual(items[0],{checkoutId:id,status:'PAID',amountPence:100,currency:'GBP',
+  merchantMatched:true,referenceMatched:true,reusablePending:false});
+});
+test('LB-08 read-only reference inspection rejects mismatches and malformed list response',async()=>{
+ const reference='lb08_existing_123',id='eb6a0f73-c344-42b4-95ec-70aa296d1496';
+ for(const items of [[{id,checkout_reference:reference,merchant_code:'OTHER',
+  currency:'GBP',amount:1,status:'PAID'}],{items:[]}]){
+  const client=createSumUpClient({enabled:true,apiKey:'sup_sk_mock',
+   merchantCode:'MTEST123',fetchImpl:async()=>({ok:true,json:async()=>items})});
+  await assert.rejects(client.inspectCheckoutReference(reference),/mismatch|Untrusted/);
+ }
+});
