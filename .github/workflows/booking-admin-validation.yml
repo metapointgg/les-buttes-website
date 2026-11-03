@@ -32,4 +32,6 @@ jobs:
           node --test management-preview/model.test.mjs
       - uses: aws-actions/setup-sam@v2
       - name: Validate SAM template without deployment
-        run: sam validate --lint --template-file infra/booking-api/template.yaml
+        run: |
+          sam validate --lint --template-file infra/booking-api/template.yaml
+          sam validate --lint --template-file services/booking-api/staging-management-preview-isolated.template.yaml
