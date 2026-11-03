@@ -22,7 +22,8 @@ export function identityFromGateway(event,{issuer=process.env.MANAGEMENT_COGNITO
  return role?{subject:claims.sub,role}:null;
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
-export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=()=>false}){
+export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=()=>false,
+ approvalEnabled=()=>false}){
  return async event=>{
    try{
      const method=event?.requestContext?.http?.method;
@@ -65,13 +66,24 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
        try{payload=JSON.parse(event.body);}catch{return reply(400,{error:'Invalid request'});}
        if(!payload||typeof payload!=='object'||Array.isArray(payload))
          return reply(400,{error:'Invalid request'});
-       if(match[2]==='approve')
-         return reply(503,{error:'Approval requires verified payment integration'});
-       if(Object.keys(payload).some(k=>k!=='reason')||
+       if(match[2]==='approve'&&!approvalEnabled())
+         return reply(503,{error:'Booking approval disabled'});
+       if(match[2]==='approve'){
+         const allowed=['approved','amountPence','priceChangeReason'];
+         if(Object.keys(payload).some(k=>!allowed.includes(k))||
+            payload.approved!==true||!Number.isSafeInteger(payload.amountPence)||
+            payload.amountPence<1||payload.amountPence>100000000||
+            (payload.priceChangeReason!==undefined&&
+             (typeof payload.priceChangeReason!=='string'||payload.priceChangeReason.length>1000)))
+           return reply(400,{error:'Explicit approval and valid GBP amount in pence required'});
+       }else if(Object.keys(payload).some(k=>k!=='reason')||
           typeof payload.reason!=='string'||payload.reason.trim().length<5||payload.reason.length>1000)
          return reply(400,{error:'A recorded reason is required'});
        try{
-         const result=await writeAction({identity:id,bookingId:match[1],action:match[2],reason:payload.reason});
+         const result=await writeAction({identity:id,bookingId:match[1],action:match[2],
+           ...(match[2]==='approve'?{approval:{amountPence:payload.amountPence,
+             ...(payload.priceChangeReason!==undefined?
+              {priceChangeReason:payload.priceChangeReason}:{})}}:{reason:payload.reason})});
          return reply(200,result);
        }catch(e){
          if(e?.name==='TransactionCanceledException')return reply(409,{error:'Booking changed; refresh and retry'});
@@ -148,6 +160,7 @@ export async function handler(event){
    deployedHandler=createAdminHandler({
      reader:createReadOnlyAdminReader({authorise:async request=>identityFromGateway(request)}),
      writeEnabled:()=>staging,
+     approvalEnabled:()=>staging&&process.env.MANAGEMENT_APPROVAL_ENABLED==='true',
      writeConfig:staging?async ({operation,...args})=>operation==='rollback'?rollbackOwnerConfiguration({db,table,...args}):publishOwnerConfiguration({db,table,...args}):undefined,
      writeAction:staging?async args=>executeOwnerTransition({
        ...args,db,table,
