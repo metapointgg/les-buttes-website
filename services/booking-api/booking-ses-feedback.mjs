@@ -50,8 +50,7 @@ export async function reconcileAuthenticatedSesFeedback({
     record.type!==event.type||record.templateId!==event.templateId)
   throw Error('SES feedback cannot be matched to authoritative outbox');
  const previous=record.state;
- if(terminal.has(previous)||previous===event.state||
-    (event.state==='DELIVERED'&&previous!=='ACCEPTED_BY_SES_NOT_DELIVERED'))
+ if(terminal.has(previous)||previous===event.state)
   return {status:'IGNORED_ALREADY_RECONCILED',state:previous};
  if(previous!=='ACCEPTED_BY_SES_NOT_DELIVERED'&&previous!=='DELIVERED')
   throw Error('SES feedback requires a recorded provider acceptance');
