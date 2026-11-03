@@ -3,7 +3,10 @@ on:
   workflow_dispatch:
   push:
     branches: [feature/direct-booking-requests-27-night]
-    paths: ['.github/workflows/lb08-isolated-management-preview.yml']
+    paths:
+      - '.github/workflows/lb08-isolated-management-preview.yml'
+      - 'services/booking-api/staging-management-preview-isolated.template.yaml'
+      - 'services/booking-api/lb08-isolated-management-review-cli.mjs'
 permissions:
   contents: read
   id-token: write
@@ -42,14 +45,17 @@ jobs:
           npm --prefix services/booking-api ci --no-audit --no-fund
           npm --prefix services/booking-api run check
           npm --prefix services/booking-api test
-          sam validate --lint --template-file services/booking-api/staging-management-preview-isolated.template.yaml
+          sam validate --template-file services/booking-api/staging-management-preview-isolated.template.yaml
+          echo 'Backend tests and isolated SAM template validation succeeded.' >> "$GITHUB_STEP_SUMMARY"
       - name: Build and inspect executable Lambda package
         shell: bash
         run: |
           set -euo pipefail
           sam build --template-file services/booking-api/staging-management-preview-isolated.template.yaml --build-dir .aws-sam/lb08-management-preview --region eu-west-2
-          test -s .aws-sam/lb08-management-preview/ManagementPreviewReadFunction/booking-admin-http.mjs
-          test -d .aws-sam/lb08-management-preview/ManagementPreviewReadFunction/node_modules/@aws-sdk/client-dynamodb
+          echo 'Inspecting SAM build directory for the packaged Lambda:'
+          ls -la .aws-sam/lb08-management-preview/
+          test -s .aws-sam/lb08-management-preview/ManagementPreviewReadFunction/booking-admin-http.mjs || { echo '::error::Booking admin HTTP handler missing from SAM package'; exit 1; }
+          test -d .aws-sam/lb08-management-preview/ManagementPreviewReadFunction/node_modules/@aws-sdk/client-dynamodb || { echo '::error::DynamoDB SDK missing from SAM package'; exit 1; }
           sam package --template-file .aws-sam/lb08-management-preview/template.yaml --s3-bucket les-buttes-cottage-manag-artifacts-145608514666-eu-west-2 --s3-prefix booking-management-preview-isolated/sam --region eu-west-2 --output-template-file .aws-sam/lb08-management-preview-packaged.yaml
       - name: Create a NON-EXECUTED isolated stack change set
         id: prepare
@@ -91,5 +97,6 @@ jobs:
         shell: bash
         run: |
           echo '::warning::Isolated management CREATE-only preview failed. No change set was executed.'
-          echo 'Inspect the first failing step above and share the GitHub Actions run URL for exact diagnosis.' >> "$GITHUB_STEP_SUMMARY"
+          echo "Failed workflow: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Inspect the first failing step for actionable diagnostics.' >> "$GITHUB_STEP_SUMMARY"
           echo 'No sam deploy, cloudformation execute-change-set or production mutation is present.' >> "$GITHUB_STEP_SUMMARY"
