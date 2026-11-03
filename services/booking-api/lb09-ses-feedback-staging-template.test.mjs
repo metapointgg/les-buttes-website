@@ -35,5 +35,5 @@ test('LB-09 only forwards delivery, bounce and complaint from existing SES confi
  assert.match(template,/Type: AWS::SES::ConfigurationSetEventDestination/);
  assert.match(template,/ConfigurationSetName: !Ref SesConfigurationSetName/);
  assert.match(template,/MatchingEventTypes:\s*\n\s*- delivery\s*\n\s*- bounce\s*\n\s*- complaint/);
- assert.match(template,/SNSDestination:\s*\n\s*TopicARN: !Ref SesFeedbackTopic/);
+ assert.match(template,/SnsDestination:\s*\n\s*TopicARN: !Ref SesFeedbackTopic/);
 });
