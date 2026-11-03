@@ -57,25 +57,31 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
    const response=await call(CHECKOUT+'?checkout_reference='+encodeURIComponent(reference));
    if(!Array.isArray(response))throw Error('Untrusted SumUp checkout list response');
    if(response.length>10)throw Error('Ambiguous SumUp checkout list');
-   return response.map(item=>{
+   // A list response may omit hosted_checkout_url. Hydrate each candidate
+   // using a fresh provider GET; a missing URL must never be invented.
+   return Promise.all(response.map(async item=>{
     if(item?.checkout_reference!==reference||item.merchant_code!==merchantCode||
        item.currency!=='GBP'||!Number.isFinite(Number(item.amount))||
        !Number.isSafeInteger(Math.round(Number(item.amount)*100))||
        item.status!=='PENDING'||typeof item.id!=='string'||
        !/^[A-Za-z0-9-]{8,100}$/.test(item.id))
      throw Error('Provider checkout mismatch; manual reconciliation required');
-    // Hosted URL may not be present in a list response; never invent one.
+    const detail=await call(CHECKOUT+'/'+encodeURIComponent(item.id));
+    if(detail?.id!==item.id||detail.checkout_reference!==reference||
+       detail.merchant_code!==merchantCode||detail.currency!=='GBP'||
+       detail.status!=='PENDING'||Number(detail.amount)!==Number(item.amount))
+     throw Error('Provider checkout detail mismatch; manual reconciliation required');
     let hostedCheckoutUrl;
     try{
-     const url=new URL(item.hosted_checkout_url);
+     const url=new URL(detail.hosted_checkout_url);
      if(url.protocol==='https:'&&url.hostname==='checkout.sumup.com'&&
         !url.username&&!url.password)hostedCheckoutUrl=url.toString();
     }catch{}
     if(!hostedCheckoutUrl)
      throw Error('Provider checkout lacks verified hosted URL; manual reconciliation required');
     return {checkoutId:item.id,reference,amountPence:Math.round(Number(item.amount)*100),
-     currency:'GBP',status:item.status,hostedCheckoutUrl};
-   });
+     currency:'GBP',status:'PENDING',hostedCheckoutUrl};
+   }));
   },
 
   async createCheckout(input){
