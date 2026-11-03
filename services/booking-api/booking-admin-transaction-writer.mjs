@@ -28,12 +28,10 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  if(action==='approve'){
    if(!approval||!Number.isSafeInteger(approval.amountPence)||approval.amountPence<=0)
      throw Error('Approval requires a positive amount in pence');
-   if(typeof approval.paymentUrl!=='string')throw Error('Approval requires a payment URL');
-   let url;
-   try{url=new URL(approval.paymentUrl);}catch{throw Error('Invalid payment URL');}
-   const allowedHost=process.env.BOOKING_ENVIRONMENT==='staging'?'test.invalid':'pay.sumup.com';
-   if(url.protocol!=='https:'||url.hostname!==allowedHost||url.username||url.password)
-     throw Error('Payment URL must be an approved HTTPS SumUp host');
+   // Approval precedes checkout creation. Do not require a speculative
+   // payment URL or allow the owner to inject an unregistered payment link.
+   if(Object.hasOwn(approval,'paymentUrl'))
+     throw Error('Approval cannot supply a payment URL; register SumUp checkout separately');
    const quotedPence=Math.round(Number(booking.quote?.totalGBP)*100);
    if(!Number.isSafeInteger(quotedPence)||quotedPence<=0)throw Error('Booking quote missing');
    if(quotedPence!==approval.amountPence&&
@@ -49,10 +47,9 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  values[':action']=action;
  let update='SET #status = :next, updatedAt = :updatedAt, lastManagementActor = :actor, lastManagementAction = :action';
  if(action==='approve'){
-   update+=', holdExpiresAt = :nextExpiry, approvedAmountGBP = :amount, paymentUrl = :paymentUrl';
+   update+=', holdExpiresAt = :nextExpiry, approvedAmountGBP = :amount';
    values[':nextExpiry']=nowEpoch+48*3600;
    values[':amount']=approval.amountPence/100;
-   values[':paymentUrl']=approval.paymentUrl;
    if(approval.priceChangeReason?.trim()){
      update+=', priceChangeReason = :priceReason';
      values[':priceReason']=approval.priceChangeReason.trim();
