@@ -24,6 +24,7 @@ test('LB-08 checkout has its own staging-only JWT route and narrow role',()=>{
  assert.match(block,/Handler: booking-admin-http\.handler/);
  assert.match(block,/MANAGEMENT_CHECKOUT_ENABLED: 'true'/);
  assert.match(block,/MANAGEMENT_APPROVAL_ENABLED: 'false'/);
+ assert.doesNotMatch(block,/^\s+AWS_REGION:/m,'Lambda supplies reserved AWS_REGION automatically');
  assert.match(block,/Action: ssm:GetParameter/);
  assert.match(block,/parameter\/les-buttes\/staging\/sumup\/api-key/);
  assert.match(block,/parameter\/les-buttes\/staging\/sumup\/merchant-code/);
