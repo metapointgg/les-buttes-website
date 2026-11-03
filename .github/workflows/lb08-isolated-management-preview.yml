@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm --prefix services/booking-api ci --no-audit --no-fund
+          npm --prefix services/booking-api install --no-package-lock --no-audit --no-fund
           npm --prefix services/booking-api run check
           npm --prefix services/booking-api test
           sam validate --template-file services/booking-api/staging-management-preview-isolated.template.yaml
