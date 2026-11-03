@@ -4,7 +4,7 @@
 
 The production-shaped payment confirmation transaction uses `UNIT#geranium` and `UNIT#honeysuckle` keys. **Never** run its synthetic booking data on the existing `les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK` table: that could collide with real availability.
 
-The dedicated table is `les-buttes-lb08-isolated-acceptance`, defined by `services/booking-api/lb08-isolated-acceptance-table.template.yaml`. It is a separate, disposable DynamoDB resource in `eu-west-2`, with `PK`/ `SK` keys, on-demand billing, and TTL. No application or production service may reference it. The template is **not deployed automatically**.
+The dedicated table is `les-buttes-lb08-staging-isolated-acceptance`, defined by `services/booking-api/lb08-isolated-acceptance-table.template.yaml`. It is a separate, disposable DynamoDB resource in `eu-west-2`, with `PK`/ `SK` keys, on-demand billing, and TTL. No application or production service may reference it. The template is **not deployed automatically**.
 
 ### Operator deployment – only after explicit approval
 
@@ -13,14 +13,14 @@ From repository root, review the exact change set prior to execution:
 ```powershell
 aws cloudformation deploy `
   --template-file services/booking-api/lb08-isolated-acceptance-table.template.yaml `
-  --stack-name les-buttes-lb08-isolated-acceptance `
+  --stack-name les-buttes-lb08-staging-isolated-acceptance `
   --region eu-west-2 `
   --no-execute-changeset
 ```
 
 The above **creates a change set but does not execute it**. Inspect it in AWS CloudFormation, confirm the only new resource is the isolated DynamoDB table, and separately approve execution. Confirm account ID, name, and region. Never target the booking staging stack or production.
 
-After an approved stack deployment, independently run DescribeTable against `les-buttes-lb08-isolated-acceptance`. Do not substitute another table if deployment fails.
+After an approved stack deployment, independently run DescribeTable against `les-buttes-lb08-staging-isolated-acceptance`. Do not substitute another table if deployment fails.
 
 ### Acceptance criteria (not yet executed)
 
