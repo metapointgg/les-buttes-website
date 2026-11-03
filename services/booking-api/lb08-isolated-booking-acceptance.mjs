@@ -91,7 +91,7 @@ export async function runIsolatedBookingAcceptance({env=process.env,clientFactor
      KeyConditionExpression:'PK = :pk AND begins_with(SK, :prefix)',
      ExpressionAttributeValues:{':pk':bookingKey.PK,':prefix':'AUDIT#'},
      ConsistentRead:true}));
-    const cleanup=[
+    const candidates=[
      {Key:bookingKey,check:'id'},
      {Key:{PK:bookingKey.PK,SK:'PAYMENT#CHECKOUT'},check:'bookingId'},
      ...slots.map(Key=>({Key,check:'id'})),
@@ -99,7 +99,14 @@ export async function runIsolatedBookingAcceptance({env=process.env,clientFactor
      ...(audits.Items??[]).filter(x=>x.bookingId===id)
       .map(x=>({Key:{PK:x.PK,SK:x.SK},check:'bookingId'}))
     ];
-    await db.send(new TransactWriteCommand({TransactItems:cleanup.map(x=>({
+    const found=await Promise.all(candidates.map(async x=>({
+     ...x,record:(await db.send(new GetCommand({
+      TableName:table,Key:x.Key,ConsistentRead:true}))).Item
+    })));
+    if(found.some(x=>x.record&&x.record[x.check]!==id))
+     throw Error('Unexpected record ownership during cleanup');
+    const cleanup=found.filter(x=>x.record);
+    if(cleanup.length)await db.send(new TransactWriteCommand({TransactItems:cleanup.map(x=>({
      Delete:{TableName:table,Key:x.Key,
       ConditionExpression:'#owner = :id',
       ExpressionAttributeNames:{'#owner':x.check},
