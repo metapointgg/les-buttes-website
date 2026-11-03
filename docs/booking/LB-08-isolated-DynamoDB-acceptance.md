@@ -118,3 +118,15 @@ The deployed original stack has 14 resources, with an unconditional, currently A
 From repository root, `powershell -File infra/booking-api/prepare-management-preview-changeset.ps1` (PowerShell 7 on Windows may use `pwsh -File`) executes **read-only preflight**, no SAM build or CloudFormation change set. After review, `powershell -File infra/booking-api/prepare-management-preview-changeset.ps1 -Prepare` validates/builds/packages staging SAM code and creates a **NON-EXECUTED** CloudFormation review change set. It does not deploy or execute. SAM packaging uploads artefacts to staging S3; `-Prepare` is therefore not a purely read-only action, but does not update running Lambda, DynamoDB or API resources. AWS CLI, SAM CLI and appropriate staging-profile permissions are required. `-Profile <configured-profile>` selects the account's AWS CLI profile. Avoid copying secret-bearing CloudFormation/API output into issue comments or chat.
 
 Before any change-set execution, inspect **every** action and replacement flag. Reject any removal or replacement of the BookingTable or index; unexpected changes to public booking function, calendar monitoring or guest request API; any unexpected IAM enlargement; any unauthenticated admin route; or any attempt to enable management writes, approval or checkout. The script alone is not proof that a change set is safe to execute.
+
+### Change-set inspection gate – 3 November 2026
+
+Read-only AWS recheck confirmed account `145608514666`, staging stack `UPDATE_COMPLETE`, table and `BookingRequestsIndex` `ACTIVE`, existing booking requests and calendar monitor enabled, and **zero pending CloudFormation change sets**.
+
+After a non-executed `lb08-management-review-YYYYMMDDHHMMSS` change set has been created with the guarded preparer, inspect it with:
+
+`powershell -File infra/booking-api/review-management-preview-changeset.ps1 -ChangeSetName lb08-management-review-YYYYMMDDHHMMSS -Profile default`
+
+This command reads CloudFormation's **projected** `Status`, `ExecutionStatus` and `Changes` fields only, excluding parameter values and secure tokens, then runs the fail-closed `lb08-management-changeset-review-cli.mjs` resource classifier. It rejects any BookingTable or other existing public API/monitoring resource modification, replacement or deletion, unexpected IAM or payment Lambda, any checkout/approval write resources, incomplete change sets, and anything except anticipated JWT read-only management additions. A clean result is only clearance for **manual review**, not permission to execute. It does not execute a change set.
+
+If the review rejects an existing public booking Lambda modification, do not loosen the reviewer: investigate the package/template reconciliation and build a narrower infrastructure-only change set that leaves all current staging code and services unaltered.
