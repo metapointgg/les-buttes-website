@@ -149,12 +149,10 @@ async function main(){
     console.log('Please complete payment within 48 hours. Your booking is confirmed only after we have verified the payment.');
     console.log('NOTE: Send the terms AND payment link manually; no guest message was dispatched.');
   }else if(command==='confirm'){
-    const [id,paymentReference]=args;
-    if(!paymentReference||paymentReference.length<6)fail('Usage: confirm ID VERIFIED_SUMUP_PAYMENT_REFERENCE');
-    if(process.env.BOOKING_ENVIRONMENT==='staging' && !paymentReference.startsWith('TEST-'))fail('Staging confirmations must use TEST- payment references');
-    if(process.env.BOOKING_ENVIRONMENT!=='staging' && paymentReference.startsWith('TEST-'))fail('Synthetic payment references cannot confirm live bookings');
-    await change(id,'APPROVED_AWAITING_PAYMENT','CONFIRMED',{paymentReference,confirmedAt:new Date().toISOString()});
-    console.log('Confirmed; the calendar now blocks these nights permanently. Send confirmation email.');
+    // LB-08: manual proof strings are not authenticated provider payment evidence.
+    // Refuse before reading or writing any booking. Only the server-side payment
+    // reconciler can confirm via a fresh SumUp checkout retrieval plus an atomic claim.
+    fail('Manual payment confirmation disabled: use verified SumUp payment reconciliation');
   }else if(command==='decline'){
     if(!args[0])fail('Usage: decline ID');
     await change(args[0],'REQUESTED','DECLINED');
@@ -178,6 +176,6 @@ async function main(){
   }else if(command==='block'){
     const [unit,start,end,...label]=args;
     await putBlock(unit,start,end,label.join(' '));
-  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | confirm ID PAYMENT_REFERENCE | decline ID | cancel ID REASON | block COTTAGE START END LABEL | classify ID SOURCE RESERVATION_STATUS [EXTERNAL_REF] | record-direct-price ID geranium=GBP honeysuckle=GBP | unblock ID');
+  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | decline ID | cancel ID REASON | block COTTAGE START END LABEL | classify ID SOURCE RESERVATION_STATUS [EXTERNAL_REF] | record-direct-price ID geranium=GBP honeysuckle=GBP | unblock ID');
 }
 main().catch(e=>{console.error(e.message);process.exitCode=1;});
