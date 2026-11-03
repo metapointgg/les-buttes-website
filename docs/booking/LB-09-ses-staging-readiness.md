@@ -1,16 +1,22 @@
-# LB-09 — Staging SES sender readiness and launch gate
+# LB-09 — SES sender readiness by AWS region
 
-**Read-only live check: 3 November 2026, AWS account 145608514666, eu-west-2.**
+**Verified 3 November 2026. Account 145608514666. No emails sent.**
 
-AWS SES `ListIdentities` includes `lesbuttes.com` and `ozanne-family.com`. However, `GetIdentityVerificationAttributes` reports **Failed** for `lesbuttes.com` and **Success** for `ozanne-family.com`. `GetIdentityDkimAttributes` reports `DkimEnabled=true` and **DkimVerificationStatus=Failed** for `lesbuttes.com`. AWS reports Max24HourSend 50,000, but **quota does not prove sender identity readiness**. No email was sent during inspection.
+## US East (N. Virginia), `us-east-1` — configured identity; sandbox restriction
 
-## Required remediation
+SESv2 `GetEmailIdentity` confirms `lesbuttes.com` **VerifiedForSendingStatus=true**, `VerificationStatus=SUCCESS`, DKIM **SUCCESS** (signing enabled), and custom MAIL FROM domain `mail.lesbuttes.com` **SUCCESS**. This matches the user's AWS Health notification. `GetAccount` confirms `SendingEnabled=true`, **ProductionAccessEnabled=false**, `Max24HourSend=200`, `MaxSendRate=1` and `SentLast24Hours=0`.
 
-1. Review the SES domain-identity verification requirements and the exact DKIM DNS records displayed for `lesbuttes.com` in the eu-west-2 console. Check the live public DNS records against SES rather than replacing records from memory. Where DNS is hosted in another service, make only the approved record changes.
-2. Recheck `GetIdentityVerificationAttributes` and `GetIdentityDkimAttributes` until both the domain verification and DKIM verification are `Success`. **Do not** enable automatic guest messages or send test guest-facing email from `lesbuttes.com` before this gate passes.
-3. Implement LB-09 SES staging template and durable outbox/idempotency logic, with unit tests for approved/payment instructions, decline, confirmed, cancellation, hold expiry and failure/retry scenarios. Separate sender identity, staging recipient restrictions and production rollout.
-4. Verify a staging message to an explicitly approved test mailbox, delivery/failure signals and non-duplication. Then approve sender/domain and communication wording separately for production.
+**Conclusion:** domain, DKIM and MAIL FROM are configured in `us-east-1`; this region's SES account is in the sandbox. Sending is permitted only to verified recipients (or the SES mailbox simulator) until AWS grants production access. Do not send live guest booking messages automatically.
 
-This is an independent blocker from LB-08 (SumUp transaction verification and payment status). The existing **read-only isolated management stack** work is staging infrastructure prerequisite, not completion of LB-08's payment webhook acceptance criteria.
+## London, `eu-west-2` — a separate regional identity
 
-**Status:** LB-09 remains unchecked; domain/DKIM fix and SES-integrated staging delivery acceptance are outstanding.
+Prior read-only SESv1 inspection reported `lesbuttes.com` identity verification **Failed** and DKIM verification **Failed** in `eu-west-2`. That does not contradict the successful setup in `us-east-1`: SES identity verification is region-specific. Do not say the domain is universally unverified.
+
+## Implementation decision and acceptance work
+
+1. Prefer the **already verified `us-east-1` SES identity** for staging, explicitly configured as a separately regional SES client, or independently verify `eu-west-2` if keeping all services regional is required. Do not silently use the Lambda runtime's `eu-west-2` default SES region.
+2. Use verified test recipient addresses or the SES mailbox simulator while production sending remains disabled. Request SES production access in `us-east-1` before unrestricted guest mail, subject to AWS approval.
+3. Build controlled staging SES templates, immutable delivery/outbox records, idempotent retries, bounce/complaint handling, and allowlisted test recipients. Test approval/payment instruction, decline, confirmation, cancellation, expiry and failure states.
+4. Demonstrate sender authentication, message delivery and no duplicates through an authorised staging test before marking LB-09 complete. Production messages remain disabled until owner approval.
+
+**LB-09 status: open.** **The earlier diagnosis 'lesbuttes.com DNS/DKIM must be repaired' was incorrect as a global statement and has been replaced.** Outstanding: production access in chosen SES region and full application delivery acceptance. No customer email has been sent.
