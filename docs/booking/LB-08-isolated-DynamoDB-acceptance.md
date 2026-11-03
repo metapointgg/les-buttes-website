@@ -56,3 +56,9 @@ The test seeds an artificial one-pound booking for seven nights in **2099**, wit
 
 **Do not substitute** the real staging booking table or the existing real SumUp sandbox transaction ID. On failure, inspect the isolated table for leftover `LB08_ISOLATED_ACCEPTANCE` items and avoid destroying the table until cleanup is verified. This test confirms transactional booking reconciliation with *simulated provider evidence*, not an independently paid guest booking.
 
+
+### Confirmation safety boundary (3 November 2026)
+
+The legacy host-only CLI command `node admin.mjs confirm` has been disabled. A manually supplied payment reference—even one prefixed `TEST-`—cannot establish payment. The only valid path to payment-based booking confirmation is `reconcileVerifiedPayment`, which independently fetches the provider checkout, verifies the single successful transaction, then atomically updates booking and reserved nights with a unique transaction claim. Do not re-enable manual confirmation as part of the staging deployment.
+
+The confirmed synthetic DynamoDB acceptance runner does not itself deploy or expose a public payment callback. Deployed end-to-end checkout orchestration, secure triggering and guest communications remain separately gated.
