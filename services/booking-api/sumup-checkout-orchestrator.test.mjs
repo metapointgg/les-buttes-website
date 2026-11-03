@@ -52,3 +52,33 @@ test('LB-07 provider conflicts and unsafe environment fail closed',async()=>{
  await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,actor:'owner',
   sumup:{createCheckout:async()=>checkout},lookupProviderByReference:async()=>[{...checkout,amountPence:10}]}),/manual reconciliation/);
 });
+
+test('LB-08 checkout orchestrator uses SumUp client reference lookup without creating duplicate',async()=>{
+ let creations=0,lookups=0,claims=0;
+ const db={send:async cmd=>{
+  if(cmd.input.Key)return {};
+  if(cmd.input.TransactItems)claims++;
+  return {};
+ }};
+ const result=await createAndRegisterCheckout({db,table,bookingId,amountPence:163000,
+  actor:'staging-owner',sumup:{
+   listCheckoutsByReference:async ref=>{
+    lookups++;assert.equal(ref,reference);return [checkout];},
+   createCheckout:async()=>{creations++;throw Error('Must not create another checkout');}
+  }});
+ assert.equal(result.status,'REGISTERED');
+ assert.equal(creations,0);
+ assert.equal(lookups,1);
+ assert.equal(claims,1);
+});
+test('LB-08 lookup errors fail closed before obtaining creation claim',async()=>{
+ let claims=0,creations=0;
+ const db={send:async cmd=>{if(cmd.input.TransactItems)claims++;return {};}};
+ await assert.rejects(createAndRegisterCheckout({db,table,bookingId,amountPence:163000,
+  actor:'staging-owner',sumup:{
+   listCheckoutsByReference:async()=>{throw Error('SumUp lookup unavailable');},
+   createCheckout:async()=>{creations++;}
+  }}),/SumUp lookup unavailable/);
+ assert.equal(claims,0);
+ assert.equal(creations,0);
+});
