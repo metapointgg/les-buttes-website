@@ -26,3 +26,12 @@ test('LB-08 isolated preview cannot create checkout or modify booking state',()=
  assert.match(template,/BOOKING_ENVIRONMENT: staging/);
  assert.match(template,/ReservedConcurrentExecutions: 2/);
 });
+
+test('LB-08 Cognito issuer parameter pattern accepts its default and rejects other regions',()=>{
+ const match=template.match(/  CognitoIssuer:\n(?:.*\n)*?    AllowedPattern: '([^']+)'\n    Default: (\S+)/);
+ assert.ok(match,'Cognito issuer pattern and default are required');
+ const re=new RegExp(match[1]);
+ assert.equal(re.test(match[2]),true,'SAM default must satisfy AllowedPattern');
+ assert.equal(re.test('https://cognito-idp.eu-west-1.amazonaws.com/eu-west-2_Wvo0I3cTa'),false);
+ assert.equal(re.test('https://cognito-idp.eu-west-2.amazonaws.com.evil.org/eu-west-2_Wvo0I3cTa'),false);
+});
