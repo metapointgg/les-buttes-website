@@ -88,10 +88,10 @@ Resources:
         Name: les-buttes-ses-feedback-staging
         Enabled: true
         MatchingEventTypes:
-          - delivery
-          - bounce
-          - complaint
-        SNSDestination:
+          - DELIVERY
+          - BOUNCE
+          - COMPLAINT
+        SnsDestination:
           TopicARN: !Ref SesFeedbackTopic
 Outputs:
   SesFeedbackTopicArn:
