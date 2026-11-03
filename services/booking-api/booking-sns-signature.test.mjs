@@ -41,7 +41,11 @@ test('LB-09 SNS certificate URL accepts only the expected AWS regional signing e
  ])assert.throws(()=>snsCertificateUrl({SigningCertURL:url}),undefined,url);
 });
 test('LB-09 verifies real RSA-SHA256 signature over SNS canonical notification, then rejects tampering',async()=>{
- const {key,certificate}=makeTestCertificate(),base=makeNotification();
+ const {key,certificate}=makeTestCertificate();
+ // The test certificate is minted after module import; keep the frozen test clock
+ // safely inside its validity period, including when openssl crosses a second.
+ const clock=Date.now()+2000;
+ const base={...makeNotification(),Timestamp:new Date(clock).toISOString()};
  const sign=message=>{
   const signer=createSign('RSA-SHA256');
   signer.update(snsSigningString(message),'utf8');signer.end();
@@ -49,7 +53,7 @@ test('LB-09 verifies real RSA-SHA256 signature over SNS canonical notification, 
  };
  let reads=0;
  const verify=createSnsNotificationVerifier({expectedTopicArn:topic,
-  now:()=>Date.parse(timestamp),loadCertificate:async url=>{reads++;assert.equal(url,certUrl);return certificate;}});
+  now:()=>clock,loadCertificate:async url=>{reads++;assert.equal(url,certUrl);return certificate;}});
  const valid=sign(base);
  assert.equal(await verify(valid),true);
  assert.equal(reads,1);
