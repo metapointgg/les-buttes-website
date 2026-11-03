@@ -23,3 +23,12 @@ test('LB-08 preparer checks IAM before SAM packaging and does not execute',()=>{
  assert.ok(iam>=0&&packagePosition>iam);
  assert.doesNotMatch(preparer,/execute-change-set|--no-confirm-changeset|sam deploy/);
 });
+
+test('LB-08 checks actual attached SAM transform policy, not simulator false-negative',()=>{
+ assert.match(preflight,/iam get-role-policy/);
+ assert.match(preflight,/IsolatedManagementPreviewChangeSetOnly/);
+ assert.match(preflight,/aws:transform\/Serverless-2016-10-31/);
+ assert.match(preflight,/\$_.Effect -ceq 'Allow'/);
+ assert.match(preflight,/\$_.Resource -ceq \$transform/);
+ assert.match(preflight,/\$matched.Count -ne 1/);
+});
