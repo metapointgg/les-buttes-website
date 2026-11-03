@@ -1,0 +1,54 @@
+name: LB-04 management preview SAM build diagnosis
+on:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+    paths:
+      - '.github/workflows/lb04-management-preview-build-diagnostics.yml'
+      - 'services/booking-api/staging-management-preview-isolated.template.yaml'
+      - 'services/booking-api/booking-admin-http.mjs'
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  package-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: aws-actions/setup-sam@v2
+      - name: Validate read-only staging management template without AWS access
+        run: |
+          set -euo pipefail
+          sam validate --template-file services/booking-api/staging-management-preview-isolated.template.yaml --region eu-west-2
+      - name: Install management backend dependencies
+        run: npm --prefix services/booking-api ci --no-audit --no-fund
+      - name: Build actual management Lambda; fail with precise missing-file diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          sam build \
+            --template-file services/booking-api/staging-management-preview-isolated.template.yaml \
+            --build-dir .aws-sam/lb04-isolated-diagnostic \
+            --region eu-west-2
+          root=.aws-sam/lb04-isolated-diagnostic
+          test -s "$root/template.yaml"
+          if ! test -s "$root/ManagementPreviewReadFunction/booking-admin-http.mjs"; then
+            echo '::error::SAM output does not contain the booking admin HTTP entrypoint'
+            find "$root" -maxdepth 3 -type f | head -80
+            exit 1
+          fi
+          if ! test -d "$root/ManagementPreviewReadFunction/node_modules/@aws-sdk/client-dynamodb"; then
+            echo '::error::SAM output lacks the DynamoDB SDK dependency'
+            find "$root/ManagementPreviewReadFunction" -maxdepth 3 -type d | head -80
+            exit 1
+          fi
+          echo 'Management preview SAM built with handler and DynamoDB SDK.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain the build log output for review
+        if: always()
+        run: |
+          echo "Diagnostic run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+          echo 'This workflow does not assume AWS credentials, upload or deploy packages, or execute change sets.' >> "$GITHUB_STEP_SUMMARY"
