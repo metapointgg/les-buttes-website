@@ -332,7 +332,6 @@ Resources:
       ReservedConcurrentExecutions: 2
       Environment:
         Variables:
-          AWS_REGION: !Ref AWS::Region
           BOOKING_ENVIRONMENT: staging
           BOOKINGS_TABLE: !Ref BookingTable
           BOOKING_REQUESTS_INDEX: BookingRequestsIndex
