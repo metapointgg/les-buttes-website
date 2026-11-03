@@ -10,7 +10,9 @@ $stack='arn:aws:cloudformation:eu-west-2:145608514666:stack/les-buttes-managemen
 $existing='arn:aws:cloudformation:eu-west-2:145608514666:stack/les-buttes-booking-staging/*'
 $artifact='arn:aws:s3:::les-buttes-cottage-manag-artifacts-145608514666-eu-west-2/booking-management-preview-isolated/sam/probe.zip'
 $tests=@(
+ @{Action='cloudformation:CreateStack';Resource=$stack},
  @{Action='cloudformation:CreateChangeSet';Resource=$stack},
+ @{Action='cloudformation:CreateChangeSet';Resource='arn:aws:cloudformation:eu-west-2:aws:transform/Serverless-2016-10-31'},
  @{Action='cloudformation:DescribeChangeSet';Resource=$stack},
  @{Action='cloudformation:DescribeStacks';Resource=$existing},
  @{Action='s3:PutObject';Resource=$artifact},
