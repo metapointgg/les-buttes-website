@@ -67,7 +67,7 @@ test('approval atomically extends metadata and all cottage-night holds',async()=
  try{
   const {sent,params}=make({...base,quote:{totalGBP:250}});
   const result=await executeOwnerTransition({...params,action:'approve',
-   approval:{amountPence:25000,paymentUrl:'https://test.invalid/pay/abc'}});
+   approval:{amountPence:25000}});
   assert.equal(result.to,'APPROVED_AWAITING_PAYMENT');
   assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':action'],'approve');
   assert.equal(result.affectedNights,2);
@@ -76,6 +76,8 @@ test('approval atomically extends metadata and all cottage-night holds',async()=
   assert.equal(items.length,4);
   assert.equal(items[3].Put.Item.action,'approve');
   assert.equal(items[3].Put.Item.approvedAmountGBP,250);
+  assert.doesNotMatch(items[0].Update.UpdateExpression,/paymentUrl/);
+  assert.equal(Object.hasOwn(items[0].Update.ExpressionAttributeValues,':paymentUrl'),false);
   assert.match(items[0].Update.ConditionExpression,/quote = :observedQuote/);
   assert.deepEqual(items[0].Update.ExpressionAttributeValues[':observedQuote'],{totalGBP:250});
   assert.equal(items[0].Update.ExpressionAttributeValues[':nextExpiry'],100+48*3600);
@@ -87,15 +89,15 @@ test('approval atomically extends metadata and all cottage-night holds',async()=
   else process.env.BOOKING_ENVIRONMENT=previous;
  }
 });
-test('approval refuses mismatched amount without audit reason or unapproved URL',async()=>{
+test('approval refuses mismatched amount without audit reason or supplied payment URL',async()=>{
  const previous=process.env.BOOKING_ENVIRONMENT;
  process.env.BOOKING_ENVIRONMENT='staging';
  try{
   const {sent,params}=make({...base,quote:{totalGBP:250}});
   await assert.rejects(executeOwnerTransition({...params,action:'approve',
-   approval:{amountPence:24000,paymentUrl:'https://test.invalid/pay/abc'}}),/audit reason/);
+   approval:{amountPence:24000}}),/audit reason/);
   await assert.rejects(executeOwnerTransition({...params,action:'approve',
-   approval:{amountPence:25000,paymentUrl:'https://evil.example/pay'}}),/approved HTTPS/);
+   approval:{amountPence:25000,paymentUrl:'https://evil.example/pay'}}),/cannot supply a payment URL/);
   assert.equal(sent.length,0);
  }finally{
   if(previous===undefined)delete process.env.BOOKING_ENVIRONMENT;
