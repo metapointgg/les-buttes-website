@@ -17,6 +17,11 @@ export function createStagingSesTransport({
    // SES region deliberately differs from AWS_REGION of our eu-west-2 booking Lambda.
    const command=commandFactory({
     Source:decision.sender,
+    MessageTags:[
+     {Name:'bookingId',Value:decision.bookingId},
+     {Name:'emailType',Value:decision.type},
+     {Name:'templateId',Value:decision.templateId}
+    ],
     Destination:{ToAddresses:[decision.recipient]},
     Message:{
      Subject:{Data:subject,Charset:'UTF-8'},
