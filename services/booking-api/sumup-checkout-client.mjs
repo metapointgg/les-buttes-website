@@ -49,6 +49,35 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
  };
  return {
   async retrieveMerchantProfile(){return call('/v0.1/me');},
+  async listCheckoutsByReference(reference){
+   if(typeof reference!=='string'||!referencePattern.test(reference))
+    throw Error('Invalid checkout reference');
+   // SumUp's documented checkout_reference filter is server-side. Verify it
+   // again client-side before returning any candidate to the orchestrator.
+   const response=await call(CHECKOUT+'?checkout_reference='+encodeURIComponent(reference));
+   if(!Array.isArray(response))throw Error('Untrusted SumUp checkout list response');
+   if(response.length>10)throw Error('Ambiguous SumUp checkout list');
+   return response.map(item=>{
+    if(item?.checkout_reference!==reference||item.merchant_code!==merchantCode||
+       item.currency!=='GBP'||!Number.isFinite(Number(item.amount))||
+       !Number.isSafeInteger(Math.round(Number(item.amount)*100))||
+       item.status!=='PENDING'||typeof item.id!=='string'||
+       !/^[A-Za-z0-9-]{8,100}$/.test(item.id))
+     throw Error('Provider checkout mismatch; manual reconciliation required');
+    // Hosted URL may not be present in a list response; never invent one.
+    let hostedCheckoutUrl;
+    try{
+     const url=new URL(item.hosted_checkout_url);
+     if(url.protocol==='https:'&&url.hostname==='checkout.sumup.com'&&
+        !url.username&&!url.password)hostedCheckoutUrl=url.toString();
+    }catch{}
+    if(!hostedCheckoutUrl)
+     throw Error('Provider checkout lacks verified hosted URL; manual reconciliation required');
+    return {checkoutId:item.id,reference,amountPence:Math.round(Number(item.amount)*100),
+     currency:'GBP',status:item.status,hostedCheckoutUrl};
+   });
+  },
+
   async createCheckout(input){
    // A generic secret key is NOT evidence of sandbox identity. Check the
    // authoritative merchant immediately before any payment-capable POST.
