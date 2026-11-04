@@ -128,3 +128,11 @@ A production release is not considered complete merely because staging has succe
 - **A07 remains OPEN**. Source review confirms `checkAuthoritativeQuote()` exits before fetching the staging quote unless `masterConnected()` is true; `updateNext()` likewise disables advancement when the public availability feed is disconnected. Therefore passing quote API and CloudFront tests is insufficient evidence of an interactive guest journey. Verify the public availability feed in the browser and then automate a real interaction; do not mark A07 passed from static assets.
 - A08–A11 remain OPEN, A12 remains NO GO. The consolidated workflow is read-only and deliberately does not submit requests, approve, charge or send emails.
 - **Next work item:** A07 browser interaction and availability dependency, then a single isolated A08–A11 synthetic lifecycle with explicit staging-only guardrails and cleanup.
+
+
+## A07 quote presentation correction — 4 November 2026
+
+- Consolidated acceptance [41932874245](https://github.com/metapointgg/les-buttes-website/actions/runs/41932874245) PASSED, including the new live public-availability response contract (fresh snapshot, season, cottage blocked arrays). Existing feature CI, staging deploy and management validation passed on `bf62115`.
+- **A07 source defect identified:** after successfully fetching the authoritative quote, the review screen still rendered `indicativeDirectTotalGBP` from the preview price model. The details screen already used the authoritative quote. This allowed conflicting totals across stages.
+- **Fix committed** `a8c5707`: once authoritative quote succeeds, the review total is replaced with the server quote, and illustrative Airbnb price/savings comparisons are hidden because they would compare inconsistent pricing models. Staging request and payment flags remain disabled.
+- **A07 remains OPEN** until the changed build passes CI/deployment and an actual browser journey demonstrates review and details both showing the same authoritative total. Do not repeat A01–A06 without a specific regression reason.
