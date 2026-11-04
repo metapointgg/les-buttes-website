@@ -60,3 +60,12 @@ A production release is not considered complete merely because staging has succe
 1. Get the standard PR validation suite green (CI verification).
 2. Invoke the existing **Deploy isolated staging quote API (manual only)** GitHub Action on branch `feature/direct-booking-requests-27-night` with its documented confirmation text `STAGING-QUOTE-ONLY`. It packages the quote Lambda and creates a change set without executing it. Review the change set before separately authorised execution.
 3. Verify `GET /quote` against published Geranium/Honeysuckle records and availability, then integrate the request path with the canonical management app. Only then address the production table, SES sender identity, genuine Turnstile, SumUp settlement and go-live acceptance.
+
+## Staging quote CI deployment gate — 4 November 2026, 20:16 GMT
+
+- Workflow `.github/workflows/staging-quote-changeset.yml` now separates environment approval from the branch-specific OIDC deployment job (commit `33816bee`).
+- Added explicit `cloudformation:CreateChangeSet` SAM transform IAM prerequisite to the existing deploy-role preflight (commit `ca3498d1`). The preflight produces a direct diagnostic if the scoped permission is absent.
+- Direct role simulation confirms the SAM transform permission is **still implicitDeny**. Existing staging stack change-set and artefact creation privileges are **allowed**; execution stays deliberately denied.
+- No new manual workflow run has occurred since the original failed run `41897966042`. The isolated quote CloudFormation stack and change set remain absent.
+- AWS IAM policy mutation was blocked by connector safety controls, so the missing scoped permission requires an authorised administrator. See [IAM prerequisite](../infra/booking-staging-quote/IAM-PREREQUISITE.md).
+- **Next release-critical action:** grant the exact transform-scoped permission, verify the simulator now reports `allowed`, manually dispatch the guarded workflow on `feature/direct-booking-requests-27-night` using `STAGING-QUOTE-ONLY`, then review generated change-set resource actions. Do not execute or enable live bookings without separate approval.
