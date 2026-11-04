@@ -29,7 +29,8 @@ jobs:
         run: |
           node --check management-preview/app.mjs
           node --check management-preview/model.mjs
-          node --test management-preview/model.test.mjs
+          node --check management-preview/hosted-auth.mjs
+          node --test management-preview/model.test.mjs management-preview/hosted-auth.test.mjs
       - uses: aws-actions/setup-sam@v2
       - name: Validate SAM template without deployment
         run: |
