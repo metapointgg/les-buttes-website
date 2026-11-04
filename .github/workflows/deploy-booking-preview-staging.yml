@@ -57,4 +57,45 @@ jobs:
           aws s3 sync dist/ s3://les-buttes-booking-preview-staging-145608514666/ --delete --exclude 'management/*' --only-show-errors
           aws cloudfront create-invalidation --distribution-id E3A3ONLRMX3AKJ --paths '/*'
           echo "Staging preview: https://d123fnjf47zmyp.cloudfront.net/" >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify published CloudFront booking page and browser quote bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          import time
+          import urllib.request
+          from urllib.parse import urljoin
+
+          base = 'https://d123fnjf47zmyp.cloudfront.net'
+          expected = 'yo8p94y63b.execute-api.eu-west-2.amazonaws.com/quote'
+          for attempt in range(1, 7):
+              try:
+                  with urllib.request.urlopen(base + '/book/', timeout=20) as response:
+                      html = response.read().decode('utf-8')
+                      assert response.status == 200
+                  scripts = re.findall(r'<script[^>]+src=["\\']([^"\\']+)', html)
+                  # Astro may emit module imports instead of script src attributes.
+                  scripts += re.findall(r'["\\'](/_astro/[^"\\']+\\.js)["\\']', html)
+                  scripts = list(dict.fromkeys(scripts))
+                  if not scripts:
+                      raise AssertionError('No browser JavaScript references found on booking page')
+                  found = False
+                  for src in scripts:
+                      if not src.startswith('/_astro/') and not src.startswith(base + '/_astro/'):
+                          continue
+                      with urllib.request.urlopen(urljoin(base, src), timeout=20) as asset:
+                          if expected in asset.read().decode('utf-8'):
+                              found = True
+                              break
+                  if not found:
+                      raise AssertionError('Published browser scripts do not contain staging quote endpoint')
+                  print('Published /book/ HTTP 200; authoritative quote endpoint found in served browser JavaScript')
+                  break
+              except Exception as exc:
+                  print(f'Attempt {attempt}/6: {exc}', flush=True)
+                  if attempt == 6:
+                      raise
+                  time.sleep(10)
+          PY
           echo "Guest submissions and payments are disabled. Read-only staging availability and authoritative quote APIs configured; no guest sign-in, submissions or payments." >> "$GITHUB_STEP_SUMMARY"
