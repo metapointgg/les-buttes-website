@@ -7,9 +7,23 @@ import {DynamoDBDocumentClient,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 import {publishOwnerConfiguration,rollbackOwnerConfiguration} from './booking-admin-config-writer.mjs';
 import {checkoutRuntimeEnabled,registerCheckoutWithSandbox} from './booking-checkout-runtime.mjs';
+// HTTP API JWT authorizers may serialise an array-valued Cognito group claim
+// as "[group-one, group-two]" rather than preserving a JavaScript array.
 const groups=(claims)=>{
- const raw=claims?.['cognito:groups']??[];
- return Array.isArray(raw)?raw:typeof raw==='string'?raw.split(',').map(v=>v.trim()):[];
+ const raw=claims?.['cognito:groups'];
+ const valid=items=>items.filter(value=>typeof value==='string'&&
+   /^[A-Za-z0-9_-]{1,64}$/.test(value));
+ if(Array.isArray(raw))return valid(raw);
+ if(typeof raw!=='string'||raw.length>1024)return [];
+ const value=raw.trim();
+ if(value.startsWith('[')&&value.endsWith(']')){
+  try{
+   const parsed=JSON.parse(value);
+   if(Array.isArray(parsed))return valid(parsed);
+  }catch{}
+  return valid(value.slice(1,-1).split(',').map(part=>part.trim()));
+ }
+ return valid(value.split(',').map(part=>part.trim()));
 };
 export function identityFromGateway(event,{issuer=process.env.MANAGEMENT_COGNITO_ISSUER,clientId=process.env.MANAGEMENT_COGNITO_CLIENT_ID}={}){
  // Require an API Gateway VERIFIED Cognito *access* token. API Gateway checks
