@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {DAY,parseDate,validBooking} from './rules.mjs';
-import {configuredQuote} from './pricing.mjs';
+import {quoteFromPublishedMaster} from './published-pricing.mjs';
 import {slotBlocksAvailability} from './occupancy.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,QueryCommand,BatchGetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
@@ -69,7 +69,7 @@ async function createRequest(input,event){
   if(input.website)return response(202,{received:true});
   const result=validBooking(input);
   if(result.error)return response(result.serverError?503:400,{error:result.error});
-  const quote=configuredQuote(result.units,result.nights);
+  const quote=await quoteFromPublishedMaster({db,table,units:result.units,nights:result.nights});
   if(quote.error)return response(503,{error:quote.error});
   if(process.env.BOOKING_ENVIRONMENT==='staging' && input.email!=='test@example.invalid')return response(400,{error:'Use synthetic test@example.invalid data only in staging'});
   const guestName=typeof input.name==='string'?input.name.trim():'';
@@ -152,7 +152,7 @@ export async function handler(event){
       const q=event.queryStringParameters||{};
       const result=validBooking({unit:q.unit,start:q.start,end:q.end,guests:Number(q.guests)});
       if(result.error)return response(result.serverError?503:400,{available:false,error:result.error});
-      const quote=configuredQuote(result.units,result.nights);
+      const quote=await quoteFromPublishedMaster({db,table,units:result.units,nights:result.nights});
       if(quote.error)return response(503,{available:false,error:quote.error});
       const isAvailable=await available(result.units,result.nights);
       return response(200,{available:isAvailable,quote:isAvailable?quote:undefined});
