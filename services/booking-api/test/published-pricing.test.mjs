@@ -5,11 +5,11 @@ import {quoteFromPublishedMaster} from '../published-pricing.mjs';
 const table='les-buttes-booking-staging-BookingTable-TEST';
 const nights=Array.from({length:7},(_,i)=>new Date(Date.UTC(2027,5,26+i)).toISOString().slice(0,10));
 const baseRecords={
- geranium:{version:3,value:{maxNights:27,bands:[
+ geranium:{version:3,value:{unit:'geranium',seasonStart:'2027-03-20',seasonEnd:'2027-08-28',maxNights:27,bands:[
   {start:'2027-03-20',end:'2027-06-26',nightlyGBP:'105.00',minNights:3},
   {start:'2027-06-26',end:'2027-08-28',nightlyGBP:'155.00',minNights:7}
  ]}},
- honeysuckle:{version:1,value:{maxNights:27,bands:[
+ honeysuckle:{version:1,value:{unit:'honeysuckle',seasonStart:'2027-03-20',seasonEnd:'2027-08-28',maxNights:27,bands:[
   {start:'2027-03-20',end:'2027-06-26',nightlyGBP:'120.00',minNights:3},
   {start:'2027-06-26',end:'2027-08-28',nightlyGBP:'140.00',minNights:7}
  ]}}
@@ -61,4 +61,19 @@ test('environment rate JSON is never read or used as a fallback',async()=>{
   if(before===undefined)delete process.env.BOOKING_RATES_JSON;
   else process.env.BOOKING_RATES_JSON=before;
  }
+});
+
+test('guest requests and the read-only quote calculator agree across season changes',async()=>{
+ const cross=Array.from({length:14},(_,i)=>new Date(Date.UTC(2027,5,19+i)).toISOString().slice(0,10));
+ const quote=await quoteFromPublishedMaster({db:fakeDb(),table,units:['geranium','honeysuckle'],nights:cross});
+ assert.equal(quote.totalGBP,'3640.00');
+ assert.deepEqual(quote.breakdown,[{unit:'geranium',amountGBP:'1820.00'},{unit:'honeysuckle',amountGBP:'1820.00'}]);
+ assert.equal(quote.minimumNights,7);
+});
+test('non-consecutive nights cannot be quoted even with published pricing',async()=>{
+ const invalid=[nights[0],nights[2]];
+ const db=fakeDb();
+ const result=await quoteFromPublishedMaster({db,table,units:['geranium'],nights:invalid});
+ assert.equal(result.serverError,true);
+ assert.equal(db.calls.length,0);
 });
