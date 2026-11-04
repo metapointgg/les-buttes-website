@@ -37,6 +37,12 @@ jobs:
           set -euo pipefail
           site='https://d123fnjf47zmyp.cloudfront.net/management'
           api='https://g2vazft1vb.execute-api.eu-west-2.amazonaws.com'
+          for path in '/index.html' '/book/' '/management/index.html' '/management/hosted-auth.mjs'; do
+            response="$(curl -sS --max-time 20 -o /tmp/lb-probe-body -D /tmp/lb-probe-headers --write-out '%{http_code}' "https://d123fnjf47zmyp.cloudfront.net$path")"
+            echo "Staging CloudFront $path HTTP $response"
+            grep -Ei '^(HTTP/|server:|x-cache:|x-amz-cf-|x-amz-error-)' /tmp/lb-probe-headers | head -8 || true
+            if test "$response" != '200'; then head -c 350 /tmp/lb-probe-body; echo; fi
+          done
           curl -fsSL --retry 3 --retry-delay 2 --max-time 20 -o /tmp/lb-management.html "$site/index.html"
           grep -Fq 'id="sign-in"' /tmp/lb-management.html
           curl -fsSL --retry 3 --retry-delay 2 --max-time 20 -o /tmp/lb-management-auth.mjs "$site/hosted-auth.mjs"
