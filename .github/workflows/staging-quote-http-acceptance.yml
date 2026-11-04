@@ -50,3 +50,14 @@ jobs:
           check available 200 "$origin" 'unit=geranium&guests=4&start=2027-07-03&end=2027-07-10'
           check occupied 422 "$origin" 'unit=geranium&guests=4&start=2027-08-28&end=2027-09-04'
           check wrong-origin 403 'https://lesbuttes.com' 'unit=geranium&guests=4&start=2027-07-03&end=2027-07-10'
+          # Browser CORS preflight is a separate HTTP exchange from GET.
+          headers="$(mktemp)"
+          preflight="$(curl --silent --show-error --max-time 20 --request OPTIONS \
+            --header "Origin: $origin" \
+            --header 'Access-Control-Request-Method: GET' \
+            --dump-header "$headers" --output /dev/null --write-out '%{http_code}' "$endpoint")"
+          echo "CORS preflight: HTTP $preflight"
+          test "$preflight" = '200' || test "$preflight" = '204'
+          grep -Eiq '^access-control-allow-origin: https://d123fnjf47zmyp.cloudfront.net' "$headers"
+          grep -Eiq '^access-control-allow-methods:.*GET' "$headers"
+          rm -f "$headers"
