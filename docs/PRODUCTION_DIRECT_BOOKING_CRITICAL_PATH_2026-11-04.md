@@ -69,3 +69,13 @@ A production release is not considered complete merely because staging has succe
 - No new manual workflow run has occurred since the original failed run `41897966042`. The isolated quote CloudFormation stack and change set remain absent.
 - AWS IAM policy mutation was blocked by connector safety controls, so the missing scoped permission requires an authorised administrator. See [IAM prerequisite](../infra/booking-staging-quote/IAM-PREREQUISITE.md).
 - **Next release-critical action:** grant the exact transform-scoped permission, verify the simulator now reports `allowed`, manually dispatch the guarded workflow on `feature/direct-booking-requests-27-night` using `STAGING-QUOTE-ONLY`, then review generated change-set resource actions. Do not execute or enable live bookings without separate approval.
+
+## 4 November 2026 — isolated staging quote deployed and live-tested
+
+- GitHub Actions run [41909620636](https://github.com/metapointgg/les-buttes-website/actions/runs/41909620636) passed all checks and created change set `samcli-deploy1793825194`.
+- Owner explicitly approved execution; CloudFormation stack `les-buttes-isolated-quote-staging` in `145608514666/eu-west-2` reached `CREATE_COMPLETE`, all five resources `CREATE_COMPLETE`.
+- Staging quote endpoint: `https://yo8p94y63b.execute-api.eu-west-2.amazonaws.com/quote` (preview origin only).
+- Live Lambda invocation using the staging origin and authoritative staging DynamoDB pricing for 3–10 July 2027, 8 guests, both cottages returned HTTP 200: Geranium £1,085, Honeysuckle £980, total £2,065, `bookingConfirmed:false`.
+- Further live Lambda tests: valid single cottage HTTP 200; wrong origin HTTP 403; non-Saturday arrival HTTP 422; excessive guest count HTTP 422; over-27-night stay HTTP 422.
+- Outstanding: validate an occupied-date conflict against known staging slots; connect quote endpoint into staging website flow; prove request → owner approval → sandbox SumUp payment → confirmation/cancellation and availability release. Production infrastructure and release gates remain separate and unapproved.
+- These checks used direct Lambda invocation, **not** an external HTTP API Gateway request; external endpoint/CORS and frontend integration still need separate verification.
