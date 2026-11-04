@@ -103,12 +103,12 @@ A production release is not considered complete merely because staging has succe
 
 | ID | Acceptance criterion | Evidence / current state | Status |
 | --- | --- | --- | --- |
-| A01 | Backend published-price and booking regression tests | Existing CI passed on `d9f9052`; included in consolidated job | Passed previously; consolidated run pending |
+| A01 | Backend published-price and booking regression tests | Existing CI passed on `d9f9052`; included in consolidated job | PASSED — consolidated run 41930378226 (991afdf) |
 | A02 | Live quote and exact 2027 published total | Staging quote HTTP acceptance run 41922203851; Geranium 3–10 July £1,085 | Passed |
 | A03 | Occupied dates rejected | Same run; 28 Aug–4 Sept 2027 HTTP 422 | Passed |
 | A04 | Wrong origin denied; browser CORS preflight permitted | Same run; HTTP 403 and OPTIONS accepted | Passed |
 | A05 | Staging website deployed with quote URL in build | Staging deploy run 41925259811 passed after Python syntax correction | Passed |
-| A06 | Published CloudFront HTML and served browser JS contain quote URL | Included in consolidated job; previous corrected deploy run 41925259811 passed | Passed by deployment check; consolidated run pending |
+| A06 | Published CloudFront HTML and served browser JS contain quote URL | Included in consolidated job; previous corrected deploy run 41925259811 passed | PASSED — consolidated run 41930378226 (991afdf) |
 | A07 | Interactive browser journey and price displayed in review/details | Browser automation not yet in consolidated job | Outstanding |
 | A08 | Guest request creates versioned immutable quote and atomic reservation | Not exercised end to end | Outstanding |
 | A09 | Canonical management app receives request and owner approves/rejects | Not exercised end to end | Outstanding |
@@ -119,3 +119,12 @@ A production release is not considered complete merely because staging has succe
 **Single-job scope:** A01–A06 read-only. A07 needs actual browser automation. A08–A11 require a separately authorised, isolated synthetic booking lifecycle with cleanup and payment sandbox credentials; do not silently perform write/payment actions as part of a read-only workflow. A12 is a distinct production go/no-go.
 
 **Next execution:** manually dispatch `Booking consolidated acceptance (staging, read-only)` once, record the run result, and prioritise A07–A11 rather than adding another overlapping smoke-test workflow.
+
+
+## Consolidated run result and A07 investigation — 4 November 2026
+
+- **A01–A06 PASSED together**: [consolidated acceptance run 41930378226](https://github.com/metapointgg/les-buttes-website/actions/runs/41930378226), commit `991afdfc9543508175078c1411e2693175a32728`. This replaces the need to repeat independent quote/CORS/CloudFront checks.
+- Other CI, staging deployment and management validation also passed on that commit.
+- **A07 remains OPEN**. Source review confirms `checkAuthoritativeQuote()` exits before fetching the staging quote unless `masterConnected()` is true; `updateNext()` likewise disables advancement when the public availability feed is disconnected. Therefore passing quote API and CloudFront tests is insufficient evidence of an interactive guest journey. Verify the public availability feed in the browser and then automate a real interaction; do not mark A07 passed from static assets.
+- A08–A11 remain OPEN, A12 remains NO GO. The consolidated workflow is read-only and deliberately does not submit requests, approve, charge or send emails.
+- **Next work item:** A07 browser interaction and availability dependency, then a single isolated A08–A11 synthetic lifecycle with explicit staging-only guardrails and cleanup.
