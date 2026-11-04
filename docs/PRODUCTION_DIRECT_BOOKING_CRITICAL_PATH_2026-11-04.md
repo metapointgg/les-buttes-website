@@ -40,3 +40,23 @@ A production release is not considered complete merely because staging has succe
 
 ## Current release decision
 **NO GO**. Do not enable live requests or payments until the above blockers are closed and acceptance results are recorded. No production booking/data/configuration changes were made by the 4 November corrective source commits.
+
+## Integration verification update — 4 November 2026, 18:40 GMT
+
+**Code/CI**
+- `GET /availability` and `POST /requests` on the guest booking handler now call `quoteFromPublishedMaster` (feature branch only; not deployed).
+- `quoteFromPublishedMaster` was consolidated to reuse `quotePublishedBands`, the established published-pricing algorithm used by `staging-quote-handler.mjs`. Both paths read the same DynamoDB `CONFIG#pricing#<cottage>/CURRENT` values, with consistent reads and version snapshots.
+- Published master smoke values (26 June–3 July 2027, both cottages) remain **£1,085 + £980 = £2,065**.
+- Dedicated GitHub Actions `Booking published-pricing release gate` passed, including the full booking API test suite. The root PR test initially failed because it did not install nested booking API SDK dependencies; root `test:booking` has now been amended to install those pinned service dependencies before tests. Verify the refreshed PR checks before merging.
+
+**Deployed infrastructure findings**
+- Existing public-read staging Lambda returned HTTP **200** for `/availability` and `/published-pricing`, but **503** for `/quote` across valid 2027 dates (synthetic Lambda request events). This must be fixed and reverified before any public direct-quote journey is enabled.
+- Existing public-read Lambda IAM already includes DynamoDB GetItem and Query on the shared staging master; the 503 points at route implementation/package/configuration rather than an obvious missing table-read policy. No deployed Lambda was changed.
+- The repository already has an **isolated source-controlled staging quote service**: `infra/booking-staging-quote/template.yaml`, `services/booking-api/staging-quote-handler.mjs` and `.github/workflows/staging-quote-changeset.yml` (manual staging-only workflow). Reuse this rather than adding another preview UI.
+- Preflight IAM simulation for role `les-buttes-booking-private-staging-deploy`: `cloudformation:CreateChangeSet=allowed`, scoped artifact `s3:PutObject=allowed`, but `cloudformation:ExecuteChangeSet=implicitDeny`. This is intentional separation of build/approval; a separately authorised principal must execute a reviewed change set.
+- Attempted ad-hoc package creation failed runtime ZIP validation; AWS blocked an alternate inline code deployment. **No staging Lambda code was deployed.** The unused change set and invalid ZIP artifact were deleted. Use the repository's SAM/GitHub Actions build and manual deployment route instead of bypassing the controls.
+
+**Next owner-visible production gate**
+1. Get the standard PR validation suite green (CI verification).
+2. Invoke the existing **Deploy isolated staging quote API (manual only)** GitHub Action on branch `feature/direct-booking-requests-27-night` with its documented confirmation text `STAGING-QUOTE-ONLY`. It packages the quote Lambda and creates a change set without executing it. Review the change set before separately authorised execution.
+3. Verify `GET /quote` against published Geranium/Honeysuckle records and availability, then integrate the request path with the canonical management app. Only then address the production table, SES sender identity, genuine Turnstile, SumUp settlement and go-live acceptance.
