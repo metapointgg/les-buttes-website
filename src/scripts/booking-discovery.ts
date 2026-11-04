@@ -42,12 +42,18 @@ if(widget){
   // A server-authoritative quote is mandatory before advancing from review.
   // The existing staging read-only master never authorises a request or payment.
   const bookingApi=(import.meta.env.PUBLIC_BOOKING_REQUEST_API_URL??'').trim().replace(/\/$/,'');
+  // Quote-only staging API is separate from the booking request API.
+  // It must never be used on production or as a booking submission endpoint.
+  const stagingQuoteUrl=hostedReadOnlyEnabled?
+    (import.meta.env.PUBLIC_BOOKING_STAGING_QUOTE_URL??'').trim(): '';
+  const quoteOnlyEnabled=Boolean(stagingQuoteUrl)&&
+    /^https:\/\/[a-z0-9.-]+\.execute-api\.eu-west-2\.amazonaws\.com\/quote$/i.test(stagingQuoteUrl);
   const liveQuoteEnabled=import.meta.env.PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED==='true'&&
-    Boolean(bookingApi)&&!localPreview;
+    (quoteOnlyEnabled||Boolean(bookingApi))&&!localPreview;
   // Submission is separately gated and cannot be enabled by an API URL alone.
   // The private staging API is never an acceptable browser endpoint.
   const requestEnabled=import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&
-    liveQuoteEnabled&&import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY&&
+    Boolean(bookingApi)&&!quoteOnlyEnabled&&liveQuoteEnabled&&import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY&&
     import.meta.env.PUBLIC_BOOKING_REQUESTS_APPROVED==='true';
 
   let authoritativeQuote:{key:string;totalGBP:string}|null=null;
@@ -59,13 +65,19 @@ if(widget){
     const params=new URLSearchParams({unit:choice,start:arrival.value,end:departure.value,
       guests:String(filters.adults+filters.children)});
     try{
-      const response=await fetch(bookingApi+'/availability?'+params,{cache:'no-store',headers:{Accept:'application/json'}});
+      const response=await fetch(quoteOnlyEnabled?stagingQuoteUrl+'?'+params:
+        bookingApi+'/availability?'+params,{cache:'no-store',headers:{Accept:'application/json'}});
       if(!response.ok)return false;
-      const result=await response.json() as {available?:boolean;quote?:{currency?:string;totalGBP?:string}};
-      if(result.available!==true||result.quote?.currency!=='GBP'||
-         !/^\d+(?:\.\d{1,2})?$/.test(result.quote.totalGBP??''))return false;
+      const result=await response.json() as {
+        available?:boolean;quote?:{currency?:string;totalGBP?:string};
+        currency?:string;totalGBP?:string;bookingConfirmed?:boolean
+      };
+      const totalGBP=quoteOnlyEnabled?
+        (result.currency==='GBP'&&result.bookingConfirmed===false?result.totalGBP:undefined):
+        (result.available===true&&result.quote?.currency==='GBP'?result.quote.totalGBP:undefined);
+      if(!/^\d+(?:\.\d{1,2})?$/.test(totalGBP??''))return false;
       if(key!==quoteKey())return false;
-      authoritativeQuote={key,totalGBP:result.quote.totalGBP!};
+      authoritativeQuote={key,totalGBP:totalGBP!};
       return true;
     }catch{return false;}
   }
