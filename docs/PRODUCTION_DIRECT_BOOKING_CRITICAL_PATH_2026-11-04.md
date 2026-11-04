@@ -1,0 +1,42 @@
+# Direct booking production release — authoritative architecture and blockers
+
+**Audit:** 4 November 2026. **Release status:** blocked; no production booking deployment authorised.
+
+## Canonical management app — do not build another one
+
+The owner-facing application is **https://lesbuttes.ozanne-family.com/**, backed by CloudFormation stack `les-buttes-cottage-management`, API Gateway `i2irz87c82`. It manages pricing, booking rules and owner operations. Do not replace it with `d123fnjf47zmyp.cloudfront.net/management/`, which is only an isolated read-only acceptance preview and is not the production management platform.
+
+**Verified AWS configuration on 4 Nov:** the canonical management Lambda has `BOOKING_MASTER_TABLE=les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK` and `BOOKING_MASTER_ENVIRONMENT=staging`. Actions, drafts, pricing approval/publication/rollback are enabled there but operate against the **staging booking master**, not a production booking master. This distinction must be resolved before going live.
+
+## One source of truth
+
+The management app publishes immutable, versioned `CONFIG#pricing#<cottage>` records and points `CURRENT` to an approved version. All price calculations — public quote, guest request creation, owner review and checkout amounts — must use the relevant published values from the booking master and preserve the pricing version(s) in the booking snapshot. Never quote live guests from a Lambda `BOOKING_RATES_JSON` variable or independently from illustrative UI prices. A missing, unpublished or ambiguous rate **must fail closed** rather than substitute a fallback.
+
+### Identified divergence
+- **Legacy staging booking Lambda:** `les-buttes-booking-staging-BookingFunction-tzvgfNDVJF22`, environment `BOOKING_RATES_JSON` uses a flat 2027 season with Geranium £100/night and Honeysuckle £120/night.
+- **Published configuration in staging DynamoDB:** Geranium version 3 and Honeysuckle version 1 have variable seasonal rates (e.g. 26 June–28 August 2027: Geranium £155/night and Honeysuckle £140/night).
+- **Source correction committed on this branch only (not deployed):**
+  - `services/booking-api/published-pricing.mjs`: consistently reads published current records from the shared DB; computes exact pence; enforces minimum stay; fails closed; includes cottage pricing versions.
+  - `services/booking-api/index.mjs`: GET `/availability` and POST `/requests` call the **same published-pricing function**.
+  - `services/booking-api/test/published-pricing.test.mjs`: regression tests for 2027 published amounts, missing/duplicate bands, exclusive end dates, and protection against environment fallback.
+  - Pure logic smoke test passed for the 2027 week 26 June–3 July: Geranium £1,085 + Honeysuckle £980 = **£2,065**.
+- **Important:** older deployed Lambda still uses environment rates until the corrected code is packaged, staged, tested and deployed. Other preview and public-read paths also require integration audit; this source change does not by itself prove every current API is unified.
+
+## No more staging UI feature expansion
+
+The existing website release pipeline deploys `main` to `lesbuttes.com`. Its production bucket has no `/book/` page and the main branch does not contain `src/pages/book/index.astro`. The booking page on this feature branch is gated by `PUBLIC_BOOKING_REQUESTS_ENABLED` and expects API URL and Turnstile configuration; its preview and live journeys currently differ. Bring the approved four-step journey into the live flow rather than replace it with a basic form.
+
+## Production critical path — must close in order
+
+1. **API consolidation:** identify every public quote and guest submission endpoint; route to the same database-backed published price/rule source; remove or deprecate environment and preview prices from any path presented as an authoritative guest quote. Ensure submitted requests independently reprice on the server, persist immutable versioned quotes and reserve dates atomically.
+2. **Stage the corrected code:** build/test and deploy to the existing staging booking API through infrastructure-as-code; check quoted totals against the management app across season boundaries, for single/both cottages and missing configs; verify no unauthorised guest PII exposure.
+3. **Use the existing management app end to end:** validate receiving new requests, approving/rejecting, locking dates, issuing SumUp payment links *only after approval*, verifying payment before confirmation, audit and reversal. Avoid building a new management UI.
+4. **Production infrastructure and configuration:** create or explicitly designate the production booking table/service(s), production pricing and stay-rule publications, genuine Turnstile keys, least-privilege IAM, logging, monitoring and idempotency. The management app must deliberately point at the correct production master when released, with staging and production isolated.
+5. **Email delivery:** SES production sending access is granted but `lesbuttes.com` identity is **not verified** and its DKIM status is `FAILED` (4 Nov audit); fix DNS with the actual DNS provider or use a verified approved sender until corrected. No DNS changes without approval.
+6. **Website release:** merge/release the complete four-stage guest journey to `main` only after production API and security acceptance. Deploy behind a disabled feature flag, smoke-test, then enable in a controlled manner.
+7. **Go/no-go:** verify Airbnb synchronisation and conflict prevention, customer-facing email, owner response, deposit/full-payment decision, refund handling, rollback, monitoring and recovery. Obtain explicit owner production approval.
+
+A production release is not considered complete merely because staging has successful synthetic tests or the management dashboard displays published values.
+
+## Current release decision
+**NO GO**. Do not enable live requests or payments until the above blockers are closed and acceptance results are recorded. No production booking/data/configuration changes were made by the 4 November corrective source commits.
