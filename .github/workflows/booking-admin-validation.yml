@@ -46,11 +46,8 @@ jobs:
           response="$(curl -sS --max-time 20 --output /dev/null --write-out '%{http_code}' "$api/admin/bookings")"
           echo "Unauthenticated staging booking-list status: $response"
           test "$response" = '401' || test "$response" = '403'
-          headers="$(curl -sS --max-time 20 -i -X OPTIONS \\
-            -H 'Origin: https://d123fnjf47zmyp.cloudfront.net' \\
-            -H 'Access-Control-Request-Method: GET' \\
-            "$api/admin/bookings")"
-          printf '%s\\n' "$headers" | grep -iq '^access-control-allow-origin: https://d123fnjf47zmyp.cloudfront.net'
+          headers="$(curl -sS --max-time 20 -i -X OPTIONS -H 'Origin: https://d123fnjf47zmyp.cloudfront.net' -H 'Access-Control-Request-Method: GET' "$api/admin/bookings")"
+          echo "$headers" | grep -iq '^access-control-allow-origin: https://d123fnjf47zmyp.cloudfront.net'
           echo 'Hosted read-only management site and unauthenticated API boundary verified; actual Cognito browser sign-in still required.' >> "$GITHUB_STEP_SUMMARY"
       - uses: aws-actions/setup-sam@v2
       - name: Validate SAM template without deployment
