@@ -24,6 +24,8 @@ jobs:
         env:
           PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'
           PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED: 'true'
+          PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED: 'true'
+          PUBLIC_BOOKING_STAGING_QUOTE_URL: 'https://yo8p94y63b.execute-api.eu-west-2.amazonaws.com/quote'
           PUBLIC_BOOKING_AVAILABILITY_URL: 'https://ktmv4x1i3b.execute-api.eu-west-2.amazonaws.com/availability'
           PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS: 'd123fnjf47zmyp.cloudfront.net'
         run: |
@@ -49,4 +51,4 @@ jobs:
           aws s3 sync dist/ s3://les-buttes-booking-preview-staging-145608514666/ --delete --exclude 'management/*' --only-show-errors
           aws cloudfront create-invalidation --distribution-id E3A3ONLRMX3AKJ --paths '/*'
           echo "Staging preview: https://d123fnjf47zmyp.cloudfront.net/" >> "$GITHUB_STEP_SUMMARY"
-          echo "Guest submissions and payments are disabled. Public availability endpoint pending; no guest sign-in, submissions or payments." >> "$GITHUB_STEP_SUMMARY"
+          echo "Guest submissions and payments are disabled. Read-only staging availability and authoritative quote APIs configured; no guest sign-in, submissions or payments." >> "$GITHUB_STEP_SUMMARY"
