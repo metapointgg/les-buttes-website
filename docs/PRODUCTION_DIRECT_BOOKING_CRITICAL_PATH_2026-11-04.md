@@ -95,3 +95,27 @@ A production release is not considered complete merely because staging has succe
 - Queried existing staging booking master `les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK` read-only and identified occupied Geranium nights 28 Aug–3 Sep 2027.
 - Directly invoked deployed isolated staging quote Lambda with permitted preview origin. Geranium 28 Aug–4 Sep 2027 returned HTTP 422; combined cottages same dates returned HTTP 422. Available Geranium 3–10 Jul 2027 returned HTTP 200 and £1,085. No booking records were written.
 - Remaining: test external API Gateway HTTP route/CORS; frontend quote integration; full request/approval/payment/confirmation acceptance; production release gates. Do not treat direct Lambda tests as public HTTP integration evidence.
+
+
+## Consolidated acceptance register — 4 November 2026
+
+**Operating rule:** Use the single manual workflow `.github/workflows/booking-consolidated-acceptance.yml` for the layered read-only acceptance checks. Do not rerun individual tests simply because the user says "continue". Record the run URL, commit, outcome and newly closed acceptance criteria here. Existing automated branch CI/deploy workflows may still run independently; they are not evidence of the full booking lifecycle.
+
+| ID | Acceptance criterion | Evidence / current state | Status |
+| --- | --- | --- | --- |
+| A01 | Backend published-price and booking regression tests | Existing CI passed on `d9f9052`; included in consolidated job | Passed previously; consolidated run pending |
+| A02 | Live quote and exact 2027 published total | Staging quote HTTP acceptance run 41922203851; Geranium 3–10 July £1,085 | Passed |
+| A03 | Occupied dates rejected | Same run; 28 Aug–4 Sept 2027 HTTP 422 | Passed |
+| A04 | Wrong origin denied; browser CORS preflight permitted | Same run; HTTP 403 and OPTIONS accepted | Passed |
+| A05 | Staging website deployed with quote URL in build | Staging deploy run 41925259811 passed after Python syntax correction | Passed |
+| A06 | Published CloudFront HTML and served browser JS contain quote URL | Included in consolidated job; previous corrected deploy run 41925259811 passed | Passed by deployment check; consolidated run pending |
+| A07 | Interactive browser journey and price displayed in review/details | Browser automation not yet in consolidated job | Outstanding |
+| A08 | Guest request creates versioned immutable quote and atomic reservation | Not exercised end to end | Outstanding |
+| A09 | Canonical management app receives request and owner approves/rejects | Not exercised end to end | Outstanding |
+| A10 | Approved request creates sandbox SumUp checkout; payment verified before confirmation | Separate £1 sandbox payment tested, not full journey | Outstanding |
+| A11 | Guest/owner emails, cancellation/refund, released dates and idempotency | Not exercised end to end | Outstanding |
+| A12 | Production identity, isolated production booking master, security and controlled go-live | Production not authorised | Blocked |
+
+**Single-job scope:** A01–A06 read-only. A07 needs actual browser automation. A08–A11 require a separately authorised, isolated synthetic booking lifecycle with cleanup and payment sandbox credentials; do not silently perform write/payment actions as part of a read-only workflow. A12 is a distinct production go/no-go.
+
+**Next execution:** manually dispatch `Booking consolidated acceptance (staging, read-only)` once, record the run result, and prioritise A07–A11 rather than adding another overlapping smoke-test workflow.
