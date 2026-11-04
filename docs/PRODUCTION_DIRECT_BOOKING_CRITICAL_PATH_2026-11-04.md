@@ -136,3 +136,11 @@ A production release is not considered complete merely because staging has succe
 - **A07 source defect identified:** after successfully fetching the authoritative quote, the review screen still rendered `indicativeDirectTotalGBP` from the preview price model. The details screen already used the authoritative quote. This allowed conflicting totals across stages.
 - **Fix committed** `a8c5707`: once authoritative quote succeeds, the review total is replaced with the server quote, and illustrative Airbnb price/savings comparisons are hidden because they would compare inconsistent pricing models. Staging request and payment flags remain disabled.
 - **A07 remains OPEN** until the changed build passes CI/deployment and an actual browser journey demonstrates review and details both showing the same authoritative total. Do not repeat A01–A06 without a specific regression reason.
+
+
+## A07 closed; transaction acceptance scope — 4 November 2026
+
+- **A07 PASSED**: [consolidated run 41935946600](https://github.com/metapointgg/les-buttes-website/actions/runs/41935946600), commit `22f063e445286059fe0a747b8ff3e4ebecbfe839`. Headless Chromium exercised staging /book/ search (Geranium, 3–10 July 2027), cottage selection, review, authoritative £1,085 quote, details price parity, and disabled submission. The public master contract and earlier API checks also passed in the same job.
+- **A01–A07 CLOSED**. Do not rerun separate manual probes as a substitute for lifecycle acceptance.
+- **A08–A11 OPEN**. Current staging browser is intentionally read-only; it cannot prove request creation, atomic reservation, owner approval/rejection, sandbox payment, email, cancellation or date release. Next acceptance job must use isolated staging-only test fixtures, synthetic guest data, SumUp sandbox, idempotency/replay assertions and cleanup, with a clear run summary per lifecycle stage. Do not enable real guest submission or production payment to accomplish this.
+- **A12 BLOCKED / production NO GO** until A08–A11 and operational controls are evidenced.
