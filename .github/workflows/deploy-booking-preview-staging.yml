@@ -74,9 +74,9 @@ jobs:
                   with urllib.request.urlopen(base + '/book/', timeout=20) as response:
                       html = response.read().decode('utf-8')
                       assert response.status == 200
-                  scripts = re.findall(r'<script[^>]+src=["\\']([^"\\']+)', html)
+                  scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
                   # Astro may emit module imports instead of script src attributes.
-                  scripts += re.findall(r'["\\'](/_astro/[^"\\']+\\.js)["\\']', html)
+                  scripts += re.findall(r'"(/_astro/[^"]+\\.js)"', html)
                   scripts = list(dict.fromkeys(scripts))
                   if not scripts:
                       raise AssertionError('No browser JavaScript references found on booking page')
