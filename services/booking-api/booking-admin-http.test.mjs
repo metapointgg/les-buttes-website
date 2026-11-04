@@ -26,6 +26,8 @@ test('LB-05 recognises API Gateway bracketed, JSON and array group claims withou
  for(const value of [
   '[management, lesbuttes-viewer]',
   '[lesbuttes-viewer, management]',
+  '[management lesbuttes-viewer]',
+  '[management booking-staging-reviewers lesbuttes-viewer]',
   '["management","lesbuttes-viewer"]',
   ['management','lesbuttes-viewer'],
   'lesbuttes-viewer,management'
