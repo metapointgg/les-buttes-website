@@ -88,3 +88,10 @@ A production release is not considered complete merely because staging has succe
 - Isolated preview website deployment [41910684507](https://github.com/metapointgg/les-buttes-website/actions/runs/41910684507) passed.
 - CloudFormation verified: `les-buttes-private-availability-staging` `UPDATE_COMPLETE`, endpoint `https://b28jlpm3a0.execute-api.eu-west-2.amazonaws.com/api/staging/availability`; `les-buttes-isolated-quote-staging` `CREATE_COMPLETE`.
 - Remaining: test public staging quote endpoint through API Gateway with allowed origin, known occupied-date conflict, frontend quote integration, authenticated management actions, and end-to-end payment/confirmation; no production release approval.
+
+## 4 November 2026 — occupied-date conflict acceptance
+
+- All three workflows for commit `6cbdd16cd695777cf13d1d38f8384c8bce0cc634` succeeded: feature CI `41912264242`, preview website `41912264232`, management validation `41912264218`.
+- Queried existing staging booking master `les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK` read-only and identified occupied Geranium nights 28 Aug–3 Sep 2027.
+- Directly invoked deployed isolated staging quote Lambda with permitted preview origin. Geranium 28 Aug–4 Sep 2027 returned HTTP 422; combined cottages same dates returned HTTP 422. Available Geranium 3–10 Jul 2027 returned HTTP 200 and £1,085. No booking records were written.
+- Remaining: test external API Gateway HTTP route/CORS; frontend quote integration; full request/approval/payment/confirmation acceptance; production release gates. Do not treat direct Lambda tests as public HTTP integration evidence.
