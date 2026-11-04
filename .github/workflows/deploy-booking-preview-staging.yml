@@ -46,7 +46,7 @@ jobs:
       - name: Upload to isolated private staging bucket
         run: |
           set -euo pipefail
-          aws s3 sync dist/ s3://les-buttes-booking-preview-staging-145608514666/ --delete --only-show-errors
+          aws s3 sync dist/ s3://les-buttes-booking-preview-staging-145608514666/ --delete --exclude 'management/*' --only-show-errors
           aws cloudfront create-invalidation --distribution-id E3A3ONLRMX3AKJ --paths '/*'
           echo "Staging preview: https://d123fnjf47zmyp.cloudfront.net/" >> "$GITHUB_STEP_SUMMARY"
           echo "Guest submissions and payments are disabled. Public availability endpoint pending; no guest sign-in, submissions or payments." >> "$GITHUB_STEP_SUMMARY"
