@@ -1,4 +1,5 @@
 import {allowedAction,safeStagingApi,reasonValid,bookingStatus} from './model.mjs';
+import {hostedManagement,isHostedManagement,createHostedAuthorisationUrl,completeHostedSignIn,hostedSignOutUrl} from './hosted-auth.mjs';
 const $=id=>document.getElementById(id);
 const state={api:null,token:null,bookings:[],cursor:null,selected:null,auditCursor:null,role:'viewer'};
 const message=(text,error=false)=>{$('message').textContent=text;$('message').className=error?'error':'';};
@@ -143,3 +144,47 @@ $('config-publish').addEventListener('click',async()=>{
  }catch(e){message(e.message,true);}
  finally{$('config-publish').disabled=false;}
 });
+
+
+// A separate staging CloudFront page has its own dedicated PKCE client.
+ // The existing production operations website and its Cognito client are unchanged.
+if(isHostedManagement(location)){
+ $('api').value=hostedManagement.api;
+ $('api').readOnly=true;
+ $('token').closest('label').hidden=true;
+ $('connect').hidden=true;
+ $('sign-in').hidden=false;
+ $('disconnect').textContent='Sign out';
+ $('owner-actions').hidden=true;
+ $('configuration-panel').hidden=true;
+ $('sign-in').addEventListener('click',async()=>{
+  try{
+   const url=await createHostedAuthorisationUrl({session:sessionStorage,cryptoApi:crypto});
+   location.assign(url);
+  }catch{message('Unable to start a secure Cognito sign-in.',true);}
+ });
+ $('disconnect').addEventListener('click',()=>{
+  location.assign(hostedSignOutUrl());
+ });
+ const returnedSearch=location.search;
+ if(new URLSearchParams(returnedSearch).has('code')||
+    new URLSearchParams(returnedSearch).has('error')){
+  // Remove the short-lived authorisation code from browser history immediately.
+  history.replaceState(null,'',hostedManagement.path);
+  message('Verifying your staging sign-in…');
+  void completeHostedSignIn({
+   search:returnedSearch,session:sessionStorage,fetchImpl:fetch
+  }).then(accessToken=>{
+   if(!accessToken){message('Sign in to view staging booking requests.');return;}
+   state.api=hostedManagement.api;
+   state.token=accessToken;
+   state.role='viewer';
+   $('sign-in').hidden=true;
+   $('owner-actions').hidden=true;
+   $('configuration-panel').hidden=true;
+   void loadBookings();
+  }).catch(()=>message('Sign-in failed or staging viewer access is not authorised. Please try again.',true));
+ }else{
+  message('Sign in with Cognito to view staging booking requests. No booking changes are enabled.');
+ }
+}
