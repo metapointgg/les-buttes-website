@@ -13,12 +13,13 @@ Parameters:
   CognitoAudience:
     Type: String
     AllowedPattern: '^[A-Za-z0-9]+$'
-    Default: 2mjmimjh7oc8h00d4nngrc1akj
+    Default: 1a0i42vp4gi24i5orh8i4jjhmr
   ManagementAllowedOrigin:
     Type: String
     Default: http://127.0.0.1:5173
     AllowedValues:
       - http://127.0.0.1:5173
+      - https://d123fnjf47zmyp.cloudfront.net
 Conditions:
   StagingRegion: !Equals [!Ref AWS::Region, eu-west-2]
 Resources:
