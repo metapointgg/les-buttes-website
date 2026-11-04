@@ -53,6 +53,26 @@ jobs:
           test "$status" = 200 || test "$status" = 204
           grep -Eiq '^access-control-allow-origin: https://d123fnjf47zmyp.cloudfront.net' "$headers"
           grep -Eiq '^access-control-allow-methods:.*GET' "$headers"
+      - name: Layer 2b - public master availability required by interactive journey
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://ktmv4x1i3b.execute-api.eu-west-2.amazonaws.com/availability'
+          curl --fail --silent --show-error --max-time 20 --header 'Origin: https://d123fnjf47zmyp.cloudfront.net' "$url" > /tmp/les-buttes-master-availability.json
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import preview from "./src/data/booking-preview-2027.json" with {type:"json"};
+            const d=JSON.parse(fs.readFileSync("/tmp/les-buttes-master-availability.json","utf8"));
+            if(d.mode!=="LIVE_STAGING_MASTER_READ_ONLY")throw Error("Unexpected availability mode");
+            for(const k of ["firstNight","lastNight","lastCheckout"]){
+              if(d[k]!==preview[k])throw Error("Availability season mismatch: "+k);
+            }
+            if(!Number.isFinite(Date.parse(d.capturedAt))||Math.abs(Date.now()-Date.parse(d.capturedAt))>120000)throw Error("Stale availability snapshot");
+            for(const unit of ["geranium","honeysuckle"]){
+              if(!Array.isArray(d.blocked?.[unit]))throw Error("Missing occupied-date blocks: "+unit);
+            }
+            console.log("Public staging availability feed is fresh and matches browser contract");
+          '
       - name: Layer 3 - deployed website, served browser code and safety flags
         shell: bash
         run: |
