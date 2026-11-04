@@ -7,23 +7,44 @@ import {DynamoDBDocumentClient,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 import {publishOwnerConfiguration,rollbackOwnerConfiguration} from './booking-admin-config-writer.mjs';
 import {checkoutRuntimeEnabled,registerCheckoutWithSandbox} from './booking-checkout-runtime.mjs';
-// HTTP API JWT authorizers may serialise an array-valued Cognito group claim
-// as "[group-one, group-two]" rather than preserving a JavaScript array.
+// API Gateway's HTTP JWT authorizer can stringify Cognito group arrays
+// using either comma separators or spaces, with optional quoted members.
+// Parse the entire claim; never use substring matching to grant a role.
+const GROUP_NAME=/^[A-Za-z0-9_-]{1,64}$/;
+const GROUP_TOKEN=/(?:"([A-Za-z0-9_-]{1,64})"|'([A-Za-z0-9_-]{1,64})'|([A-Za-z0-9_-]{1,64}))/y;
+const parseGroupSequence=(raw)=>{
+ const value=raw.trim(),result=[];
+ if(!value)return [];
+ let offset=0;
+ while(offset<value.length){
+  GROUP_TOKEN.lastIndex=offset;
+  const found=GROUP_TOKEN.exec(value);
+  if(!found)return [];
+  result.push(found[1]??found[2]??found[3]);
+  offset=GROUP_TOKEN.lastIndex;
+  if(offset===value.length)break;
+  const separator=/^(?:\s*,\s*|\s+)/.exec(value.slice(offset));
+  if(!separator)return [];
+  offset+=separator[0].length;
+  if(offset===value.length)return [];
+ }
+ return result;
+};
 const groups=(claims)=>{
  const raw=claims?.['cognito:groups'];
- const valid=items=>items.filter(value=>typeof value==='string'&&
-   /^[A-Za-z0-9_-]{1,64}$/.test(value));
- if(Array.isArray(raw))return valid(raw);
+ if(Array.isArray(raw))return raw.every(value=>typeof value==='string'&&GROUP_NAME.test(value))?raw:[];
  if(typeof raw!=='string'||raw.length>1024)return [];
  const value=raw.trim();
- if(value.startsWith('[')&&value.endsWith(']')){
+ if(value.startsWith('[')||value.endsWith(']')){
+  if(!value.startsWith('[')||!value.endsWith(']'))return [];
   try{
    const parsed=JSON.parse(value);
-   if(Array.isArray(parsed))return valid(parsed);
+   if(Array.isArray(parsed))
+    return parsed.every(member=>typeof member==='string'&&GROUP_NAME.test(member))?parsed:[];
   }catch{}
-  return valid(value.slice(1,-1).split(',').map(part=>part.trim()));
+  return parseGroupSequence(value.slice(1,-1));
  }
- return valid(value.split(',').map(part=>part.trim()));
+ return parseGroupSequence(value);
 };
 export function identityFromGateway(event,{issuer=process.env.MANAGEMENT_COGNITO_ISSUER,clientId=process.env.MANAGEMENT_COGNITO_CLIENT_ID}={}){
  // Require an API Gateway VERIFIED Cognito *access* token. API Gateway checks
