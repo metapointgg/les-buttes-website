@@ -1,6 +1,10 @@
 name: Booking consolidated acceptance (staging, read-only)
 
 on:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+    paths:
+      - '.github/workflows/booking-consolidated-acceptance.yml'
   workflow_dispatch:
 
 permissions:
