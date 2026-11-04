@@ -13,10 +13,22 @@ concurrency:
   group: les-buttes-isolated-staging-quote
   cancel-in-progress: false
 jobs:
-  deploy:
+  staging_approval:
     if: github.ref == 'refs/heads/feature/direct-booking-requests-27-night' && inputs.confirm_staging_only == 'STAGING-QUOTE-ONLY'
     runs-on: ubuntu-latest
     environment: staging
+    permissions:
+      contents: read
+    steps:
+      - name: Confirm staging environment authorisation
+        run: echo "Staging environment gate passed; no AWS credentials requested by this job."
+  deploy:
+    needs: staging_approval
+    if: github.ref == 'refs/heads/feature/direct-booking-requests-27-night' && inputs.confirm_staging_only == 'STAGING-QUOTE-ONLY'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
