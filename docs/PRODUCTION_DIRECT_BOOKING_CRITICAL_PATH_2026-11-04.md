@@ -79,3 +79,12 @@ A production release is not considered complete merely because staging has succe
 - Further live Lambda tests: valid single cottage HTTP 200; wrong origin HTTP 403; non-Saturday arrival HTTP 422; excessive guest count HTTP 422; over-27-night stay HTTP 422.
 - Outstanding: validate an occupied-date conflict against known staging slots; connect quote endpoint into staging website flow; prove request → owner approval → sandbox SumUp payment → confirmation/cancellation and availability release. Production infrastructure and release gates remain separate and unapproved.
 - These checks used direct Lambda invocation, **not** an external HTTP API Gateway request; external endpoint/CORS and frontend integration still need separate verification.
+
+## 4 November 2026 — post-deployment CI and private availability
+
+- Commit `cc6e4c1e1bcebed1cf0390710aefc6a3a1f5b9d9` triggered three staging workflows; all completed successfully.
+- Management validation [41910684950](https://github.com/metapointgg/les-buttes-website/actions/runs/41910684950) initially failed npm install with transient `ETARGET @aws-sdk/nested-clients@^3.998.0`; rerun of failed jobs passed unchanged, including backend tests, management model tests, hosted management HTTP smoke and SAM validation.
+- Feature CI [41910684626](https://github.com/metapointgg/les-buttes-website/actions/runs/41910684626) passed Astro build, booking API/discovery tests, multilingual pages, safety gates, availability and quote SAM builds. Its private staging availability deployment succeeded and checked anonymous access returned HTTP 401.
+- Isolated preview website deployment [41910684507](https://github.com/metapointgg/les-buttes-website/actions/runs/41910684507) passed.
+- CloudFormation verified: `les-buttes-private-availability-staging` `UPDATE_COMPLETE`, endpoint `https://b28jlpm3a0.execute-api.eu-west-2.amazonaws.com/api/staging/availability`; `les-buttes-isolated-quote-staging` `CREATE_COMPLETE`.
+- Remaining: test public staging quote endpoint through API Gateway with allowed origin, known occupied-date conflict, frontend quote integration, authenticated management actions, and end-to-end payment/confirmation; no production release approval.
