@@ -99,6 +99,42 @@ jobs:
           assert found, 'Quote endpoint not present in published browser scripts'
           print('CloudFront page and published authoritative quote asset verified')
           PY
+      - name: Layer 3b - interactive browser booking journey (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.58.2
+          npx playwright install --with-deps chromium
+          node --input-type=module <<'JS'
+          import {chromium} from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          try{
+            const page=await browser.newPage();
+            const errors=[];
+            page.on('pageerror',error=>errors.push(error.message));
+            await page.goto('https://d123fnjf47zmyp.cloudfront.net/book/',{waitUntil:'domcontentloaded'});
+            await page.locator('[data-discovery-search] [name="arrival"]').fill('2027-07-03');
+            await page.locator('[data-discovery-search] [name="departure"]').fill('2027-07-10');
+            await page.locator('[data-discovery-search] [name="adults"]').fill('2');
+            await page.locator('[data-discovery-search] button[type="submit"]').click();
+            await page.locator('[data-booking-step="2"]:visible').waitFor();
+            await page.locator('[data-discovery-option="geranium"] [data-select-option]').click();
+            const next=page.locator('[data-continue-review]');
+            await next.waitFor();
+            if(await next.isDisabled())throw Error('Review button disabled after selecting available stay');
+            await next.click();
+            await page.locator('[data-booking-step="3"]:visible').waitFor();
+            const review=(await page.locator('[data-summary-direct]').innerText()).trim();
+            if(!review.includes('1,085'))throw Error('Review does not display authoritative GBP 1085: '+review);
+            await page.locator('[data-continue-details]').click();
+            await page.locator('[data-booking-step="4"]:visible').waitFor();
+            const details=(await page.locator('[data-details-price]').innerText()).trim();
+            if(review!==details)throw Error('Authoritative review/details prices disagree: '+review+' / '+details);
+            if(await page.locator('[data-preview-guest-details] button[type="submit"]:enabled').count())throw Error('Unsafe booking submission enabled');
+            if(errors.length)throw Error('Browser JS errors: '+errors.join('; '));
+            console.log('PASS: four-step browser journey, authoritative review/details '+review+', submission disabled');
+          }finally{await browser.close();}
+          JS
       - name: Layer 4 - release evidence and remaining gates
         if: always()
         run: |
@@ -111,7 +147,7 @@ jobs:
             echo '- Canonical owner approval/rejection and audit'
             echo '- SumUp sandbox checkout, verified payment and idempotency'
             echo '- Confirmation emails, cancellation, refund and date release'
-            echo '- Interactive browser journey (requires browser automation)'
+            echo '- Interactive browser journey is covered by Layer 3b (read-only); check its result'
             echo ''
             echo 'Production release remains NO GO. This workflow never creates bookings or charges payments.'
           } >> "$GITHUB_STEP_SUMMARY"
