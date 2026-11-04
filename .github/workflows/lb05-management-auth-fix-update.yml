@@ -1,0 +1,82 @@
+name: LB-05 staging management auth fix UPDATE preview
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+    paths:
+      - '.github/workflows/lb05-management-auth-fix-update.yml'
+      - 'services/booking-api/booking-admin-http.mjs'
+      - 'services/booking-api/booking-admin-http.test.mjs'
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: lb05-management-readonly-update
+  cancel-in-progress: false
+jobs:
+  preview-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: aws-actions/setup-sam@v2
+      - name: Validate and package corrected staging Lambda
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm --prefix services/booking-api install --no-package-lock --no-audit --no-fund
+          npm --prefix services/booking-api run check
+          npm --prefix services/booking-api test
+          sam validate --template-file services/booking-api/staging-management-preview-isolated.template.yaml --region eu-west-2
+          sam build --template-file services/booking-api/staging-management-preview-isolated.template.yaml --build-dir .aws-sam/lb05-management-auth-fix --region eu-west-2
+          test -s .aws-sam/lb05-management-auth-fix/ManagementPreviewReadFunction/booking-admin-http.mjs
+          test -d .aws-sam/lb05-management-auth-fix/ManagementPreviewReadFunction/node_modules/@aws-sdk/client-dynamodb
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
+          aws-region: eu-west-2
+          role-session-name: lb05-readonly-auth-fix
+      - name: Verify existing separate read-only staging stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
+          test "$(aws cloudformation describe-stacks --stack-name les-buttes-management-preview-isolated-staging --query 'Stacks[0].StackStatus' --output text)" = 'UPDATE_COMPLETE'
+          test "$(aws cloudformation describe-stacks --stack-name les-buttes-booking-staging --query 'Stacks[0].StackStatus' --output text)" = 'UPDATE_COMPLETE'
+      - name: Package only staging management Lambda artefact
+        shell: bash
+        run: |
+          set -euo pipefail
+          sam package --template-file .aws-sam/lb05-management-auth-fix/template.yaml \
+            --s3-bucket les-buttes-cottage-manag-artifacts-145608514666-eu-west-2 \
+            --s3-prefix booking-management-preview-isolated/sam \
+            --region eu-west-2 \
+            --output-template-file .aws-sam/lb05-management-auth-fix-packaged.yaml
+      - name: Create NON-EXECUTED UPDATE change set
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="lb05-management-auth-fix-${GITHUB_RUN_ID}"
+          aws cloudformation create-change-set \
+            --stack-name les-buttes-management-preview-isolated-staging \
+            --change-set-name "$name" --change-set-type UPDATE \
+            --template-body file://.aws-sam/lb05-management-auth-fix-packaged.yaml \
+            --parameters \
+              ParameterKey=StagingBookingTableName,ParameterValue=les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK \
+              ParameterKey=CognitoIssuer,ParameterValue=https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa \
+              ParameterKey=CognitoAudience,ParameterValue=1a0i42vp4gi24i5orh8i4jjhmr \
+              ParameterKey=ManagementAllowedOrigin,ParameterValue=https://d123fnjf47zmyp.cloudfront.net \
+            --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND --region eu-west-2 \
+            --description 'LB05 staging Cognito group claim parsing fix. NEVER execute automatically'
+          aws cloudformation wait change-set-create-complete \
+            --stack-name les-buttes-management-preview-isolated-staging \
+            --change-set-name "$name" --region eu-west-2
+          aws cloudformation describe-change-set \
+            --stack-name les-buttes-management-preview-isolated-staging \
+            --change-set-name "$name" --region eu-west-2 \
+            --query '{Status:Status,ExecutionStatus:ExecutionStatus,Changes:Changes[].ResourceChange.[Action,LogicalResourceId,ResourceType,Replacement]}' --output json
+          echo "Read-only auth fix change set (NOT EXECUTED): $name" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Deployment requires independent review of actual resource changes.' >> "$GITHUB_STEP_SUMMARY"
