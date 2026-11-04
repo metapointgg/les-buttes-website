@@ -36,8 +36,8 @@ jobs:
             echo "$name HTTP $code (expected $expected)"
             test "$code" = "$expected" || { cat "$body"; exit 1; }
             case "$name" in
-              available) node -e "const d=require(process.argv[1]);if(d.totalGBP!=='1085.00'||d.bookingConfirmed!==false)process.exit(1)" "$body" ;;
-              occupied) node -e "const d=require(process.argv[1]);if(!d.error)process.exit(1)" "$body" ;;
+              available) node -e "const d=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(d.totalGBP!=='1085.00'||d.bookingConfirmed!==false)process.exit(1)" "$body" ;;
+              occupied) node -e "const d=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));if(!d.error)process.exit(1)" "$body" ;;
             esac
             rm -f "$body"
           }
