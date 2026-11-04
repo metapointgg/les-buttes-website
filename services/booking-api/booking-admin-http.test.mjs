@@ -15,6 +15,29 @@ test('only verified access tokens from expected Cognito pool/client are accepted
  assert.equal(identityFromGateway({requestContext:{http:{method:'GET'}}},opts),null);
  assert.equal(identityFromGateway({...verified,requestContext:{...verified.requestContext,authorizer:{jwt:{claims:{...verified.requestContext.authorizer.jwt.claims,'cognito:groups':[]}}}}},opts),null);
 });
+test('LB-05 recognises API Gateway bracketed, JSON and array group claims without substring privilege escalation',()=>{
+ const opts={issuer,clientId};
+ const input=groupClaim=>({...verified,requestContext:{
+  ...verified.requestContext,authorizer:{jwt:{claims:{
+   ...verified.requestContext.authorizer.jwt.claims,
+   'cognito:groups':groupClaim
+  }}}
+ }});
+ for(const value of [
+  '[management, lesbuttes-viewer]',
+  '[lesbuttes-viewer, management]',
+  '["management","lesbuttes-viewer"]',
+  ['management','lesbuttes-viewer'],
+  'lesbuttes-viewer,management'
+ ])assert.deepEqual(identityFromGateway(input(value),opts),
+  {subject:'owner-user-id',role:'viewer'});
+ for(const value of [
+  '[management]','[other-lesbuttes-viewer]',
+  'prefix-lesbuttes-viewer', ['other-lesbuttes-viewer'],
+  '[lesbuttes-viewer-injected]', '["lesbuttes-owner-injected"]',
+  '[lesbuttes-viewer' // malformed bracket must never grant access
+ ])assert.equal(identityFromGateway(input(value),opts),null);
+});
 test('admin route is read-only, requires JWT and never approves on GET',async()=>{
  const origIssuer=process.env.MANAGEMENT_COGNITO_ISSUER,origClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
  process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
