@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Les Buttes | Booking management preview</title><link rel="stylesheet" href="./styles.css"></head>
 <body><header><p class="eyebrow">Les Buttes Holiday Cottages</p><h1>Booking management</h1><p>Staging preview — no live bookings or payments</p></header>
 <main>
 <section class="panel" aria-labelledby="connect-title"><h2 id="connect-title">Connect to staging</h2>
 <label>Management API URL <input id="api" type="url" placeholder="https://…execute-api.eu-west-2.amazonaws.com" autocomplete="off"></label>
 <label>Cognito access token <input id="token" type="password" autocomplete="off" placeholder="Access token (held in memory only)"></label>
-<div class="actions"><button id="connect">Load bookings</button><button id="disconnect" class="secondary">Disconnect</button></div>
-<p class="hint">Use a verified Cognito access token. Tokens are never saved to browser storage. Only staging API endpoints are permitted.</p></section>
+<div class="actions"><button id="sign-in" hidden>Sign in with Cognito</button><button id="connect">Load bookings</button><button id="disconnect" class="secondary">Disconnect</button></div>
+<p class="hint">On the hosted staging preview, sign in using Cognito. Access tokens remain in memory only and are not saved in browser storage. The local developer preview supports manual tokens.</p></section>
 <p id="message" role="status" aria-live="polite"></p>
 <div class="layout"><section class="panel" aria-labelledby="list-title"><h2 id="list-title">Booking requests</h2><div id="bookings"></div><button id="more" class="secondary" hidden>Load more</button></section>
 <section class="panel" aria-labelledby="detail-title"><h2 id="detail-title">Booking details</h2><div id="detail"><p>Select a booking to view its details.</p></div>
