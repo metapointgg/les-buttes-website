@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {identityFromGateway,createAdminHandler} from './booking-admin-http.mjs';
+import {identityFromGateway,stagingAuthDiagnostic,createAdminHandler} from './booking-admin-http.mjs';
 const issuer='https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_testing';
 const clientId='public-staging-client';
 const verified={requestContext:{http:{method:'GET'},authorizer:{jwt:{claims:{
@@ -37,6 +37,27 @@ test('LB-05 recognises API Gateway bracketed, JSON and array group claims withou
   '[lesbuttes-viewer-injected]', '["lesbuttes-owner-injected"]',
   '[lesbuttes-viewer' // malformed bracket must never grant access
  ])assert.equal(identityFromGateway(input(value),opts),null);
+});
+test('LB-05 live denial diagnostic has no token, identity or original group values',()=>{
+ const opts={issuer,clientId};
+ const claims={...verified.requestContext.authorizer.jwt.claims,
+  sub:'private-person-reference',email:'private@example.invalid',
+  'cognito:username':'private-user','cognito:groups':'[management, lesbuttes-viewer]',
+  marker:'never-record-this-token'};
+ const event={requestContext:{authorizer:{jwt:{claims}}}};
+ const diagnostic=stagingAuthDiagnostic(event,opts);
+ assert.equal(diagnostic.viewerRolePresent,true);
+ assert.equal(diagnostic.issuerMatches,true);
+ assert.equal(diagnostic.clientMatches,true);
+ assert.equal(diagnostic.groupEncoding,'bracketed');
+ for(const secret of ['private-person-reference','private@example.invalid','private-user',
+  'management','never-record-this-token','viewer]'])
+  assert.equal(JSON.stringify(diagnostic).includes(secret),false);
+ const mismatched=stagingAuthDiagnostic({requestContext:{authorizer:{jwt:{
+  claims:{...claims,client_id:'unexpected-client'}
+ }}}},opts);
+ assert.equal(mismatched.clientMatches,false);
+ assert.equal(mismatched.viewerRolePresent,true);
 });
 test('admin route is read-only, requires JWT and never approves on GET',async()=>{
  const origIssuer=process.env.MANAGEMENT_COGNITO_ISSUER,origClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
