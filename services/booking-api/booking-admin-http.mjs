@@ -36,6 +36,29 @@ export function identityFromGateway(event,{issuer=process.env.MANAGEMENT_COGNITO
  const role=roles.includes('lesbuttes-owner')?'owner':roles.includes('lesbuttes-admin')?'admin':roles.includes('lesbuttes-viewer')?'viewer':null;
  return role?{subject:claims.sub,role}:null;
 }
+export function stagingAuthDiagnostic(event,{issuer=process.env.MANAGEMENT_COGNITO_ISSUER,clientId=process.env.MANAGEMENT_COGNITO_CLIENT_ID}={}){
+ // Only boolean and structural diagnostics. Never log token, subject, username,
+ // email, full claims, or the original group names.
+ const jwt=event?.requestContext?.authorizer?.jwt;
+ const claims=jwt?.claims;
+ const raw=claims?.['cognito:groups'];
+ const parsed=groups(claims);
+ return {
+  version:'lb05-auth-v2',
+  gatewayJwtPresent:Boolean(jwt),
+  claimsPresent:Boolean(claims),
+  subjectPresent:typeof claims?.sub==='string'&&claims.sub.length>0,
+  issuerMatches:claims?.iss===issuer,
+  clientMatches:claims?.client_id===clientId,
+  tokenUseAccess:claims?.token_use==='access',
+  groupEncoding:Array.isArray(raw)?'array':typeof raw==='string'?
+   raw.trim().startsWith('[')?'bracketed':'string':'missing',
+  parsedGroupCount:parsed.length,
+  viewerRolePresent:parsed.includes('lesbuttes-viewer'),
+  ownerRolePresent:parsed.includes('lesbuttes-owner'),
+  adminRolePresent:parsed.includes('lesbuttes-admin')
+ };
+}
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
 export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=()=>false,
  approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout}){
@@ -44,7 +67,12 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
      const method=event?.requestContext?.http?.method;
      if(method!=='GET'&&method!=='POST')return reply(405,{error:'Method not allowed'});
      const id=identityFromGateway(event);
-     if(!id)return reply(403,{error:'Forbidden'});
+     if(!id){
+       // Safe rejection telemetry: never log the identity or JWT payload.
+       if(process.env.BOOKING_ENVIRONMENT==='staging')
+         console.warn('LB05_AUTH_REJECT',JSON.stringify(stagingAuthDiagnostic(event)));
+       return reply(403,{error:'Forbidden'});
+     }
      const path=event.rawPath??'';
      if(method==='POST'){
        const match=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/actions\/(approve|decline|cancel)$/i);
