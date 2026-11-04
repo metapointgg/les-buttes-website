@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Les Buttes isolated staging booking management preview - read only, separate stack
+Parameters:
+  StagingBookingTableName:
+    Type: String
+    AllowedPattern: '^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$'
+    Description: Existing authoritative staging booking table; this stack never creates or modifies it.
+  CognitoIssuer:
+    Type: String
+    AllowedPattern: '^https://cognito-idp\.eu-west-2\.amazonaws\.com/eu-west-2_[A-Za-z0-9]+$'
+    Default: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa
+  CognitoAudience:
+    Type: String
+    AllowedPattern: '^[A-Za-z0-9]+$'
+    Default: 1a0i42vp4gi24i5orh8i4jjhmr
+  ManagementAllowedOrigin:
+    Type: String
+    Default: http://127.0.0.1:5173
+    AllowedValues:
+      - http://127.0.0.1:5173
+      - https://d123fnjf47zmyp.cloudfront.net
+Conditions:
+  StagingRegion: !Equals [!Ref AWS::Region, eu-west-2]
+Resources:
+  ManagementPreviewApi:
+    Condition: StagingRegion
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: '$default'
+      CorsConfiguration:
+        AllowOrigins: [!Ref ManagementAllowedOrigin]
+        AllowMethods: [GET, OPTIONS]
+        AllowHeaders: [authorization, content-type]
+        MaxAge: 300
+      Auth:
+        DefaultAuthorizer: ManagementJwt
+        Authorizers:
+          ManagementJwt:
+            IdentitySource: '$request.header.Authorization'
+            JwtConfiguration:
+              issuer: !Ref CognitoIssuer
+              audience: [!Ref CognitoAudience]
+  ManagementPreviewReadFunction:
+    Condition: StagingRegion
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: booking-admin-http.handler
+      Runtime: nodejs22.x
+      Timeout: 12
+      MemorySize: 256
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKINGS_TABLE: !Ref StagingBookingTableName
+          BOOKING_REQUESTS_INDEX: BookingRequestsIndex
+          MANAGEMENT_COGNITO_ISSUER: !Ref CognitoIssuer
+          MANAGEMENT_COGNITO_CLIENT_ID: !Ref CognitoAudience
+          MANAGEMENT_WRITES_ENABLED: 'false'
+          MANAGEMENT_APPROVAL_ENABLED: 'false'
+          MANAGEMENT_CHECKOUT_ENABLED: 'false'
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: [dynamodb:GetItem, dynamodb:Query]
+              Resource:
+                - !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${StagingBookingTableName}'
+                - !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${StagingBookingTableName}/index/BookingRequestsIndex'
+      Events:
+        GetManagementPreview:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ManagementPreviewApi
+            Path: /admin/{proxy+}
+            Method: GET
+            Auth:
+              Authorizer: ManagementJwt
+Outputs:
+  ManagementPreviewApiUrl:
+    Condition: StagingRegion
+    Description: Separate Cognito-protected read-only staging management API.
+    Value: !Sub 'https://${ManagementPreviewApi}.execute-api.${AWS::Region}.amazonaws.com'

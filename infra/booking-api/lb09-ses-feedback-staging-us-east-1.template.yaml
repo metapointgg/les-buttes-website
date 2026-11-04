@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Les Buttes LB-09 isolated staging-only SES feedback infrastructure in us-east-1.
+  SES configuration set already exists. No booking-table, Lambda, guest-send
+  or production booking changes. Deploy only with explicit staging approval.
+Parameters:
+  SesConfigurationSetName:
+    Type: String
+    Default: my-first-configuration-set
+    AllowedValues:
+      - my-first-configuration-set
+  AwsAccountId:
+    Type: String
+    Default: '145608514666'
+    AllowedValues:
+      - '145608514666'
+Resources:
+  SesFeedbackDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: les-buttes-ses-feedback-staging-dlq
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+  SesFeedbackQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: les-buttes-ses-feedback-staging
+      VisibilityTimeout: 120
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt SesFeedbackDeadLetterQueue.Arn
+        maxReceiveCount: 5
+  SesFeedbackTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: les-buttes-ses-feedback-staging
+  SesFeedbackTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref SesFeedbackTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: SesMayPublishOnlyFromApprovedConfigurationSet
+            Effect: Allow
+            Principal:
+              Service: ses.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref SesFeedbackTopic
+            Condition:
+              StringEquals:
+                AWS:SourceAccount: !Ref AwsAccountId
+              ArnEquals:
+                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:configuration-set/${SesConfigurationSetName}'
+  SesFeedbackQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref SesFeedbackQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ReceiveOnlyApprovedSesFeedbackTopic
+            Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt SesFeedbackQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref SesFeedbackTopic
+  SesFeedbackSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref SesFeedbackTopic
+      Protocol: sqs
+      Endpoint: !GetAtt SesFeedbackQueue.Arn
+      RawMessageDelivery: false
+  SesFeedbackEventDestination:
+    Type: AWS::SES::ConfigurationSetEventDestination
+    DependsOn:
+      - SesFeedbackTopicPolicy
+    Properties:
+      ConfigurationSetName: !Ref SesConfigurationSetName
+      EventDestination:
+        Name: les-buttes-ses-feedback-staging
+        Enabled: true
+        MatchingEventTypes:
+          - DELIVERY
+          - BOUNCE
+          - COMPLAINT
+        SnsDestination:
+          TopicARN: !Ref SesFeedbackTopic
+Outputs:
+  SesFeedbackTopicArn:
+    Description: Exact allowed SNS topic ARN for signature verification
+    Value: !Ref SesFeedbackTopic
+  SesFeedbackQueueUrl:
+    Description: Staging queue for future signature-verifying consumer
+    Value: !Ref SesFeedbackQueue
+  SesFeedbackDeadLetterQueueUrl:
+    Description: Poison-message isolation queue
+    Value: !Ref SesFeedbackDeadLetterQueue

@@ -1,7 +1,10 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('../dist/', import.meta.url).pathname;
+// File URL pathnames begin with /C:/ on Windows and are not valid filesystem paths.
+// fileURLToPath converts correctly on both Windows and Linux GitHub runners.
+const root = fileURLToPath(new URL('../dist/', import.meta.url));
 const files = [];
 
 function walk(dir) {

@@ -1,0 +1,117 @@
+# AWS staging rehearsal — not production
+
+## Verified AWS staging milestone — 24 October 2026
+
+The host deployed the stack `les-buttes-booking-staging` successfully to AWS account `145608514666`, region `eu-west-2`. After fixing the permanent-block availability regression and cleaning up the initial synthetic booking, the end-to-end run finished with:
+
+```
+STAGING PASS: quote -> request -> conflict rejection -> approval -> synthetic confirmation -> cancellation -> availability.
+No SumUp payment, real guest email, or production booking was created.
+```
+
+This verifies the AWS core reservation workflow (including confirmed occupancy, cancellation and availability restoration). It **does not** verify real SumUp payments, real Airbnb calendar reconciliation, SES mail deliverability or live pricing. The stack is still deployed and can incur small ongoing AWS charges. The live website is unchanged.
+
+
+The booking backend is **not deployed automatically** by website GitHub Actions. PR #41 remains draft. Use this runbook only for an *isolated* AWS test stack, with synthetic guests, rates and season rules. This script does not modify the site's main branch or production booking links.
+
+## 1. Local prerequisites
+
+In PowerShell, from the repository root:
+
+- AWS CLI v2 configured with an AWS profile that can create CloudFormation, DynamoDB, Lambda, HTTP API Gateway, IAM and SSM resources.
+- AWS SAM CLI and Node.js 22 or newer.
+- Region eu-west-2.
+- No SumUp credentials and no actual customer records are required.
+- AWS deployment creates billable resources (including DynamoDB backups). Review your billing alarms and available AWS credits.
+
+The deployment will display the account ID and require you to type DEPLOY-STAGING before creating or modifying resources.
+
+## 2. Deploy and run the staging test
+
+Run:
+
+    powershell -File infra/booking-api/deploy-staging.ps1 -Profile YOUR_AWS_PROFILE
+
+The script will:
+
+1. Check AWS identity and refuse a stack without staging in its name.
+2. Write synthetic open dates and nightly prices to dedicated SSM String parameters (no approved customer price data required).
+3. Build the SAM app and deploy the les-buttes-booking-staging CloudFormation stack.
+4. Generate fresh random calendar and staging access tokens.
+5. Use Cloudflare Turnstile's published testing credentials, never a production key.
+6. Set the test API's mode to staging and require an access token on every request.
+7. Create a synthetic request for test@example.invalid without sending any email or real payment link.
+8. Verify booking availability, an overlapping-request conflict, a combined-cottage conflict that must not hold the other cottage, and a rejected 28-night booking.
+9. Approve the synthetic request with a test.invalid URL, confirm with a TEST- reference, then cancel and verify availability returns.
+
+The API cannot accept a non-synthetic guest email in staging. The approval CLI cannot accept a real SumUp pay.sumup.com link in staging, and cannot accept a TEST- payment reference outside staging.
+
+After successful tests, the staging stack remains deployed (and may continue accruing minimal AWS charges). It does not alter the real website. To remove it when finished, use SAM/CloudFormation stack deletion after reviewing whether any test records need preserving, and separately delete the two staging SSM parameters.
+
+### Troubleshooting
+
+If a rehearsal fails, the script reports the synthetic booking ID if known. Use the private host CLI on the staging table to inspect and manually release the test block. A failed payment simulation must never be confused with a real SumUp payment.
+
+**Specific confirmed-reservation regression fixed 24 October 2026:** the initial rehearsal reported `STAGING FAILED: Confirmed booking stays blocked` because the availability API mistakenly treated permanent date records (no TTL) as available. It was corrected in `services/booking-api/occupancy.mjs` and covered by automated regression tests. The failed run leaves a real **synthetic** DynamoDB booking in the isolated staging table; do not simply re-run with the same dates before releasing it. On the host workstation, set `AWS_PROFILE`, `AWS_REGION`, `BOOKING_ENVIRONMENT=staging` and the staging `BOOKINGS_TABLE`. From `services/booking-api/`, run `node admin.mjs show <reference>` and verify **guestEmail=test@example.invalid** and status `CONFIRMED`, then run `node admin.mjs cancel <reference> "Synthetic staging test cleanup after confirmed-block regression"`. The cancellation should release its nightly slots. Return to the repository root, pull the fixed branch, then redeploy the staging stack (this rotates the private token) and verify the E2E passes.
+
+Do not cancel any booking if its details or status differ from the synthetic test.
+
+The automatically generated staging access token is session-only; rerunning deployment rotates it. Do not commit a staging token, Airbnb iCalendar secret URL or merchant credentials to GitHub, Pages CMS or public website files.
+
+The PowerShell script has not been executed in your AWS account by ChatGPT because AWS account access is not connected in this conversation. CI validates pure booking logic but does not prove IAM/CloudFormation deployment or real DynamoDB transaction behaviour; those require the staged run.
+
+## 3. Reviewing real Airbnb calendar data — read-only
+
+In Airbnb for each cottage:
+
+Calendar → Availability → Connect calendars → Export calendar.
+
+Airbnb provides a private .ics calendar link. Download its content securely to your own computer (do not paste the URL into GitHub or this repository). Then, from services/booking-api/:
+
+    node preview-airbnb.mjs geranium "C:\Private\geranium.ics"
+    node preview-airbnb.mjs honeysuckle "C:\Private\honeysuckle.ics"
+
+The preview reports blocked date ranges and prints suggested private admin.mjs block commands. It never writes to DynamoDB. The parser deliberately rejects unfamiliar datetime/recurrence formats rather than inventing dates. It discards guest names, descriptions and email text.
+
+**Critical:** Airbnb's exported calendar includes blocked dates for availability settings, preparation time, pending requests and confirmed bookings. A blocked date cannot be assumed to be a confirmed reservation. Compare each preview range to Airbnb's host reservation records before recording it in the master calendar.
+
+After reviewing blocks, manually record each verified range using the staging-table CLI. Never automate an unreviewed import. Calendar sync is delayed, so continue checking Airbnb's host calendar before approving direct bookings.
+
+## Optional automated Airbnb feed monitoring
+
+For staging-only read-only change checks every four hours, with encrypted Airbnb export URLs and SNS email alerts, follow **[MONITORING.md](MONITORING.md)**. Monitoring is **disabled by default**, requires an explicit deployment flag and a confirmed SNS email subscription, and will never import or cancel reservations. It uses a separate checkpoint table and can incur extra AWS charges.
+
+## 4. Later production readiness
+
+Staging must succeed before we consider a real booking launch. Production still needs approved 2027 rate/season boundaries, a full calendar reconciliation, the exact Strict cancellation and refund wording, SumUp merchant checks, email setup, and production monitoring. Keep the GitHub PR in draft until those gates are satisfied.
+
+## Optional Cognito-protected booking management API — NOT YET DEPLOYED
+
+A staging-only **opt-in** management HTTP API and booking-request GSI have been
+added to `template.yaml`. They are **disabled by default** and leave the public
+booking API untouched.
+
+- `ManagementPreviewEnabled=true` requires `BookingEnvironment=staging`,
+  `ManagementCognitoPoolId`, `ManagementCognitoClientId` and an exact
+  `ManagementAllowedOrigin` (e.g. `http://127.0.0.1:5173`).
+- `ManagementApi` is a separate Cognito-JWT-protected API surface backed by
+  the **same** `BookingTable`; its Lambda has only GetItem/Query permissions.
+- The optional `BookingRequestsIndex` GSI is on the existing table, not a new
+  booking database. New direct requests write `GSI1PK=BOOKING_REQUESTS` and
+  `GSI1SK=<requestedAt>#<bookingId>`.
+- Historical requests without the GSI attributes require a reviewed,
+  idempotent staging-only backfill before the inbox can be considered complete.
+- No Cognito pool, SPA client, domain, index or API was created in AWS by
+  committing this code.
+- **Do not enable by an ordinary existing `deploy-staging.ps1` run.** That
+  script intentionally does not accept management-pool arguments, and a normal
+  run rotates other staging tokens. Extend its explicit confirmation/previous
+  settings preservation checks or deploy through a separately reviewed change
+  set before provisioning the new surface.
+- The management app source is tracked in
+  `metapointgg/les-buttes-cottage-management`, draft PR #9. It will point to
+  the new ManagementApiUrl and the Cognito issuer/client but contains no AWS
+  credentials. Its build is validated separately.
+- Payment initiation, guest request, approval, cancellation, rule publication
+  and refunds are **not part of this management read-only endpoint**.
+

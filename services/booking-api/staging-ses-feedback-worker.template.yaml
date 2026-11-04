@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  Les Buttes LB-09 isolated SES feedback worker, US East staging only.
+  Queue consumption deliberately DISABLED until owner-authorised acceptance.
+Parameters:
+  BookingTableName:
+    Type: String
+    Default: les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK
+    AllowedValues:
+      - les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK
+Conditions:
+  IsApprovedRegion: !Equals [!Ref AWS::Region, us-east-1]
+Resources:
+  SesFeedbackWorker:
+    Condition: IsApprovedRegion
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: booking-ses-feedback-worker.handler
+      Runtime: nodejs22.x
+      Timeout: 30
+      MemorySize: 256
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKING_SES_FEEDBACK_ENABLED: 'true'
+          BOOKING_SES_FEEDBACK_QUEUE_ARN: arn:aws:sqs:us-east-1:145608514666:les-buttes-ses-feedback-staging
+          BOOKING_SES_FEEDBACK_TOPIC_ARN: arn:aws:sns:us-east-1:145608514666:les-buttes-ses-feedback-staging
+          BOOKING_TABLE_REGION: eu-west-2
+          BOOKINGS_TABLE: !Ref BookingTableName
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Sid: ReadAndReconcileEmailOutboxOnly
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:UpdateItem
+              Resource: !Sub 'arn:${AWS::Partition}:dynamodb:eu-west-2:${AWS::AccountId}:table/${BookingTableName}'
+            - Sid: ConsumeOnlySesFeedbackStagingQueue
+              Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+              Resource: arn:aws:sqs:us-east-1:145608514666:les-buttes-ses-feedback-staging
+      Events:
+        SesFeedback:
+          Type: SQS
+          Properties:
+            Queue: arn:aws:sqs:us-east-1:145608514666:les-buttes-ses-feedback-staging
+            BatchSize: 5
+            Enabled: false
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
+Outputs:
+  StagingFeedbackWorkerArn:
+    Condition: IsApprovedRegion
+    Value: !GetAtt SesFeedbackWorker.Arn
+    Description: Inert staging consumer with disabled SQS event-source mapping

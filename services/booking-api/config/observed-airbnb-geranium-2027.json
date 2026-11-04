@@ -1,0 +1,80 @@
+{
+  "status": "OBSERVED_AIRBNB_HOST_CALENDAR_NOT_APPROVED_FOR_DIRECT_BOOKINGS",
+  "property": "geranium",
+  "listingId": "17564897",
+  "evidenceDate": "2026-10-24",
+  "evidence": "Eight user-supplied Airbnb host calendar screenshots for March through October 2027. Existing in-season listing rates were previously adjusted for Airbnb's host-fee pricing change; these displayed rates must NOT be increased again just for that change.",
+  "season": {
+    "firstOccupiedNight": "2027-03-20",
+    "lastOccupiedNight": "2027-10-01",
+    "lastCheckout": "2027-10-02"
+  },
+  "displayedNightlyRatesGBP": [
+    {
+      "start": "2027-03-20",
+      "end": "2027-03-31",
+      "amount": 185
+    },
+    {
+      "start": "2027-04-01",
+      "end": "2027-04-30",
+      "amount": 185
+    },
+    {
+      "start": "2027-05-01",
+      "end": "2027-05-31",
+      "amount": 205
+    },
+    {
+      "start": "2027-06-01",
+      "end": "2027-06-30",
+      "amount": 215
+    },
+    {
+      "start": "2027-07-01",
+      "end": "2027-07-31",
+      "amount": 235
+    },
+    {
+      "start": "2027-08-01",
+      "end": "2027-08-31",
+      "amount": 250
+    },
+    {
+      "start": "2027-09-01",
+      "end": "2027-09-30",
+      "amount": 210
+    },
+    {
+      "start": "2027-10-01",
+      "end": "2027-10-01",
+      "amount": 210
+    }
+  ],
+  "caveats": [
+    "Some cells within existing Airbnb bookings are partially obscured; the calendar shows consistent month-by-month rates on visible cells and the 28 Aug–4 Sep held week.",
+    "Out-of-season days 1–19 March and after 1 October are not offered as holiday availability, regardless of prices visible in greyed-out cells.",
+    "Displayed calendar nightly rates are not proof of final host payout or separate cleaning fee/tax treatment; use the actual booking price breakdown where applicable.",
+    "Rates are an observed Airbnb listing baseline, NOT an instruction to update the direct-booking AWS rate table or reprice existing reservations."
+  ],
+  "verifiedHeldDirectWeek": {
+    "start": "2027-08-28",
+    "checkout": "2027-09-04",
+    "calculation": [
+      {
+        "dates": "2027-08-28 through 2027-08-31",
+        "nights": 4,
+        "rateGBP": 250,
+        "totalGBP": 1000
+      },
+      {
+        "dates": "2027-09-01 through 2027-09-03",
+        "nights": 3,
+        "rateGBP": 210,
+        "totalGBP": 630
+      }
+    ],
+    "modelGrossGBP": 1630,
+    "earlierAirbnbQuoteGBP": 1630
+  }
+}

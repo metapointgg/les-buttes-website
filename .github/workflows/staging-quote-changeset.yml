@@ -1,0 +1,78 @@
+name: Deploy isolated staging quote API (manual only)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_staging_only:
+        description: 'Type STAGING-QUOTE-ONLY to authorise isolated staging deployment'
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: les-buttes-isolated-staging-quote
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/feature/direct-booking-requests-27-night' && inputs.confirm_staging_only == 'STAGING-QUOTE-ONLY'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: aws-actions/setup-sam@v2
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
+          aws-region: eu-west-2
+      - name: Verify staging account and immutable target
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
+          aws dynamodb describe-table --table-name 'les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK' --query 'Table.TableStatus' --output text | grep -qx ACTIVE
+      - name: Verify isolated quote deployment IAM prerequisite
+        shell: bash
+        run: |
+          set -euo pipefail
+          role_name='les-buttes-booking-private-staging-deploy'
+          stack_arn='arn:aws:cloudformation:eu-west-2:145608514666:stack/les-buttes-isolated-quote-staging/*'
+          artifact_arn='arn:aws:s3:::les-buttes-cottage-manag-artifacts-145608514666-eu-west-2/booking-isolated-quote-staging/sam/*'
+          for action_resource in "cloudformation:CreateChangeSet|$stack_arn" "s3:PutObject|$artifact_arn"; do
+            action="${action_resource%%|*}"
+            resource="${action_resource#*|}"
+            decision="$(aws iam simulate-principal-policy \
+              --policy-source-arn "arn:aws:iam::145608514666:role/$role_name" \
+              --action-names "$action" \
+              --resource-arns "$resource" \
+              --query 'EvaluationResults[0].EvalDecision' --output text)"
+            if [ "$decision" != 'allowed' ]; then
+              echo "::error::Missing $action on $resource ($decision). See infra/booking-staging-quote/IAM-PREREQUISITE.md"
+              exit 1
+            fi
+          done
+      - name: Install dependencies and test
+        working-directory: services/booking-api
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+      - name: Validate and package staging template
+        run: |
+          sam validate --lint --template-file infra/booking-staging-quote/template.yaml
+          sam build --template-file infra/booking-staging-quote/template.yaml --build-dir .aws-sam/isolated-quote
+      - name: Create changeset only (no automatic deployment)
+        run: |
+          sam deploy --template-file .aws-sam/isolated-quote/template.yaml \
+            --stack-name les-buttes-isolated-quote-staging \
+            --region eu-west-2 \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+              ExistingStagingTable=les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK \
+              PreviewOrigin=https://d123fnjf47zmyp.cloudfront.net \
+            --s3-bucket les-buttes-cottage-manag-artifacts-145608514666-eu-west-2 \
+            --s3-prefix booking-isolated-quote-staging/sam \
+            --no-execute-changeset \
+            --no-fail-on-empty-changeset

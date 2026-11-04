@@ -1,0 +1,28 @@
+{
+  "name": "les-buttes-booking-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "node --check index.mjs && node --check admin.mjs && node --check monitor-airbnb.mjs && node --check export-availability-snapshot.mjs && node --check master-occupied.mjs && node --check preview-master-server.mjs && node --check booking-settings.mjs && node --check booking-admin-reader.mjs && node --check booking-admin-http.mjs && node --check booking-admin-action-policy.mjs && node --check booking-admin-transaction-policy.mjs && node --check booking-admin-transaction-writer.mjs && node --check booking-admin-config-writer.mjs && node --check sumup-checkout-client.mjs && node --check sumup-checkout-store.mjs && node --check sumup-checkout-orchestrator.mjs && node --check booking-approved-checkout.mjs && node --check booking-checkout-runtime.mjs && node --check booking-staging-ses-policy.mjs && node --check booking-staging-ses-transport.mjs && node --check booking-email-outbox.mjs && node --check booking-lifecycle-email-templates.mjs && node --check booking-ses-feedback.mjs && node --check booking-sns-signature.mjs && node --check booking-ses-feedback-sqs-handler.mjs && node --check booking-ses-feedback-worker.mjs && node --check booking-ses-outcome.mjs && node --check lb08-admin-deployment-policy.mjs && node --check lb08-staging-changeset-preflight.mjs && node --check lb08-management-changeset-review.mjs && node --check lb08-isolated-management-changeset-review.mjs && node --check lb08-isolated-management-review-cli.mjs && node --check lb08-management-changeset-review-cli.mjs && node --check sumup-creation-claim.mjs && node --check sumup-checkout-recovery.mjs && node --check sumup-payment-verification.mjs && node --check sumup-payment-confirmation.mjs && node --check sumup-payment-reconciler.mjs && node --check sumup-payment-notification.mjs && node --check sumup-payment-trigger-auth.mjs && node --check sumup-payment-trigger-replay.mjs && node --check payment-staging-preflight.mjs && node --check sumup-sandbox-runtime.mjs && node --check sumup-sandbox-probe.mjs && node --check sumup-synthetic-checkout.mjs && node --check sumup-synthetic-checkout-read.mjs && node --check sumup-sandbox-reference-probe.mjs && node --check lb08-ddb-staging-preflight.mjs && node --check lb08-ddb-transaction-probe.mjs && node --check lb08-ddb-atomic-staging-probe.mjs && node --check lb08-isolated-booking-acceptance.mjs && node --check staging-availability-handler.mjs && node --check public-availability-handler.mjs && node --check published-band-quote.mjs && node --check staging-quote-handler.mjs",
+    "test": "node --test",
+    "probe:sumup:sandbox": "node sumup-sandbox-probe.mjs",
+    "probe:sumup:synthetic-checkout": "node sumup-synthetic-checkout.mjs",
+    "probe:sumup:synthetic-read": "node sumup-synthetic-checkout-read.mjs",
+    "probe:lb08:ddb-staging": "node lb08-ddb-staging-preflight.mjs",
+    "probe:lb08:ddb-transaction": "node lb08-ddb-transaction-probe.mjs",
+    "probe:lb08:ddb-atomic": "node lb08-ddb-atomic-staging-probe.mjs",
+    "probe:lb08:isolated-confirmation": "node lb08-isolated-booking-acceptance.mjs",
+    "probe:sumup:reference-read": "node sumup-sandbox-reference-probe.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.1145.0",
+    "@aws-sdk/lib-dynamodb": "3.1145.0",
+    "@aws-sdk/client-ses": "3.1145.0",
+    "@aws-sdk/client-ssm": "3.1145.0",
+    "@aws-sdk/client-sns": "3.1145.0"
+  }
+}
