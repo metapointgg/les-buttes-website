@@ -24,3 +24,35 @@ After permissions are granted:
 4. Test `/quote` for a valid week, an occupied week, invalid guests and CORS origin restrictions.
 
 No live bookings or payments should be enabled by this operation.
+
+## Verified blocker — 4 November 2026, 20:16 GMT
+
+A live `iam:SimulatePrincipalPolicy` check for role `les-buttes-booking-private-staging-deploy` confirms:
+
+| Action/resource | Decision |
+|---|---|
+| `cloudformation:CreateChangeSet` / isolated quote stack | `allowed` |
+| `s3:PutObject` / isolated quote artefact prefix | `allowed` |
+| `cloudformation:CreateChangeSet` / `arn:aws:cloudformation:eu-west-2:aws:transform/Serverless-2016-10-31` | **`implicitDeny`** |
+| `cloudformation:ExecuteChangeSet` / isolated quote stack | `implicitDeny` (intentional) |
+
+The feature-branch workflow was corrected to separate `staging` environment approval from branch-scoped OIDC credentials in commit `33816bee`. An additional preflight check for SAM transform permission was committed in `ca3498d1`. **Neither commit has been exercised by a fresh manual workflow run yet.**
+
+**One required admin permission** (do not broaden to wildcard transforms or give ExecuteChangeSet):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "cloudformation:CreateChangeSet",
+      "Resource": "arn:aws:cloudformation:eu-west-2:aws:transform/Serverless-2016-10-31"
+    }
+  ]
+}
+```
+
+AWS connector write operations to alter IAM were blocked, so the grant **has not** been made here. Do not run the workflow expecting success until that grant is verified. Once granted, run the feature-branch manual workflow with `STAGING-QUOTE-ONLY`. Its sole objective is to prepare the staging change set for separate review; never execute automatically.
+
+For clarity: IAM simulator checks of subsequent Lambda/role creation actions returned `implicitDeny` for the deploy role, which is expected for a change-set preparation role and **does not alone prove the separately authorised CloudFormation execution stage lacks permissions**. Verify execution permissions separately during review.
