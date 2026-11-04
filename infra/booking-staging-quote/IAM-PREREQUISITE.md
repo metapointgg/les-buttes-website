@@ -56,3 +56,17 @@ The feature-branch workflow was corrected to separate `staging` environment appr
 AWS connector write operations to alter IAM were blocked, so the grant **has not** been made here. Do not run the workflow expecting success until that grant is verified. Once granted, run the feature-branch manual workflow with `STAGING-QUOTE-ONLY`. Its sole objective is to prepare the staging change set for separate review; never execute automatically.
 
 For clarity: IAM simulator checks of subsequent Lambda/role creation actions returned `implicitDeny` for the deploy role, which is expected for a change-set preparation role and **does not alone prove the separately authorised CloudFormation execution stage lacks permissions**. Verify execution permissions separately during review.
+
+## 4 November 2026 — policy now attached; IAM simulation is a false negative
+
+The owner attached inline policy `les_buttes_cloudformation_CreateChangeSet` to deployment role `les-buttes-booking-private-staging-deploy`. AWS `iam:GetRolePolicy` verified its contents exactly match AWS's documented SAM transform ARN allow statement:
+
+`cloudformation:CreateChangeSet` on `arn:aws:cloudformation:eu-west-2:aws:transform/Serverless-2016-10-31`.
+
+The role already has an identically scoped statement in its existing `IsolatedQuoteChangeSetOnly` inline policy. **Do not add further permissions.**
+
+However, AWS `iam:SimulatePrincipalPolicy` still returns `implicitDeny` on that transform ARN. An independent `iam:SimulateCustomPolicy` using *only the exact documented Allow statement* also returns `implicitDeny` with zero matched statements. This demonstrates that this IAM simulation is not a reliable acceptance test for the transform resource; it does **not** demonstrate that the attached policy is absent or incorrect. AWS's official CloudFormation guide confirms the exact scoped ARN is correct.
+
+**Remaining blocker:** Workflow `.github/workflows/staging-quote-changeset.yml` contains a transform-specific IAM simulator preflight added in commit `ca3498d1`. That preflight must be replaced with a reliable check before the workflow is triggered; retain its existing staging environment approval, branch-specific OIDC, confirmation text, stack-ARN and artifact-ARN checks and `--no-execute-changeset`. The real change-set creation is the definitive AWS authorisation test and does not execute a deployment. A GitHub workflow update to correct this simulator false negative was attempted but blocked by connection safety checks; **no workflow change was committed**.
+
+No booking table, Lambda, production infrastructure or payment settings were changed. No new workflow dispatch or isolated quote stack has been confirmed.
