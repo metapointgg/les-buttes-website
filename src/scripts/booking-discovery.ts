@@ -352,6 +352,16 @@ if(widget){
       feedback.textContent='An authoritative quote is unavailable. Please try again later.';
       return;
     }
+    // The review screen must display the server-authoritative total, not the
+    // illustrative preview rate. Do not compare illustrative Airbnb savings
+    // against an authoritative direct quote.
+    if(liveQuoteEnabled&&authoritativeQuote?.key===quoteKey()){
+      fill('[data-summary-direct]',money(Number(authoritativeQuote.totalGBP)));
+      for(const selector of ['[data-summary-airbnb]','[data-summary-saving]']){
+        const element=widget.querySelector<HTMLElement>(selector);
+        if(element?.parentElement)element.parentElement.hidden=true;
+      }
+    }
     setStep(3);
   });
   onClick('[data-continue-details]',async()=>{
