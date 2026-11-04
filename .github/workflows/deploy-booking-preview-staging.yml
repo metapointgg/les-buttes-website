@@ -35,6 +35,12 @@ jobs:
           test -s dist/book/index.html
           test -s dist/fr/book/index.html
           test -s dist/nl/book/index.html
+          # Astro inlines PUBLIC_* settings into hashed browser bundles.
+          # Fail deployment if the actual browser script lacks the quote endpoint.
+          if ! grep -RqlF 'yo8p94y63b.execute-api.eu-west-2.amazonaws.com/quote' dist/_astro/; then
+            echo "Authoritative staging quote endpoint missing from built browser assets" >&2
+            exit 1
+          fi
           if grep -Eqi 'data-mode=["'\''"]live|data-booking-form' dist/book/index.html; then
             echo "Unsafe live booking form in staging build" >&2
             exit 1
