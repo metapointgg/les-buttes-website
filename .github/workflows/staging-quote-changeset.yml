@@ -52,7 +52,8 @@ jobs:
           role_name='les-buttes-booking-private-staging-deploy'
           stack_arn='arn:aws:cloudformation:eu-west-2:145608514666:stack/les-buttes-isolated-quote-staging/*'
           artifact_arn='arn:aws:s3:::les-buttes-cottage-manag-artifacts-145608514666-eu-west-2/booking-isolated-quote-staging/sam/*'
-          for action_resource in "cloudformation:CreateChangeSet|$stack_arn" "s3:PutObject|$artifact_arn"; do
+          transform_arn='arn:aws:cloudformation:eu-west-2:aws:transform/Serverless-2016-10-31'
+          for action_resource in "cloudformation:CreateChangeSet|$stack_arn" "cloudformation:CreateChangeSet|$transform_arn" "s3:PutObject|$artifact_arn"; do
             action="${action_resource%%|*}"
             resource="${action_resource#*|}"
             decision="$(aws iam simulate-principal-policy \
