@@ -7,7 +7,7 @@ import {preparePaymentConfirmation} from './sumup-payment-confirmation.mjs';
 const BOOKING_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout,merchantCode,
  nowEpoch=Math.floor(Date.now()/1000)}={}){
- if(!db?.send||typeof table!=='string'||!/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/.test(table)||
+ if(!db?.send||typeof table!=='string'||!table.toLowerCase().includes('staging')||
    !BOOKING_ID.test(bookingId??'')||typeof fetchCheckout!=='function'||
    typeof merchantCode!=='string'||!merchantCode.trim()||
    !Number.isSafeInteger(nowEpoch)||nowEpoch<0)
