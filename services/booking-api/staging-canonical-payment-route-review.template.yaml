@@ -13,6 +13,98 @@ Parameters:
     Type: String
     AllowedPattern: '^[A-Za-z0-9]+$'
     Description: Existing JWT authorizer ID from canonical API; verify issuer and audience.
+  ReviewedArtifactBucket:
+    Type: String
+    AllowedPattern: '^[a-z0-9][a-z0-9.-]{2,62}    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+Conditions:
+  ApprovedStagingDeployment: !Equals [!Ref DeploymentEnabled, 'true']
+  CorrectRegion: !Equals [!Ref AWS::Region, eu-west-2]
+  Deploy: !And [!Condition ApprovedStagingDeployment, !Condition CorrectRegion]
+Resources:
+  PaymentReconciliationRole:
+    Type: AWS::IAM::Role
+    Condition: Deploy
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StagingBookingReadOnly
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem]
+                Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${StagingBookingTableName}'
+  PaymentReconciliationFunction:
+    Type: AWS::Lambda::Function
+    Condition: Deploy
+    Properties:
+      Runtime: nodejs22.x
+      Handler: booking-admin-http.handler
+      Role: !GetAtt PaymentReconciliationRole.Arn
+      Timeout: 12
+      MemorySize: 256
+      ReservedConcurrentExecutions: 2
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          MANAGEMENT_COGNITO_ISSUER: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa
+          MANAGEMENT_COGNITO_CLIENT_ID: 2mjmimjh7oc8h00d4nngrc1akj
+          BOOKINGS_TABLE: !Ref StagingBookingTableName
+          MANAGEMENT_WRITES_ENABLED: 'false'
+          MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED: 'false'
+          MANAGEMENT_APPROVAL_ENABLED: 'false'
+          MANAGEMENT_CHECKOUT_ENABLED: 'false'
+          BOOKING_CONFIRMATION_DISPATCH_ENABLED: 'false'
+          BOOKING_EMAILS_ENABLED: 'false'
+  PaymentReconciliationIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Condition: Deploy
+    Properties:
+      ApiId: !Ref CanonicalApiId
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt PaymentReconciliationFunction.Arn
+      PayloadFormatVersion: '2.0'
+  PaymentReconciliationRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Condition: Deploy
+    Properties:
+      ApiId: !Ref CanonicalApiId
+      RouteKey: 'POST /admin/bookings/{bookingId}/payment/reconcile'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub 'integrations/${PaymentReconciliationIntegration}'
+  PaymentReconciliationPermission:
+    Type: AWS::Lambda::Permission
+    Condition: Deploy
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PaymentReconciliationFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CanonicalApiId}/*/POST/admin/bookings/*/payment/reconcile'
+Outputs:
+  ReviewStatus:
+    Value: 'Review-only template; DeploymentEnabled defaults to false. Writes, SSM and SES are not granted.'
+
+    Description: Explicitly approved S3 bucket containing the packaged Node.js Lambda.
+  ReviewedArtifactKey:
+    Type: String
+    MinLength: 1
+    Description: Explicitly approved immutable versioned Lambda artefact key.
+  ReviewedArtifactVersion:
+    Type: String
+    MinLength: 1
+    Description: Immutable S3 object version for reviewed artefact.
   DeploymentEnabled:
     Type: String
     AllowedValues: ['false', 'true']
