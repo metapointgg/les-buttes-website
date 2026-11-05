@@ -216,8 +216,12 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
        const record=await reader.getBooking(event,checkoutStatus[1]);
        if(!record)return reply(404,{error:'Not found'});
        const checkout=await readCheckout({bookingId:checkoutStatus[1]});
+       // Checkout registration is not proof of payment. The authoritative
+       // booking state is updated only by provider-verified reconciliation.
+       const confirmed=record.status==='CONFIRMED'&&record.reservationStatus==='CONFIRMED';
        return reply(200,{bookingId:checkoutStatus[1],
-         registered:Boolean(checkout),
+         registered:Boolean(checkout),bookingConfirmed:confirmed,
+         ...(confirmed?{confirmationRecordedAt:record.paidAt??null}:{}),
          ...(checkout?{checkoutId:checkout.checkoutId,
            registrationStatus:checkout.status,
            amountPence:checkout.amountPence,currency:checkout.currency}:{})});
