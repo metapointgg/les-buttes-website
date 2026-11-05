@@ -85,7 +85,7 @@ Resources:
     Condition: Deploy
     Properties:
       Runtime: nodejs22.x
-      Handler: booking-admin-http.handler
+      Handler: staging-payment-route-handler.handler
       Role: !GetAtt PaymentReconciliationRole.Arn
       Timeout: 12
       MemorySize: 256
