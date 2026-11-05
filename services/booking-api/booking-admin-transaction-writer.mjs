@@ -26,14 +26,22 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  if(action==='cancel'&&booking.reservationStatus!=='CONFIRMED')
    throw Error('Confirmed direct reservation status required');
  if(action==='approve'){
-   if(!approval||!Number.isSafeInteger(approval.amountPence)||approval.amountPence<=0)
+   if(!approval)throw Error('Approval requires explicit pricing consent');
+   const quotedPence=Math.round(Number(booking.quote?.totalGBP)*100);
+   if(!Number.isSafeInteger(quotedPence)||quotedPence<=0||
+      Math.abs(Number(booking.quote?.totalGBP)*100-quotedPence)>0.000001)
+     throw Error('Booking quote missing or not exact GBP pence');
+   if(approval.usePublishedQuote===true){
+     if(Object.hasOwn(approval,'amountPence')||Object.hasOwn(approval,'priceChangeReason'))
+       throw Error('Published-quote approval cannot override price');
+     approval={amountPence:quotedPence};
+   }
+   if(!Number.isSafeInteger(approval.amountPence)||approval.amountPence<=0)
      throw Error('Approval requires a positive amount in pence');
    // Approval precedes checkout creation. Do not require a speculative
    // payment URL or allow the owner to inject an unregistered payment link.
    if(Object.hasOwn(approval,'paymentUrl'))
      throw Error('Approval cannot supply a payment URL; register SumUp checkout separately');
-   const quotedPence=Math.round(Number(booking.quote?.totalGBP)*100);
-   if(!Number.isSafeInteger(quotedPence)||quotedPence<=0)throw Error('Booking quote missing');
    if(quotedPence!==approval.amountPence&&
       (typeof approval.priceChangeReason!=='string'||approval.priceChangeReason.trim().length<5))
      throw Error('Changed approval price requires an audit reason');
