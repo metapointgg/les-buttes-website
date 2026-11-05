@@ -6,6 +6,7 @@ on:
     branches: [feature/direct-booking-requests-27-night]
     paths:
       - '.github/workflows/canonical-staging-payment-package.yml'
+      - 'services/booking-api/**'
 
 permissions:
   contents: read
@@ -40,6 +41,7 @@ jobs:
           test -s dist/canonical-staging-payment-lambda.zip
           unzip -tq dist/canonical-staging-payment-lambda.zip
           unzip -Z1 dist/canonical-staging-payment-lambda.zip | grep -Fx 'booking-admin-http.mjs'
+          unzip -Z1 dist/canonical-staging-payment-lambda.zip | grep -Fx 'staging-payment-route-handler.mjs'
           unzip -Z1 dist/canonical-staging-payment-lambda.zip | grep -Fx 'node_modules/@aws-sdk/client-dynamodb/package.json'
           unzip -Z1 dist/canonical-staging-payment-lambda.zip | grep -Fx 'node_modules/@aws-sdk/lib-dynamodb/package.json'
           (cd dist && sha256sum --check SHA256SUMS)
