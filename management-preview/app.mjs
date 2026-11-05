@@ -50,6 +50,8 @@ async function selectBooking(id){
     row(detail,'Sandbox checkout',checkout.registered?
      'Registered ('+checkout.registrationStatus+', '+checkout.currency+' '+(checkout.amountPence/100).toFixed(2)+')':
      'Not registered');
+    row(detail,'Payment confirmation',checkout.bookingConfirmed?
+     'Confirmed by verified provider reconciliation':'Not confirmed');
    }catch{
     row(detail,'Sandbox checkout','Status unavailable');
    }
