@@ -44,6 +44,8 @@ async function selectBooking(id){
    ['Hold expires',booking.holdExpiresAt?new Date(booking.holdExpiresAt*1000).toLocaleString('en-GB'):'Not applicable']])
    row(detail,label,value??'—');
   $('owner-actions').hidden=state.role!=='owner';
+  $('approve-consent').checked=false;
+  $('approve').disabled=!allowedAction(booking,'approve')||state.role!=='owner';
   $('decline').disabled=!allowedAction(booking,'decline');
   $('cancel').disabled=!allowedAction(booking,'cancel');
   $('reason').value='';
@@ -98,6 +100,23 @@ $('disconnect').addEventListener('click',()=>{
 });
 $('more').addEventListener('click',()=>loadBookings(true));
 $('more-audit').addEventListener('click',()=>loadAudit(true));
+$('approve').addEventListener('click',async()=>{
+ if(state.role!=='owner'||!state.selected||!$('approve-consent').checked){
+  message('Explicit approval of the published quotation is required.',true);return;
+ }
+ if(!window.confirm('Approve this booking at its published quotation? This reserves the dates pending payment, but does not send a payment link.'))return;
+ $('approve').disabled=true;
+ try{
+  await request('/admin/bookings/'+encodeURIComponent(state.selected)+'/actions/approve',
+   {method:'POST',body:{approved:true,usePublishedQuote:true}});
+  message('Booking approved at its published quotation. Checkout registration remains a separate owner action.');
+  await loadBookings();await selectBooking(state.selected);
+ }catch(e){message(e.message,true);await selectBooking(state.selected);}
+});
+$('approve-consent').addEventListener('change',()=>{
+ $('approve').disabled=!$('approve-consent').checked||!state.selected||
+  !allowedAction(state.bookings.find(b=>b.id===state.selected),'approve')||state.role!=='owner';
+});
 $('decline').addEventListener('click',()=>performAction('decline'));
 $('cancel').addEventListener('click',()=>performAction('cancel'));
 
