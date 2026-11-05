@@ -18,3 +18,15 @@ Status: **not accepted for end-to-end staging; production NO GO**.
 
 ## Safety invariant
 A payment can be confirmed without an email being sent. An email must never be sent from an unconfirmed booking. A claimed outbox event must never be retried automatically after an uncertain send.
+
+## Verified AWS inventory — 2026-11-05
+
+Read-only AWS inspection, account 145608514666, eu-west-2:
+
+- CloudFormation `les-buttes-cottage-management`: `UPDATE_COMPLETE`.
+- Canonical HTTP API: `i2irz87c82`, route `ANY /{proxy+}` with `JWT` authorisation, plus existing mailing routes. This is **not** evidence that booking payment reconciliation is implemented.
+- Canonical API Lambda: `les-buttes-cottage-management-ApiFunction-NtF6QjkvsE3v`, runtime **python3.13**, handler `app.handler`, last modified 2026-10-27 09:13:47 UTC.
+- The canonical Lambda has `BOOKING_MASTER_*` settings, but no `MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED`, `BOOKING_CONFIRMATION_DISPATCH_ENABLED` or `BOOKING_EMAILS_ENABLED` environment settings.
+- The Node.js `services/booking-api/booking-admin-http.mjs` handler and its new payment route are **not** deployed as the canonical Python Lambda handler.
+
+**Architecture decision required before deploying:** retain the canonical Python owner UI/API as the single owner app and integrate the Node.js booking service through an explicitly authorised, Cognito-protected staging route/integration. Do not replace the canonical Python Lambda, route all traffic to a new app, or enable write/SES flags in the read-only preview. Review the integration design and IAM/CloudFormation change set first.
