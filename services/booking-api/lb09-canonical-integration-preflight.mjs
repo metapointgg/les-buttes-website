@@ -3,7 +3,9 @@
 const STAGING_TABLE=/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/;
 const ROUTE='POST /admin/bookings/{bookingId}/payment/reconcile';
 export function inspectCanonicalPaymentIntegration({stack,apiId,routes=[],lambdaConfig,
- bookingTable,expectedApiId='i2irz87c82'}={}){
+ bookingTable,authorizers=[],expectedApiId='i2irz87c82',
+ expectedIssuer='https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa',
+ expectedAudience='2mjmimjh7oc8h00d4nngrc1akj'}={}){
  const failures=[];
  if(stack?.StackStatus!=='UPDATE_COMPLETE')failures.push('Canonical stack not stable');
  if(apiId!==expectedApiId)failures.push('Unexpected canonical API');
@@ -13,9 +15,15 @@ export function inspectCanonicalPaymentIntegration({stack,apiId,routes=[],lambda
  const catchAll=routes.find(x=>x.RouteKey==='ANY /{proxy+}');
  if(!catchAll||catchAll.AuthorizationType!=='JWT')
   failures.push('Canonical catch-all JWT protection missing');
+ const canonicalAuthorizer=authorizers.find(x=>x.AuthorizerId===catchAll?.AuthorizerId);
+ if(!canonicalAuthorizer||canonicalAuthorizer.AuthorizerType!=='JWT'||
+    canonicalAuthorizer.JwtConfiguration?.Issuer!==expectedIssuer||
+    !canonicalAuthorizer.JwtConfiguration?.Audience?.includes(expectedAudience))
+  failures.push('Canonical Cognito issuer/audience not verified');
  const paymentRoutes=routes.filter(x=>x.RouteKey===ROUTE);
  if(paymentRoutes.length!==1)failures.push('Dedicated payment route not installed');
- else if(paymentRoutes[0].AuthorizationType!=='JWT'||!paymentRoutes[0].Target)
+ else if(paymentRoutes[0].AuthorizationType!=='JWT'||!paymentRoutes[0].Target||
+         paymentRoutes[0].AuthorizerId!==canonicalAuthorizer?.AuthorizerId)
   failures.push('Dedicated payment route lacks JWT or integration');
  const env=lambdaConfig?.Environment?.Variables??{};
  if(env.BOOKING_CONFIRMATION_DISPATCH_ENABLED==='true'||env.BOOKING_EMAILS_ENABLED==='true')
