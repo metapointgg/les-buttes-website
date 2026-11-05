@@ -30,3 +30,9 @@ Read-only AWS inspection, account 145608514666, eu-west-2:
 - The Node.js `services/booking-api/booking-admin-http.mjs` handler and its new payment route are **not** deployed as the canonical Python Lambda handler.
 
 **Architecture decision required before deploying:** retain the canonical Python owner UI/API as the single owner app and integrate the Node.js booking service through an explicitly authorised, Cognito-protected staging route/integration. Do not replace the canonical Python Lambda, route all traffic to a new app, or enable write/SES flags in the read-only preview. Review the integration design and IAM/CloudFormation change set first.
+
+## Verified canonical JWT authoriser — 2026-11-05
+
+Read-only API Gateway inspection of `i2irz87c82` in eu-west-2 found JWT authoriser `q9ukxh` (`CognitoAuthorizer`), issuer `https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa`, audience `2mjmimjh7oc8h00d4nngrc1akj`. Existing `ANY /{proxy+}` and mailing routes use this authoriser. **No dedicated payment reconciliation route is installed.**
+
+**Important:** The isolated management preview template uses a different Cognito audience (`1a0i42vp4gi24i5orh8i4jjhmr`). Do not copy that preview client ID into the canonical owner API integration. The Node.js `identityFromGateway` must receive the verified canonical issuer and client ID through its own staging environment settings. The review-only CloudFormation template still requires a reviewed immutable Lambda artefact, authoriser binding, IAM assessment and change-set preview before any deployment.
