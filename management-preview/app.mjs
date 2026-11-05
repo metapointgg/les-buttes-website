@@ -56,6 +56,7 @@ async function selectBooking(id){
   }
   $('owner-actions').hidden=state.role!=='owner';
   $('approve-consent').checked=false;
+  $('reconcile-payment').disabled=state.role!=='owner'||booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT';
   $('register-checkout').disabled=state.role!=='owner'||booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT'||!Number.isInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000);
   $('approve').disabled=!allowedAction(booking,'approve')||state.role!=='owner';
   $('decline').disabled=!allowedAction(booking,'decline');
@@ -124,6 +125,23 @@ $('approve').addEventListener('click',async()=>{
   message('Booking approved at its published quotation. Checkout registration remains a separate owner action.');
   await loadBookings();await selectBooking(state.selected);
  }catch(e){message(e.message,true);await selectBooking(state.selected);}
+});
+$('reconcile-payment').addEventListener('click',async()=>{
+ const booking=state.selectedBooking;
+ if(state.role!=='owner'||!booking||booking.id!==state.selected||
+    booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT'){
+  message('Select an approved booking awaiting payment.',true);return;
+ }
+ if(!window.confirm('Check SumUp sandbox directly for verified payment? This may atomically confirm a paid booking. No guest email will be sent.'))return;
+ $('reconcile-payment').disabled=true;
+ try{
+  const result=await request('/admin/bookings/'+encodeURIComponent(booking.id)+'/payment/reconcile',
+   {method:'POST',body:{}});
+  if(!['CONFIRMED','ALREADY_CONFIRMED'].includes(result.status)||result.bookingId!==booking.id)
+   throw Error('Payment verification did not confirm the booking');
+  message('Provider-verified sandbox payment: '+result.status+'. Guest notification remains separate.');
+  await loadBookings();await selectBooking(booking.id);
+ }catch(e){message(e.message,true);await selectBooking(booking.id);}
 });
 $('register-checkout').addEventListener('click',async()=>{
  const booking=state.selectedBooking;
