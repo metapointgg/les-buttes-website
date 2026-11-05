@@ -45,6 +45,13 @@ Resources:
             Principal: {Service: lambda.amazonaws.com}
             Action: sts:AssumeRole
       Policies:
+        - PolicyName: LambdaStagingDiagnosticLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*'
         - PolicyName: StagingBookingReadOnly
           PolicyDocument:
             Version: '2012-10-17'
