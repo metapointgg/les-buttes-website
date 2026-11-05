@@ -44,6 +44,16 @@ async function selectBooking(id){
    ['Quoted price',booking.quote?.totalGBP===undefined?'Not available':'£'+booking.quote.totalGBP],
    ['Hold expires',booking.holdExpiresAt?new Date(booking.holdExpiresAt*1000).toLocaleString('en-GB'):'Not applicable']])
    row(detail,label,value??'—');
+  if(state.role==='owner'){
+   try{
+    const checkout=await request('/admin/bookings/'+encodeURIComponent(id)+'/checkout/status');
+    row(detail,'Sandbox checkout',checkout.registered?
+     'Registered ('+checkout.registrationStatus+', '+checkout.currency+' '+(checkout.amountPence/100).toFixed(2)+')':
+     'Not registered');
+   }catch{
+    row(detail,'Sandbox checkout','Status unavailable');
+   }
+  }
   $('owner-actions').hidden=state.role!=='owner';
   $('approve-consent').checked=false;
   $('register-checkout').disabled=state.role!=='owner'||booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT'||!Number.isInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000);
