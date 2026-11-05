@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   package-for-review:
@@ -57,6 +58,32 @@ jobs:
             dist/SHA256SUMS
             dist/SOURCE_MANIFEST
           retention-days: 14
+      - name: Authenticate to isolated staging artefact bucket only
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
+          aws-region: eu-west-2
+          role-session-name: payment-artifact-review-only
+      - name: Upload immutable versioned staging payment review candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
+          bucket='les-buttes-payment-staging-145608514666-eu-west-2'
+          test "$(aws s3api get-bucket-versioning --bucket "$bucket" --query Status --output text)" = 'Enabled'
+          key="payment-review/${GITHUB_SHA}/canonical-staging-payment-lambda.zip"
+          version="$(aws s3api put-object --bucket "$bucket" --key "$key" \
+            --body dist/canonical-staging-payment-lambda.zip \
+            --server-side-encryption AES256 --query VersionId --output text)"
+          test -n "$version" && test "$version" != 'None' && test "$version" != 'null'
+          aws s3api head-object --bucket "$bucket" --key "$key" --version-id "$version" \
+            --query '{VersionId:VersionId,Size:ContentLength,Encryption:ServerSideEncryption}' --output json
+          {
+            echo "Versioned staging payment review artefact: s3://$bucket/$key"
+            echo "S3 object version: $version"
+            echo "GitHub source commit: $GITHUB_SHA"
+            echo 'No CloudFormation deployment, API route activation or payment writes were performed.'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Record safety boundary
         run: |
           {
