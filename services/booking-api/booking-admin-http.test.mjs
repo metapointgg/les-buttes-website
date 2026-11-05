@@ -327,3 +327,42 @@ test('checkout status reports authoritative confirmation without treating regist
   else process.env.BOOKING_ENVIRONMENT=oldEnvironment;
  }
 });
+
+test('owner reconciliation returns explicit notification status without claiming delivery',async()=>{
+ const oldIssuer=process.env.MANAGEMENT_COGNITO_ISSUER;
+ const oldClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+ const oldEnvironment=process.env.BOOKING_ENVIRONMENT;
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ process.env.BOOKING_ENVIRONMENT='staging';
+ try{
+  const bookingId='11111111-1111-4111-8111-111111111111';
+  let calls=0;
+  const handler=createAdminHandler({reader:{},
+   writeEnabled:()=>true,reconciliationEnabled:()=>true,
+   reconcilePayment:async args=>{calls++;
+    assert.equal(args.bookingId,bookingId);
+    assert.equal(args.identity.role,'owner');
+    return {bookingId,status:'CONFIRMED',guestNotificationSent:false,
+     notificationStatus:'DISABLED'};}});
+  const path='/admin/bookings/'+bookingId+'/payment/reconcile';
+  const owner=await handler({...verified,rawPath:path,body:'{}',
+   requestContext:{...verified.requestContext,http:{method:'POST'}}});
+  assert.equal(owner.statusCode,200);
+  assert.equal(JSON.parse(owner.body).notificationStatus,'DISABLED');
+  assert.equal(calls,1);
+  const viewer={...verified,rawPath:path,body:'{}',
+   requestContext:{...verified.requestContext,http:{method:'POST'},
+    authorizer:{jwt:{claims:{...verified.requestContext.authorizer.jwt.claims,
+     'cognito:groups':['lesbuttes-viewer']}}}}};
+  assert.equal((await handler(viewer)).statusCode,403);
+  assert.equal(calls,1);
+ }finally{
+  if(oldIssuer===undefined)delete process.env.MANAGEMENT_COGNITO_ISSUER;
+  else process.env.MANAGEMENT_COGNITO_ISSUER=oldIssuer;
+  if(oldClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+  else process.env.MANAGEMENT_COGNITO_CLIENT_ID=oldClient;
+  if(oldEnvironment===undefined)delete process.env.BOOKING_ENVIRONMENT;
+  else process.env.BOOKING_ENVIRONMENT=oldEnvironment;
+ }
+});
