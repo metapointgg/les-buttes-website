@@ -89,7 +89,7 @@ jobs:
           {
             echo '## Canonical staging payment Lambda review package'
             echo 'Source commit: ${{ github.sha }}'
-            echo 'Package is a GitHub Actions artefact only.'
-            echo 'No AWS credentials, CloudFormation execution, route activation or payment operations were performed.'
-            echo 'The S3 bucket/key/version must be separately reviewed and supplied to the default-disabled deployment template.'
+            echo 'Package is retained as a GitHub Actions artefact and uploaded to a private versioned staging S3 bucket.'
+            echo 'AWS credentials were used only for the isolated S3 artefact upload; no CloudFormation execution, route activation or payment operations were performed.'
+            echo 'Review the S3 bucket/key/version printed above before any separately approved CloudFormation change set.'
           } >> "$GITHUB_STEP_SUMMARY"
