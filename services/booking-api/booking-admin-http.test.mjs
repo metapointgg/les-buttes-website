@@ -277,7 +277,7 @@ test('checkout status is owner-only, sanitised and never asserts provider paymen
   const owner=await handler({...verified,rawPath:path});
   assert.equal(owner.statusCode,200);
   const body=JSON.parse(owner.body);
-  assert.deepEqual(body,{bookingId,registered:true,checkoutId:'sandbox-checkout-123',
+  assert.deepEqual(body,{bookingId,registered:true,bookingConfirmed:false,checkoutId:'sandbox-checkout-123',
    registrationStatus:'PENDING',amountPence:108500,currency:'GBP'});
   assert.equal(reads,1);
   const viewer={...verified,requestContext:{...verified.requestContext,
@@ -285,6 +285,39 @@ test('checkout status is owner-only, sanitised and never asserts provider paymen
     'cognito:groups':['lesbuttes-viewer']}}}}};
   assert.equal((await handler({...viewer,rawPath:path})).statusCode,403);
   assert.equal(reads,1);
+ }finally{
+  if(oldIssuer===undefined)delete process.env.MANAGEMENT_COGNITO_ISSUER;
+  else process.env.MANAGEMENT_COGNITO_ISSUER=oldIssuer;
+  if(oldClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+  else process.env.MANAGEMENT_COGNITO_CLIENT_ID=oldClient;
+  if(oldEnvironment===undefined)delete process.env.BOOKING_ENVIRONMENT;
+  else process.env.BOOKING_ENVIRONMENT=oldEnvironment;
+ }
+});
+
+test('checkout status reports authoritative confirmation without treating registration as paid',async()=>{
+ const oldIssuer=process.env.MANAGEMENT_COGNITO_ISSUER;
+ const oldClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+ const oldEnvironment=process.env.BOOKING_ENVIRONMENT;
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ process.env.BOOKING_ENVIRONMENT='staging';
+ try{
+  const bookingId='11111111-1111-4111-8111-111111111111';
+  const handler=createAdminHandler({
+   reader:{getBooking:async()=>({id:bookingId,status:'CONFIRMED',
+    reservationStatus:'CONFIRMED',paidAt:'2026-11-05T08:00:00.000Z'})},
+   readCheckout:async()=>({checkoutId:'sandbox-checkout-123',
+    status:'PENDING',amountPence:108500,currency:'GBP'})
+  });
+  const response=await handler({...verified,
+   rawPath:'/admin/bookings/'+bookingId+'/checkout/status'});
+  assert.equal(response.statusCode,200);
+  const body=JSON.parse(response.body);
+  assert.equal(body.registered,true);
+  assert.equal(body.registrationStatus,'PENDING');
+  assert.equal(body.bookingConfirmed,true);
+  assert.equal(body.confirmationRecordedAt,'2026-11-05T08:00:00.000Z');
  }finally{
   if(oldIssuer===undefined)delete process.env.MANAGEMENT_COGNITO_ISSUER;
   else process.env.MANAGEMENT_COGNITO_ISSUER=oldIssuer;
