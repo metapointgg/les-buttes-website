@@ -124,6 +124,27 @@ async function main(){
     console.log(count+' records');
   }else if(command==='show'){
     const b=await booking(args[0]);console.log(JSON.stringify({...b,holdActive:['REQUESTED','APPROVED_AWAITING_PAYMENT'].includes(b.status)&&!!(b.holdExpiresAt&&b.holdExpiresAt>Math.floor(Date.now()/1000))},null,2));
+  }else if(command==='approve-for-checkout'){
+    // Owner approves the immutable published quote; the separate, owner-only
+    // checkout runtime must register a verified sandbox SumUp checkout.
+    // No owner-supplied payment URL is stored or sent to a guest.
+    const [id,...unexpected]=args;
+    if(!id||unexpected.length)fail('Usage: approve-for-checkout ID');
+    const b=await booking(id);
+    if(b.source!=='direct'||b.status!=='REQUESTED'||
+       b.reservationStatus!=='PENDING_REVIEW')
+      fail('Only a pending direct booking request may be approved');
+    const quoted=Number(b.quote?.totalGBP);
+    const amountPence=Math.round(quoted*100);
+    if(!Number.isSafeInteger(amountPence)||amountPence<1||
+       Math.abs(quoted*100-amountPence)>0.000001)
+      fail('Published quote amount is invalid; do not approve');
+    await change(id,'REQUESTED','APPROVED_AWAITING_PAYMENT',
+      {approvedAmountGBP:amountPence/100,approvedAt:new Date().toISOString(),
+       approvalMethod:'PUBLISHED_QUOTE_PENDING_VERIFIED_CHECKOUT'},
+      Math.floor(Date.now()/1000)+48*3600);
+    console.log('Approved for checkout registration; no payment URL or guest email sent.');
+    console.log('Register a sandbox checkout using the owner-authenticated checkout runtime for booking '+id);
   }else if(command==='approve'){
     const [id,amount,link,...reasonParts]=args;
     if(!id||!amount||!link)fail('Usage: approve ID AMOUNT_GBP SUMUP_PAYMENT_URL');
@@ -182,6 +203,6 @@ async function main(){
   }else if(command==='block'){
     const [unit,start,end,...label]=args;
     await putBlock(unit,start,end,label.join(' '));
-  }else fail('Commands: list | show ID | approve ID GBP SUMUP_URL | decline ID | cancel ID REASON | block COTTAGE START END LABEL | classify ID SOURCE RESERVATION_STATUS [EXTERNAL_REF] | record-direct-price ID geranium=GBP honeysuckle=GBP | unblock ID');
+  }else fail('Commands: list | show ID | approve-for-checkout ID | approve ID GBP SUMUP_URL | decline ID | cancel ID REASON | block COTTAGE START END LABEL | classify ID SOURCE RESERVATION_STATUS [EXTERNAL_REF] | record-direct-price ID geranium=GBP honeysuckle=GBP | unblock ID');
 }
 main().catch(e=>{console.error(e.message);process.exitCode=1;});
