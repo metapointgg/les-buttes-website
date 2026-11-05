@@ -17,6 +17,11 @@ if(!/^https:\/\/[a-z0-9.-]+\.amazonaws\.com$/.test(url)&&!/^https:\/\/[a-z0-9.-]
   console.error('Refusing a non-AWS test API endpoint');
   process.exit(1);
 }
+// This legacy rehearsal assumes a manual admin confirmation command. That command
+// was deliberately disabled: only provider-verified SumUp reconciliation may
+// confirm a booking. Refuse BEFORE any synthetic booking or date hold is written.
+// Use lb08-isolated-booking-acceptance.mjs against its disposable table instead.
+throw Error('Legacy staging-e2e is retired: admin confirm is disabled. Use guarded LB-08 isolated payment acceptance; do not create staging holds with this script.');
 const headers={'x-lesbuttes-staging-token':secret};
 let start=process.env.STAGING_CHECKIN||null;
 let end=process.env.STAGING_CHECKOUT||null;
