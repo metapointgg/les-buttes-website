@@ -143,10 +143,13 @@ $('reconcile-payment').addEventListener('click',async()=>{
    throw Error('Payment verification did not confirm the booking');
   const notification=result.notificationStatus;
   const detail=notification==='DISABLED'?' Guest email dispatch is disabled.':
-   notification==='SENT'?' Guest email dispatch reported sent.':
-   notification==='ALREADY_SENT'?' Guest email was previously dispatched.':
-   notification==='RECONCILIATION_REQUIRED'?' Guest email outcome requires manual reconciliation.':
-   ' Guest email status is not confirmed; check the correspondence outbox.';
+   notification==='ACCEPTED_BY_SES_NOT_DELIVERED'?
+    ' SES accepted the email for processing; delivery to the guest is not confirmed.':
+   notification==='ALREADY_ACCEPTED_BY_SES_NOT_DELIVERED'?
+    ' SES previously accepted the email; delivery to the guest is not confirmed.':
+   notification==='RECONCILIATION_REQUIRED'?
+    ' Guest email outcome is uncertain; inspect the correspondence outbox before retrying.':
+   ' Guest email status is not confirmed; inspect the correspondence outbox.';
   message('Provider-verified sandbox payment: '+result.status+'.'+detail,
    notification==='RECONCILIATION_REQUIRED');
   await loadBookings();await selectBooking(booking.id);
