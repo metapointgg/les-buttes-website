@@ -8,7 +8,9 @@ import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 import {publishOwnerConfiguration,rollbackOwnerConfiguration} from './booking-admin-config-writer.mjs';
 import {checkoutRuntimeEnabled,registerCheckoutWithSandbox} from './booking-checkout-runtime.mjs';
 import {readRegisteredCheckout} from './sumup-checkout-store.mjs';
-import {paymentReconciliationEnabled,reconcileOwnerSandboxPayment} from './booking-payment-reconciliation-runtime.mjs';
+import {paymentReconciliationEnabled} from './booking-payment-reconciliation-runtime.mjs';
+import {reconcilePaymentAndNotify} from './booking-payment-confirmation-followup.mjs';
+import {createStagingSesTransport} from './booking-staging-ses-transport.mjs';
 // API Gateway's HTTP JWT authorizer can stringify Cognito group arrays
 // using either comma separators or spaces, with optional quoted members.
 // Parse the entire claim; never use substring matching to grant a role.
@@ -284,7 +286,9 @@ export async function handler(event){
      approvalEnabled:()=>staging&&process.env.MANAGEMENT_APPROVAL_ENABLED==='true',
      checkoutEnabled:()=>staging&&checkoutRuntimeEnabled(process.env),
      reconciliationEnabled:()=>staging&&paymentReconciliationEnabled(process.env),
-     reconcilePayment:staging?async args=>reconcileOwnerSandboxPayment({db,...args}):undefined,
+     reconcilePayment:staging?async args=>reconcilePaymentAndNotify({db,...args,
+       transport:process.env.BOOKING_CONFIRMATION_DISPATCH_ENABLED==='true'?
+        createStagingSesTransport():undefined}):undefined,
      registerCheckout:staging?async args=>registerCheckoutWithSandbox({db,...args}):undefined,
      readCheckout:staging?async ({bookingId})=>readRegisteredCheckout({db,table,bookingId}):undefined,
      writeConfig:staging?async ({operation,...args})=>operation==='rollback'?rollbackOwnerConfiguration({db,table,...args}):publishOwnerConfiguration({db,table,...args}):undefined,
