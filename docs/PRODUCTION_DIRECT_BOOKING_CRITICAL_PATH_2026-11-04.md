@@ -160,3 +160,12 @@ A production release is not considered complete merely because staging has succe
 5. The existing production master and SES/DKIM release blockers described above remain unresolved; no production migration or public submission should occur as a shortcut.
 
 **Next ordered implementation:** identify the existing SumUp reconciler and its acceptance harness, then create one guarded isolated staging lifecycle test that runs A08 request/atomic hold → A09 owner approval/rejection → A10 provider-verified sandbox payment/idempotency → A11 cancellation/release and notification/refund evidence, with deterministic synthetic fixture and cleanup. Do not mark the lifecycle passed on the strength of the source audit alone.
+
+
+## 5 November 2026 — A08–A11 existing harness audit and safety correction
+
+- Latest pre-change checks on `e3302cd` passed: feature CI 41938462184, preview deployment 41938462473 and management validation 41938462403.
+- Existing `services/booking-api/lb08-isolated-booking-acceptance.mjs` already provides a guarded disposable-table acceptance against `les-buttes-lb08-staging-isolated-acceptance`: seeds synthetic approved booking and seven date slots, exercises `reconcileVerifiedPayment` using a synthetic paid provider fixture, strongly reads confirmed booking/slots/transaction claim, rejects replay, verifies one audit record, and cleans up its owned records. It **does not** create a real SumUp checkout, exercise guest request creation, owner approval, SES or refund.
+- `services/booking-api/sumup-payment-internal-e2e.test.mjs` covers signed internal trigger, paid/unpaid provider outcomes, tampering, concurrent replay and failed reconciliation in a mock environment. These are unit/integration tests, **not** live end-to-end evidence.
+- **Safety defect corrected** in commit `bc66b77`: obsolete `services/booking-api/staging-e2e.mjs` still expected `admin.mjs confirm` to succeed, despite that command now intentionally refusing manual payment proof. The legacy script now fails closed before creating any synthetic date holds. Use LB-08 acceptance instead.
+- **A08–A11 remain OPEN:** execute existing guarded LB-08 acceptance with authorised isolated-table credentials, then extend the consolidated acceptance design to cover request/approval/checkout and email/refund evidence without production writes or false claims of actual provider payment.
