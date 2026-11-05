@@ -18,5 +18,10 @@ test('LB-09 draft has no write, SumUp credential or SES permissions',()=>{
  for(const flag of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED',
   'BOOKING_CONFIRMATION_DISPATCH_ENABLED','BOOKING_EMAILS_ENABLED'])
   assert.ok(template.includes(flag+": 'false'"),flag);
- assert.match(template,/REPLACE_WITH_REVIEWED_IMMUTABLE_ARTIFACT_KEY/);
+ assert.match(template,/S3ObjectVersion: !Ref ReviewedArtifactVersion/);
+ assert.match(template,/S3Bucket: !Ref ReviewedArtifactBucket/);
+ assert.match(template,/S3Key: !Ref ReviewedArtifactKey/);
+ assert.doesNotMatch(template,/REPLACE_WITH_REVIEWED/);
+ assert.match(template,/MANAGEMENT_COGNITO_ISSUER: https:\/\/cognito-idp\.eu-west-2\.amazonaws\.com\/eu-west-2_Wvo0I3cTa/);
+ assert.match(template,/MANAGEMENT_COGNITO_CLIENT_ID: 2mjmimjh7oc8h00d4nngrc1akj/);
 });
