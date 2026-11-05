@@ -61,6 +61,9 @@ Resources:
           MANAGEMENT_WRITES_ENABLED: 'false'
           MANAGEMENT_APPROVAL_ENABLED: 'false'
           MANAGEMENT_CHECKOUT_ENABLED: 'false'
+          MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED: 'false'
+          BOOKING_CONFIRMATION_DISPATCH_ENABLED: 'false'
+          BOOKING_EMAILS_ENABLED: 'false'
       Policies:
         - Version: '2012-10-17'
           Statement:
