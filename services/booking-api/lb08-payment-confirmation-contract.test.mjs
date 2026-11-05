@@ -21,7 +21,7 @@ const registered={PK:'BOOKING#'+id,SK:'PAYMENT#CHECKOUT',
 const provider={id:checkoutId,checkout_reference:reference,merchant_code:merchantCode,
  amount:1,currency:'GBP',status:'PAID',transactions:[{
  id:txId,status:'SUCCESSFUL',amount:1,currency:'GBP',merchant_code:merchantCode}]};
-const table='lb08-isolated-bookings-staging-fixture';
+const table='les-buttes-booking-staging-BookingTable-LB08FIXTURE';
 function adapter(){
  const commands=[];let state='AWAITING_PAYMENT';let auditWrites=0;
  return {commands,get auditWrites(){return auditWrites;},
