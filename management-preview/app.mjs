@@ -1,7 +1,7 @@
 import {allowedAction,safeStagingApi,reasonValid,bookingStatus} from './model.mjs';
 import {hostedManagement,isHostedManagement,createHostedAuthorisationUrl,completeHostedSignIn,hostedSignOutUrl} from './hosted-auth.mjs';
 const $=id=>document.getElementById(id);
-const state={api:null,token:null,bookings:[],cursor:null,selected:null,auditCursor:null,role:'viewer'};
+const state={api:null,token:null,bookings:[],cursor:null,selected:null,selectedBooking:null,auditCursor:null,role:'viewer'};
 const message=(text,error=false)=>{$('message').textContent=text;$('message').className=error?'error':'';};
 const node=(tag,text,className)=>{const el=document.createElement(tag);el.textContent=String(text??'');if(className)el.className=className;return el;};
 const row=(container,label,value)=>{const el=node('div','','row');el.append(node('span',label),node('strong',value));container.append(el);};
@@ -36,6 +36,7 @@ async function selectBooking(id){
  try{
   state.selected=id;renderList();
   const booking=await request('/admin/bookings/'+encodeURIComponent(id));
+  state.selectedBooking=booking;
   const detail=$('detail');detail.replaceChildren();
   for(const [label,value] of [['Reference',booking.id],['Guest',booking.guestName],['Email',booking.guestEmail],
    ['Status',booking.status],['Reservation state',booking.reservationStatus],['Cottages',(booking.units||[]).join(', ')],
@@ -94,7 +95,7 @@ $('connect').addEventListener('click',()=>{
  $('configuration-panel').hidden=state.role!=='owner';$('token').value='';loadBookings();
 });
 $('disconnect').addEventListener('click',()=>{
- state.api=null;state.token=null;state.bookings=[];state.cursor=null;state.selected=null;state.role='viewer';
+ state.api=null;state.token=null;state.bookings=[];state.cursor=null;state.selected=null;state.selectedBooking=null;state.role='viewer';
  $('bookings').replaceChildren();$('detail').replaceChildren();$('audit').replaceChildren();
  $('owner-actions').hidden=true;$('configuration-panel').hidden=true;$('more').hidden=true;$('more-audit').hidden=true;message('Disconnected.');
 });
@@ -115,7 +116,7 @@ $('approve').addEventListener('click',async()=>{
 });
 $('approve-consent').addEventListener('change',()=>{
  $('approve').disabled=!$('approve-consent').checked||!state.selected||
-  !allowedAction(state.bookings.find(b=>b.id===state.selected),'approve')||state.role!=='owner';
+  !allowedAction(state.selectedBooking,'approve')||state.role!=='owner';
 });
 $('decline').addEventListener('click',()=>performAction('decline'));
 $('cancel').addEventListener('click',()=>performAction('cancel'));
