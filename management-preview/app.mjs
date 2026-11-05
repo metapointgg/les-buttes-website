@@ -46,6 +46,7 @@ async function selectBooking(id){
    row(detail,label,value??'—');
   $('owner-actions').hidden=state.role!=='owner';
   $('approve-consent').checked=false;
+  $('register-checkout').disabled=state.role!=='owner'||booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT'||!Number.isInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000);
   $('approve').disabled=!allowedAction(booking,'approve')||state.role!=='owner';
   $('decline').disabled=!allowedAction(booking,'decline');
   $('cancel').disabled=!allowedAction(booking,'cancel');
@@ -113,6 +114,24 @@ $('approve').addEventListener('click',async()=>{
   message('Booking approved at its published quotation. Checkout registration remains a separate owner action.');
   await loadBookings();await selectBooking(state.selected);
  }catch(e){message(e.message,true);await selectBooking(state.selected);}
+});
+$('register-checkout').addEventListener('click',async()=>{
+ const booking=state.selectedBooking;
+ if(state.role!=='owner'||!booking||booking.id!==state.selected||
+    booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT'||
+    !Number.isInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000)){
+  message('Select an eligible, unexpired owner-approved booking.',true);return;
+ }
+ if(!window.confirm('Register a SumUp sandbox checkout for this approved booking? This may create a provider checkout but will not send a guest email or confirm payment.'))return;
+ $('register-checkout').disabled=true;
+ try{
+  const result=await request('/admin/bookings/'+encodeURIComponent(booking.id)+'/checkout/register',
+   {method:'POST',body:{}});
+  if(result.status!=='REGISTERED'||result.bookingId!==booking.id)
+   throw Error('Checkout registration was not verified');
+  message('Sandbox checkout registered. No guest notification sent; payment must be verified separately.');
+  await loadBookings();await selectBooking(booking.id);
+ }catch(e){message(e.message,true);await selectBooking(booking.id);}
 });
 $('approve-consent').addEventListener('change',()=>{
  $('approve').disabled=!$('approve-consent').checked||!state.selected||
