@@ -25,3 +25,18 @@ test('LB-09 draft has no write, SumUp credential or SES permissions',()=>{
  assert.match(template,/MANAGEMENT_COGNITO_ISSUER: https:\/\/cognito-idp\.eu-west-2\.amazonaws\.com\/eu-west-2_Wvo0I3cTa/);
  assert.match(template,/MANAGEMENT_COGNITO_CLIENT_ID: 2mjmimjh7oc8h00d4nngrc1akj/);
 });
+
+test('LB-09 CloudFormation review template has one coherent parameter and resource graph',()=>{
+ for(const section of ['Parameters','Conditions','Resources','Outputs'])
+  assert.equal((template.match(new RegExp('^'+section+':','gm'))??[]).length,1,
+   section+' must be declared exactly once');
+ for(const parameter of ['CanonicalApiId','StagingBookingTableName','CognitoAuthorizerId',
+  'ReviewedArtifactBucket','ReviewedArtifactKey','ReviewedArtifactVersion','DeploymentEnabled'])
+  assert.match(template,new RegExp('^  '+parameter+':$','m'));
+ assert.match(template,/ReviewedArtifactVersion:\\n    Type: String\\n    MinLength: 1/);
+ assert.match(template,/DeploymentEnabled:\\n    Type: String\\n    AllowedValues: \\['false', 'true'\\]\\n    Default: 'false'/);
+ assert.match(template,/PaymentReconciliationFunction:\\n    Type: AWS::Lambda::Function\\n    Condition: Deploy/);
+ assert.match(template,/PaymentReconciliationRoute:\\n    Type: AWS::ApiGatewayV2::Route\\n    Condition: Deploy/);
+ assert.match(template,/PaymentReconciliationPermission:\\n    Type: AWS::Lambda::Permission\\n    Condition: Deploy/);
+ assert.doesNotMatch(template,/REPLACE_WITH_REVIEWED|AllowedPattern: '[^'\\n]*Type: String/);
+});
