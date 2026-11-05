@@ -8,6 +8,7 @@ import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 import {publishOwnerConfiguration,rollbackOwnerConfiguration} from './booking-admin-config-writer.mjs';
 import {checkoutRuntimeEnabled,registerCheckoutWithSandbox} from './booking-checkout-runtime.mjs';
 import {readRegisteredCheckout} from './sumup-checkout-store.mjs';
+import {paymentReconciliationEnabled,reconcileOwnerSandboxPayment} from './booking-payment-reconciliation-runtime.mjs';
 // API Gateway's HTTP JWT authorizer can stringify Cognito group arrays
 // using either comma separators or spaces, with optional quoted members.
 // Parse the entire claim; never use substring matching to grant a role.
@@ -83,7 +84,7 @@ export function stagingAuthDiagnostic(event,{issuer=process.env.MANAGEMENT_COGNI
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
 export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=()=>false,
- approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout}){
+ approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout,reconciliationEnabled=()=>false,reconcilePayment}){
  return async event=>{
    try{
      const method=event?.requestContext?.http?.method;
@@ -117,6 +118,21 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
            if(e?.name==='TransactionCanceledException')return reply(409,{error:'Configuration changed; refresh and retry'});
            if(/Invalid|Unknown|required|too large|restriction|range|band|tier|season|approval|not found/.test(e?.message??''))
              return reply(400,{error:'Invalid configuration'});
+           throw e;
+         }
+       }
+       const paymentMatch=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/payment\/reconcile$/i);
+       if(paymentMatch){
+         if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+         if(process.env.BOOKING_ENVIRONMENT!=='staging'||!writeEnabled()||
+            !reconciliationEnabled()||typeof reconcilePayment!=='function')
+           return reply(503,{error:'Payment reconciliation disabled'});
+         if(event.isBase64Encoded||event.body!=='{}')
+           return reply(400,{error:'Payment reconciliation accepts no payment assertions'});
+         try{return reply(200,await reconcilePayment({bookingId:paymentMatch[1],identity:id}));}
+         catch(e){
+           if(/not verified|missing|mismatch|not eligible|disabled|reconciliation|TransactionCanceled/.test(e?.message??''))
+             return reply(409,{error:'Payment not confirmed; reconcile with provider before retrying'});
            throw e;
          }
        }
@@ -263,6 +279,8 @@ export async function handler(event){
      writeEnabled:()=>staging,
      approvalEnabled:()=>staging&&process.env.MANAGEMENT_APPROVAL_ENABLED==='true',
      checkoutEnabled:()=>staging&&checkoutRuntimeEnabled(process.env),
+     reconciliationEnabled:()=>staging&&paymentReconciliationEnabled(process.env),
+     reconcilePayment:staging?async args=>reconcileOwnerSandboxPayment({db,...args}):undefined,
      registerCheckout:staging?async args=>registerCheckoutWithSandbox({db,...args}):undefined,
      readCheckout:staging?async ({bookingId})=>readRegisteredCheckout({db,table,bookingId}):undefined,
      writeConfig:staging?async ({operation,...args})=>operation==='rollback'?rollbackOwnerConfiguration({db,table,...args}):publishOwnerConfiguration({db,table,...args}):undefined,
