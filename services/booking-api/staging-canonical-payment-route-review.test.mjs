@@ -10,6 +10,7 @@ test('LB-09 route draft preserves canonical API and requires explicit deployment
  assert.match(template,/RouteKey: 'POST \/admin\/bookings\/\{bookingId\}\/payment\/reconcile'/);
  assert.match(template,/AuthorizationType: JWT/);
  assert.match(template,/AuthorizerId: !Ref CognitoAuthorizerId/);
+ assert.match(template,/CognitoAuthorizerId:\n    Type: String\n    AllowedValues: \[q9ukxh\]/);
  assert.doesNotMatch(template,/AWS::ApiGatewayV2::Api|AWS::DynamoDB::Table/);
 });
 test('LB-09 draft restricts staging transaction and SumUp secret permissions, with execution disabled',()=>{
