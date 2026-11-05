@@ -49,7 +49,7 @@ test('cancel requires reason and releases confirmed booking without payment conf
 test('rejects non-owner, unsupported approval, expired hold and mismatched booking',async()=>{
  const {sent,params}=make();
  await assert.rejects(executeOwnerTransition({...params,identity:{role:'admin'},action:'decline'}),/Forbidden/);
- await assert.rejects(executeOwnerTransition({...params,action:'approve'}),/positive amount/);
+ await assert.rejects(executeOwnerTransition({...params,action:'approve'}),/explicit pricing consent/);
  await assert.rejects(executeOwnerTransition({...params,action:'decline',nowEpoch:200}),/expired/);
  await assert.rejects(executeOwnerTransition({...params,action:'decline',readBooking:async()=>({...base,id:'22222222-2222-4222-8222-222222222222'})}),/mismatch/);
  assert.equal(sent.length,0);
@@ -145,4 +145,23 @@ test('LB-02 transaction cancellation propagates without reporting a successful a
  }};
  await assert.rejects(executeOwnerTransition({...params,action:'decline'}),/Conditional check failed/);
  assert.equal(calls,1);
+});
+
+test('published-quote approval derives exact pence and rejects price overrides',async()=>{
+ const previous=process.env.BOOKING_ENVIRONMENT;
+ process.env.BOOKING_ENVIRONMENT='staging';
+ try{
+  const {sent,params}=make({...base,quote:{totalGBP:1085}});
+  const result=await executeOwnerTransition({...params,action:'approve',
+   approval:{usePublishedQuote:true}});
+  assert.equal(result.to,'APPROVED_AWAITING_PAYMENT');
+  assert.equal(sent[0].TransactItems[0].Update.ExpressionAttributeValues[':amount'],1085);
+  assert.equal(sent[0].TransactItems[3].Put.Item.approvedAmountGBP,1085);
+  await assert.rejects(executeOwnerTransition({...params,action:'approve',
+   approval:{usePublishedQuote:true,amountPence:1}}),/cannot override price/);
+  assert.equal(sent.length,1);
+ }finally{
+  if(previous===undefined)delete process.env.BOOKING_ENVIRONMENT;
+  else process.env.BOOKING_ENVIRONMENT=previous;
+ }
 });
