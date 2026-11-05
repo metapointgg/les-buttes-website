@@ -255,3 +255,42 @@ test('LB-06 staging configuration requires owner, approval and CAS version',asyn
   }
  }
 });
+
+test('checkout status is owner-only, sanitised and never asserts provider payment',async()=>{
+ const oldIssuer=process.env.MANAGEMENT_COGNITO_ISSUER;
+ const oldClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+ const oldEnvironment=process.env.BOOKING_ENVIRONMENT;
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ process.env.BOOKING_ENVIRONMENT='staging';
+ try{
+  const bookingId='11111111-1111-4111-8111-111111111111';
+  const path='/admin/bookings/'+bookingId+'/checkout/status';
+  let reads=0;
+  const handler=createAdminHandler({
+   reader:{getBooking:async()=>({id:bookingId,status:'APPROVED_AWAITING_PAYMENT'})},
+   readCheckout:async()=>{reads++;return {checkoutId:'sandbox-checkout-123',
+    status:'PENDING',amountPence:108500,currency:'GBP',
+    hostedCheckoutUrl:'https://checkout.sumup.com/private',
+    apiKey:'never-expose',paymentStatus:'PAID'};}
+  });
+  const owner=await handler({...verified,rawPath:path});
+  assert.equal(owner.statusCode,200);
+  const body=JSON.parse(owner.body);
+  assert.deepEqual(body,{bookingId,registered:true,checkoutId:'sandbox-checkout-123',
+   registrationStatus:'PENDING',amountPence:108500,currency:'GBP'});
+  assert.equal(reads,1);
+  const viewer={...verified,requestContext:{...verified.requestContext,
+   authorizer:{jwt:{claims:{...verified.requestContext.authorizer.jwt.claims,
+    'cognito:groups':['lesbuttes-viewer']}}}}};
+  assert.equal((await handler({...viewer,rawPath:path})).statusCode,403);
+  assert.equal(reads,1);
+ }finally{
+  if(oldIssuer===undefined)delete process.env.MANAGEMENT_COGNITO_ISSUER;
+  else process.env.MANAGEMENT_COGNITO_ISSUER=oldIssuer;
+  if(oldClient===undefined)delete process.env.MANAGEMENT_COGNITO_CLIENT_ID;
+  else process.env.MANAGEMENT_COGNITO_CLIENT_ID=oldClient;
+  if(oldEnvironment===undefined)delete process.env.BOOKING_ENVIRONMENT;
+  else process.env.BOOKING_ENVIRONMENT=oldEnvironment;
+ }
+});
