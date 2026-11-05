@@ -33,14 +33,14 @@ function harness(providerResponse=provider){
   if(command instanceof TransactWriteCommand){writes++;return {};}
   throw Error('Unexpected DynamoDB operation');
  }};
- const reconcile=({bookingId})=>reconcileVerifiedPayment({db,table:'booking-staging',
+ const reconcile=({bookingId})=>reconcileVerifiedPayment({db,table:'les-buttes-booking-staging-BookingTable-LB08FIXTURE',
   bookingId,merchantCode:'ABCDEF12',nowEpoch,
   fetchCheckout:async checkoutId=>{providerReads++;assert.equal(checkoutId,checkout.checkoutId);
    return providerResponse;}});
  return {db,reconcile,get writes(){return writes;},get providerReads(){return providerReads;}};
 }
 const run=h=>processSignedInternalPaymentTrigger({body,signature,secret,db:h.db,
- table:'booking-staging',nowEpoch,enabled:true,reconcile:h.reconcile});
+ table:'les-buttes-booking-staging-BookingTable-LB08FIXTURE',nowEpoch,enabled:true,reconcile:h.reconcile});
 test('signed internal trigger verifies provider, conditionally confirms seven nights and blocks replay',async()=>{
  const h=harness(),result=await run(h);
  assert.equal(result.status,'CONFIRMED');
@@ -59,7 +59,7 @@ test('signed trigger cannot confirm an unpaid provider checkout',async()=>{
 test('tampered signature causes no provider read or DynamoDB writes',async()=>{
  const h=harness();
  await assert.rejects(processSignedInternalPaymentTrigger({body,
-  signature:'f'.repeat(64),secret,db:h.db,table:'booking-staging',nowEpoch,
+  signature:'f'.repeat(64),secret,db:h.db,table:'les-buttes-booking-staging-BookingTable-LB08FIXTURE',nowEpoch,
   enabled:true,reconcile:h.reconcile}),/Unauthorised/);
  assert.equal(h.writes,0);assert.equal(h.providerReads,0);
 });
@@ -75,7 +75,7 @@ test('simultaneous delivery wins one replay claim and runs reconciliation once',
   claims.add(key);return {};
  }};
  const reconcile=async()=>{reconciliations++;return {status:'CONFIRMED'};};
- const args={body,signature,secret,db,table:'booking-staging',nowEpoch,enabled:true,reconcile};
+ const args={body,signature,secret,db,table:'les-buttes-booking-staging-BookingTable-LB08FIXTURE',nowEpoch,enabled:true,reconcile};
  const outcomes=await Promise.allSettled([
   processSignedInternalPaymentTrigger(args),processSignedInternalPaymentTrigger(args)]);
  assert.equal(outcomes.filter(v=>v.status==='fulfilled').length,1);
@@ -90,7 +90,7 @@ test('reconciliation failure consumes trigger claim and requires a fresh authori
   if(claims.has(key))throw Error('ConditionalCheckFailedException');
   claims.add(key);return {};
  }};
- const args={body,signature,secret,db,table:'booking-staging',nowEpoch,enabled:true,
+ const args={body,signature,secret,db,table:'les-buttes-booking-staging-BookingTable-LB08FIXTURE',nowEpoch,enabled:true,
   reconcile:async()=>{reconciliations++;throw Error('Provider unavailable');}};
  await assert.rejects(processSignedInternalPaymentTrigger(args),/Provider unavailable/);
  await assert.rejects(processSignedInternalPaymentTrigger(args),/ConditionalCheckFailedException/);
