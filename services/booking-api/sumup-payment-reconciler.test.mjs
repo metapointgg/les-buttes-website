@@ -33,7 +33,7 @@ function setup({bookingRecord=booking,checkoutRecord=registered,providerRecord=p
  };
  return {db,commands,fetchCheckout,get providerCalls(){return providerCalls;}};
 }
-const run=(s,extra={})=>reconcileVerifiedPayment({db:s.db,table:'les-buttes-bookings-staging',
+const run=(s,extra={})=>reconcileVerifiedPayment({db:s.db,table:'les-buttes-booking-staging-BookingTable-TEST123',
  bookingId:id,fetchCheckout:s.fetchCheckout,merchantCode:'merchant-1',nowEpoch:1800000000,...extra});
 test('LB-08 fresh provider evidence authorises one atomic confirmation and audit',async()=>{
  const s=setup(),result=await run(s);
@@ -44,7 +44,7 @@ test('LB-08 fresh provider evidence authorises one atomic confirmation and audit
  const tx=s.commands[2];
  assert.ok(tx instanceof TransactWriteCommand);
  assert.equal(tx.input.TransactItems.length,11);
- assert.ok(tx.input.TransactItems.every(x=>Object.values(x)[0].TableName==='les-buttes-bookings-staging'));
+ assert.ok(tx.input.TransactItems.every(x=>Object.values(x)[0].TableName==='les-buttes-booking-staging-BookingTable-TEST123'));
  assert.equal(tx.input.TransactItems[9].Put.Item.PK,'PAYMENT_TRANSACTION#transaction-12345');
 });
 test('LB-08 rejects forged payment and cannot write',async()=>{
@@ -85,7 +85,7 @@ test('LB-08 lost DynamoDB response recovers only matching atomic confirmation cl
   return {Item:writes?{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
    paymentTransactionId:'transaction-12345',paidAt:'2027-01-01T00:00:00.000Z'}:booking};
  }};
- const result=await reconcileVerifiedPayment({db,table:'booking-staging',bookingId:id,
+ const result=await reconcileVerifiedPayment({db,table:'les-buttes-booking-staging-BookingTable-TEST123',bookingId:id,
   merchantCode:'merchant-1',fetchCheckout:async()=>provider,nowEpoch:1800000000});
  assert.equal(result.status,'ALREADY_CONFIRMED');
  assert.equal(writes,1);
@@ -100,7 +100,7 @@ test('LB-08 rejects transaction claim associated with another booking',async()=>
   return {Item:writes?{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
    paymentTransactionId:'transaction-12345',paidAt:'2027-01-01T00:00:00.000Z'}:booking};
  }};
- await assert.rejects(reconcileVerifiedPayment({db,table:'booking-staging',bookingId:id,
+ await assert.rejects(reconcileVerifiedPayment({db,table:'les-buttes-booking-staging-BookingTable-TEST123',bookingId:id,
   merchantCode:'merchant-1',fetchCheckout:async()=>provider,nowEpoch:1800000000}),
   /TransactionCanceledException/);
  assert.equal(writes,1);
@@ -116,7 +116,17 @@ test('LB-08 uncertain outcome rejects claim with mismatched amount',async()=>{
   return {Item:writes?{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
    paymentTransactionId:'transaction-12345',paidAt:'2027-01-01T00:00:00.000Z'}:booking};
  }};
- await assert.rejects(reconcileVerifiedPayment({db,table:'booking-staging',bookingId:id,
+ await assert.rejects(reconcileVerifiedPayment({db,table:'les-buttes-booking-staging-BookingTable-TEST123',bookingId:id,
   merchantCode:'merchant-1',fetchCheckout:async()=>provider,nowEpoch:1800000000}),/Socket disconnected/);
  assert.equal(writes,1);
+});
+
+test('LB-08 rejects unrelated staging tables before any read or provider call',async()=>{
+ const s=setup();
+ for(const table of ['unrelated-staging-table','les-buttes-booking-staging-BookingTable-TEST123-extra',
+  'les-buttes-booking-production-BookingTable-TEST123','les-buttes-booking-staging-BookingTable-']){
+  await assert.rejects(run(s,{table}),/not configured/);
+ }
+ assert.equal(s.commands.length,0);
+ assert.equal(s.providerCalls,0);
 });
