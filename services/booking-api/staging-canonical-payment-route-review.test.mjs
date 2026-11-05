@@ -21,8 +21,10 @@ test('LB-09 draft restricts staging transaction and SumUp secret permissions, wi
  assert.match(template,/parameter\/les-buttes\/staging\/sumup\/api-key/);
  assert.match(template,/parameter\/les-buttes\/staging\/sumup\/merchant-code/);
  assert.doesNotMatch(template,/dynamodb:(PutItem|UpdateItem|DeleteItem)|ses:SendEmail|ssm:GetParametersByPath/);
- for(const flag of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED',
-  'BOOKING_CONFIRMATION_DISPATCH_ENABLED','BOOKING_EMAILS_ENABLED'])
+ assert.match(template,/StagingPaymentWritesEnabled:\n    Type: String\n    AllowedValues: \['false', 'true'\]\n    Default: 'false'/);
+ for(const flag of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED'])
+  assert.ok(template.includes(flag+': !Ref StagingPaymentWritesEnabled'),flag);
+ for(const flag of ['BOOKING_CONFIRMATION_DISPATCH_ENABLED','BOOKING_EMAILS_ENABLED'])
   assert.ok(template.includes(flag+": 'false'"),flag);
  assert.match(template,/S3ObjectVersion: !Ref ReviewedArtifactVersion/);
  assert.match(template,/S3Bucket: !Ref ReviewedArtifactBucket/);
@@ -37,7 +39,7 @@ test('LB-09 CloudFormation review template has one coherent parameter and resour
   assert.equal((template.match(new RegExp('^'+section+':','gm'))??[]).length,1,
    section+' must be declared exactly once');
  for(const parameter of ['CanonicalApiId','StagingBookingTableName','CognitoAuthorizerId',
-  'ReviewedArtifactBucket','ReviewedArtifactKey','ReviewedArtifactVersion','DeploymentEnabled'])
+  'ReviewedArtifactBucket','ReviewedArtifactKey','ReviewedArtifactVersion','DeploymentEnabled','StagingPaymentWritesEnabled'])
   assert.match(template,new RegExp('^  '+parameter+':$','m'));
  assert.match(template,/ReviewedArtifactVersion:\n    Type: String\n    MinLength: 1/);
  assert.match(template,/DeploymentEnabled:\n    Type: String\n    AllowedValues: \['false', 'true'\]\n    Default: 'false'/);
