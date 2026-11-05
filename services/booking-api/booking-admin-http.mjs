@@ -7,6 +7,7 @@ import {DynamoDBDocumentClient,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {executeOwnerTransition} from './booking-admin-transaction-writer.mjs';
 import {publishOwnerConfiguration,rollbackOwnerConfiguration} from './booking-admin-config-writer.mjs';
 import {checkoutRuntimeEnabled,registerCheckoutWithSandbox} from './booking-checkout-runtime.mjs';
+import {readRegisteredCheckout} from './sumup-checkout-store.mjs';
 // API Gateway's HTTP JWT authorizer can stringify Cognito group arrays
 // using either comma separators or spaces, with optional quoted members.
 // Parse the entire claim; never use substring matching to grant a role.
@@ -82,7 +83,7 @@ export function stagingAuthDiagnostic(event,{issuer=process.env.MANAGEMENT_COGNI
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
 export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=()=>false,
- approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout}){
+ approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout}){
  return async event=>{
    try{
      const method=event?.requestContext?.http?.method;
@@ -189,6 +190,22 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
          ...(decision.allowed?{from:decision.from,to:decision.to}:{reason:decision.reason})});
      }
 
+     // Owner-only checkout registration status. The provider's payment state is
+     // deliberately not inferred from this record, and the hosted URL is omitted.
+     const checkoutStatus=path.match(/^\\/admin\\/bookings\\/([0-9a-f-]{36})\\/checkout\\/status$/i);
+     if(checkoutStatus){
+       if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+       if(process.env.BOOKING_ENVIRONMENT!=='staging'||typeof readCheckout!=='function')
+         return reply(503,{error:'Checkout status unavailable'});
+       const record=await reader.getBooking(event,checkoutStatus[1]);
+       if(!record)return reply(404,{error:'Not found'});
+       const checkout=await readCheckout({bookingId:checkoutStatus[1]});
+       return reply(200,{bookingId:checkoutStatus[1],
+         registered:Boolean(checkout),
+         ...(checkout?{checkoutId:checkout.checkoutId,
+           registrationStatus:checkout.status,
+           amountPence:checkout.amountPence,currency:checkout.currency}:{})});
+     }
      let match=path.match(/^\/admin\/config\/(pricing|stay-rules|cancellation|payments|business|arrival-departure|terms)\/(geranium|honeysuckle|all)(\/versions)?$/);
      if(match){
        const data=match[3]?await reader.getConfigHistory(event,match[1],match[2]):await reader.getConfig(event,match[1],match[2]);
@@ -247,6 +264,7 @@ export async function handler(event){
      approvalEnabled:()=>staging&&process.env.MANAGEMENT_APPROVAL_ENABLED==='true',
      checkoutEnabled:()=>staging&&checkoutRuntimeEnabled(process.env),
      registerCheckout:staging?async args=>registerCheckoutWithSandbox({db,...args}):undefined,
+     readCheckout:staging?async ({bookingId})=>readRegisteredCheckout({db,table,bookingId}):undefined,
      writeConfig:staging?async ({operation,...args})=>operation==='rollback'?rollbackOwnerConfiguration({db,table,...args}):publishOwnerConfiguration({db,table,...args}):undefined,
      writeAction:staging?async args=>executeOwnerTransition({
        ...args,db,table,
