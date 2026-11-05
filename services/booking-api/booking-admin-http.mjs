@@ -192,7 +192,7 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
 
      // Owner-only checkout registration status. The provider's payment state is
      // deliberately not inferred from this record, and the hosted URL is omitted.
-     const checkoutStatus=path.match(/^\\/admin\\/bookings\\/([0-9a-f-]{36})\\/checkout\\/status$/i);
+     const checkoutStatus=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/checkout\/status$/i);
      if(checkoutStatus){
        if(id.role!=='owner')return reply(403,{error:'Forbidden'});
        if(process.env.BOOKING_ENVIRONMENT!=='staging'||typeof readCheckout!=='function')
