@@ -129,7 +129,7 @@ async function main(){
     if(!id||!amount||!link)fail('Usage: approve ID AMOUNT_GBP SUMUP_PAYMENT_URL');
     // Payment amounts must be exact GBP pence. Reject fractional-penny and
     // exponential input before persisting an approved checkout amount.
-    if(!/^(?:0|[1-9]\\d*)(?:\\.\\d{1,2})?$/.test(amount)||
+    if(!/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(amount)||
        !Number.isSafeInteger(Math.round(Number(amount)*100))||
        Math.round(Number(amount)*100)<=0)
       fail('Approved amount must be a positive GBP amount with at most two decimal places');
