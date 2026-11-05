@@ -144,3 +144,19 @@ A production release is not considered complete merely because staging has succe
 - **A01–A07 CLOSED**. Do not rerun separate manual probes as a substitute for lifecycle acceptance.
 - **A08–A11 OPEN**. Current staging browser is intentionally read-only; it cannot prove request creation, atomic reservation, owner approval/rejection, sandbox payment, email, cancellation or date release. Next acceptance job must use isolated staging-only test fixtures, synthetic guest data, SumUp sandbox, idempotency/replay assertions and cleanup, with a clear run summary per lifecycle stage. Do not enable real guest submission or production payment to accomplish this.
 - **A12 BLOCKED / production NO GO** until A08–A11 and operational controls are evidenced.
+
+
+## Production readiness checkpoint — 5 November 2026
+
+**Planning estimate: ~75%** (subjective readiness, not 7/12 test-count arithmetic). **NO GO** for live bookings.
+
+**Recheck evidence:** commit `0a45396` passed feature CI [41937213380](https://github.com/metapointgg/les-buttes-website/actions/runs/41937213380), isolated preview deployment [41937213392](https://github.com/metapointgg/les-buttes-website/actions/runs/41937213392), and management validation [41937213328](https://github.com/metapointgg/les-buttes-website/actions/runs/41937213328). A07 browser acceptance remains evidenced by [41935946600](https://github.com/metapointgg/les-buttes-website/actions/runs/41935946600).
+
+**Implementation-level A08–A11 audit (not acceptance evidence):**
+1. `services/booking-api/index.mjs` has atomic `TransactWriteCommand` for request metadata plus nightly slots and persists a published quote, but the staging guest API requires a private `STAGING_API_TOKEN`, Turnstile verification, and `BOOKING_REQUESTS_ENABLED=true`. The public read-only browser deliberately cannot submit. Need an isolated, credential-safe synthetic request harness; never expose the staging token to browser JavaScript.
+2. `services/booking-api/admin.mjs` supports conditional owner approve/decline and atomic slot release. Approval records an owner-supplied payment URL and prints a **manual** guest email template; it does not itself issue or validate a SumUp checkout.
+3. `admin.mjs confirm` explicitly rejects manual confirmation and requires server-side verified SumUp reconciliation. The reconciler must be identified and exercised against a sandbox checkout with duplicate/replay checks before A10 passes.
+4. `admin.mjs cancel` releases confirmed booking slots but states that SumUp refunds and guest notifications must be handled separately. `index.mjs` suppresses owner email in staging. A11 requires explicit tests of outbound delivery, refund reconciliation and cancellation notification, not just date release.
+5. The existing production master and SES/DKIM release blockers described above remain unresolved; no production migration or public submission should occur as a shortcut.
+
+**Next ordered implementation:** identify the existing SumUp reconciler and its acceptance harness, then create one guarded isolated staging lifecycle test that runs A08 request/atomic hold → A09 owner approval/rejection → A10 provider-verified sandbox payment/idempotency → A11 cancellation/release and notification/refund evidence, with deterministic synthetic fixture and cleanup. Do not mark the lifecycle passed on the strength of the source audit alone.
