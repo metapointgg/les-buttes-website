@@ -134,14 +134,21 @@ $('reconcile-payment').addEventListener('click',async()=>{
     booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT'){
   message('Select an approved booking awaiting payment.',true);return;
  }
- if(!window.confirm('Check SumUp sandbox directly for verified payment? This may atomically confirm a paid booking. No guest email will be sent.'))return;
+ if(!window.confirm('Reconcile this booking against SumUp sandbox? Verified payment may atomically confirm the booking. Guest correspondence depends on the separately configured notification gate.'))return;
  $('reconcile-payment').disabled=true;
  try{
   const result=await request('/admin/bookings/'+encodeURIComponent(booking.id)+'/payment/reconcile',
    {method:'POST',body:{}});
   if(!['CONFIRMED','ALREADY_CONFIRMED'].includes(result.status)||result.bookingId!==booking.id)
    throw Error('Payment verification did not confirm the booking');
-  message('Provider-verified sandbox payment: '+result.status+'. Guest notification remains separate.');
+  const notification=result.notificationStatus;
+  const detail=notification==='DISABLED'?' Guest email dispatch is disabled.':
+   notification==='SENT'?' Guest email dispatch reported sent.':
+   notification==='ALREADY_SENT'?' Guest email was previously dispatched.':
+   notification==='RECONCILIATION_REQUIRED'?' Guest email outcome requires manual reconciliation.':
+   ' Guest email status is not confirmed; check the correspondence outbox.';
+  message('Provider-verified sandbox payment: '+result.status+'.'+detail,
+   notification==='RECONCILIATION_REQUIRED');
   await loadBookings();await selectBooking(booking.id);
  }catch(e){message(e.message,true);await selectBooking(booking.id);}
 });
