@@ -43,6 +43,9 @@ jobs:
           unzip -Z1 dist/canonical-staging-payment-lambda.zip | grep -Fx 'node_modules/@aws-sdk/client-dynamodb/package.json'
           unzip -Z1 dist/canonical-staging-payment-lambda.zip | grep -Fx 'node_modules/@aws-sdk/lib-dynamodb/package.json'
           (cd dist && sha256sum --check SHA256SUMS)
+          printf 'source_commit=%s\nsource_ref=%s\nworkflow_run=%s\n' \
+            "$GITHUB_SHA" "$GITHUB_REF" "$GITHUB_RUN_ID" > dist/SOURCE_MANIFEST
+          grep -Fx "source_commit=$GITHUB_SHA" dist/SOURCE_MANIFEST
       - name: Upload review artefact only
         uses: actions/upload-artifact@v4
         with:
@@ -50,6 +53,7 @@ jobs:
           path: |
             dist/canonical-staging-payment-lambda.zip
             dist/SHA256SUMS
+            dist/SOURCE_MANIFEST
           retention-days: 14
       - name: Record safety boundary
         run: |
