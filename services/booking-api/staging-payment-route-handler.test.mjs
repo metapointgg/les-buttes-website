@@ -43,3 +43,16 @@ test('payment-only entrypoint never exposes credentials or allows caching in den
   assert.equal(response.headers['Cache-Control'],'no-store');
   assert.deepEqual(JSON.parse(response.body),{error:'Forbidden'});
 });
+
+test('payment-only entrypoint rejects an ID token even when its group says owner',async()=>{
+  const response=await handler(event({requestContext:{
+    http:{method:'POST'},routeKey:route,
+    authorizer:{jwt:{claims:{
+      sub:'synthetic-owner',token_use:'id',
+      iss:'https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa',
+      client_id:'2mjmimjh7oc8h00d4nngrc1akj',
+      'cognito:groups':'lesbuttes-owner'
+    }}}
+  }}));
+  assert.equal(response.statusCode,403);
+});
