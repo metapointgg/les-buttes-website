@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {handler} from './staging-payment-route-handler.mjs';
+import {identityFromGateway} from './booking-admin-http.mjs';
 
 const route='POST /admin/bookings/{bookingId}/payment/reconcile';
 const path='/admin/bookings/12345678-1234-1234-1234-123456789abc/payment/reconcile';
@@ -44,8 +45,8 @@ test('payment-only entrypoint never exposes credentials or allows caching in den
   assert.deepEqual(JSON.parse(response.body),{error:'Forbidden'});
 });
 
-test('payment-only entrypoint rejects an ID token even when its group says owner',async()=>{
-  const response=await handler(event({requestContext:{
+test('owner-group ID tokens cannot establish an authenticated management identity',()=>{
+  const eventWithIdToken=event({requestContext:{
     http:{method:'POST'},routeKey:route,
     authorizer:{jwt:{claims:{
       sub:'synthetic-owner',token_use:'id',
@@ -53,6 +54,9 @@ test('payment-only entrypoint rejects an ID token even when its group says owner
       client_id:'2mjmimjh7oc8h00d4nngrc1akj',
       'cognito:groups':'lesbuttes-owner'
     }}}
-  }}));
-  assert.equal(response.statusCode,403);
+  }});
+  assert.equal(identityFromGateway(eventWithIdToken,{
+    issuer:'https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa',
+    clientId:'2mjmimjh7oc8h00d4nngrc1akj'
+  }),null);
 });
