@@ -2,6 +2,10 @@ name: Package canonical staging payment Lambda (review only)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+    paths:
+      - '.github/workflows/canonical-staging-payment-package.yml'
 
 permissions:
   contents: read
