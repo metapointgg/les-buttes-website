@@ -11,8 +11,8 @@ Parameters:
     AllowedPattern: '^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$'
   CognitoAuthorizerId:
     Type: String
-    AllowedPattern: '^[A-Za-z0-9]+$'
-    Description: Existing JWT authorizer ID from canonical API; verify issuer and audience.
+    AllowedValues: [q9ukxh]
+    Description: Verified existing JWT authorizer on canonical API i2irz87c82 (5 November 2026).
   ReviewedArtifactBucket:
     Type: String
     MinLength: 3
