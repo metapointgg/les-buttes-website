@@ -12,11 +12,15 @@ test('LB-09 route draft preserves canonical API and requires explicit deployment
  assert.match(template,/AuthorizerId: !Ref CognitoAuthorizerId/);
  assert.doesNotMatch(template,/AWS::ApiGatewayV2::Api|AWS::DynamoDB::Table/);
 });
-test('LB-09 draft has no write, SumUp credential or SES permissions',()=>{
+test('LB-09 draft restricts staging transaction and SumUp secret permissions, with execution disabled',()=>{
  assert.match(template,/Action: \[dynamodb:GetItem\]/);
  assert.match(template,/Action: \[logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents\]/);
  assert.doesNotMatch(template,/logs:DeleteLogGroup|logs:DeleteLogStream|logs:DeleteLogEvents/);
- assert.doesNotMatch(template,/dynamodb:(PutItem|UpdateItem|TransactWriteItems)|ssm:GetParameter|ses:SendEmail/);
+ assert.match(template,/Action: \[dynamodb:TransactWriteItems\]/);
+ assert.match(template,/Action: \[ssm:GetParameter\]/);
+ assert.match(template,/parameter\/les-buttes\/staging\/sumup\/api-key/);
+ assert.match(template,/parameter\/les-buttes\/staging\/sumup\/merchant-code/);
+ assert.doesNotMatch(template,/dynamodb:(PutItem|UpdateItem|DeleteItem)|ses:SendEmail|ssm:GetParametersByPath/);
  for(const flag of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED',
   'BOOKING_CONFIRMATION_DISPATCH_ENABLED','BOOKING_EMAILS_ENABLED'])
   assert.ok(template.includes(flag+": 'false'"),flag);
