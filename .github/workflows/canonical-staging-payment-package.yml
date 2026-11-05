@@ -1,0 +1,53 @@
+name: Package canonical staging payment Lambda (review only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-for-review:
+    if: github.ref == 'refs/heads/feature/direct-booking-requests-27-night'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate booking API and staging route contract
+        working-directory: services/booking-api
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm run check
+          npm test
+      - name: Assemble immutable review candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cd services/booking-api
+          zip -q -r ../../dist/canonical-staging-payment-lambda.zip . \
+            -x '*.test.mjs' 'test/*' 'node_modules/.cache/*'
+          cd ../..
+          sha256sum dist/canonical-staging-payment-lambda.zip | tee dist/SHA256SUMS
+          test -s dist/canonical-staging-payment-lambda.zip
+      - name: Upload review artefact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-staging-payment-lambda-${{ github.sha }}
+          path: |
+            dist/canonical-staging-payment-lambda.zip
+            dist/SHA256SUMS
+          retention-days: 14
+      - name: Record safety boundary
+        run: |
+          {
+            echo '## Canonical staging payment Lambda review package'
+            echo 'Source commit: ${{ github.sha }}'
+            echo 'Package is a GitHub Actions artefact only.'
+            echo 'No AWS credentials, CloudFormation execution, route activation or payment operations were performed.'
+            echo 'The S3 bucket/key/version must be separately reviewed and supplied to the default-disabled deployment template.'
+          } >> "$GITHUB_STEP_SUMMARY"
