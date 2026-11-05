@@ -149,19 +149,23 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
        if(match[2]==='approve'&&!approvalEnabled())
          return reply(503,{error:'Booking approval disabled'});
        if(match[2]==='approve'){
-         const allowed=['approved','amountPence','priceChangeReason'];
+         const allowed=['approved','amountPence','priceChangeReason','usePublishedQuote'];
+         const published=payload.usePublishedQuote===true;
          if(Object.keys(payload).some(k=>!allowed.includes(k))||
-            payload.approved!==true||!Number.isSafeInteger(payload.amountPence)||
-            payload.amountPence<1||payload.amountPence>100000000||
-            (payload.priceChangeReason!==undefined&&
-             (typeof payload.priceChangeReason!=='string'||payload.priceChangeReason.length>1000)))
-           return reply(400,{error:'Explicit approval and valid GBP amount in pence required'});
+            payload.approved!==true||
+            (published?(Object.hasOwn(payload,'amountPence')||
+               Object.hasOwn(payload,'priceChangeReason')):
+              (!Number.isSafeInteger(payload.amountPence)||
+               payload.amountPence<1||payload.amountPence>100000000||
+               (payload.priceChangeReason!==undefined&&
+                (typeof payload.priceChangeReason!=='string'||payload.priceChangeReason.length>1000)))))
+           return reply(400,{error:'Explicit approval and valid published quote or GBP amount in pence required'});
        }else if(Object.keys(payload).some(k=>k!=='reason')||
           typeof payload.reason!=='string'||payload.reason.trim().length<5||payload.reason.length>1000)
          return reply(400,{error:'A recorded reason is required'});
        try{
          const result=await writeAction({identity:id,bookingId:match[1],action:match[2],
-           ...(match[2]==='approve'?{approval:{amountPence:payload.amountPence,
+           ...(match[2]==='approve'?{approval:{...(payload.usePublishedQuote===true?{usePublishedQuote:true}:{amountPence:payload.amountPence}),
              ...(payload.priceChangeReason!==undefined?
               {priceChangeReason:payload.priceChangeReason}:{})}}:{reason:payload.reason})});
          return reply(200,result);
