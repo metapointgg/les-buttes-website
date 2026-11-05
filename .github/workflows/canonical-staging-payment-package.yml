@@ -36,7 +36,7 @@ jobs:
           zip -q -r ../../dist/canonical-staging-payment-lambda.zip . \
             -x '*.test.mjs' 'test/*' 'node_modules/.cache/*'
           cd ../..
-          sha256sum dist/canonical-staging-payment-lambda.zip | tee dist/SHA256SUMS
+          (cd dist && sha256sum canonical-staging-payment-lambda.zip | tee SHA256SUMS)
           test -s dist/canonical-staging-payment-lambda.zip
           unzip -tq dist/canonical-staging-payment-lambda.zip
           unzip -Z1 dist/canonical-staging-payment-lambda.zip | grep -Fx 'booking-admin-http.mjs'
