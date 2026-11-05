@@ -21,7 +21,9 @@ test('LB-08 isolated preview cannot create checkout or modify booking state',()=
  const iam=template.slice(template.indexOf('      Policies:'),template.indexOf('      Events:'));
  assert.match(iam,/dynamodb:GetItem, dynamodb:Query/);
  assert.doesNotMatch(iam,/dynamodb:(PutItem|UpdateItem|DeleteItem|TransactWriteItems)|ssm:GetParameter|ses:SendEmail/);
- for(const setting of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_APPROVAL_ENABLED','MANAGEMENT_CHECKOUT_ENABLED'])
+ for(const setting of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_APPROVAL_ENABLED','MANAGEMENT_CHECKOUT_ENABLED',
+   'MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED','BOOKING_CONFIRMATION_DISPATCH_ENABLED',
+   'BOOKING_EMAILS_ENABLED'])
   assert.ok(template.includes(setting+": 'false'"),setting);
  assert.match(template,/BOOKING_ENVIRONMENT: staging/);
  assert.match(template,/ReservedConcurrentExecutions: 2/);
