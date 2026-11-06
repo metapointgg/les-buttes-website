@@ -19,9 +19,9 @@ export async function runIsolatedRequestHoldAcceptance({env=process.env,clientFa
   const bookingKey={PK:'BOOKING#'+id,SK:'META'};
   const collisionKey={PK:'BOOKING#'+collisionId,SK:'META'};
   const slots=NIGHTS.map(day=>({PK:'UNIT#geranium',SK:'DATE#'+day}));
-  const booking={...bookingKey,id,kind:'LB08_A08_SYNTHETIC',status:'REQUESTED',
+  const publishedQuote=Object.freeze({totalGBP:1085,totalPence:108500,\n    perCottage:[{unit:'geranium',totalGBP:1085,totalPence:108500,pricingVersion:3}]});\n  const booking={...bookingKey,id,kind:'LB08_A08_SYNTHETIC',status:'REQUESTED',
     reservationStatus:'PENDING_REVIEW',units:['geranium'],start:NIGHTS[0],
-    end:'2099-07-11',guestEmail:'test@example.invalid',holdExpiresAt:now+3600};
+    end:'2099-07-11',guestEmail:'test@example.invalid',quote:publishedQuote,\n    requestedAt:new Date(now*1000).toISOString(),holdExpiresAt:now+3600};
   const slotItems=slots.map(key=>({...key,id,expiresAt:now+3600,kind:'LB08_A08_SYNTHETIC'}));
   let seeded=false,output;
   const read=async Key=>(await db.send(new GetCommand({TableName:ISOLATED_TABLE,Key,ConsistentRead:true}))).Item;
@@ -36,8 +36,7 @@ export async function runIsolatedRequestHoldAcceptance({env=process.env,clientFa
         ConditionExpression:'attribute_not_exists(PK)'}}))
     ]}));
     seeded=true;
-    if((await read(bookingKey))?.id!==id||
-       (await Promise.all(slots.map(read))).some(x=>x?.id!==id))
+    const saved=await read(bookingKey);\n    if(saved?.id!==id||saved?.status!=='REQUESTED'||\n       saved?.reservationStatus!=='PENDING_REVIEW'||\n       saved?.quote?.totalPence!==publishedQuote.totalPence||\n       saved?.quote?.perCottage?.[0]?.pricingVersion!==3||\n       (await Promise.all(slots.map(read))).some(x=>x?.id!==id))
       throw Error('Atomic hold readback mismatch');
     let conflictRejected=false;
     try{
@@ -55,7 +54,7 @@ export async function runIsolatedRequestHoldAcceptance({env=process.env,clientFa
     if(!conflictRejected)throw Error('Overlapping synthetic hold was not rejected');
     if(await read(collisionKey))throw Error('Failed collision wrote a booking record');
     output={atomicHoldVerified:true,conflictRejected:true,orphanBookingRejected:true,
-      nights:slots.length,syntheticBookingId:id};
+      nights:slots.length,pricingSnapshotVerified:true,syntheticBookingId:id};
   }finally{
     try{
       // Clean only records owned by this invocation. Never delete another owner's slot.
