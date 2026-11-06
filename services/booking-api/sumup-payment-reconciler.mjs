@@ -6,8 +6,12 @@ import {preparePaymentConfirmation} from './sumup-payment-confirmation.mjs';
 
 const BOOKING_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout,merchantCode,
- nowEpoch=Math.floor(Date.now()/1000)}={}){
- if(!db?.send||typeof table!=='string'||!/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/.test(table)||
+ nowEpoch=Math.floor(Date.now()/1000),isolatedAcceptance=false}={}){
+ const stagingTable=typeof table==='string'&&/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/.test(table);
+ const isolatedTable=isolatedAcceptance===true&&table==='les-buttes-lb08-staging-isolated-acceptance'&&
+   process.env.BOOKING_ENVIRONMENT==='staging'&&process.env.AWS_REGION==='eu-west-2'&&
+   process.env.BOOKINGS_TABLE===table&&process.env.LB08_ISOLATED_BOOKING_ACCEPTANCE==='yes';
+ if(!db?.send||!(stagingTable||isolatedTable)||
    !BOOKING_ID.test(bookingId??'')||typeof fetchCheckout!=='function'||
    typeof merchantCode!=='string'||!merchantCode.trim()||
    !Number.isSafeInteger(nowEpoch)||nowEpoch<0)
