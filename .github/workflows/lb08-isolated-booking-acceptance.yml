@@ -49,7 +49,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
           aws-region: eu-west-2
-      # Re-run after the isolated-table IAM policy was attached to the staging role.
+      # Re-run after the isolated-table IAM policy includes ConditionCheckItem.
       - name: Verify AWS identity and dedicated table before any write
         shell: bash
         run: |
