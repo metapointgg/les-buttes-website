@@ -10,6 +10,8 @@ on:
       - 'services/booking-api/lb08-isolated-request-hold-acceptance.mjs'
       - 'services/booking-api/lb08-isolated-booking-acceptance.mjs'
       - 'services/booking-api/lb08-isolated-request-hold-acceptance.test.mjs'
+      - 'services/booking-api/booking-admin-transaction-writer-a09.test.mjs'
+      - 'services/booking-api/booking-admin-transaction-writer.mjs'
 
 permissions:
   contents: read
@@ -45,6 +47,7 @@ jobs:
           set -euo pipefail
           npm --prefix services/booking-api run check
           node --test services/booking-api/lb08-isolated-request-hold-acceptance.test.mjs
+          node --test services/booking-api/booking-admin-transaction-writer-a09.test.mjs
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
