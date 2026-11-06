@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install booking API dependencies
-        run: npm --prefix services/booking-api ci --no-audit --no-fund
+        run: npm --prefix services/booking-api install --no-package-lock --no-audit --no-fund
       - name: Validate source and run safety regression tests
         run: |
           set -euo pipefail
