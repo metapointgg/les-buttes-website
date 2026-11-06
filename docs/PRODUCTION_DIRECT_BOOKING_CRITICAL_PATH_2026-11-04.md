@@ -169,3 +169,12 @@ A production release is not considered complete merely because staging has succe
 - `services/booking-api/sumup-payment-internal-e2e.test.mjs` covers signed internal trigger, paid/unpaid provider outcomes, tampering, concurrent replay and failed reconciliation in a mock environment. These are unit/integration tests, **not** live end-to-end evidence.
 - **Safety defect corrected** in commit `bc66b77`: obsolete `services/booking-api/staging-e2e.mjs` still expected `admin.mjs confirm` to succeed, despite that command now intentionally refusing manual payment proof. The legacy script now fails closed before creating any synthetic date holds. Use LB-08 acceptance instead.
 - **A08–A11 remain OPEN:** execute existing guarded LB-08 acceptance with authorised isolated-table credentials, then extend the consolidated acceptance design to cover request/approval/checkout and email/refund evidence without production writes or false claims of actual provider payment.
+
+## 6 November 2026 — A08 isolated DynamoDB acceptance PASSED; A09 in progress
+
+- **A08 PASSED** in GitHub Actions [run 42282987021](https://github.com/metapointgg/les-buttes-website/actions/runs/42282987021), commit `ba8f5e1`, AWS account `145608514666`, region `eu-west-2`, dedicated table `les-buttes-lb08-staging-isolated-acceptance` only.
+- Real DynamoDB transaction verified seven atomic nightly holds, competing-booking collision rejection, no orphan booking, synthetic pricing snapshot and strongly consistent cleanup.
+- Separately, real DynamoDB payment-reconciliation transaction with **synthetic SumUp PAID fixture** verified seven confirmed nights, transaction claim, one audit record, replay rejection and cleanup. **No actual SumUp charge or production booking** was involved.
+- The acceptance role has narrowly scoped DynamoDB permissions including `ConditionCheckItem`; the full workflow is green.
+- **A09 NEXT:** execute owner approval/decline transitions against the isolated table with atomic slot updates/releases and audit readback, using the existing `booking-admin-transaction-writer.mjs`. Current `booking-admin-transaction-writer-a09.test.mjs` is unit-level only and does not constitute live AWS acceptance. Wire acceptance to the canonical management app separately before claiming end-to-end owner operations.
+- **Release decision remains NO GO.** A08 success does not establish live payment settlement, SES deliverability, production environment isolation, Airbnb synchronisation or production approval.
