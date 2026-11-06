@@ -51,7 +51,7 @@ export async function runIsolatedBookingAcceptance({env=process.env,clientFactor
   }))}));
   seeded=true;
   const result=await reconcileVerifiedPayment({db,table,bookingId:id,
-   merchantCode,fetchCheckout:async requested=>{
+   merchantCode,isolatedAcceptance:true,fetchCheckout:async requested=>{
     if(requested!==checkoutId)throw Error('Unexpected synthetic checkout identity');
     return fixture;
    },nowEpoch:now});
@@ -69,7 +69,7 @@ export async function runIsolatedBookingAcceptance({env=process.env,clientFactor
    throw Error('Atomic confirmation strong-readback mismatch');
   let replayRejected=false;
   try{
-   await reconcileVerifiedPayment({db,table,bookingId:id,merchantCode,
+   await reconcileVerifiedPayment({db,table,bookingId:id,merchantCode,isolatedAcceptance:true,
     fetchCheckout:async()=>fixture,nowEpoch:now});
   }catch(error){replayRejected=/Booking state mismatch|not eligible/.test(error.message);}
   if(!replayRejected)throw Error('Synthetic payment replay was not rejected');
