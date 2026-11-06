@@ -78,7 +78,11 @@ export async function runIsolatedRequestHoldAcceptance({env=process.env,clientFa
           Delete:{TableName:ISOLATED_TABLE,Key:x.Key,ConditionExpression:'#id = :id',
             ExpressionAttributeNames:{'#id':'id'},ExpressionAttributeValues:{':id':id}}
         }))}));
-        if(output)output.syntheticRecordsCleanedUp=true;
+        if(output){
+          const remaining=await Promise.all(candidates.map(read));
+          if(remaining.some(Boolean))throw Error('Isolated synthetic cleanup readback failed');
+          output.syntheticRecordsCleanedUp=true;
+        }
       }
     }finally{db.destroy?.();base?.destroy?.();}
   }
