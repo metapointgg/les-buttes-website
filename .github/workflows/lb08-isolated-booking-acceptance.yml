@@ -1,7 +1,15 @@
-name: LB-08 isolated atomic booking acceptance (manual only)
+name: LB-08 isolated atomic booking acceptance
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/direct-booking-requests-27-night
+    paths:
+      - '.github/workflows/lb08-isolated-booking-acceptance.yml'
+      - 'services/booking-api/lb08-isolated-request-hold-acceptance.mjs'
+      - 'services/booking-api/lb08-isolated-booking-acceptance.mjs'
+      - 'services/booking-api/lb08-isolated-request-hold-acceptance.test.mjs'
 
 permissions:
   contents: read
