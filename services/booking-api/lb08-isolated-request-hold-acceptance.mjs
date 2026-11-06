@@ -36,7 +36,8 @@ export async function runIsolatedRequestHoldAcceptance({env=process.env,clientFa
     await db.send(new TransactWriteCommand({TransactItems:[
       {Put:{TableName:ISOLATED_TABLE,Item:booking,ConditionExpression:'attribute_not_exists(PK)'}},
       ...slotItems.map(Item=>({Put:{TableName:ISOLATED_TABLE,Item,
-        ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',\n        ExpressionAttributeValues:{':now':now}}}))
+        ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',
+        ExpressionAttributeValues:{':now':now}}}))
     ]}));
     seeded=true;
     const saved=await read(bookingKey);
@@ -52,7 +53,9 @@ export async function runIsolatedRequestHoldAcceptance({env=process.env,clientFa
         {Put:{TableName:ISOLATED_TABLE,Item:{...collisionKey,id:collisionId,
           kind:'LB08_A08_SYNTHETIC'},ConditionExpression:'attribute_not_exists(PK)'}},
         {Put:{TableName:ISOLATED_TABLE,Item:{...slots[0],id:collisionId},
-          ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',\n          ExpressionAttributeValues:{':now':now}}}\n      ]}));
+          ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',
+          ExpressionAttributeValues:{':now':now}}}
+      ]}));
     }catch(e){
       conflictRejected=e.name==='TransactionCanceledException'||
         e.name==='ConditionalCheckFailedException';
