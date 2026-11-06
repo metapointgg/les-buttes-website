@@ -12,6 +12,7 @@ on:
       - 'services/booking-api/lb08-isolated-request-hold-acceptance.test.mjs'
       - 'services/booking-api/booking-admin-transaction-writer-a09.test.mjs'
       - 'services/booking-api/booking-admin-transaction-writer.mjs'
+      - 'services/booking-api/a09-isolated-owner-transition-acceptance.mjs'
 
 permissions:
   contents: read
@@ -68,6 +69,13 @@ jobs:
           set -euo pipefail
           npm --prefix services/booking-api run probe:lb08:isolated-request-hold
           echo 'A08 isolated synthetic hold and collision acceptance completed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Run A09 isolated owner approval and decline acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check services/booking-api/a09-isolated-owner-transition-acceptance.mjs
+          node services/booking-api/a09-isolated-owner-transition-acceptance.mjs
+          echo 'A09 isolated owner approval and decline acceptance completed.' >> "$GITHUB_STEP_SUMMARY"
       - name: Run synthetic payment confirmation and replay acceptance
         shell: bash
         run: |
