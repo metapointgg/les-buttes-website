@@ -22,10 +22,11 @@ export async function runA09IsolatedAcceptance({env=process.env}={}){
   const described=await db.send(new DescribeTableCommand({TableName:TABLE}));
   if(described.Table?.TableArn!=='arn:aws:dynamodb:eu-west-2:145608514666:table/'+TABLE||
      described.Table?.TableStatus!=='ACTIVE')throw Error('Wrong isolated acceptance table');
-  for(const action of ['approve','decline']){
+  for(const action of ['approve','decline','cancel']){
    const id=randomUUID(),bookingKey=key(id);
    const booking={...bookingKey,id,source:'direct',GSI1PK:'BOOKING_REQUESTS',
-     status:'REQUESTED',reservationStatus:'PENDING_REVIEW',units:['geranium'],
+     status:action==='cancel'?'CONFIRMED':'REQUESTED',
+     reservationStatus:action==='cancel'?'CONFIRMED':'PENDING_REVIEW',units:['geranium'],
      start:'2099-08-28',end:'2099-09-04',holdExpiresAt:now+3600,
      quote:{totalGBP:1085},kind:'A09_ISOLATED_ACCEPTANCE'};
    let seeded=false;
@@ -37,22 +38,25 @@ export async function runA09IsolatedAcceptance({env=process.env}={}){
     const result=await executeOwnerTransition({db,table:TABLE,
      readBooking:async requested=>requested===id?read(bookingKey):null,
      identity,bookingId:id,action,nowEpoch:now,
-     ...(action==='approve'?{approval:{usePublishedQuote:true}}:{})});
+     ...(action==='approve'?{approval:{usePublishedQuote:true}}:{}),
+     ...(action==='cancel'?{reason:'A09 isolated synthetic cancellation acceptance'}:{})});
     const updated=await read(bookingKey);
     const occupied=await Promise.all(slots.map(read));
     const audits=(await db.send(new QueryCommand({TableName:TABLE,
      KeyConditionExpression:'PK = :pk AND begins_with(SK, :prefix)',
      ExpressionAttributeValues:{':pk':bookingKey.PK,':prefix':'AUDIT#'},
      ConsistentRead:true}))).Items??[];
-    if(result.affectedNights!==7||updated?.status!==(action==='approve'?'APPROVED_AWAITING_PAYMENT':'DECLINED')||
-       updated?.reservationStatus!==(action==='approve'?'AWAITING_PAYMENT':'DECLINED')||
+    if(result.affectedNights!==7||updated?.status!==(action==='approve'?'APPROVED_AWAITING_PAYMENT':action==='cancel'?'CANCELLED':'DECLINED')||
+       updated?.reservationStatus!==(action==='approve'?'AWAITING_PAYMENT':action==='cancel'?'CANCELLED':'DECLINED')||
        audits.length!==1||audits[0].action!==action||audits[0].actor!==identity.subject)
       throw Error('A09 metadata/audit readback failed: '+action);
     if(action==='approve'&&(updated.approvedAmountGBP!==1085||
        occupied.some(x=>x?.id!==id||x.expiresAt!==now+48*3600)))
       throw Error('A09 approval hold extension failed');
-    if(action==='decline'&&occupied.some(Boolean))
-      throw Error('A09 decline did not release all slots');
+    if((action==='decline'||action==='cancel')&&occupied.some(Boolean))
+      throw Error('A09 owner transition did not release all slots: '+action);
+    if(action==='cancel'&&(!updated.cancelReason||!updated.cancelledAt))
+      throw Error('A09 cancellation reason/timestamp not recorded');
     results.push({action,sevenNightsVerified:true,auditVerified:true});
    }finally{
     if(seeded){
