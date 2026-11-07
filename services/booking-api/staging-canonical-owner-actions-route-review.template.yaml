@@ -94,6 +94,7 @@ Resources:
           BOOKINGS_TABLE: !Ref StagingBookingTableName
           MANAGEMENT_WRITES_ENABLED: !Ref StagingOwnerActionsEnabled
           MANAGEMENT_APPROVAL_ENABLED: !Ref StagingOwnerActionsEnabled
+          MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED: 'false'
           MANAGEMENT_CHECKOUT_ENABLED: 'false'
           BOOKING_CONFIRMATION_DISPATCH_ENABLED: 'false'
           BOOKING_EMAILS_ENABLED: 'false'
