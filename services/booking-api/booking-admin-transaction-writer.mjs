@@ -47,7 +47,7 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
      throw Error('Changed approval price requires an audit reason');
  }
  const names={'#status':'status'};
- const values={':expected':decision.from,':next':decision.to,':now':nowEpoch,
+ const values={':expected':decision.from,':next':decision.to,
    ':updatedAt':new Date(nowEpoch*1000).toISOString(),':id':bookingId};
  if(typeof identity.subject!=='string'||identity.subject.trim().length<1)
    throw Error('Owner subject required for audit');
@@ -89,6 +89,7 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  values[':expectedReservation']=action==='cancel'?'CONFIRMED':'PENDING_REVIEW';
  if(action==='approve'||action==='decline'){
    condition+=' AND holdExpiresAt = :observedExpiry AND holdExpiresAt > :now';
+   values[':now']=nowEpoch;
    values[':observedExpiry']=booking.holdExpiresAt;
  }
  const transitionId=randomUUID();
