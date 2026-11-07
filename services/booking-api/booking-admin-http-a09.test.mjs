@@ -77,3 +77,22 @@ test('A09 rejects unverified gateway identity',async()=>{
  assert.equal((await handler(request)).statusCode,403);
  assert.equal(calls.length,0);
 });
+
+test('A09 payment reconciliation fails closed for a non-staging booking table',async()=>{
+ const original=process.env.BOOKINGS_TABLE;
+ process.env.BOOKINGS_TABLE='les-buttes-booking-production-BookingTable';
+ let calls=0;
+ const handler=createAdminHandler({reader:{},writeEnabled:()=>true,
+  reconciliationEnabled:()=>true,reconcilePayment:async()=>{calls++;return {status:'CONFIRMED'};}});
+ try{
+  const request=event({action:'approve',payload:{}});
+  request.rawPath='/admin/bookings/'+bookingId+'/payment/reconcile';
+  request.body='{}';
+  const response=await handler(request);
+  assert.equal(response.statusCode,503);
+  assert.equal(calls,0);
+ }finally{
+  if(original===undefined)delete process.env.BOOKINGS_TABLE;
+  else process.env.BOOKINGS_TABLE=original;
+ }
+});
