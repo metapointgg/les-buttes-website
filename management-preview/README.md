@@ -29,3 +29,7 @@ The read-only API `https://g2vazft1vb.execute-api.eu-west-2.amazonaws.com` now a
 Verified technical evidence: five files deployed in S3; CloudFront invalidation `I85QSQ8NSSE0EQAAOVK52LKYX7` `Completed`; CloudFront pretty-URL function leaves `/management/index.html` intact. Backend direct Lambda probe using **synthetic test claims**, new Cognito client and `lesbuttes-viewer` returned `200` with **six** staging bookings. Synthetic viewer POST and old-client claims returned `403`. These tests do **not** prove end-to-end OAuth or that an actual browser can fetch the data.
 
 **Final LB-05 acceptance:** an authorised account must visit the hosted URL, complete Cognito sign-in, see booking inbox, detail and audit, and verify that owner actions remain unavailable. Record a browser result with no access token, password, email address or guest information copied into the tracker. Do not mark LB-04/LB-05 complete until these tests pass. The local manual-token preview remains a development-only alternative.
+
+## 7 November 2026 — owner action client-side safety fix
+
+The separate staging management preview now explicitly disables decline and cancel buttons for non-owner roles and rechecks owner identity, selected booking identity, permitted action and current booking state immediately before displaying a confirmation dialogue. These checks are **defence in depth only**: the authenticated server remains authoritative. This change does not deploy owner actions to the canonical management application and does not enable any staging write flags.
