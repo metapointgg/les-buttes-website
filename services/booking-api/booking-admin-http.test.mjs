@@ -332,9 +332,11 @@ test('owner reconciliation returns explicit notification status without claiming
  const oldIssuer=process.env.MANAGEMENT_COGNITO_ISSUER;
  const oldClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
  const oldEnvironment=process.env.BOOKING_ENVIRONMENT;
+ const oldTable=process.env.BOOKINGS_TABLE;
  process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
  process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
  process.env.BOOKING_ENVIRONMENT='staging';
+ process.env.BOOKINGS_TABLE='les-buttes-booking-staging';
  try{
   const bookingId='11111111-1111-4111-8111-111111111111';
   let calls=0;
@@ -364,5 +366,7 @@ test('owner reconciliation returns explicit notification status without claiming
   else process.env.MANAGEMENT_COGNITO_CLIENT_ID=oldClient;
   if(oldEnvironment===undefined)delete process.env.BOOKING_ENVIRONMENT;
   else process.env.BOOKING_ENVIRONMENT=oldEnvironment;
+  if(oldTable===undefined)delete process.env.BOOKINGS_TABLE;
+  else process.env.BOOKINGS_TABLE=oldTable;
  }
 });
