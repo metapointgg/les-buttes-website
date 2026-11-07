@@ -61,8 +61,8 @@ async function selectBooking(id){
   $('reconcile-payment').disabled=state.role!=='owner'||booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT';
   $('register-checkout').disabled=state.role!=='owner'||booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT'||!Number.isInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000);
   $('approve').disabled=!allowedAction(booking,'approve')||state.role!=='owner';
-  $('decline').disabled=!allowedAction(booking,'decline');
-  $('cancel').disabled=!allowedAction(booking,'cancel');
+  $('decline').disabled=state.role!=='owner'||!allowedAction(booking,'decline');
+  $('cancel').disabled=state.role!=='owner'||!allowedAction(booking,'cancel');
   $('reason').value='';
   state.auditCursor=null;
   $('audit').replaceChildren();
@@ -87,6 +87,10 @@ async function loadAudit(more){
  }catch(e){message(e.message,true);}
 }
 async function performAction(action){
+ if(state.role!=='owner'||!state.selectedBooking||state.selectedBooking.id!==state.selected||
+    !['decline','cancel'].includes(action)||!allowedAction(state.selectedBooking,action)){
+  message('This booking action is not permitted.',true);return;
+ }
  const reason=$('reason').value;
  if(!reasonValid(reason)){message('Provide a reason of at least five characters.',true);return;}
  if(!window.confirm(`Are you sure you want to ${action} this booking? This cannot be undone.`))return;
