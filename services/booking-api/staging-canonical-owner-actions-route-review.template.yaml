@@ -124,4 +124,4 @@ Resources:
       SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CanonicalApiId}/*/POST/admin/bookings/*/actions/*'
 Outputs:
   ReviewStatus:
-    Value: 'Review-only template; DeploymentEnabled defaults to false. Staging-only DynamoDB transaction and SumUp SSM access are scoped; owner writes require a separate default-off owner switch and SES is not granted.'
+    Value: 'Review-only template; DeploymentEnabled defaults to false. Staging-only DynamoDB transaction access is scoped; owner actions require a separate default-off switch; no SumUp, SES or production table permissions are granted.'
