@@ -71,7 +71,7 @@ jobs:
           test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
           bucket='les-buttes-payment-staging-145608514666-eu-west-2'
           test "$(aws s3api get-bucket-versioning --bucket "$bucket" --query Status --output text)" = 'Enabled'
-          key="owner-actions-review/${GITHUB_SHA}/canonical-staging-owner-actions-lambda.zip"
+          key="payment-review/${GITHUB_SHA}/canonical-staging-owner-actions-lambda.zip"
           version="$(aws s3api put-object --bucket "$bucket" --key "$key" \
             --body dist/canonical-staging-owner-actions-lambda.zip \
             --server-side-encryption AES256 --query VersionId --output text)"
