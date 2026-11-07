@@ -126,7 +126,8 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
        const paymentMatch=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/payment\/reconcile$/i);
        if(paymentMatch){
          if(id.role!=='owner')return reply(403,{error:'Forbidden'});
-         if(process.env.BOOKING_ENVIRONMENT!=='staging'||!writeEnabled()||
+         if(process.env.BOOKING_ENVIRONMENT!=='staging'||
+            !process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||!writeEnabled()||
             !reconciliationEnabled()||typeof reconcilePayment!=='function')
            return reply(503,{error:'Payment reconciliation disabled'});
          if(event.isBase64Encoded||event.body!=='{}')
