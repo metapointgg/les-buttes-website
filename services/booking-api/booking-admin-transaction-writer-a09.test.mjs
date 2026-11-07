@@ -71,3 +71,17 @@ test('A09 never accepts an injected payment URL',async()=>{
  await assert.rejects(run('approve',{approval:{amountPence:108500,paymentUrl:'https://example.invalid/pay'}}),/payment URL/);
  assert.equal(commands.length,0);
 });
+
+test('A09 cancellation transaction never includes unused :now and releases seven nights',async()=>{
+ const record={...booking(),status:'CONFIRMED',reservationStatus:'CONFIRMED'};
+ const {commands,run}=harness(record);
+ const result=await run('cancel',{reason:'Guest cancellation requested'});
+ assert.equal(result.to,'CANCELLED');
+ assert.equal(commands.length,1);
+ const items=commands[0].input.TransactItems;
+ assert.equal(items.length,9);
+ assert.equal(items.filter(x=>x.Delete).length,7);
+ assert.equal(Object.hasOwn(items[0].Update.ExpressionAttributeValues,':now'),false);
+ assert.match(items[0].Update.UpdateExpression,/cancelReason = :reason/);
+ assert.equal(items.at(-1).Put.Item.reason,'Guest cancellation requested');
+});
