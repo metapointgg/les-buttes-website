@@ -259,7 +259,7 @@ if(isHostedManagement(location)){
    state.token=accessToken;
    state.role=managementRoleFromAccessToken(accessToken);
    $('sign-in').hidden=true;
-   $('owner-actions').hidden=true;
+   $('owner-actions').hidden=state.role!=='owner';
    $('configuration-panel').hidden=state.role!=='owner';
    void loadBookings();
   }).catch(()=>message('Sign-in failed or staging viewer access is not authorised. Please try again.',true));
