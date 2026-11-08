@@ -110,10 +110,10 @@ A production release is not considered complete merely because staging has succe
 | A05 | Staging website deployed with quote URL in build | Staging deploy run 41925259811 passed after Python syntax correction | Passed |
 | A06 | Published CloudFront HTML and served browser JS contain quote URL | Included in consolidated job; previous corrected deploy run 41925259811 passed | PASSED — consolidated run 41930378226 (991afdf) |
 | A07 | Interactive browser journey and price displayed in review/details | Browser automation not yet in consolidated job | Outstanding |
-| A08 | Guest request creates versioned immutable quote and atomic reservation | Not exercised end to end | Outstanding |
-| A09 | Canonical management app receives request and owner approves/rejects | Not exercised end to end | Outstanding |
-| A10 | Approved request creates sandbox SumUp checkout; payment verified before confirmation | Separate £1 sandbox payment tested, not full journey | Outstanding |
-| A11 | Guest/owner emails, cancellation/refund, released dates and idempotency | Not exercised end to end | Outstanding |
+| A08 | Guest request creates versioned immutable quote and atomic reservation | 8 Nov: actual guest HTTP request, £735 Geranium quote version 3, seven atomic holds, competing HTTP request rejected | Passed for synthetic staging API |
+| A09 | Canonical management app receives request and owner approves/rejects | 8 Nov: deployed canonical owner-action Lambda approved the new request; seven holds extended. Browser sign-in is still required to verify the authenticated UI route | Backend passed; browser acceptance open |
+| A10 | Approved request creates sandbox SumUp checkout; payment verified before confirmation | 8 Nov: same request paid £735 through SumUp hosted sandbox and 3DS simulator; deployed reconciler independently verified provider and committed CONFIRMED; replay ALREADY_CONFIRMED, one audit | Passed for staging backend/provider transaction |
+| A11 | Guest/owner emails, cancellation/refund, released dates and idempotency | 8 Nov: public staging feed blocked confirmed dates; cancellation released all seven slots and restored quote HTTP 200. Emails disabled; external calendar import and refund acceptance remain unverified | Partial |
 | A12 | Production identity, isolated production booking master, security and controlled go-live | Production not authorised | Blocked |
 
 **Single-job scope:** A01–A06 read-only. A07 needs actual browser automation. A08–A11 require a separately authorised, isolated synthetic booking lifecycle with cleanup and payment sandbox credentials; do not silently perform write/payment actions as part of a read-only workflow. A12 is a distinct production go/no-go.
@@ -194,3 +194,31 @@ A production release is not considered complete merely because staging has succe
 - API Gateway `i2irz87c82` route inventory found `POST /admin/bookings/{bookingId}/payment/reconcile` with JWT authorisation, but **no** `POST /admin/bookings/{bookingId}/actions/{action}` route. Therefore A09 is **not yet available through the canonical management API** despite isolated AWS acceptance.
 - **Next implementation gate:** inspect the canonical management application's existing booking-action route contract and its Lambda code before changing infrastructure. Integrate the transactional A09 owner writer using the existing management app, JWT authorisation, explicit staging feature flag and narrow IAM; create a reviewed staging change set and verify against synthetic staging records. Do not expose the isolated harness or silently point canonical management at the isolated test table.
 - **Production remains NO GO.** No AWS resources or booking records were modified during this read-only audit.
+
+## 8 November 2026 — one database-priced request paid and confirmed in SumUp sandbox
+
+**Scope:** AWS account `145608514666`, booking resources in `eu-west-2`, branch `feature/direct-booking-requests-27-night`. No live payment or production booking was enabled.
+
+**Implementation and deployments**
+- `2e4d7d7d1df4166577e8d9077398b125b79f70d7`: restored the existing deployed synthetic guest handler to source control, replaced its divergent quote path with `quoteFromPublishedMaster`, retained atomic nightly holds and hourly quotas, and rejected non-test guest identities. An explicit staging-only Cloudflare test switch supports the documented dummy-token response; the existing private secret remains unchanged.
+- Existing stack `les-buttes-booking-guest-staging` updated via reviewed change set `guest-published-pricing-2e4d7d7`; no replacements, no new resources. Deployed package SHA-256 (base64): `/twDrNn9qtKBUtbxof87WfPU3LPqML2/TcEF4kXbneU=`.
+- `5c185d8e5ad7ce70c41540f5eb7569f494a997c1`: corrected the payment Lambda's table-scoped IAM actions to `PutItem`, `UpdateItem` and `ConditionCheckItem`, made repeat reconciliation validate provider evidence plus the immutable transaction claim, and removed temporary TTL fields from confirmed booking metadata.
+- Existing stack `les-buttes-payment-reconciliation-route-staging` updated via reviewed change set `payment-confirmation-5c185d8`; no replacements, same JWT-protected route and staging table. Sandbox reconciliation enabled, email flags remain disabled. Deployed package SHA-256 (base64): `Nq7ycvhI5kNV9+MEC2TKdGMSVii2kXTVnl6afJcgFZ0=`.
+- Backend suite: **376 passed, 0 failed**. Both changed CloudFormation templates passed cfn-lint; AWS change-set validation reported no validation errors.
+- GitHub checks on `5c185d8` all passed: [feature CI 42535556703](https://github.com/metapointgg/les-buttes-website/actions/runs/42535556703), [preview deployment 42535556702](https://github.com/metapointgg/les-buttes-website/actions/runs/42535556702), published-pricing release gate, payment-route authoriser smoke, owner/payment packages, management validation and quote-package validation.
+
+**Single transaction evidence**
+1. Public staging quote returned **£735.00** for Geranium, **3–10 April 2027**, two guests.
+2. `POST https://75im3kpaq6.execute-api.eu-west-2.amazonaws.com/request` returned HTTP **201**, synthetic booking `75e1dd6b-11a5-43ed-82a3-890063dfca90`, published Geranium pricing **version 3**, same **£735.00**. Synthetic identity only.
+3. Deployed owner-action Lambda approved that record at its published quote and extended **seven** nightly holds. This used an authorised AWS Lambda integration event with fixture owner claims; it is **not evidence of browser JWT authentication**.
+4. Deployed checkout Lambda registered sandbox checkout `a42efccb-b26b-47af-a080-c38fd7f43574` for **73,500 pence**. SumUp hosted checkout displayed **Test mode**. Its documented test card and 3DS simulator completed successfully, receipt **TAAA7D2MG3D**.
+5. Deployed reconciliation Lambda independently retrieved SumUp payment evidence and returned **CONFIRMED** at **23:34:47 UTC**. Provider transaction ID `1e8553ef-b947-4e30-8416-b75c1f366b00`. Strongly consistent reads verified the confirmed booking and seven non-expiring nightly slots; booking metadata had no temporary TTL.
+6. Repeated verification returned **ALREADY_CONFIRMED**, with exactly **one** payment-confirmation audit record. The public staging availability feed blocked **3–10 April**, quote returned **422**, and a competing guest request returned **409**.
+7. Cleanup used the deployed owner cancellation action: **CONFIRMED → CANCELLED**, seven slots released. Strong read found **zero** remaining test slots. Public availability removed the test range and the quote returned **200 / £735.00** again. Synthetic audit/payment evidence was retained; no real-money refund was involved.
+8. An unauthenticated request to the canonical owner checkout-status HTTP route returned **401**.
+
+**Remaining acceptance boundaries**
+- The canonical management browser opens at sign-in. Complete an authenticated browser approval/checkout/reconciliation run before closing A09 UI acceptance. The public preview remains read-only; synthetic submission was exercised through HTTP.
+- Confirmation response explicitly reported `guestNotificationSent:false`, `notificationStatus:DISABLED`. No guest/owner email was sent. The existing SES identity is currently verified in `us-east-1` (the code's explicit sending region), while `eu-west-2` verification is failed; do not reuse the old blanket statement that all SES sending identities are unverified.
+- Staging availability synchronisation is verified within the shared booking master and public feed. Actual Airbnb import/propagation, guest correspondence, refund workflow and automatic post-payment triggering are not established by this transaction.
+- Production remains **NO GO** pending those functional/operational gates, deliberate production data/configuration isolation and explicit owner approval. Do not label this an accepted complete customer-facing production journey.
