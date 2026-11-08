@@ -1,0 +1,43 @@
+name: Verify canonical staging owner-action infrastructure (read only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
+          aws-region: eu-west-2
+          role-session-name: owner-route-read-only-verification
+      - name: Verify canonical API route and write-disabled Lambda
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
+          stack='les-buttes-canonical-owner-actions-staging'
+          test "$(aws cloudformation describe-stacks --stack-name "$stack" --query 'Stacks[0].StackStatus' --output text)" = 'CREATE_COMPLETE'
+          route='POST /admin/bookings/{bookingId}/actions/{action}'
+          route_id="$(aws apigatewayv2 get-routes --api-id i2irz87c82 --query "Items[?RouteKey=='$route' && AuthorizationType=='JWT' && AuthorizerId=='q9ukxh'].RouteId | [0]" --output text)"
+          test -n "$route_id" && test "$route_id" != 'None'
+          fn="$(aws cloudformation describe-stack-resource --stack-name "$stack" --logical-resource-id OwnerActionFunction --query 'StackResourceDetail.PhysicalResourceId' --output text)"
+          test -n "$fn" && test "$fn" != 'None'
+          test "$(aws lambda get-function-configuration --function-name "$fn" --query State --output text)" = 'Active'
+          for flag in MANAGEMENT_WRITES_ENABLED MANAGEMENT_APPROVAL_ENABLED MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED; do
+            test "$(aws lambda get-function-configuration --function-name "$fn" --query "Environment.Variables.$flag" --output text)" = 'false'
+          done
+          test "$(aws lambda get-function-configuration --function-name "$fn" --query 'Environment.Variables.BOOKING_ENVIRONMENT' --output text)" = 'staging'
+          {
+            echo '## Canonical owner-action staging verification'
+            echo "Stack: $stack (CREATE_COMPLETE)"
+            echo "JWT route ID: $route_id"
+            echo 'Lambda active; booking writes, approvals and reconciliation disabled.'
+            echo 'No booking writes, route mutations or deployment operations performed.'
+          } >> "$GITHUB_STEP_SUMMARY"
