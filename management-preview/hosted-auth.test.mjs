@@ -32,7 +32,7 @@ test('LB-05 PKCE requires exact isolated staging page and uses S256/nonce withou
  assert.equal(s.keys().length,2);
  assert.equal(s.keys().some(k=>/access.?token/i.test(k)),false);
 });
-test('LB-05 completed code exchange validates state and enforces access-token viewer role',async()=>{
+test('LB-05 completed code exchange validates state and enforces staging management access',async()=>{
  const s=session(),url=new URL(await createHostedAuthorisationUrl({session:s,cryptoApi:fakeCrypto}));
  let calls=0;
  const token=jwt(claims());
@@ -52,7 +52,7 @@ test('LB-05 completed code exchange validates state and enforces access-token vi
  assert.equal(result,token);assert.equal(calls,1);assert.deepEqual(s.keys(),[]);
  assert.equal(decodeStagingAccessClaims(token)['cognito:groups'].includes('lesbuttes-viewer'),true);
 });
-test('LB-05 rejects replay/CSRF and missing or elevated Cognito identity before fetch',async()=>{
+test('LB-05 rejects replay/CSRF and unauthorised Cognito identity before fetch',async()=>{
  const s=session(),url=new URL(await createHostedAuthorisationUrl({session:s,cryptoApi:fakeCrypto}));
  let calls=0;const fetchImpl=async()=>{calls++;return {ok:true,json:async()=>({access_token:jwt(claims())})};};
  await assert.rejects(completeHostedSignIn({search:'?code=abc&state=wrong',session:s,fetchImpl}),/state validation/);
@@ -61,16 +61,22 @@ test('LB-05 rejects replay/CSRF and missing or elevated Cognito identity before 
  assert.equal(calls,0);
  for(const change of [
   {'cognito:groups':['management']},
-  {'cognito:groups':['lesbuttes-owner']},
   {token_use:'id'},
   {client_id:'different'},
   {exp:Math.floor(Date.now()/1000)-1},
   {iss:'https://invalid.example'}
- ])assert.throws(()=>decodeStagingAccessClaims(jwt({...claims(),...change})),/staging booking viewer access/);
+ ])assert.throws(()=>decodeStagingAccessClaims(jwt({...claims(),...change})),/staging management access/);
 });
 test('LB-05 sign-out is restricted to exact staging client and redirect',()=>{
  const logout=new URL(hostedSignOutUrl());
  assert.equal(logout.pathname,'/logout');
  assert.equal(logout.searchParams.get('client_id'),hostedManagement.clientId);
  assert.equal(logout.searchParams.get('logout_uri'),hostedManagement.redirect);
+});
+
+test('Canonical owner access token is accepted for staging management sign-in',()=>{
+ const owner=jwt({...claims(),'cognito:groups':['lesbuttes-owner']});
+ assert.equal(decodeStagingAccessClaims(owner)['cognito:groups'][0],'lesbuttes-owner');
+ assert.equal(hostedManagement.api,'https://i2irz87c82.execute-api.eu-west-2.amazonaws.com');
+ assert.equal(hostedManagement.clientId,'2mjmimjh7oc8h00d4nngrc1akj');
 });
