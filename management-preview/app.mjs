@@ -257,10 +257,10 @@ if(isHostedManagement(location)){
    if(!accessToken){message('Sign in to view staging booking requests.');return;}
    state.api=hostedManagement.api;
    state.token=accessToken;
-   state.role='viewer';
+   state.role=managementRoleFromAccessToken(accessToken);
    $('sign-in').hidden=true;
    $('owner-actions').hidden=true;
-   $('configuration-panel').hidden=true;
+   $('configuration-panel').hidden=state.role!=='owner';
    void loadBookings();
   }).catch(()=>message('Sign-in failed or staging viewer access is not authorised. Please try again.',true));
  }else{
