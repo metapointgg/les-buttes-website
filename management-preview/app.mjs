@@ -1,4 +1,4 @@
-import {allowedAction,safeStagingApi,reasonValid,bookingStatus} from './model.mjs';
+import {allowedAction,safeStagingApi,reasonValid,bookingStatus,managementRoleFromAccessToken} from './model.mjs';
 import {hostedManagement,isHostedManagement,createHostedAuthorisationUrl,completeHostedSignIn,hostedSignOutUrl} from './hosted-auth.mjs';
 const $=id=>document.getElementById(id);
 const state={api:null,token:null,bookings:[],cursor:null,selected:null,selectedBooking:null,auditCursor:null,role:'viewer'};
@@ -105,11 +105,7 @@ $('connect').addEventListener('click',()=>{
  const token=$('token').value.trim();
  if(!api||!token){message('Enter a valid eu-west-2 staging API URL and access token.',true);return;}
  state.api=api;state.token=token;
- try{
-  const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-  const groups=claims['cognito:groups']||[];
-  state.role=Array.isArray(groups)&&groups.includes('lesbuttes-owner')?'owner':'viewer';
- }catch{state.role='viewer';}
+ state.role=managementRoleFromAccessToken(token);
  $('configuration-panel').hidden=state.role!=='owner';$('token').value='';loadBookings();
 });
 $('disconnect').addEventListener('click',()=>{
