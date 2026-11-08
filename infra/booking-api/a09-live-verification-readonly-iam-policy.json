@@ -1,0 +1,29 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadCanonicalOwnerActionCloudFormation",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeStackResource"
+      ],
+      "Resource": "arn:aws:cloudformation:eu-west-2:145608514666:stack/les-buttes-canonical-owner-actions-staging/*"
+    },
+    {
+      "Sid": "ReadCanonicalOwnerActionRoute",
+      "Effect": "Allow",
+      "Action": "apigateway:GET",
+      "Resource": [
+        "arn:aws:apigateway:eu-west-2::/apis/i2irz87c82/routes",
+        "arn:aws:apigateway:eu-west-2::/apis/i2irz87c82/routes/*"
+      ]
+    },
+    {
+      "Sid": "ReadCanonicalOwnerActionLambdaConfiguration",
+      "Effect": "Allow",
+      "Action": "lambda:GetFunctionConfiguration",
+      "Resource": "arn:aws:lambda:eu-west-2:145608514666:function:les-buttes-canonical-owner-act-OwnerActionFunction-*"
+    }
+  ]
+}
