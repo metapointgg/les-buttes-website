@@ -13,6 +13,8 @@ test('LB-08 confirmation atomically changes booking and seven nights, deduplicat
  assert.equal(affectedNights,7);assert.equal(items.length,11);
  assert.equal(items[0].Update.ExpressionAttributeValues[':confirmed'],'CONFIRMED');
  assert.match(items[0].Update.ConditionExpression,/holdExpiresAt > :now/);
+ assert.match(items[0].Update.UpdateExpression,/REMOVE expiresAt, holdExpiresAt/,
+  'a paid booking must survive beyond the temporary request TTL');
  assert.equal(items[1].ConditionCheck.Key.SK,'PAYMENT#CHECKOUT');
  for(const slot of items.slice(2,9)){
   assert.match(slot.Update.UpdateExpression,/REMOVE expiresAt/);

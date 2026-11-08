@@ -25,9 +25,23 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
    registered.status!=='PENDING')throw Error('Registered checkout not eligible');
  // Merchant configuration is trusted server-side; never sourced from the callback.
  const provider=await fetchCheckout(registered.checkoutId);
- const evidence=verifySumUpPayment({registered:{...registered,merchantCode},provider,booking,
+ const alreadyConfirmed=booking.status==='CONFIRMED'&&booking.reservationStatus==='CONFIRMED';
+ // A later retry must still fetch provider evidence and match the immutable
+ // atomic confirmation claim; it must not write another audit or reservation.
+ const evidence=verifySumUpPayment({registered:{...registered,merchantCode},provider,
+  booking:alreadyConfirmed?{...booking,reservationStatus:'AWAITING_PAYMENT'}:booking,
   now:new Date(nowEpoch*1000)});
  if(!evidence.verified)throw Error('Payment not verified: '+evidence.reason);
+ if(alreadyConfirmed){
+  const claim=(await db.send(new GetCommand({TableName:table,
+   Key:{PK:'PAYMENT_TRANSACTION#'+evidence.transactionId,SK:'CONFIRMATION'},ConsistentRead:true}))).Item;
+  if(booking.GSI1PK!=='BOOKING_REQUESTS'||booking.paymentTransactionId!==evidence.transactionId||
+     typeof booking.paidAt!=='string'||!booking.paidAt||claim?.bookingId!==bookingId||
+     claim.checkoutId!==registered.checkoutId||claim.amountPence!==registered.amountPence||claim.currency!=='GBP')
+   throw Error('Confirmed booking payment claim mismatch');
+  return {status:'ALREADY_CONFIRMED',bookingId,transactionId:evidence.transactionId,
+   affectedNights:booking.units.length*(Date.parse(booking.end)-Date.parse(booking.start))/86400000};
+ }
  const prepared=preparePaymentConfirmation({booking,registered,evidence,nowEpoch});
  const items=prepared.items.map(item=>{
   const kind=Object.keys(item)[0];

@@ -24,7 +24,7 @@ export function preparePaymentConfirmation({booking,registered,evidence,nowEpoch
  const key={PK:'BOOKING#'+booking.id,SK:'META'};
  const amount=registered.amountPence/100;
  const items=[
-  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, paymentTransactionId = :tx, updatedAt = :stamp',
+  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, paymentTransactionId = :tx, updatedAt = :stamp REMOVE expiresAt, holdExpiresAt',
    ConditionExpression:'#status = :approved AND reservationStatus = :awaiting AND id = :id AND #source = :direct AND approvedAmountGBP = :amount AND holdExpiresAt = :expiry AND holdExpiresAt > :now AND #units = :units AND #start = :start AND #end = :end',
    ExpressionAttributeNames:{'#status':'status','#source':'source','#units':'units','#start':'start','#end':'end'},
    ExpressionAttributeValues:{':confirmed':'CONFIRMED',':approved':'APPROVED_AWAITING_PAYMENT',':awaiting':'AWAITING_PAYMENT',

@@ -73,6 +73,24 @@ test('LB-08 prevents production table access before reading or calling provider'
  assert.equal(s.commands.length,0);
  assert.equal(s.providerCalls,0);
 });
+test('a subsequent paid callback verifies the provider and atomic claim without another write',async()=>{
+ for(const tampered of [false,true]){
+  let reads=0,providerCalls=0;
+  const db={send:async command=>{
+   assert.ok(command instanceof GetCommand,'a replay must not write');reads++;
+   assert.equal(command.input.ConsistentRead,true);
+   if(command.input.Key.SK==='META')return {Item:{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED',
+    paymentTransactionId:'transaction-12345',paidAt:'2027-01-01T00:00:00.000Z'}};
+   if(command.input.Key.SK==='PAYMENT#CHECKOUT')return {Item:registered};
+   return {Item:{bookingId:tampered?'different-booking':id,checkoutId:registered.checkoutId,amountPence:163000,currency:'GBP'}};
+  }};
+  const invocation=reconcileVerifiedPayment({db,table:'les-buttes-booking-staging-BookingTable-TEST123',bookingId:id,
+   merchantCode:'merchant-1',fetchCheckout:async()=>{providerCalls++;return provider;},nowEpoch:2100000000});
+  if(tampered)await assert.rejects(invocation,/claim mismatch/);
+  else assert.equal((await invocation).status,'ALREADY_CONFIRMED');
+  assert.equal(reads,3);assert.equal(providerCalls,1);
+ }
+});
 
 test('LB-08 lost DynamoDB response recovers only matching atomic confirmation claim',async()=>{
  let writes=0;

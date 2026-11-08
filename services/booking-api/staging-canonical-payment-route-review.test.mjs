@@ -17,11 +17,11 @@ test('LB-09 draft restricts staging transaction and SumUp secret permissions, wi
  assert.match(template,/Action: \[dynamodb:GetItem\]/);
  assert.match(template,/Action: \[logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents\]/);
  assert.doesNotMatch(template,/logs:DeleteLogGroup|logs:DeleteLogStream|logs:DeleteLogEvents/);
- assert.match(template,/Action: \[dynamodb:TransactWriteItems\]/);
+ assert.match(template,/Action: \[dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:ConditionCheckItem\]/);
  assert.match(template,/Action: \[ssm:GetParameter\]/);
  assert.match(template,/parameter\/les-buttes\/staging\/sumup\/api-key/);
  assert.match(template,/parameter\/les-buttes\/staging\/sumup\/merchant-code/);
- assert.doesNotMatch(template,/dynamodb:(PutItem|UpdateItem|DeleteItem)|ses:SendEmail|ssm:GetParametersByPath/);
+ assert.doesNotMatch(template,/dynamodb:(TransactWriteItems|DeleteItem)|ses:SendEmail|ssm:GetParametersByPath/);
  assert.match(template,/StagingPaymentWritesEnabled:\n    Type: String\n    AllowedValues: \['false', 'true'\]\n    Default: 'false'/);
  for(const flag of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED'])
   assert.ok(template.includes(flag+': !Ref StagingPaymentWritesEnabled'),flag);
