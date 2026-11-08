@@ -27,9 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           endpoint='https://i2irz87c82.execute-api.eu-west-2.amazonaws.com/admin/bookings/11111111-1111-4111-8111-111111111111/actions/approve'
-          code="$(curl --silent --show-error --max-time 15 --output /tmp/a09-unauth-response --write-out '%{http_code}' \\
-            --request POST --header 'Content-Type: application/json' \\
-            --data '{"approved":true,"usePublishedQuote":true}' "$endpoint")"
+          code="$(curl --silent --show-error --max-time 15 --output /tmp/a09-unauth-response --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' --data '{"approved":true,"usePublishedQuote":true}' "$endpoint")"
           test "$code" = '401' || { echo "Expected API Gateway 401, received $code"; exit 1; }
           echo 'API Gateway rejected unauthenticated owner action with HTTP 401.' >> "$GITHUB_STEP_SUMMARY"
       - name: Verify canonical API route and write-disabled Lambda
