@@ -2,6 +2,11 @@ name: Verify canonical staging owner-action infrastructure (read only)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+    paths:
+      - '.github/workflows/canonical-owner-action-live-verification.yml'
+      - 'infra/booking-api/a09-live-verification-readonly-iam-policy.json'
 
 permissions:
   contents: read
