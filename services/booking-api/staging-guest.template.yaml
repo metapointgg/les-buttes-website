@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Separate synthetic-only guest submission staging API, disabled by default;
+  NEVER deploy as production.
+Parameters:
+  ExistingStagingTable:
+    Type: String
+    AllowedPattern: ^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$
+  PreviewOrigin:
+    Type: String
+    Default: http://localhost:4321
+    AllowedValues:
+    - http://localhost:4321
+    - https://d123fnjf47zmyp.cloudfront.net
+  TurnstileSecretParameter:
+    Type: String
+    Description: Existing SSM SecureString parameter name, never the secret itself
+    AllowedPattern: ^/les-buttes/staging/turnstile/[A-Za-z0-9_-]+$
+  EnableSyntheticWrites:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+    - 'false'
+    - 'true'
+  EnableTestChallenge:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+    - 'false'
+    - 'true'
+    Description: Use Cloudflare public testing credentials for synthetic staging requests
+      only.
+Conditions:
+  EnableWrite:
+    Fn::Equals:
+    - Ref: EnableSyntheticWrites
+    - 'true'
+Resources:
+  GuestApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+        - Ref: PreviewOrigin
+        AllowMethods:
+        - POST
+        - OPTIONS
+        AllowHeaders:
+        - content-type
+        MaxAge: 0
+    Metadata:
+      SamResourceId: GuestApi
+  GuestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: staging-guest-handler.handler
+      CodeUri: .
+      MemorySize: 256
+      Timeout: 12
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: staging
+          BOOKING_STAGING_GUEST_WRITES:
+            Fn::If:
+            - EnableWrite
+            - 'true'
+            - 'false'
+          BOOKINGS_TABLE:
+            Ref: ExistingStagingTable
+          ALLOWED_PREVIEW_ORIGIN:
+            Ref: PreviewOrigin
+          TURNSTILE_SECRET_PARAMETER:
+            Ref: TurnstileSecretParameter
+          BOOKING_STAGING_TEST_CHALLENGE:
+            Ref: EnableTestChallenge
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:Query
+          - dynamodb:GetItem
+          Resource:
+            Fn::Sub: arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}
+        - Fn::If:
+          - EnableWrite
+          - Effect: Allow
+            Action:
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            Resource:
+              Fn::Sub: arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}
+          - Ref: AWS::NoValue
+        - Effect: Allow
+          Action:
+          - ssm:GetParameter
+          Resource:
+            Fn::Sub: arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${TurnstileSecretParameter}
+      Events:
+        Submit:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GuestApi
+            Path: /request
+            Method: POST
+    Metadata:
+      SamResourceId: GuestFunction
+Outputs:
+  StagingSubmissionUrl:
+    Value:
+      Fn::Sub: https://${GuestApi}.execute-api.${AWS::Region}.amazonaws.com
