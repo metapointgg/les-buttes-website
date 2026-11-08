@@ -4,10 +4,10 @@ export const hostedManagement=Object.freeze({
  origin:'https://d123fnjf47zmyp.cloudfront.net',
  path:'/management/index.html',
  redirect:'https://d123fnjf47zmyp.cloudfront.net/management/index.html',
- api:'https://g2vazft1vb.execute-api.eu-west-2.amazonaws.com',
+ api:'https://i2irz87c82.execute-api.eu-west-2.amazonaws.com',
  issuer:'https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa',
  domain:'https://les-buttes-145608514666.auth.eu-west-2.amazoncognito.com',
- clientId:'1a0i42vp4gi24i5orh8i4jjhmr'
+ clientId:'2mjmimjh7oc8h00d4nngrc1akj'
 });
 const VERIFIER='lb:read-only-management:verifier';
 const STATE='lb:read-only-management:state';
@@ -43,8 +43,8 @@ export function decodeStagingAccessClaims(token,{now=Date.now()}={}){
  if(claims?.token_use!=='access'||claims.iss!==hostedManagement.issuer||
   claims.client_id!==hostedManagement.clientId||
   !Number.isFinite(claims.exp)||claims.exp<=Math.floor(now/1000)+15||
-  !Array.isArray(groups)||!groups.includes('lesbuttes-viewer'))
-  throw Error('This account does not have staging booking viewer access');
+  !Array.isArray(groups)||!groups.some(group=>['lesbuttes-owner','lesbuttes-viewer'].includes(group)))
+  throw Error('This account does not have staging management access');
  return claims;
 }
 export async function completeHostedSignIn({search,session,fetchImpl,now=Date.now()}={}){
