@@ -44,7 +44,7 @@ async function selectBooking(id){
    ['Quoted price',booking.quote?.totalGBP===undefined?'Not available':'£'+booking.quote.totalGBP],
    ['Hold expires',booking.holdExpiresAt?new Date(booking.holdExpiresAt*1000).toLocaleString('en-GB'):'Not applicable']])
    row(detail,label,value??'—');
-  if(state.role==='owner'){
+  if(state.role==='owner'&&booking.status==='APPROVED_AWAITING_PAYMENT'){
    try{
     const checkout=await request('/admin/bookings/'+encodeURIComponent(id)+'/checkout/status');
     row(detail,'Sandbox checkout',checkout.registered?
@@ -67,6 +67,7 @@ async function selectBooking(id){
   state.auditCursor=null;
   $('audit').replaceChildren();
   await loadAudit(false);
+  if(!$('message').classList.contains('error'))message('Booking details loaded.');
  }catch(e){message(e.message,true);}
 }
 async function loadAudit(more){
