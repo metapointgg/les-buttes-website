@@ -54,6 +54,11 @@ Parameters:
     AllowedValues: ['false', 'true']
     Default: 'false'
     Description: Staging SES simulator lifecycle delivery only; IAM prevents delivery to real recipients.
+  StagingEmailSendingEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+    Description: Master staging SES simulator gate; IAM prevents delivery to real recipients.
 Conditions:
   AutomaticReconciliation: !Equals [!Ref AutomaticReconciliationEnabled, 'true']
   ApprovedStagingDeployment: !Equals [!Ref DeploymentEnabled, 'true']
@@ -157,7 +162,7 @@ Resources:
           MANAGEMENT_APPROVAL_ENABLED: 'false'
           MANAGEMENT_CHECKOUT_ENABLED: 'false'
           BOOKING_CONFIRMATION_DISPATCH_ENABLED: !Ref StagingConfirmationDispatchEnabled
-          BOOKING_EMAILS_ENABLED: 'false'
+          BOOKING_EMAILS_ENABLED: !Ref StagingEmailSendingEnabled
   PaymentReconciliationIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Condition: Deploy

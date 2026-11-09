@@ -27,7 +27,7 @@ test('LB-09 draft restricts staging transaction and SumUp secret permissions, wi
   assert.ok(template.includes(flag+': !Ref StagingPaymentWritesEnabled'),flag);
  assert.match(template,/BOOKING_CONFIRMATION_DISPATCH_ENABLED: !Ref StagingConfirmationDispatchEnabled/);
  assert.match(template,/BOOKING_LIFECYCLE_DISPATCH_ENABLED: !Ref StagingLifecycleDispatchEnabled/);
- assert.match(template,/BOOKING_EMAILS_ENABLED: 'false'/);
+ assert.match(template,/BOOKING_EMAILS_ENABLED: !Ref StagingEmailSendingEnabled/);
  assert.match(template,/S3ObjectVersion: !Ref ReviewedArtifactVersion/);
  assert.match(template,/S3Bucket: !Ref ReviewedArtifactBucket/);
  assert.match(template,/S3Key: !Ref ReviewedArtifactKey/);
@@ -55,6 +55,6 @@ test('SES sending is restricted to the simulator and each dispatch path is disab
  assert.match(template,/ses:SendEmail/);
  assert.match(template,/ses:Recipients: \[success@simulator\.amazonses\.com\]/);
  assert.match(template,/ses:FromAddress: info@lesbuttes\.com/);
- for(const parameter of ['StagingConfirmationDispatchEnabled','StagingLifecycleDispatchEnabled'])
+ for(const parameter of ['StagingConfirmationDispatchEnabled','StagingLifecycleDispatchEnabled','StagingEmailSendingEnabled'])
   assert.match(template,new RegExp(parameter+":\\n    Type: String\\n    AllowedValues: \\['false', 'true'\\]\\n    Default: 'false'"));
 });
