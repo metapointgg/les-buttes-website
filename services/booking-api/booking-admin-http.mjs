@@ -209,8 +209,8 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
          ...(decision.allowed?{from:decision.from,to:decision.to}:{reason:decision.reason})});
      }
 
-     // Owner-only checkout registration status. The provider's payment state is
-     // deliberately not inferred from this record, and the hosted URL is omitted.
+     // Owner-only checkout status. A hosted link is exposed only for an active
+     // synthetic staging approval; registration never asserts provider payment.
      const checkoutStatus=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/checkout\/status$/i);
      if(checkoutStatus){
        if(id.role!=='owner')return reply(403,{error:'Forbidden'});
@@ -222,8 +222,25 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
        // Checkout registration is not proof of payment. The authoritative
        // booking state is updated only by provider-verified reconciliation.
        const confirmed=record.status==='CONFIRMED'&&record.reservationStatus==='CONFIRMED';
+       let hostedCheckoutUrl;
+       if(record.id===checkoutStatus[1]&&record.synthetic===true&&
+          record.guestEmail==='test@example.invalid'&&record.source==='direct'&&
+          record.status==='APPROVED_AWAITING_PAYMENT'&&record.reservationStatus==='AWAITING_PAYMENT'&&
+          Number.isSafeInteger(record.holdExpiresAt)&&record.holdExpiresAt>Math.floor(Date.now()/1000)&&
+          checkout?.bookingId===record.id&&checkout.status==='PENDING'&&checkout.currency==='GBP'&&
+          Number.isSafeInteger(checkout.amountPence)&&checkout.amountPence>0&&
+          checkout.amountPence===Math.round(Number(record.approvedAmountGBP)*100)){
+         try{
+           const url=new URL(checkout.hostedCheckoutUrl);
+           if(url.protocol==='https:'&&url.hostname==='checkout.sumup.com'&&!url.port&&
+              !url.username&&!url.password&&!url.hash&&
+              /^\/pay\/c-[0-9a-f-]{36}$/i.test(url.pathname)&&!url.search)
+             hostedCheckoutUrl=url.href;
+         }catch{}
+       }
        return reply(200,{bookingId:checkoutStatus[1],
          registered:Boolean(checkout),bookingConfirmed:confirmed,
+         ...(hostedCheckoutUrl?{hostedCheckoutUrl,sandbox:true}:{}),
          ...(confirmed?{confirmationRecordedAt:record.paidAt??null}:{}),
          ...(checkout?{checkoutId:checkout.checkoutId,
            registrationStatus:checkout.status,

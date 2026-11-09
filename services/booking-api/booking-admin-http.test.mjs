@@ -295,6 +295,33 @@ test('checkout status is owner-only, sanitised and never asserts provider paymen
  }
 });
 
+test('active synthetic owner checkout exposes only its registered SumUp sandbox link',async()=>{
+ const prior=Object.fromEntries(['MANAGEMENT_COGNITO_ISSUER','MANAGEMENT_COGNITO_CLIENT_ID','BOOKING_ENVIRONMENT'].map(k=>[k,process.env[k]]));
+ Object.assign(process.env,{MANAGEMENT_COGNITO_ISSUER:issuer,MANAGEMENT_COGNITO_CLIENT_ID:clientId,BOOKING_ENVIRONMENT:'staging'});
+ try{
+  const bookingId='11111111-1111-4111-8111-111111111111';
+  const link='https://checkout.sumup.com/pay/c-22222222-2222-4222-8222-222222222222';
+  const base={id:bookingId,synthetic:true,guestEmail:'test@example.invalid',source:'direct',
+   status:'APPROVED_AWAITING_PAYMENT',reservationStatus:'AWAITING_PAYMENT',
+   holdExpiresAt:Math.floor(Date.now()/1000)+3600,approvedAmountGBP:735};
+  let record={...base},checkout={bookingId,checkoutId:'22222222-2222-4222-8222-222222222222',
+   status:'PENDING',amountPence:73500,currency:'GBP',hostedCheckoutUrl:link};
+  const handler=createAdminHandler({reader:{getBooking:async()=>record},readCheckout:async()=>checkout});
+  const event={...verified,rawPath:'/admin/bookings/'+bookingId+'/checkout/status'};
+  let body=JSON.parse((await handler(event)).body);
+  assert.equal(body.hostedCheckoutUrl,link);assert.equal(body.sandbox,true);assert.equal(body.bookingConfirmed,false);
+  for(const change of [{synthetic:false},{guestEmail:'customer@example.com'},{status:'CONFIRMED',reservationStatus:'CONFIRMED'},
+   {holdExpiresAt:1},{approvedAmountGBP:734},{id:'33333333-3333-4333-8333-333333333333'}]){
+   record={...base,...change};body=JSON.parse((await handler(event)).body);assert.equal(body.hostedCheckoutUrl,undefined);
+  }
+  record={...base};
+  for(const unsafe of ['javascript:alert(1)','https://checkout.sumup.com.evil.test/pay/c-22222222-2222-4222-8222-222222222222',
+   link+'?redirect=elsewhere',link+'#fragment',link.replace('.com/','.com:444/')]){
+   checkout={...checkout,hostedCheckoutUrl:unsafe};assert.equal(JSON.parse((await handler(event)).body).hostedCheckoutUrl,undefined);
+  }
+ }finally{for(const [k,v] of Object.entries(prior)){if(v===undefined)delete process.env[k];else process.env[k]=v;}}
+});
+
 test('checkout status reports authoritative confirmation without treating registration as paid',async()=>{
  const oldIssuer=process.env.MANAGEMENT_COGNITO_ISSUER;
  const oldClient=process.env.MANAGEMENT_COGNITO_CLIENT_ID;
