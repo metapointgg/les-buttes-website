@@ -9,7 +9,7 @@ function fixture(){
  ['PAYMENT#CHECKOUT',{checkoutId:'checkout',currency:'GBP',amountPence:73500}],
  ['CONFIRMATION',{bookingId,checkoutId:'checkout',amountPence:73500}]]);
  const db={send:async c=>{const x=c.input;if(c.constructor.name==='GetCommand')return {Item:rows.get(x.Key.SK)};if(c.constructor.name==='PutCommand'){if(rows.has(x.Item.SK))throw Error('duplicate');rows.set(x.Item.SK,x.Item);}return {};}};
- const args={db,bookingId,env,ssm:{},verifyMerchant:async()=>({sandboxVerified:true,merchantMatched:true}),loadCredentials:async()=>({apiKey:'test',merchantCode:'MTEST'}),fetchImpl:async(url,options)=>{if(options.method==='POST'){posts++;refunded=735;return {ok:true};}return {ok:true,json:async()=>({id:transactionId,merchant_code:'MTEST',amount:735,currency:'GBP',refunded_amount:refunded,status:refunded?'REFUNDED':'SUCCESSFUL'})};}};
+ const args={db,bookingId,env,ssm:{},verifyMerchant:async()=>({sandboxVerified:true,merchantMatched:true}),loadCredentials:async()=>({apiKey:'test',merchantCode:'MTEST'}),fetchImpl:async(url,options)=>{if(options.method==='POST'){posts++;refunded=735;return {ok:true};}return {ok:true,json:async()=>({id:transactionId,merchant_code:'MTEST',amount:735,currency:'GBP',transaction_events:refunded?[{id:1,event_type:"REFUND",status:"REFUNDED",amount:refunded}]:[],status:refunded?'REFUNDED':'SUCCESSFUL'})};}};
  return {args,rows,get posts(){return posts;}};
 }
 test('sandbox full refund derives amount from verified booking and retries never POST twice',async()=>{

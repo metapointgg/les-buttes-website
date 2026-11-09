@@ -20,14 +20,21 @@ export async function sandboxRefund({db,bookingId,env=process.env,fetchImpl=fetc
   const r=await fetchImpl('https://api.sumup.com/v2.1/merchants/'+encodeURIComponent(merchantCode)+'/transactions?id='+transactionId,{headers,signal:AbortSignal.timeout(12000)});
   if(!r.ok)throw Error('Provider transaction read failed: '+r.status);
   const t=await r.json();
-  if(t.id!==transactionId||t.merchant_code!==merchantCode||t.currency!=='GBP'||Math.round(Number(t.amount)*100)!==checkout.amountPence||!Number.isFinite(Number(t.refunded_amount))||Number(t.refunded_amount)<0)throw Error('Provider transaction identity or amount mismatch');
+  if(t.id!==transactionId||t.merchant_code!==merchantCode||t.currency!=='GBP'||Math.round(Number(t.amount)*100)!==checkout.amountPence)throw Error('Provider transaction identity or amount mismatch');
+  // Transaction detail exposes refund events, not the list endpoint's refunded_amount.
+  const events=Array.isArray(t.transaction_events)?t.transaction_events:t.events;
+  if(!Array.isArray(events))throw Error('Provider refund events unavailable');
+  const refunds=events.filter(e=>(e.event_type??e.type)==='REFUND');
+  if(refunds.some(e=>!Number.isFinite(e.amount)||e.amount<=0))throw Error('Invalid provider refund amount');
+  t.refundPending=refunds.some(e=>!['REFUNDED','SUCCESSFUL','FAILED'].includes(e.status));
+  t.refundedPence=refunds.filter(e=>['REFUNDED','SUCCESSFUL'].includes(e.status)).reduce((n,e)=>n+Math.round(e.amount*100),0);
   return t;
  };
  const before=await read(),key={PK:'BOOKING#'+bookingId,SK:'REFUND#SANDBOX_ACCEPTANCE_V1'};
  const existing=await get(key.SK);
  let requested=false;
  if(!existing){
-  if(before.status!=='SUCCESSFUL'||Number(before.refunded_amount)!==0)throw Error('Fresh refundable sandbox payment required');
+  if(before.status!=='SUCCESSFUL'||before.refundedPence!==0||before.refundPending)throw Error('Fresh refundable sandbox payment required');
   // Synthetic 100% / zero-fee fixture only. Never publish this as business policy.
   await db.send(new PutCommand({TableName:table,Item:{...key,bookingId,transactionId,amountPence:checkout.amountPence,policyId:'SYNTHETIC_FULL_REFUND_V1',refundBasisPoints:10000,feePence:0,state:'REQUESTED',createdAt:new Date().toISOString()},ConditionExpression:'attribute_not_exists(PK)'}));
   try{
@@ -41,7 +48,7 @@ export async function sandboxRefund({db,bookingId,env=process.env,fetchImpl=fetc
   }
  }else if(existing.transactionId!==transactionId||existing.amountPence!==checkout.amountPence||existing.policyId!=='SYNTHETIC_FULL_REFUND_V1')throw Error('Refund claim mismatch');
  const after=await read();
- if(Math.round(Number(after.refunded_amount)*100)!==checkout.amountPence||after.status!=='REFUNDED')return {status:'RECONCILIATION_REQUIRED',bookingId,refundPostAttempted:requested};
+ if(after.refundedPence!==checkout.amountPence||after.refundPending||after.status!=='REFUNDED')return {status:'RECONCILIATION_REQUIRED',bookingId,refundPostAttempted:requested};
  await db.send(new UpdateCommand({TableName:table,Key:key,UpdateExpression:'SET #s = :s, verifiedAt = :at',ExpressionAttributeNames:{'#s':'state'},ExpressionAttributeValues:{':s':'REFUNDED',':at':new Date().toISOString()}}));
  return {status:requested?'REFUNDED':'ALREADY_REFUNDED',bookingId,amountPence:checkout.amountPence,syntheticPolicy:true,refundPostAttempted:requested};
 }
