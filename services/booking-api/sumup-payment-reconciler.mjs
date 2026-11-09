@@ -21,6 +21,8 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
  // Both local records are read consistently; neither webhook nor browser data supplies payment status.
  const booking=(await db.send(new GetCommand({TableName:table,Key:key,ConsistentRead:true}))).Item;
  const registered=await readRegisteredCheckout({db,table,bookingId});
+ const cancellationPolicyRecord=(await db.send(new GetCommand({TableName:table,
+  Key:{PK:'CONFIG#cancellation#all',SK:'CURRENT'},ConsistentRead:true}))).Item;
  if(!booking||!registered)throw Error('Authoritative booking or checkout missing');
  if(registered.bookingId!==bookingId||registered.currency!=='GBP'||
    registered.status!=='PENDING')throw Error('Registered checkout not eligible');
@@ -44,7 +46,7 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
    affectedNights:booking.units.length*(Date.parse(booking.end)-Date.parse(booking.start))/86400000};
  }
  const calendarChecks=process.env.BOOKING_AIRBNB_REQUIRED==='true'?await requireAirbnbAvailability({db,table,units:booking.units,start:booking.start,end:booking.end,now:nowEpoch}):[];
- const prepared=preparePaymentConfirmation({booking,registered,evidence,nowEpoch});
+ const prepared=preparePaymentConfirmation({booking,registered,evidence,cancellationPolicyRecord,nowEpoch});
  const items=prepared.items.map(item=>{
   const kind=Object.keys(item)[0];
   return {[kind]:{...item[kind],TableName:table}};

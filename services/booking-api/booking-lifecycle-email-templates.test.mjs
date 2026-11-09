@@ -10,10 +10,11 @@ const fixture={
  confirmed:{booking:{...base,status:'CONFIRMED',paymentVerified:true}},
  declined:{booking:{...base,status:'DECLINED'}},
  cancelled:{booking:{...base,status:'CANCELLED'}},
+ refund_confirmed:{booking:{...base,status:'CANCELLED',refundStatus:'REFUNDED',refundedAmountPence:36750}},
  hold_expired:{booking:{...base,status:'EXPIRED'}},
  delivery_failure:{booking:{...base,status:'DELIVERY_FAILURE'}}
 };
-test('LB-09 covers all six lifecycle types with deterministic, bounded text and stable template IDs',()=>{
+test('LB-09 covers all lifecycle types with deterministic, bounded text and stable template IDs',()=>{
  for(const [type,data] of Object.entries(fixture)){
   const rendered=renderBookingLifecycleEmail({type,...data});
   assert.equal(rendered.bookingId,bookingId);
@@ -48,6 +49,8 @@ test('LB-09 cannot confirm before verification or promise refund on cancellation
   booking:{...base,status:'APPROVED_AWAITING_PAYMENT',paymentVerified:true}}));
  const msg=renderBookingLifecycleEmail({type:'cancelled',...fixture.cancelled});
  assert.match(msg.body,/does not confirm a refund/);
+ const refund=renderBookingLifecycleEmail({type:'refund_confirmed',...fixture.refund_confirmed});
+ assert.match(refund.body,/£367\.50/);
 });
 test('LB-09 rejects malformed dates, invented cottages, control characters and unknown types',()=>{
  for(const booking of [

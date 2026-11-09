@@ -331,6 +331,9 @@ export async function handler(event){
      writeAction:staging?async args=>{
       const result=await executeOwnerTransition({
        ...args,db,table,
+       readCancellationPolicy:async version=>(await db.send(new GetCommand({
+        TableName:table,Key:{PK:'CONFIG#cancellation#all',SK:'VERSION#'+version},ConsistentRead:true
+       }))).Item??null,
        readBooking:async bookingId=>(await db.send(new GetCommand({
          TableName:table,Key:{PK:'BOOKING#'+bookingId,SK:'META'},ConsistentRead:true
        }))).Item??null

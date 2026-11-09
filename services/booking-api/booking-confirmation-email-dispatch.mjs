@@ -45,7 +45,7 @@ export async function dispatchBookingLifecycleEmail({db,table,bookingId,type,tra
  env=process.env,send=sendBookingEmailOnce}={}){
  if(!db?.send||!transport?.send||!TABLE.test(table??'')||!ID.test(bookingId??'')||
   env.BOOKING_ENVIRONMENT!=='staging'||env.BOOKING_LIFECYCLE_DISPATCH_ENABLED!=='true'||
-  !['approval_payment','declined','cancelled','confirmed'].includes(type))throw Error('Staging lifecycle dispatch disabled');
+  !['approval_payment','declined','cancelled','confirmed','refund_confirmed'].includes(type))throw Error('Staging lifecycle dispatch disabled');
  const {Item:booking}=await db.send(new GetCommand({TableName:table,Key:{PK:'BOOKING#'+bookingId,SK:'META'},ConsistentRead:true}));
  if(booking?.id!==bookingId||booking.source!=='direct')throw Error('Authoritative booking unavailable');
  const simulator=env.BOOKING_SES_SIMULATOR_ENABLED==='true';
@@ -64,7 +64,8 @@ export async function dispatchBookingLifecycleEmail({db,table,bookingId,type,tra
    if(!Number.isSafeInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000))throw Error('Expired payment request');
   }
   message={...renderBookingLifecycleEmail({type,booking:{bookingId,cottage,checkIn:booking.start,checkOut:booking.end,status:booking.status,
-   approvedAmountPence:Math.round(Number(booking.approvedAmountGBP)*100)},checkout}),to:recipient};
+   approvedAmountPence:Math.round(Number(booking.approvedAmountGBP)*100),refundStatus:booking.refundStatus,
+   refundedAmountPence:booking.refundedAmountPence},checkout}),to:recipient};
  }
  return send({db,table,transport,env,message});
 }

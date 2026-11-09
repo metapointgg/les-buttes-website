@@ -5,6 +5,7 @@ import {createHmac} from 'node:crypto';
 import {GetCommand,PutCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {processSignedInternalPaymentTrigger} from './sumup-payment-notification.mjs';
 import {reconcileVerifiedPayment} from './sumup-payment-reconciler.mjs';
+import {APPROVED_STRICT_SHORT_STAY_POLICY} from './cancellation-policy.mjs';
 const id='11111111-1111-4111-8111-111111111111',nowEpoch=1800000000;
 const secret='local-staging-synthetic-internal-secret-123';
 const body=JSON.stringify({bookingId:id,issuedAt:nowEpoch});
@@ -18,6 +19,7 @@ const checkout={bookingId:id,checkoutId:'checkout-12345678',reference:'booking-1
 const provider={id:checkout.checkoutId,checkout_reference:checkout.reference,
  merchant_code:'ABCDEF12',amount:1630,currency:'GBP',status:'PAID',
  transactions:[{id:'transaction-12345',status:'SUCCESSFUL',amount:1630,currency:'GBP',merchant_code:'ABCDEF12'}]};
+const policy={PK:'CONFIG#cancellation#all',SK:'CURRENT',version:'2026-11-09T22:00:00.000Z#approved',value:APPROVED_STRICT_SHORT_STAY_POLICY};
 function harness(providerResponse=provider){
  const claims=new Set();let writes=0,providerReads=0;
  const db={send:async command=>{
@@ -28,6 +30,7 @@ function harness(providerResponse=provider){
   }
   if(command instanceof GetCommand){
    assert.equal(command.input.ConsistentRead,true);
+   if(command.input.Key.PK==='CONFIG#cancellation#all')return {Item:policy};
    return {Item:command.input.Key.SK==='META'?booking:checkout};
   }
   if(command instanceof TransactWriteCommand){writes++;return {};}

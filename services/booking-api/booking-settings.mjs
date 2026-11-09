@@ -2,6 +2,7 @@
 // Uses the SAME BOOKINGS_TABLE as BOOKING# metadata and UNIT# date slots.
 // These functions are intentionally not exposed as public HTTP handlers.
 import {GetCommand,QueryCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
+import {validateCancellationPolicy} from './cancellation-policy.mjs';
 const KIND=['pricing','stay-rules','cancellation','payments','business','arrival-departure','terms'];
 const UNIT=['geranium','honeysuckle','all'];
 const ISO=/^\d{4}-\d{2}-\d{2}$/;
@@ -47,8 +48,7 @@ export function validateConfig({kind,unit='all',value}){
     }
   }
   if(kind==='cancellation'){
-    if(!Array.isArray(value.tiers)||!value.tiers.length)throw Error('Refund tiers required');
-    for(const x of value.tiers)if(!Number.isInteger(x.daysBeforeArrival)||x.daysBeforeArrival<0||!Number.isInteger(x.refundPercent)||x.refundPercent<0||x.refundPercent>100)throw Error('Invalid refund tier');
+    validateCancellationPolicy(value);
   }
   if(kind==='payments'){
     if(!Number.isInteger(value.depositPercent)||value.depositPercent<0||value.depositPercent>100||!Number.isInteger(value.balanceDueDays)||value.balanceDueDays<0)throw Error('Invalid payment policy');

@@ -2,7 +2,9 @@
 // Caller MUST supply independently verified provider evidence and a strongly consistent booking.
 import {randomUUID} from 'node:crypto';
 import {prepareOwnerTransition} from './booking-admin-transaction-policy.mjs';
-export function preparePaymentConfirmation({booking,registered,evidence,nowEpoch=Math.floor(Date.now()/1000)}={}){
+import {validateCancellationPolicy} from './cancellation-policy.mjs';
+export function preparePaymentConfirmation({booking,registered,evidence,cancellationPolicyRecord,
+ nowEpoch=Math.floor(Date.now()/1000)}={}){
  if(!booking||!registered||!evidence?.verified||evidence.bookingId!==booking.id||
    evidence.checkoutId!==registered.checkoutId||
    evidence.reference!==registered.reference||
@@ -16,6 +18,10 @@ export function preparePaymentConfirmation({booking,registered,evidence,nowEpoch
   throw Error('Booking not eligible for payment confirmation');
  if(typeof evidence.transactionId!=='string'||!/^[A-Za-z0-9_-]{6,128}$/.test(evidence.transactionId))
   throw Error('Verified provider transaction ID required');
+ if(!cancellationPolicyRecord||cancellationPolicyRecord.PK!=='CONFIG#cancellation#all'||
+   cancellationPolicyRecord.SK!=='CURRENT'||typeof cancellationPolicyRecord.version!=='string'||
+   cancellationPolicyRecord.version.length<8)throw Error('Published cancellation policy required');
+ validateCancellationPolicy(cancellationPolicyRecord.value);
  const allocation=prepareOwnerTransition({identity:{role:'owner'},action:'cancel',
   booking:{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED'},reason:'Payment verification allocation',nowEpoch});
  if(!allocation.allowed)throw Error(allocation.reason);
@@ -24,17 +30,22 @@ export function preparePaymentConfirmation({booking,registered,evidence,nowEpoch
  const key={PK:'BOOKING#'+booking.id,SK:'META'};
  const amount=registered.amountPence/100;
  const items=[
-  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, paymentTransactionId = :tx, updatedAt = :stamp REMOVE expiresAt, holdExpiresAt',
+  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, paidAmountPence = :pence, paymentTransactionId = :tx, updatedAt = :stamp, cancellationPolicyVersion = :policyVersion, cancellationPolicyId = :policyId REMOVE expiresAt, holdExpiresAt',
    ConditionExpression:'#status = :approved AND reservationStatus = :awaiting AND id = :id AND #source = :direct AND approvedAmountGBP = :amount AND holdExpiresAt = :expiry AND holdExpiresAt > :now AND #units = :units AND #start = :start AND #end = :end',
    ExpressionAttributeNames:{'#status':'status','#source':'source','#units':'units','#start':'start','#end':'end'},
    ExpressionAttributeValues:{':confirmed':'CONFIRMED',':approved':'APPROVED_AWAITING_PAYMENT',':awaiting':'AWAITING_PAYMENT',
     ':id':booking.id,':direct':'direct',':amount':amount,':expiry':booking.holdExpiresAt,':now':nowEpoch,
-    ':units':booking.units,':start':booking.start,':end':booking.end,':stamp':stamp,':tx':evidence.transactionId}}},
+    ':units':booking.units,':start':booking.start,':end':booking.end,':stamp':stamp,':tx':evidence.transactionId,
+    ':policyVersion':cancellationPolicyRecord.version,':policyId':cancellationPolicyRecord.value.policyId}}},
   {ConditionCheck:{Key:{PK:'BOOKING#'+booking.id,SK:'PAYMENT#CHECKOUT'},
    ConditionExpression:'checkoutId = :checkout AND #reference = :ref AND amountPence = :pence AND currency = :gbp',
    ExpressionAttributeNames:{'#reference':'reference'},
    ExpressionAttributeValues:{':checkout':registered.checkoutId,':ref':registered.reference,
-    ':pence':registered.amountPence,':gbp':'GBP'}}}
+    ':pence':registered.amountPence,':gbp':'GBP'}}},
+  {ConditionCheck:{Key:{PK:'CONFIG#cancellation#all',SK:'CURRENT'},
+   ConditionExpression:'#version = :version AND #value = :value',
+   ExpressionAttributeNames:{'#version':'version','#value':'value'},
+   ExpressionAttributeValues:{':version':cancellationPolicyRecord.version,':value':cancellationPolicyRecord.value}}}
  ];
  for(const slot of allocation.slots)items.push({Update:{Key:slot,
   UpdateExpression:'REMOVE expiresAt',

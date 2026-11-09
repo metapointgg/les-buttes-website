@@ -5,7 +5,7 @@
 // Never use unverified SES events or email outcomes to change booking payment state.
 import {UpdateCommand} from '@aws-sdk/lib-dynamodb';
 const TABLE=/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/;
-const KEY=/^EMAIL#(?:approval_payment|declined|confirmed|cancelled|hold_expired|delivery_failure)#[a-z0-9][a-z0-9_-]{1,80}$/;
+const KEY=/^EMAIL#(?:approval_payment|declined|confirmed|cancelled|refund_confirmed|hold_expired|delivery_failure)#[a-z0-9][a-z0-9_-]{1,80}$/;
 const STATUS=Object.freeze({Delivery:'DELIVERED',Bounce:'BOUNCED',Complaint:'COMPLAINED'});
 const ALLOWED={
  ACCEPTED_BY_SES_NOT_DELIVERED:new Set(['DELIVERED','BOUNCED','COMPLAINED']),

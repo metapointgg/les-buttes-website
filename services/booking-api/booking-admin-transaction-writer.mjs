@@ -4,9 +4,10 @@ import {requireAirbnbAvailability} from './airbnb-availability.mjs';
 import {randomUUID} from 'node:crypto';
 import {TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {prepareOwnerTransition} from './booking-admin-transaction-policy.mjs';
+import {assessBookingCancellation} from './booking-cancellation-assessment.mjs';
 
 export async function executeOwnerTransition({db,table,readBooking,identity,bookingId,action,reason,
-  nowEpoch=Math.floor(Date.now()/1000),approval}={}){
+  nowEpoch=Math.floor(Date.now()/1000),approval,readCancellationPolicy}={}){
  if(!db?.send||typeof readBooking!=='function'||typeof table!=='string'||!table)
    throw Error('Writer is not configured');
  if(!identity||identity.role!=='owner')throw Error('Forbidden');
@@ -26,6 +27,13 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  }
  if(action==='cancel'&&booking.reservationStatus!=='CONFIRMED')
    throw Error('Confirmed direct reservation status required');
+ let refundAssessment=null;
+ if(action==='cancel'&&booking.cancellationPolicyVersion){
+   if(typeof readCancellationPolicy!=='function')throw Error('Cancellation policy reader required');
+   const policyRecord=await readCancellationPolicy(booking.cancellationPolicyVersion);
+   refundAssessment=assessBookingCancellation({booking,policyRecord,
+    cancelledAt:new Date(nowEpoch*1000).toISOString()});
+ }
  if(action==='approve'){
    if(!approval)throw Error('Approval requires explicit pricing consent');
    const quotedPence=Math.round(Number(booking.quote?.totalGBP)*100);
@@ -67,6 +75,13 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  if(action==='cancel'){
    update+=', cancelReason = :reason, cancelledAt = :updatedAt';
    values[':reason']=reason.trim();
+   if(refundAssessment){
+     update+=', refundPolicyVersion = :refundPolicyVersion, refundPolicyId = :refundPolicyId, refundPercent = :refundPercent, refundDuePence = :refundDuePence, refundFeePence = :refundFeePence, refundReason = :refundReason, refundStatus = :refundStatus';
+     Object.assign(values,{':refundPolicyVersion':refundAssessment.policyVersion,
+      ':refundPolicyId':refundAssessment.policyId,':refundPercent':refundAssessment.refundPercent,
+      ':refundDuePence':refundAssessment.refundAmountPence,':refundFeePence':0,
+      ':refundReason':refundAssessment.reason,':refundStatus':refundAssessment.refundAmountPence>0?'ASSESSED':'NOT_DUE'});
+   }
  }
  if(action==='cancel'){
    update+=', expiresAt = :recordExpiry';
@@ -98,6 +113,10 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    id:transitionId,bookingId,action,from:decision.from,to:decision.to,
    actor:identity.subject,recordedAt:new Date(nowEpoch*1000).toISOString(),
    ...(action==='cancel'?{reason:reason.trim()}:{}),
+   ...(refundAssessment?{refundPolicyVersion:refundAssessment.policyVersion,
+    refundPolicyId:refundAssessment.policyId,refundPercent:refundAssessment.refundPercent,
+    refundDuePence:refundAssessment.refundAmountPence,refundFeePence:0,
+    refundReason:refundAssessment.reason}:{}),
    ...(action==='approve'?{approvedAmountGBP:approval.amountPence/100}: {})};
  const items=[{Update:{TableName:table,Key:decision.metadataKey,
    UpdateExpression:update,ConditionExpression:condition,

@@ -11,6 +11,7 @@ const TYPES=Object.freeze({
  declined:'declined_v1',
  confirmed:'confirmed_v1',
  cancelled:'cancelled_v1',
+ refund_confirmed:'refund_confirmed_v1',
  hold_expired:'hold_expired_v1',
  delivery_failure:'delivery_failure_v1'
 });
@@ -91,6 +92,15 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
    subject='Les Buttes – booking cancellation';
    lines=['Your booking has been cancelled.',stay,reference,
     'Any refund will be assessed and communicated separately; this email does not confirm a refund.'];
+   break;
+  case 'refund_confirmed':
+   if(booking.status!=='CANCELLED'||booking.refundStatus!=='REFUNDED'||
+     !Number.isSafeInteger(booking.refundedAmountPence)||booking.refundedAmountPence<1)
+    throw Error('Verified refund required');
+   subject='Les Buttes – refund confirmed';
+   lines=['Your refund has been confirmed.',stay,reference,
+    'Refund amount: '+money(booking.refundedAmountPence),
+    'The refund was returned through the original payment method.'];
    break;
   case 'hold_expired':
    if(booking.status!=='EXPIRED')throw Error('Expired booking state required');

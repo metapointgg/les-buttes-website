@@ -136,6 +136,15 @@ Resources:
       AuthorizationType: JWT
       AuthorizerId: !Ref CognitoAuthorizerId
       Target: !Sub 'integrations/${OwnerActionIntegration}'
+  OwnerConfigurationRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Condition: Deploy
+    Properties:
+      ApiId: !Ref CanonicalApiId
+      RouteKey: 'POST /admin/config/{kind}/{unit}/{operation}'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub 'integrations/${OwnerActionIntegration}'
   OwnerActionPermission:
     Type: AWS::Lambda::Permission
     Condition: Deploy
@@ -144,6 +153,14 @@ Resources:
       FunctionName: !Ref OwnerActionFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CanonicalApiId}/*/POST/admin/bookings/*/actions/*'
+  OwnerConfigurationPermission:
+    Type: AWS::Lambda::Permission
+    Condition: Deploy
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OwnerActionFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CanonicalApiId}/*/POST/admin/config/*/*/*'
 Outputs:
   ReviewStatus:
     Value: 'Review-only template; DeploymentEnabled defaults to false. Staging-only DynamoDB transaction access is scoped; owner actions require a separate default-off switch; no SumUp, SES or production table permissions are granted.'
