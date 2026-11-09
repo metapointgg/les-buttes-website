@@ -35,7 +35,11 @@ export async function reconcileScheduledPayments(event,{env=process.env,db,
      await reconcile({db,table:env.BOOKINGS_TABLE,bookingId:candidate.id,env,
       identity:{role:'owner',subject:'system:staging-sandbox-payment-reconciliation'},transport:createStagingSesTransport({env})});
      counts.confirmed++;
-    }catch{counts.pendingOrReview++;}
+    }catch(error){
+     counts.pendingOrReview++;
+     console.error('STAGING_PAYMENT_RECONCILIATION_REVIEW',candidate.id,
+      String(error?.message??error?.name??'unknown').slice(0,240));
+    }
    }
    cursor=page.LastEvaluatedKey;
   }while(cursor);
