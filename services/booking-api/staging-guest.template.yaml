@@ -92,7 +92,9 @@ Resources:
       - Statement:
         - Effect: Allow
           Action: ses:SendEmail
-          Resource: arn:aws:ses:us-east-1:145608514666:identity/lesbuttes.com
+          Resource:
+          - arn:aws:ses:us-east-1:145608514666:identity/lesbuttes.com
+          - arn:aws:ses:us-east-1:145608514666:configuration-set/my-first-configuration-set
           Condition:
             StringEquals:
               ses:FromAddress: info@lesbuttes.com

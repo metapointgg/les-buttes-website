@@ -17,7 +17,8 @@ export function createStagingSesTransport({
    // SES region deliberately differs from AWS_REGION of our eu-west-2 booking Lambda.
    const command=commandFactory({
     Source:decision.sender,
-    MessageTags:[
+    ...(env.BOOKING_SES_CONFIGURATION_SET?{ConfigurationSetName:env.BOOKING_SES_CONFIGURATION_SET}:{}),
+    Tags:[
      {Name:'bookingId',Value:decision.bookingId},
      {Name:'emailType',Value:decision.type},
      {Name:'templateId',Value:decision.templateId}
@@ -39,6 +40,9 @@ export function createStagingSesTransport({
     return {messageId:result.MessageId,region:decision.region,
      bookingId:decision.bookingId,templateId:decision.templateId,type:decision.type,
      status:'ACCEPTED_BY_SES_NOT_DELIVERED'};
+   }catch(error){
+    console.error('STAGING_SES_SEND_FAILED',String(error?.name??'UnknownError').replace(/[^A-Za-z0-9_]/g,'').slice(0,80));
+    throw error;
    }finally{
     client.destroy?.();
    }
