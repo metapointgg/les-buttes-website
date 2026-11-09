@@ -21,7 +21,7 @@ test('LB-09 draft restricts staging transaction and SumUp secret permissions, wi
  assert.match(template,/Action: \[ssm:GetParameter\]/);
  assert.match(template,/parameter\/les-buttes\/staging\/sumup\/api-key/);
  assert.match(template,/parameter\/les-buttes\/staging\/sumup\/merchant-code/);
- assert.doesNotMatch(template,/dynamodb:(TransactWriteItems|DeleteItem)|ses:SendEmail|ssm:GetParametersByPath/);
+ assert.doesNotMatch(template,/dynamodb:(TransactWriteItems|DeleteItem)|ssm:GetParametersByPath/);
  assert.match(template,/StagingPaymentWritesEnabled:\n    Type: String\n    AllowedValues: \['false', 'true'\]\n    Default: 'false'/);
  for(const flag of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED'])
   assert.ok(template.includes(flag+': !Ref StagingPaymentWritesEnabled'),flag);
@@ -48,4 +48,11 @@ test('LB-09 CloudFormation review template has one coherent parameter and resour
  assert.match(template,/PaymentReconciliationRoute:\n    Type: AWS::ApiGatewayV2::Route\n    Condition: Deploy/);
  assert.match(template,/PaymentReconciliationPermission:\n    Type: AWS::Lambda::Permission\n    Condition: Deploy/);
  assert.doesNotMatch(template,/REPLACE_WITH_REVIEWED|AllowedPattern: '[^'\n]*Type: String/);
+});
+
+test('SES sending is restricted to the simulator and disabled by default',()=>{
+ assert.match(template,/ses:SendEmail/);
+ assert.match(template,/ses:Recipients: \[success@simulator\.amazonses\.com\]/);
+ assert.match(template,/ses:FromAddress: info@lesbuttes\.com/);
+ assert.match(template,/BOOKING_LIFECYCLE_DISPATCH_ENABLED: 'false'/);
 });

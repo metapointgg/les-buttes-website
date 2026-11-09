@@ -154,4 +154,4 @@ Resources:
       SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CanonicalApiId}/*/POST/admin/bookings/*/payment/reconcile'
 Outputs:
   ReviewStatus:
-    Value: 'Review-only template; DeploymentEnabled defaults to false. Staging-only DynamoDB transaction and SumUp SSM access are scoped; payment writes require a separate default-off owner switch and SES is not granted.'
+    Value: 'Review-only template; DeploymentEnabled defaults to false. Staging-only DynamoDB transaction and SumUp SSM access are scoped; payment writes require a separate default-off owner switch and SES is restricted to the staging simulator.'
