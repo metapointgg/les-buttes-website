@@ -22,7 +22,11 @@ export async function reconcileScheduledPayments(event,{env=process.env,db,
   do{
    const page=await db.send(new QueryCommand({TableName:env.BOOKINGS_TABLE,IndexName:'BookingRequestsIndex',
     KeyConditionExpression:'GSI1PK = :pk',ExpressionAttributeValues:{':pk':'BOOKING_REQUESTS'},ExclusiveStartKey:cursor}));
-   for(const candidate of page.Items??[]){
+   for(const indexed of page.Items??[]){
+    if(indexed.status!=='APPROVED_AWAITING_PAYMENT')continue;
+    const record=await db.send(new GetCommand({TableName:env.BOOKINGS_TABLE,Key:{PK:'BOOKING#'+indexed.id,SK:'META'},ConsistentRead:true}));
+    const candidate=record.Item;
+    if(!candidate)continue;
     if(candidate.status!=='APPROVED_AWAITING_PAYMENT'||candidate.synthetic!==true||candidate.guestEmail!=='test@example.invalid')continue;
     if(!Number.isSafeInteger(candidate.holdExpiresAt)||candidate.holdExpiresAt<=now()){counts.expired++;continue;}
     const checkout=await db.send(new GetCommand({TableName:env.BOOKINGS_TABLE,Key:{PK:'BOOKING#'+candidate.id,SK:'PAYMENT#CHECKOUT'},ConsistentRead:true}));

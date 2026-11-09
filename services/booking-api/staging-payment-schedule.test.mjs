@@ -12,7 +12,8 @@ test('schedule rejects foreign sources, production, missing gates and altered ru
 test('schedule processes only unexpired synthetic approved checkouts and isolates pending failures',async()=>{
  const base={status:'APPROVED_AWAITING_PAYMENT',synthetic:true,guestEmail:'test@example.invalid',holdExpiresAt:200};
  let calls=0;
- const db={send:async c=>c.input.IndexName?{Items:[{...base,id:'pending'},{...base,id:'paid'},{...base,id:'expired',holdExpiresAt:50},{...base,id:'real',synthetic:false},{...base,id:'confirmed',status:'CONFIRMED'}]}:{Item:{}}};
+ const records=[{...base,id:'pending'},{...base,id:'paid'},{...base,id:'expired',holdExpiresAt:50},{...base,id:'real',synthetic:false},{...base,id:'confirmed',status:'CONFIRMED'}];
+ const db={send:async c=>c.input.IndexName?{Items:records.map(({id,status})=>({id,status}))}:c.input.Key.SK==='META'?{Item:records.find(r=>'BOOKING#'+r.id===c.input.Key.PK)}:{Item:{}}};
  const result=await reconcileScheduledPayments(event,{env,db,now:()=>100,reconcile:async({bookingId,identity})=>{
   calls++;assert.equal(identity.subject,'system:staging-sandbox-payment-reconciliation');if(bookingId==='pending')throw Error('Payment pending');return {status:'CONFIRMED'};
  }});
