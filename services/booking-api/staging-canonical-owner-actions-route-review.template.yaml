@@ -35,6 +35,16 @@ Parameters:
     AllowedValues: ['false', 'true']
     Default: 'false'
     Description: Separate owner-approved switch; never enable for initial route deployment.
+  StagingLifecycleDispatchEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+    Description: Staging SES simulator rejection and cancellation delivery only.
+  StagingEmailSendingEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+    Description: Master staging SES simulator gate; IAM prevents delivery to real recipients.
 Conditions:
   ApprovedStagingDeployment: !Equals [!Ref DeploymentEnabled, 'true']
   CorrectRegion: !Equals [!Ref AWS::Region, eu-west-2]
@@ -102,7 +112,7 @@ Resources:
         S3ObjectVersion: !Ref ReviewedArtifactVersion
       Environment:
         Variables:
-          BOOKING_LIFECYCLE_DISPATCH_ENABLED: 'false'
+          BOOKING_LIFECYCLE_DISPATCH_ENABLED: !Ref StagingLifecycleDispatchEnabled
           BOOKING_SES_SIMULATOR_ENABLED: 'true'
           BOOKING_SES_REGION: us-east-1
           BOOKING_SES_SANDBOX_ACK: 'true'
@@ -118,7 +128,7 @@ Resources:
           MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED: 'false'
           MANAGEMENT_CHECKOUT_ENABLED: 'false'
           BOOKING_CONFIRMATION_DISPATCH_ENABLED: 'false'
-          BOOKING_EMAILS_ENABLED: 'false'
+          BOOKING_EMAILS_ENABLED: !Ref StagingEmailSendingEnabled
   OwnerActionIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Condition: Deploy

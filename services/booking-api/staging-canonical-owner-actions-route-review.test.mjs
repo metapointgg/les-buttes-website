@@ -20,9 +20,12 @@ test('canonical owner actions use immutable code and disabled-by-default staging
  assert.doesNotMatch(template,/ssm:GetParameter|dynamodb:TransactWriteItems/);
 });
 
-test('SES sending is restricted to the simulator and disabled by default',()=>{
+test('SES sending is restricted to the simulator and independently disabled by default',()=>{
  assert.match(template,/ses:SendEmail/);
  assert.match(template,/ses:Recipients: \[success@simulator\.amazonses\.com\]/);
  assert.match(template,/ses:FromAddress: info@lesbuttes\.com/);
- assert.match(template,/BOOKING_LIFECYCLE_DISPATCH_ENABLED: 'false'/);
+ assert.match(template,/BOOKING_LIFECYCLE_DISPATCH_ENABLED: !Ref StagingLifecycleDispatchEnabled/);
+ assert.match(template,/BOOKING_EMAILS_ENABLED: !Ref StagingEmailSendingEnabled/);
+ for(const parameter of ['StagingLifecycleDispatchEnabled','StagingEmailSendingEnabled'])
+  assert.match(template,new RegExp(parameter+":\\n    Type: String\\n    AllowedValues: \\['false', 'true'\\]\\n    Default: 'false'"));
 });
