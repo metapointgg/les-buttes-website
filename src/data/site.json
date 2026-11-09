@@ -1,0 +1,30 @@
+{
+  "name": "Les Buttes Holiday Cottages",
+  "shortName": "Les Buttes",
+  "url": "https://lesbuttes.com",
+  "email": "info@lesbuttes.com",
+  "telephoneDisplay": "+44 (0)1481 266363",
+  "telephoneHref": "+441481266363",
+  "address": {
+    "street": "Rue des Raies",
+    "locality": "St Pierre du Bois",
+    "island": "Guernsey",
+    "postcode": "GY7 9SF",
+    "country": "GG"
+  },
+  "coordinates": {
+    "latitude": 49.4351233819604,
+    "longitude": -2.626559951281771
+  },
+  "sameAs": [
+    "https://www.facebook.com/holidaycottagesonguernsey",
+    "https://www.instagram.com/les_buttes_guernsey/"
+  ],
+  "airbnb": {
+    "geranium": "https://www.airbnb.com/rooms/17564897",
+    "honeysuckle": "https://www.airbnb.com/rooms/15695088"
+  },
+  "analytics": {
+    "googleAnalyticsId": "G-X7FCEV679L"
+  }
+}

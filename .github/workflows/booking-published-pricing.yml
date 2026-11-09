@@ -1,0 +1,42 @@
+name: Booking published-pricing release gate
+on:
+  push:
+    branches:
+      - feature/direct-booking-requests-27-night
+    paths:
+      - services/booking-api/**
+      - .github/workflows/booking-published-pricing.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - services/booking-api/**
+      - .github/workflows/booking-published-pricing.yml
+
+permissions:
+  contents: read
+
+jobs:
+  booking-pricing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned booking API dependencies
+        working-directory: services/booking-api
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Check source syntax
+        working-directory: services/booking-api
+        run: |
+          node --check index.mjs
+          node --check booking-settings.mjs
+          node --check published-pricing.mjs
+      - name: Run authoritative published-pricing tests
+        working-directory: services/booking-api
+        run: node --test test/published-pricing.test.mjs
+      - name: Run complete booking API regression suite
+        working-directory: services/booking-api
+        run: npm test

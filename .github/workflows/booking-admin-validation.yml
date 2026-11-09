@@ -1,0 +1,38 @@
+name: Booking management staging validation
+on:
+  pull_request:
+    paths:
+      - "services/booking-api/**"
+      - "management-preview/**"
+      - "infra/booking-api/**"
+      - ".github/workflows/booking-admin-validation.yml"
+  push:
+    branches:
+      - feature/direct-booking-requests-27-night
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install backend dependencies
+        run: npm --prefix services/booking-api install --no-audit --no-fund
+      - name: Backend syntax and unit tests
+        run: |
+          npm --prefix services/booking-api run check
+          npm --prefix services/booking-api test
+      - name: Management preview model tests and syntax
+        run: |
+          node --check management-preview/app.mjs
+          node --check management-preview/model.mjs
+          node --check management-preview/hosted-auth.mjs
+          node --test management-preview/model.test.mjs management-preview/hosted-auth.test.mjs management-preview/staging-deployment-contract.test.mjs
+      - uses: aws-actions/setup-sam@v2
+      - name: Validate SAM template without deployment
+        run: |
+          sam validate --lint --template-file infra/booking-api/template.yaml
+          sam validate --lint --template-file services/booking-api/staging-management-preview-isolated.template.yaml

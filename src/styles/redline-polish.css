@@ -1,0 +1,237 @@
+/* Targeted implementation of the September 2026 detailed redlines.
+   Keep the existing structure and design system; only adjust highlighted hierarchy,
+   crop, spacing, comparison cues, galleries, internal closes and footer rhythm. */
+
+/* ---------- Shared hero treatment ---------- */
+.page-intro-with-media{min-height:clamp(28rem,50vw,38rem)!important}
+.page-intro-overlay{background:linear-gradient(90deg,rgba(6,29,24,.72) 0%,rgba(9,37,29,.48) 45%,rgba(16,37,28,.08) 100%)!important}
+.page-intro-content{justify-content:flex-end!important;padding-top:clamp(5rem,9vw,7rem)!important;padding-bottom:clamp(3.4rem,6.5vw,5.2rem)!important}
+.page-intro-content h1{max-width:12.5ch!important;line-height:1.02!important}
+.page-intro-content .lede{max-width:39rem!important}
+.page-intro-background img,.page-intro-background video{object-fit:cover}
+.page-cottages .page-intro-background img{object-position:58% 66%}
+.page-gardens .page-intro-background img{object-position:52% 62%}
+.page-about .page-intro-background img{object-position:52% 58%}
+.page-gallery .page-intro-background img{object-position:54% 58%}
+.page-contact .page-intro-background img{object-position:54% 58%}
+.page-explore-guernsey .page-intro-background img,.page-explore-guernsey .page-intro-background video{object-position:50% 52%}
+
+/* ---------- Home redlines ---------- */
+.page-home .home-hero:after{background:linear-gradient(90deg,rgba(5,24,20,.75) 0%,rgba(8,31,25,.54) 42%,rgba(15,39,30,.08) 78%,rgba(15,39,30,.02) 100%)!important}
+.page-home .home-hero-image img,.page-home .home-hero-image video{object-position:58% 66%!important}
+.page-home .home-hero-copy{width:min(100%,37rem)!important;margin-left:clamp(0rem,3.7vw,3.25rem);transform:translateY(1.15rem)}
+.page-home .home-hero-copy h1{max-width:9.1ch!important;line-height:.98!important}
+.page-home .home-hero .hero-actions{gap:1rem!important;margin-top:1.7rem!important}
+.page-home .home-hero .button-outline{background:rgba(8,29,23,.1)!important}
+.page-home .home-sections .section:first-child .section-builder-copy h2{max-width:11.5ch!important}
+.page-home .home-sections .section:first-child .section-builder-copy>p:not(.eyebrow){max-width:35rem;margin-bottom:1.25rem}
+.page-home .home-sections .section:first-child .section-builder-feature-image img{max-height:15.5rem!important;opacity:.9!important}
+.page-home .home-sections .section-builder-feature-strip article{padding:1.2rem 1rem!important}
+.page-home .home-sections .section-builder-feature-strip-icon svg{width:30px;height:30px;stroke-width:1.65}
+.page-home .home-sections .section-builder-feature-strip strong{font-size:.94rem!important}
+.page-home .home-sections .cottage-card .card-image{aspect-ratio:3/2!important}
+.page-home .home-sections .cottage-card .card-body{padding:1.1rem 1.25rem 1.35rem!important}
+.page-home .home-sections .cottage-stats.compact{gap:.55rem .95rem;margin:.65rem 0 .85rem;padding-top:.65rem!important}
+.page-home .home-sections .cottage-stats.compact li{font-size:.82rem}
+.page-home .home-sections .cottage-stats.compact li:last-child{padding:.15rem .45rem;color:var(--green);background:#dfeade;border-radius:999px;font-size:.75rem}
+.page-home .section-builder-quote-image-overlay{background:linear-gradient(90deg,rgba(6,29,24,.61),rgba(16,37,28,.38))!important}
+.page-home .section-builder-quote-on-image blockquote{max-width:24ch;margin-inline:auto;line-height:1.2!important}
+.page-home .home-sections .section:has(.section-builder-feature.image-right):not(.green) .section-builder-feature{grid-template-columns:minmax(0,1.12fr) minmax(18rem,.88fr)!important}
+.page-home .home-sections .section:has(.section-builder-feature.image-right):not(.green) .section-builder-feature-image{aspect-ratio:4/3!important}
+.page-home .home-sections .section.green,.page-home .home-sections .section.green .section-builder-feature{min-height:clamp(31rem,52vw,42rem)!important}
+.page-home .home-sections .section:has(.section-builder-card-grid-icons) .section-heading{margin-bottom:1.8rem!important}
+.page-home .home-sections .section:has(.section-builder-card-grid-icons) .section-heading h2{max-width:14ch!important;margin-inline:auto}
+.page-home .home-sections .section:has(.section-builder-card-grid-icons) .section-heading .lede{max-width:40rem!important;margin:0 auto}
+.page-home .home-sections .section-builder-card-grid-icons .section-builder-icon{width:3rem!important;height:3rem!important}
+.page-home .home-sections .section-builder-card-grid-icons .section-builder-icon svg{width:28px;height:28px}
+.page-home .home-sections .callout{padding-block:clamp(4.2rem,7.5vw,6.6rem)!important}
+.page-home .home-sections .callout .button-light{min-height:3.2rem;padding-inline:1.45rem}
+.page-home .home-sections .callout .button-outline{min-height:2.85rem}
+
+/* ---------- Our Cottages ---------- */
+.page-cottages .page-intro-content{padding-left:clamp(0rem,2vw,1.5rem)}
+.page-cottages .page-intro-content h1{max-width:13.5ch!important}
+.page-cottages .cottage-compare-section{padding-top:clamp(3rem,5vw,4.5rem)!important}
+.page-cottages .cottage-compare-heading{margin-bottom:1.8rem!important}
+.page-cottages .cottage-card-comparison .card-image{aspect-ratio:3/2!important}
+.page-cottages .cottage-card-comparison .card-body{padding:1.15rem 1.35rem 1.2rem!important}
+.page-cottages .cottage-card-comparison .card-body h2{margin-bottom:.22rem!important}
+.page-cottages .cottage-card-comparison .cottage-card-tagline{margin-bottom:.4rem!important}
+.page-cottages .cottage-card-comparison .cottage-card-summary{min-height:0;margin-bottom:.75rem!important}
+.page-cottages .cottage-card-comparison .cottage-stats{gap:.55rem 1rem;margin:.65rem 0 .85rem;padding:.7rem 0 0!important;border-top:1px solid var(--line)!important}
+.page-cottages .cottage-card-comparison .cottage-stats li{font-size:.84rem}
+.page-cottages .cottage-comparison-notes{gap:.45rem;margin:.8rem 0 1rem;padding-top:.75rem}
+.page-cottages .cottage-comparison-notes p{grid-template-columns:7rem 1fr;align-items:start;padding:.48rem .55rem;background:#f6f1e6;border-radius:.35rem}
+.page-cottages .cottage-comparison-notes p::before{content:'◆';margin-right:.4rem;color:var(--gold);font-size:.55rem;transform:translateY(.35rem)}
+.page-cottages .cottage-comparison-notes strong{grid-column:1;white-space:nowrap}
+.page-cottages .cottage-comparison-notes span{grid-column:2}
+.page-cottages .cottage-card-comparison .card-actions{margin-top:.6rem}
+.page-cottages .cottage-card-comparison .cottage-card-button{width:100%;justify-content:center;color:#fff!important;background:var(--green)!important}
+.page-cottages .cottage-preview-strip{gap:.3rem;padding:.35rem .35rem .45rem;border-top:0!important;background:var(--paper)!important}
+.page-cottages .cottage-preview-strip img{aspect-ratio:4/3!important}
+.page-cottages .section-builder-feature-strip-section{padding-block:.9rem!important}
+.page-cottages .section-builder-feature-strip article{min-height:7.4rem!important;padding:1.25rem!important}
+.page-cottages .section-builder-feature-strip-icon svg{width:30px;height:30px}
+.page-cottages .section-builder-card-grid:not(.section-builder-card-grid-icons){gap:.7rem!important;border:0!important}
+.page-cottages .section-builder-card-grid:not(.section-builder-card-grid-icons) .section-builder-card{border:1px solid var(--line)!important;border-radius:.35rem!important;background:var(--paper)!important}
+.page-cottages .section-builder-card-grid:not(.section-builder-card-grid-icons) .section-builder-card-content{padding:1rem 1.1rem!important}
+.page-cottages .section-builder-card-grid:not(.section-builder-card-grid-icons) h3{font-size:1rem!important;font-family:var(--body)!important;font-weight:700!important}
+.page-cottages .section-builder-card-grid:not(.section-builder-card-grid-icons) p{font-size:.84rem;line-height:1.45}
+.page-cottages .callout{margin-block:2.5rem!important;padding:2.5rem 3rem!important}
+.page-cottages .callout h2{font-size:clamp(2rem,4vw,3rem)}
+
+/* ---------- Cottage details ---------- */
+.page-cottages-geranium .cottage-editorial-hero:after,.page-cottages-honeysuckle .cottage-editorial-hero:after{background:linear-gradient(90deg,rgba(6,29,24,.72) 0%,rgba(9,37,29,.48) 48%,rgba(16,37,28,.08) 100%)!important}
+.page-cottages-geranium .cottage-editorial-hero-media img{object-position:60% 66%!important}
+.page-cottages-honeysuckle .cottage-editorial-hero-media img{object-position:58% 62%!important}
+.page-cottages-geranium .cottage-editorial-hero-inner,.page-cottages-honeysuckle .cottage-editorial-hero-inner{padding-bottom:clamp(3.2rem,6vw,5rem)!important}
+.page-cottages-geranium .cottage-editorial-copy,.page-cottages-honeysuckle .cottage-editorial-copy{margin-left:clamp(0rem,2.5vw,2rem);max-width:43rem}
+.page-cottages-geranium .cottage-editorial-copy h1,.page-cottages-honeysuckle .cottage-editorial-copy h1{max-width:9.5ch!important}
+.page-cottages-geranium .cottage-editorial-hero .facts-bar,.page-cottages-honeysuckle .cottage-editorial-hero .facts-bar{margin-top:1.3rem!important}
+.page-cottages-geranium .cottage-editorial-hero .cottage-actions,.page-cottages-honeysuckle .cottage-editorial-hero .cottage-actions{gap:1rem!important;margin-top:1.6rem!important}
+.page-cottages-geranium .cottage-story-copy .prose,.page-cottages-honeysuckle .cottage-story-copy .prose{max-width:34rem}
+.page-cottages-geranium .cottage-story-media,.page-cottages-honeysuckle .cottage-story-media{min-height:28rem}
+.page-cottages-geranium .cottage-detail-section,.page-cottages-honeysuckle .cottage-detail-section{padding-block:clamp(2.8rem,5vw,4.6rem)!important}
+.page-cottages-geranium .cottage-detail-grid,.page-cottages-honeysuckle .cottage-detail-grid{gap:clamp(1.8rem,4vw,3.6rem)!important}
+.page-cottages-geranium .cottage-detail-media,.page-cottages-honeysuckle .cottage-detail-media{gap:.45rem!important}
+.page-cottages-geranium .cottage-detail-media figure,.page-cottages-honeysuckle .cottage-detail-media figure{border-radius:.3rem}
+.page-cottages-geranium .cottage-detail-media figcaption,.page-cottages-honeysuckle .cottage-detail-media figcaption{padding:.35rem .5rem;background:linear-gradient(90deg,rgba(6,29,24,.62),rgba(6,29,24,.08));font-size:.7rem}
+.page-cottages-geranium .cottage-detail-media-living figure.is-primary,.page-cottages-honeysuckle .cottage-detail-media-living figure.is-primary{min-height:30rem!important}
+.page-cottages-geranium .cottage-detail-media-kitchen figure.is-primary,.page-cottages-honeysuckle .cottage-detail-media-kitchen figure.is-primary{min-height:28rem!important}
+.page-cottages-geranium .cottage-detail-media-sleeping figure.is-primary,.page-cottages-honeysuckle .cottage-detail-media-sleeping figure.is-primary{min-height:27rem!important}
+.page-cottages-geranium .cottage-garden-copy,.page-cottages-honeysuckle .cottage-garden-copy{padding-inline:clamp(2.5rem,5vw,4.5rem)!important}
+.page-cottages-geranium .cottage-garden-copy p:not(.eyebrow),.page-cottages-honeysuckle .cottage-garden-copy p:not(.eyebrow){max-width:27rem}
+.page-cottages-geranium .cottage-facility-grid li,.page-cottages-honeysuckle .cottage-facility-grid li{min-height:8.1rem!important}
+.page-cottages-geranium .cottage-facility-icon svg,.page-cottages-honeysuckle .cottage-facility-icon svg{width:3.15rem;height:3.15rem;stroke-width:1.7}
+.page-cottages-geranium .review,.page-cottages-honeysuckle .review{max-width:48rem}
+.page-cottages-geranium .review blockquote,.page-cottages-honeysuckle .review blockquote{font-size:clamp(1.7rem,3.4vw,2.7rem)!important;line-height:1.22!important}
+.page-cottages-geranium .section:has(.review),.page-cottages-honeysuckle .section:has(.review){padding-block:clamp(2.5rem,4vw,3.5rem)!important}
+.page-cottages-geranium .cottage-location-story,.page-cottages-honeysuckle .cottage-location-story{padding-block:clamp(2.6rem,4.5vw,4rem)!important}
+.page-cottages-geranium .cottage-location-grid,.page-cottages-honeysuckle .cottage-location-grid{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr)!important}
+.page-cottages-geranium .section-builder-gallery,.page-cottages-honeysuckle .section-builder-gallery{gap:.42rem!important}
+.page-cottages-geranium .callout,.page-cottages-honeysuckle .callout{padding-block:clamp(3.4rem,6vw,5.4rem)!important}
+.page-cottages-geranium .callout .button-light,.page-cottages-honeysuckle .callout .button-light{min-height:3.25rem;padding-inline:1.5rem}
+
+/* ---------- Gardens ---------- */
+.page-gardens .garden-main-section{padding-block:clamp(3rem,5vw,4.5rem)!important}
+.page-gardens .garden-main-layout{gap:clamp(2rem,4.5vw,4rem)!important}
+.page-gardens .garden-main-copy{max-width:31rem!important}
+.page-gardens .garden-main-copy h2{max-width:11ch!important}
+.page-gardens .garden-main-copy p:not(.eyebrow){line-height:1.62}
+.page-gardens .garden-main-image{min-height:41rem!important}
+.page-gardens .garden-main-image img{object-position:50% 58%}
+.page-gardens .garden-areas-section{padding-top:clamp(2.6rem,4.5vw,4rem)!important}
+.page-gardens .garden-areas-heading{margin-bottom:1.35rem!important}
+.page-gardens .garden-areas-heading .lede{max-width:42rem}
+.page-gardens .garden-area-grid{align-items:stretch}
+.page-gardens .garden-area-card:not(.has-image){position:relative;min-height:100%;background:linear-gradient(145deg,#fffdf8 0%,#f3eadb 100%)!important;border-color:#cdbb9d!important}
+.page-gardens .garden-area-card:not(.has-image)::before{content:'✦';display:grid;place-items:center;min-height:15rem;color:rgba(148,96,41,.42);font-family:var(--display);font-size:4rem;background:radial-gradient(circle at 40% 45%,rgba(180,123,58,.11),transparent 58%)}
+.page-gardens .garden-area-image{min-height:22rem!important}
+.page-gardens .garden-area-image img{object-position:50% 56%}
+.page-gardens .garden-gallery-section{padding-block:clamp(3rem,5vw,4.5rem)!important}
+.page-gardens .garden-gallery-heading{margin-bottom:1.5rem!important}
+.page-gardens .garden-mosaic{gap:.45rem!important}
+.page-gardens .garden-mosaic figcaption{padding:.35rem .5rem;background:linear-gradient(90deg,rgba(6,29,24,.58),rgba(6,29,24,.06));font-size:.7rem}
+.page-gardens .garden-mosaic figure:not(.garden-mosaic-primary){min-height:0!important}
+.page-gardens .garden-orchard,.page-gardens .garden-valley{position:relative;overflow:hidden}
+.page-gardens .garden-orchard{background:linear-gradient(145deg,#fffdf8 0%,#f5efe2 100%)!important}
+.page-gardens .garden-orchard::after{content:'';position:absolute;right:-4rem;bottom:-5rem;width:16rem;height:16rem;border:1px solid rgba(180,123,58,.18);border-radius:50%;box-shadow:0 0 0 2.5rem rgba(180,123,58,.05),0 0 0 5rem rgba(180,123,58,.03);pointer-events:none}
+.page-gardens .garden-valley{background:linear-gradient(135deg,#103b30 0%,#194c3d 58%,#315f4f 100%)!important}
+.page-gardens .callout{margin-block:2.6rem!important;padding:2.75rem 3rem!important;background:#fffdf8!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+.page-gardens .callout h2{color:var(--ink)!important}
+.page-gardens .callout p:not(.eyebrow){color:var(--soft)!important}
+.page-gardens .callout .eyebrow{color:#946029!important}
+.page-gardens .callout .button-light{color:#fff!important;background:var(--green)!important;border-color:var(--green)!important}
+
+/* ---------- Our Story ---------- */
+.page-about .section-builder-feature{gap:clamp(2rem,4vw,3.8rem)!important}
+.page-about .section-builder-copy{max-width:34rem!important}
+.page-about .section-builder-copy h2{max-width:15ch!important}
+.page-about .section-builder-feature-image{aspect-ratio:16/10!important}
+.page-about .section-builder-feature-image img{object-position:50% 55%}
+.page-about .story-timeline-section{padding-block:clamp(3rem,5vw,4.5rem)!important}
+.page-about .story-timeline-heading{margin-bottom:1.2rem!important}
+.page-about .story-timeline{margin-top:1.8rem!important}
+.page-about .story-timeline p{max-width:30rem;font-size:.94rem;line-height:1.5}
+.page-about .section-builder-quote{padding-block:clamp(2.5rem,4vw,3.5rem)!important}
+.page-about .section-builder-quote blockquote{font-size:clamp(1.9rem,3.6vw,2.8rem)!important;line-height:1.22!important}
+.page-about .callout{margin-block:2.8rem!important;padding:2.8rem 3rem!important;background:linear-gradient(120deg,#194c3d,#315f4f)!important}
+
+/* ---------- Explore Guernsey ---------- */
+.page-explore-guernsey .section-builder-feature{gap:clamp(2rem,4vw,3.5rem)!important}
+.page-explore-guernsey .section-builder-feature-image{aspect-ratio:4/3!important}
+.page-explore-guernsey .section-builder-copy{max-width:32rem!important}
+.page-explore-guernsey .section-builder-copy>p:not(.eyebrow){line-height:1.62!important}
+.page-explore-guernsey .section-builder-card-grid-icons{gap:.8rem!important;border:0!important}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card{overflow:hidden;border:1px solid var(--line)!important;border-radius:.45rem!important;background:var(--paper)!important}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card.has-image .section-builder-card-image{aspect-ratio:16/9!important}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card-content{padding:1rem!important}
+.page-explore-guernsey .section-builder-card-grid-icons .section-builder-card h3{font-family:var(--display)!important;font-size:1.35rem!important;font-weight:500!important}
+.page-explore-guernsey .section-builder-pill{margin-top:auto}
+.page-explore-guernsey .map-card{grid-template-columns:minmax(0,1.7fr) minmax(15rem,.5fr)!important}
+.page-explore-guernsey .map-card iframe{min-height:31rem!important}
+.page-explore-guernsey #map .section-heading{margin-bottom:1.2rem!important}
+.page-explore-guernsey .callout{margin-block:2.5rem!important;padding:2.7rem 3rem!important;background:linear-gradient(120deg,#103b30,#285545)!important}
+
+/* ---------- Gallery ---------- */
+.page-gallery .gallery-page-section{padding-top:clamp(2.6rem,4.5vw,4rem)!important}
+.page-gallery .gallery-page-heading{margin-bottom:1.1rem!important}
+.page-gallery .gallery-filters{gap:.65rem;margin-bottom:1.35rem!important}
+.page-gallery .gallery-filter{min-width:5.4rem;padding:.65rem 1.05rem!important}
+.page-gallery .gallery-filter[aria-pressed='true']{background:#285545!important}
+.page-gallery .editorial-gallery{gap:.45rem!important}
+.page-gallery .editorial-gallery-item{border-radius:.3rem!important}
+.page-gallery .editorial-gallery-item figcaption{right:.45rem;bottom:.45rem;left:.45rem;padding:.35rem .5rem;background:linear-gradient(90deg,rgba(6,29,24,.58),rgba(6,29,24,.04));font-size:.7rem}
+.page-gallery .callout{margin-block:2.6rem!important;padding:2.7rem 3rem!important;background:#fffdf8!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+.page-gallery .callout h2{color:var(--ink)!important}.page-gallery .callout p:not(.eyebrow){color:var(--soft)!important}.page-gallery .callout .eyebrow{color:#946029!important}.page-gallery .callout .button-light{color:#fff!important;background:var(--green)!important;border-color:var(--green)!important}
+
+/* ---------- Contact ---------- */
+.page-contact .contact-editorial-section{padding-block:clamp(3rem,5vw,4.5rem)!important}
+.page-contact .contact-editorial-grid{gap:clamp(2rem,4vw,3.8rem)!important}
+.page-contact .contact-editorial-story .lede{max-width:35rem!important;line-height:1.58}
+.page-contact .contact-editorial-image{margin-top:1.35rem!important;aspect-ratio:16/9!important}
+.page-contact .contact-details-panel{padding:1.7rem 1.9rem!important}
+.page-contact .contact-detail-item{grid-template-columns:3rem 1fr!important;padding:.9rem 0!important}
+.page-contact .contact-detail-icon{width:2.6rem!important;height:2.6rem!important}
+.page-contact .contact-detail-icon svg{width:25px;height:25px;stroke-width:1.75}
+.page-contact #map{padding-block:clamp(2.5rem,4vw,3.6rem)!important}
+.page-contact #map .section-heading{margin-bottom:1.1rem!important}
+.page-contact .map-card{grid-template-columns:minmax(0,1.65fr) minmax(16rem,.5fr)!important}
+.page-contact .map-card iframe{min-height:30rem!important}
+.page-contact .notice{max-width:54rem;margin-inline:auto;padding:1rem 1.2rem!important}
+
+/* ---------- Internal-page footer ---------- */
+body:not(.page-home) .site-footer{margin-top:0!important;padding-top:2.2rem!important}
+body:not(.page-home) .site-footer .footer-intro{display:none!important}
+body:not(.page-home) .site-footer .footer-grid{grid-template-areas:'brand brand brand' 'visit contact explore'!important;grid-template-columns:1fr 1.25fr .9fr!important;gap:1.5rem 3rem!important;padding-bottom:2rem!important}
+body:not(.page-home) .site-footer .footer-brand{justify-self:start!important;width:13rem!important}
+body:not(.page-home) .site-footer .footer-column h3{margin-bottom:.45rem!important}
+body:not(.page-home) .site-footer .footer-column>a{margin:.4rem 0!important}
+body:not(.page-home) .site-footer .footer-bottom{padding-block:1rem!important}
+
+@media(min-width:64rem){
+  .page-home .home-sections .section:first-child .section-builder-feature{grid-template-columns:1.08fr .92fr!important}
+  .page-cottages .cottage-preview-strip{margin-top:.2rem}
+  .page-explore-guernsey .section-builder-card-grid-icons{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+
+@media(max-width:63.99rem){
+  body:not(.page-home) .site-footer .footer-grid{grid-template-areas:'brand brand' 'visit contact' 'explore explore'!important;grid-template-columns:1fr 1fr!important}
+}
+
+@media(max-width:47.99rem){
+  .page-intro-with-media{min-height:30rem!important}
+  .page-intro-content{padding:3rem 0!important}
+  .page-home .home-hero-copy{margin-left:0;transform:none}
+  .page-home .home-hero-image img,.page-home .home-hero-image video{object-position:62% 60%!important}
+  .page-home .home-sections .cottage-card .card-image{aspect-ratio:4/3!important}
+  .page-cottages .cottage-comparison-notes p{grid-template-columns:1fr!important;gap:.15rem}
+  .page-cottages .cottage-comparison-notes strong,.page-cottages .cottage-comparison-notes span{grid-column:1}
+  .page-cottages-geranium .cottage-editorial-copy,.page-cottages-honeysuckle .cottage-editorial-copy{margin-left:0}
+  .page-cottages-geranium .cottage-story-media,.page-cottages-honeysuckle .cottage-story-media{min-height:21rem}
+  .page-cottages-geranium .cottage-location-grid,.page-cottages-honeysuckle .cottage-location-grid{grid-template-columns:1fr!important}
+  .page-gardens .garden-main-image{min-height:24rem!important}
+  .page-gardens .garden-area-card:not(.has-image)::before{min-height:10rem}
+  .page-explore-guernsey .map-card,.page-contact .map-card{grid-template-columns:1fr!important}
+  body:not(.page-home) .site-footer .footer-grid{grid-template-areas:'brand' 'visit' 'contact' 'explore'!important;grid-template-columns:1fr!important}
+}

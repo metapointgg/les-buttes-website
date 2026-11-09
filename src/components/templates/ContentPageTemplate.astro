@@ -1,0 +1,55 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageIntro from '../PageIntro.astro';
+import PageSections from '../PageSections.astro';
+import CharitySections from '../CharitySections.astro';
+
+interface Props { pageData:any }
+const {pageData:p}=Astro.props;
+const hasHero=Boolean(p.heroImage||p.heroVideo);
+const isCharitiesPage=p.slug==='our-charities';
+const charityRemainingSections=isCharitiesPage?(p.sections??[]):[];
+const faqItems=(p.sections??[])
+  .filter((section:any)=>section.enabled!==false&&section.type==='cards'&&/frequently asked questions/i.test(section.title??''))
+  .flatMap((section:any)=>section.items??[])
+  .filter((item:any)=>item.title&&item.text);
+const faqJsonLd=faqItems.length?{
+  '@context':'https://schema.org',
+  '@type':'FAQPage',
+  mainEntity:faqItems.map((item:any)=>({
+    '@type':'Question',
+    name:item.title,
+    acceptedAnswer:{'@type':'Answer',text:item.text}
+  }))
+}:undefined;
+---
+<BaseLayout title={p.seo.title} description={p.seo.description} jsonLd={faqJsonLd}>
+  {hasHero ? (
+    <PageIntro
+      eyebrow={p.eyebrow}
+      title={p.title}
+      intro={p.intro}
+      mediaType={p.heroMediaType}
+      imageSrc={p.heroImage}
+      imageAlt={p.heroAlt}
+      pan={p.heroPan}
+      videoSrc={p.heroVideo}
+      posterSrc={p.heroPoster}
+    >
+      {(p.heroPrimaryLabel && p.heroPrimaryUrl) || (p.heroSecondaryLabel && p.heroSecondaryUrl) ? (
+        <div class="hero-actions page-intro-actions">
+          {p.heroPrimaryLabel && p.heroPrimaryUrl && <a class="button button-light" href={p.heroPrimaryUrl}>{p.heroPrimaryLabel}</a>}
+          {p.heroSecondaryLabel && p.heroSecondaryUrl && <a class="button button-outline" href={p.heroSecondaryUrl}>{p.heroSecondaryLabel}</a>}
+        </div>
+      ) : null}
+    </PageIntro>
+  ) : (
+    <div class="wrap"><PageIntro eyebrow={p.eyebrow} title={p.title} intro={p.intro}/></div>
+  )}
+  {isCharitiesPage ? (
+    <>
+      <CharitySections/>
+      <PageSections sections={charityRemainingSections}/>
+    </>
+  ) : <PageSections sections={p.sections}/>} 
+</BaseLayout>

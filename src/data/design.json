@@ -1,0 +1,28 @@
+{
+  "typography": {
+    "bodyFont": "systemSans",
+    "headingFont": "heritageSerif",
+    "bodySize": 16,
+    "bodyLineHeight": 1.7,
+    "headingLineHeight": 1.08,
+    "pageTitleMin": 40,
+    "pageTitleMax": 83,
+    "homeTitleMin": 54,
+    "homeTitleMax": 99,
+    "sectionTitleMin": 32,
+    "sectionTitleMax": 54,
+    "subheadingMin": 21,
+    "subheadingMax": 27,
+    "cottageTitleMin": 32,
+    "cottageTitleMax": 43,
+    "leadMin": 18,
+    "leadMax": 21,
+    "proseSize": 17,
+    "smallCardHeadingSize": 17,
+    "eyebrowSize": 12.5,
+    "buttonSize": 14.5,
+    "smallTextSize": 13.5,
+    "quoteMin": 29,
+    "quoteMax": 51
+  }
+}

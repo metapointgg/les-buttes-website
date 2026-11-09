@@ -1,0 +1,143 @@
+---
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ResponsiveImage from '../../components/ResponsiveImage.astro';
+import Icon from '../../components/Icon.astro';
+
+const page=await getEntry('subpages','gardens');
+if(!page) throw new Error('Missing gardens content');
+const sections:any[]=page.data.sections??[];
+const mainGarden:any=sections.find(section=>section.type==='feature'&&section.enabled!==false);
+const gardenAreas:any=sections.find(section=>section.type==='cards'&&section.enabled!==false);
+const orchard:any=sections.find(section=>section.type==='list'&&section.enabled!==false);
+const valley:any=sections.find(section=>section.type==='text'&&section.enabled!==false);
+const paragraphs=(text?:string)=>text?.split(/\n\s*\n/).filter(Boolean)??[];
+const heroImage=page.data.heroImage??'/src/assets/images/main-garden.jpg';
+
+const existingAreas=(gardenAreas?.items??[]).map((item:any,index:number)=>({
+  ...item,
+  image:item.image??(index===0?'/src/assets/images/main-garden.png':'/src/assets/images/garden-seating.png')
+}));
+const gardenCards=[
+  ...existingAreas.slice(0,2),
+  orchard&&{
+    title:'Orchard',
+    text:orchard.text,
+    image:'/src/assets/images/cottages/geranium/garden.jpg',
+    imageAlt:'Mature planting and flowers in the gardens at Les Buttes'
+  },
+  valley&&{
+    title:'The Valley',
+    text:paragraphs(valley.text)[0]?.split('. ')[0]+'.',
+    image:'/src/assets/images/cottages/honeysuckle/garden.jpg',
+    imageAlt:'A green garden view within the Les Buttes grounds'
+  }
+].filter(Boolean);
+---
+<BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
+  <header class="gardens-reference-hero">
+    <div class="gardens-reference-hero-media">
+      <ResponsiveImage src={heroImage} alt={page.data.heroAlt??''} widths={[640,960,1280,1600,1920]} sizes="100vw" loading="eager" fetchpriority="high"/>
+    </div>
+    <div class="gardens-reference-hero-overlay" aria-hidden="true"></div>
+    <div class="wrap gardens-reference-hero-copy">
+      <h1>{page.data.title}</h1>
+      <p>{page.data.intro}</p>
+    </div>
+  </header>
+
+  {mainGarden&&<section class="gardens-reference-main">
+    <div class="wrap gardens-reference-main-grid">
+      <div class="gardens-reference-main-copy">
+        <h2>{mainGarden.eyebrow??mainGarden.title}</h2>
+        {paragraphs(mainGarden.text).map(text=><p>{text}</p>)}
+      </div>
+      {mainGarden.image&&<figure class="gardens-reference-main-image">
+        <ResponsiveImage src={mainGarden.image} alt={mainGarden.imageAlt??''} widths={[640,960,1280]} sizes="(max-width:760px) 100vw, 58vw"/>
+      </figure>}
+    </div>
+  </section>}
+
+  {gardenAreas&&<section class="gardens-reference-discover">
+    <div class="wrap gardens-reference-discover-inner">
+      <div class="gardens-reference-discover-lead">
+        <div class="gardens-reference-discover-copy">
+          <h2>{gardenAreas.title}</h2>
+          {gardenAreas.text&&<p>{gardenAreas.text}</p>}
+        </div>
+        <figure class="gardens-reference-discover-image">
+          <ResponsiveImage src="/src/assets/images/main-garden.png" alt="A leafy view across the gardens at Les Buttes" widths={[640,960,1280]} sizes="(max-width:760px) 100vw, 58vw"/>
+        </figure>
+      </div>
+
+      <div class="gardens-reference-card-grid">
+        {gardenCards.map((item:any)=><article class="gardens-reference-card">
+          <div class="gardens-reference-card-image">
+            <ResponsiveImage src={item.image} alt={item.imageAlt??''} widths={[480,720,960]} sizes="(max-width:760px) 100vw, 50vw"/>
+          </div>
+          <div class="gardens-reference-card-copy">
+            <div>
+              <h3>{item.title}</h3>
+              {item.text&&<p>{item.text}</p>}
+            </div>
+            <span class="gardens-reference-card-arrow" aria-hidden="true"><Icon name="arrow" size={18}/></span>
+          </div>
+        </article>)}
+      </div>
+    </div>
+  </section>}
+</BaseLayout>
+
+<style>
+.gardens-reference-hero{position:relative;isolation:isolate;min-height:clamp(25rem,46vw,38rem);overflow:hidden;color:#fff;background:var(--deep)}
+.gardens-reference-hero-media{position:absolute;inset:0;z-index:-2}
+.gardens-reference-hero-media :global(picture),.gardens-reference-hero-media :global(img){width:100%;height:100%}
+.gardens-reference-hero-media :global(img){object-fit:cover;object-position:50% 58%}
+.gardens-reference-hero-overlay{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(5,25,20,.63) 0%,rgba(7,31,24,.38) 48%,rgba(7,31,24,.08) 78%)}
+.gardens-reference-hero-copy{display:flex;min-height:inherit;flex-direction:column;justify-content:center;align-items:flex-start;padding-block:clamp(4rem,8vw,7rem)}
+.gardens-reference-hero-copy h1{max-width:10.5ch;margin:0 0 1rem;color:#fff;font:500 clamp(3.2rem,6.4vw,6.6rem)/.98 var(--display);letter-spacing:-.025em}
+.gardens-reference-hero-copy p{max-width:48rem;margin:0;color:#ffffffe8;font-size:clamp(1rem,1.5vw,1.28rem);line-height:1.55}
+
+.gardens-reference-main{padding:clamp(3.5rem,7vw,6.2rem) 0;background:var(--paper)}
+.gardens-reference-main-grid{display:grid;gap:clamp(2rem,5vw,5.5rem);align-items:center;max-width:78rem}
+.gardens-reference-main-copy h2,.gardens-reference-discover-copy h2{margin:0 0 .9rem;font:500 clamp(2.25rem,4.2vw,4.4rem)/1.02 var(--display);letter-spacing:-.02em}
+.gardens-reference-main-copy p,.gardens-reference-discover-copy p{max-width:34rem;margin:0;color:var(--soft);font-size:1rem;line-height:1.62}
+.gardens-reference-main-image{overflow:hidden;margin:0;border-radius:.35rem;aspect-ratio:16/10;background:var(--pale)}
+.gardens-reference-main-image :global(picture),.gardens-reference-main-image :global(img){width:100%;height:100%}
+.gardens-reference-main-image :global(img){object-fit:cover;object-position:50% 54%}
+
+.gardens-reference-discover{padding:clamp(3.2rem,6vw,5.6rem) 0 clamp(4.2rem,7vw,6.5rem);background:var(--cream)}
+.gardens-reference-discover-inner{max-width:78rem}
+.gardens-reference-discover-lead{display:grid;gap:clamp(1.6rem,4vw,4rem);align-items:center;margin-bottom:clamp(1.7rem,3vw,2.8rem)}
+.gardens-reference-discover-copy h2{max-width:12ch}
+.gardens-reference-discover-image{overflow:hidden;margin:0;border-radius:.32rem;aspect-ratio:16/7;background:var(--pale)}
+.gardens-reference-discover-image :global(picture),.gardens-reference-discover-image :global(img){width:100%;height:100%}
+.gardens-reference-discover-image :global(img){object-fit:cover;object-position:50% 54%}
+
+.gardens-reference-card-grid{display:grid;gap:clamp(.85rem,1.8vw,1.25rem)}
+.gardens-reference-card{overflow:hidden;background:var(--paper);border:1px solid var(--line);border-radius:.25rem}
+.gardens-reference-card-image{overflow:hidden;aspect-ratio:16/8.8;background:var(--pale)}
+.gardens-reference-card-image :global(picture),.gardens-reference-card-image :global(img){width:100%;height:100%}
+.gardens-reference-card-image :global(img){object-fit:cover;object-position:center}
+.gardens-reference-card-copy{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:end;padding:1rem 1.1rem 1.1rem}
+.gardens-reference-card-copy h3{margin:0 0 .28rem;font:500 clamp(1.35rem,2.3vw,1.85rem)/1.08 var(--display)}
+.gardens-reference-card-copy p{display:-webkit-box;overflow:hidden;margin:0;color:var(--soft);font-size:.87rem;line-height:1.42;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.gardens-reference-card-arrow{display:grid;width:2rem;height:2rem;place-items:center;color:var(--green)}
+
+@media(min-width:48rem){
+  .gardens-reference-main-grid{grid-template-columns:minmax(18rem,.72fr) minmax(0,1.28fr)}
+  .gardens-reference-discover-lead{grid-template-columns:minmax(18rem,.72fr) minmax(0,1.28fr)}
+  .gardens-reference-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:47.99rem){
+  .gardens-reference-hero{min-height:29rem}
+  .gardens-reference-hero-media :global(img){object-position:54% 55%}
+  .gardens-reference-hero-overlay{background:linear-gradient(90deg,rgba(5,25,20,.68),rgba(7,31,24,.32) 72%,rgba(7,31,24,.12))}
+  .gardens-reference-hero-copy{justify-content:flex-end;padding-bottom:3.2rem}
+  .gardens-reference-hero-copy h1{font-size:clamp(3rem,12vw,4.7rem)}
+  .gardens-reference-main,.gardens-reference-discover{padding-block:3rem}
+  .gardens-reference-main-image{aspect-ratio:4/3}
+  .gardens-reference-discover-image{aspect-ratio:16/9}
+  .gardens-reference-card-image{aspect-ratio:16/9}
+}
+</style>

@@ -1,0 +1,813 @@
+media:
+  - name: images
+    label: Website images
+    input: src/assets/images
+    output: /src/assets/images
+    rename: safe
+    categories: [image]
+  - name: videos
+    label: Website videos
+    input: public/videos
+    output: /videos
+    rename: safe
+    categories: [video]
+    extensions: [mp4, webm]
+
+components:
+  seo:
+    type: object
+    label: Search and social sharing
+    fields:
+      - { name: title, label: Page title, type: string, required: true }
+      - { name: titleNl, label: "Page title (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: titleFr, label: "Page title (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: description, label: Search description, type: text, required: true }
+      - { name: descriptionNl, label: "Search description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: descriptionFr, label: "Search description (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: socialTitle, label: Social sharing title, description: Optional. If blank, the page title is used for Facebook, WhatsApp and X., type: string }
+      - { name: socialTitleNl, label: "Social sharing title (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: socialTitleFr, label: "Social sharing title (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: socialDescription, label: Social sharing description, description: Optional. If blank, the search description is used for social previews., type: text }
+      - { name: socialDescriptionNl, label: "Social sharing description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: socialDescriptionFr, label: "Social sharing description (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - name: image
+        label: Social sharing image
+        description: Optional page-specific image for Facebook, WhatsApp and X. If blank, the default Les Buttes farmhouse social image is used.
+        type: image
+        options: { media: images }
+      - { name: imageAlt, label: Social image description, description: Optional accessible description for the social sharing image., type: text }
+      - { name: imageAltNl, label: "Social image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: imageAltFr, label: "Social image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+
+  pageSections:
+    type: object
+    label: Page sections
+    description: Edit the sections used by each page. The website templates control their final layout and styling.
+    list: { collapsible: { collapsed: true, summary: "{title}" } }
+    fields:
+      - { name: enabled, label: Show section, type: boolean, default: true }
+      - name: type
+        label: Section type
+        type: select
+        required: true
+        options:
+          values:
+            - { value: text, label: Text }
+            - { value: feature, label: Image and text }
+            - { value: image, label: Single image }
+            - { value: cards, label: Cards }
+            - { value: iconCards, label: Icon cards }
+            - { value: featureStrip, label: Feature strip }
+            - { value: splitQuote, label: Split text and quote }
+            - { value: cottageListing, label: Available cottage listing }
+            - { value: list, label: List }
+            - { value: gallery, label: Image gallery }
+            - { value: quote, label: Quote / photographic testimonial }
+            - { value: notice, label: Notice / information box }
+            - { value: steps, label: Numbered steps }
+            - { value: locationMap, label: Les Buttes location map }
+            - { value: cta, label: Call to action }
+            - { value: map, label: Map / large image }
+      - name: theme
+        label: Section background
+        type: select
+        default: auto
+        options:
+          values:
+            - { value: auto, label: Automatic alternating }
+            - { value: cream, label: Cream }
+            - { value: paper, label: White }
+            - { value: green, label: Green }
+      - name: width
+        label: Content width
+        type: select
+        default: standard
+        options:
+          values:
+            - { value: standard, label: Standard }
+            - { value: narrow, label: Narrow }
+            - { value: wide, label: Wide }
+      - { name: eyebrow, label: Small heading / timeline date, description: On the Our Story page this is the date or period shown above each timeline heading., type: string }
+      - { name: eyebrowNl, label: "Small heading / timeline date (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: eyebrowFr, label: "Small heading / timeline date (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: title, label: Section heading, type: string, required: true }
+      - { name: titleNl, label: "Section heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: titleFr, label: "Section heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: text, label: Section text, type: text }
+      - { name: textNl, label: "Section text (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: textFr, label: "Section text (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - name: image
+        label: Section image
+        description: For Quote sections, adding an image creates a full-width photographic testimonial.
+        type: image
+        options: { media: images }
+      - { name: imageAlt, label: Image description, type: text }
+      - { name: imageAltNl, label: "Image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: imageAltFr, label: "Image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: imageCaption, label: Image caption, type: string }
+      - { name: imageCaptionNl, label: "Image caption (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: imageCaptionFr, label: "Image caption (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - name: imagePosition
+        label: Image position
+        type: select
+        default: left
+        options:
+          values:
+            - { value: left, label: Left }
+            - { value: right, label: Right }
+      - name: showCottagePreviewStrip
+        label: Show cottage preview photographs
+        description: Only applies to an Available cottage listing section.
+        type: boolean
+        default: false
+      - name: items
+        label: Cards / icon cards / feature strip / steps
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{title}" } }
+        fields:
+          - { name: kicker, label: Small label / number, type: string }
+          - { name: kickerNl, label: "Small label / number (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: kickerFr, label: "Small label / number (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: title, label: Item heading, type: string, required: true }
+          - { name: titleNl, label: "Item heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: titleFr, label: "Item heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: text, label: Item text, type: text }
+          - { name: textNl, label: "Item text (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: textFr, label: "Item text (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - name: image
+            label: Card image
+            description: Optional image shown above the card text.
+            type: image
+            options: { media: images }
+          - { name: imageAlt, label: Card image description, type: text }
+          - { name: imageAltNl, label: "Card image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: imageAltFr, label: "Card image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - name: icon
+            label: Icon
+            type: select
+            options:
+              values:
+                - { value: beach, label: Beach }
+                - { value: walk, label: Walking }
+                - { value: guernsey, label: Guernsey }
+                - { value: history, label: History }
+                - { value: heart, label: Heart }
+                - { value: islands, label: Islands }
+                - { value: food, label: Food }
+                - { value: pin, label: Location }
+                - { value: bed, label: Bed }
+                - { value: bath, label: Bathroom }
+                - { value: guests, label: Guests }
+                - { value: kitchen, label: Kitchen }
+                - { value: living, label: Living space }
+                - { value: garden, label: Garden }
+                - { value: wifi, label: Wi-Fi }
+                - { value: phone, label: Phone }
+                - { value: mail, label: Email }
+                - { value: external, label: External link }
+                - { value: arrow, label: Arrow }
+          - { name: linkLabel, label: Link label, type: string }
+          - { name: linkLabelNl, label: "Link label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: linkLabelFr, label: "Link label (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: linkUrl, label: Link URL, type: string }
+          - { name: external, label: Open link in new tab, type: boolean, default: false }
+      - { name: listItems, label: List items, type: string, list: true }
+      - name: galleryImages
+        label: Gallery images
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{caption}" } }
+        fields:
+          - name: image
+            label: Image
+            type: image
+            required: true
+            options: { media: images }
+          - { name: alt, label: Image description, type: text }
+          - { name: altNl, label: "Image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: altFr, label: "Image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - { name: caption, label: Caption, type: string }
+          - { name: captionNl, label: "Caption (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: captionFr, label: "Caption (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - name: category
+            label: Gallery category
+            type: select
+            options:
+              values:
+                - { value: cottages, label: Cottages }
+                - { value: interiors, label: Interiors }
+                - { value: gardens, label: Gardens }
+                - { value: guernsey, label: Guernsey }
+      - { name: quote, label: Quotation, type: text }
+      - { name: quoteNl, label: "Quotation (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: quoteFr, label: "Quotation (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: attribution, label: Quote attribution / supporting note, type: string }
+      - { name: attributionNl, label: "Quote attribution / supporting note (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: attributionFr, label: "Quote attribution / supporting note (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: buttonLabel, label: Button label, type: string }
+      - { name: buttonLabelNl, label: "Button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: buttonLabelFr, label: "Button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: buttonUrl, label: Button URL, type: string }
+      - { name: buttonExternal, label: Open button in new tab, type: boolean, default: false }
+      - { name: secondaryButtonLabel, label: Secondary button label, type: string }
+      - { name: secondaryButtonLabelNl, label: "Secondary button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: secondaryButtonLabelFr, label: "Secondary button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: secondaryButtonUrl, label: Secondary button URL, type: string }
+      - { name: secondaryButtonExternal, label: Open secondary button in new tab, type: boolean, default: false }
+
+  cottageSections:
+    type: object
+    label: Cottage page sections
+    description: Add, remove and reorder the main content sections on the cottage page. Each section has text on the left and one to four images in a grid on the right.
+    list:
+      collapsible:
+        collapsed: true
+        summary: "{title}"
+    fields:
+      - { name: title, label: Title, type: string, required: true }
+      - { name: titleNl, label: "Title (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: titleFr, label: "Title (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: description, label: Description, type: text, required: true }
+      - { name: descriptionNl, label: "Description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: descriptionFr, label: "Description (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - name: images
+        label: Images
+        description: Add between one and four images. One image is shown large; multiple images are arranged as a grid.
+        type: object
+        list:
+          min: 1
+          max: 4
+          collapsible:
+            collapsed: true
+            summary: "{caption}"
+        fields:
+          - { name: image, label: Image, type: image, required: true, options: { media: images } }
+          - { name: alt, label: Image description, type: text, required: true }
+          - { name: altNl, label: "Image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: altFr, label: "Image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - { name: caption, label: Optional caption, type: string }
+          - { name: captionNl, label: "Optional caption (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: captionFr, label: "Optional caption (French)", type: string, description: "Optional French translation. English is used if empty." }
+
+  reviewList:
+    type: object
+    label: Guest reviews
+    description: Add, remove and reorder guest reviews. Up to three reviews are shown at once on larger screens; additional reviews can be browsed in the carousel.
+    list:
+      collapsible:
+        collapsed: true
+        summary: "{userDetails}"
+    fields:
+      - { name: stars, label: Number of stars, type: number, required: true, default: 5 }
+      - { name: comment, label: Review comment, type: text, required: true }
+      - { name: commentNl, label: "Review comment (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: commentFr, label: "Review comment (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: userDetails, label: Guest details, description: For example Debbie, Airbnb guest., type: string, required: true }
+      - { name: userDetailsNl, label: "Guest details (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: userDetailsFr, label: "Guest details (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: sourceUrl, label: Reviews page link, description: Link to the relevant Airbnb reviews page., type: string }
+      - { name: sourceLabel, label: Link text, type: string, default: Read reviews on Airbnb }
+      - { name: sourceLabelNl, label: "Link text (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: sourceLabelFr, label: "Link text (French)", type: string, description: "Optional French translation. English is used if empty." }
+
+content:
+  - name: cottages
+    label: Cottages
+    type: collection
+    path: src/content/cottages
+    format: yaml-frontmatter
+    filename: "{primary}.md"
+    view: { primary: name, fields: [name, available, sleeps], sort: [name] }
+    fields:
+      - { name: name, label: Cottage name, type: string, required: true }
+      - { name: slug, label: Web address, type: string, required: true, pattern: "^[a-z0-9-]+$" }
+      - name: available
+        label: Available on website
+        description: Turn this on to show the cottage in listings, its cottage page and the sitemap.
+        type: boolean
+        default: true
+        required: true
+      - { name: tagline, label: Short description, type: string, required: true }
+      - { name: taglineNl, label: "Short description (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: taglineFr, label: "Short description (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: summary, label: Cottage summary, type: text, required: true }
+      - { name: summaryNl, label: "Cottage summary (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: summaryFr, label: "Cottage summary (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: sleeps, label: Guests, type: number, required: true }
+      - { name: bedrooms, label: Bedrooms, type: number, required: true }
+      - { name: beds, label: Beds, type: number, required: true }
+      - { name: bathrooms, label: Bathrooms, type: number, required: true }
+      - { name: season, label: Visitor season, description: Short operating season shown as a property fact., type: string }
+      - { name: seasonNl, label: "Visitor season (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: seasonFr, label: "Visitor season (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: dogFriendly, label: Dog friendly, type: boolean, required: true }
+      - { name: airbnbUrl, label: Airbnb booking link, type: string }
+      - name: heroMediaType
+        label: Main media type
+        description: Choose a photograph or an autoplaying silent video for the cottage hero.
+        type: select
+        default: image
+        options:
+          values:
+            - { value: image, label: Image }
+            - { value: video, label: Video }
+      - name: heroImage
+        label: Main image
+        description: Used as the main image and as the fallback when video is selected.
+        type: image
+        required: true
+        options: { media: images }
+      - { name: heroAlt, label: Main image description, type: text, required: true }
+      - { name: heroAltNl, label: "Main image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: heroAltFr, label: "Main image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: heroPan, label: Pan main image, description: Adds subtle lateral movement when the main media type is Image., type: boolean, default: false }
+      - name: heroVideo
+        label: Main video
+        description: Optional MP4 or WebM background video. It plays muted, loops and has no controls.
+        type: file
+        options: { media: videos, categories: [video] }
+      - name: heroPoster
+        label: Video fallback image
+        description: Optional still image shown while video loads and to visitors who prefer reduced motion.
+        type: image
+        options: { media: images }
+      - { name: sections, component: cottageSections }
+      - { name: facilities, label: What is included, type: string, list: true }
+      - { name: reviews, component: reviewList }
+      - { name: reviewAutoRotate, label: Rotate reviews automatically, description: Turn this on to advance the cottage review carousel automatically., type: boolean, default: false }
+      - { name: reviewIntervalSeconds, label: Seconds between reviews, description: Used when automatic rotation is enabled. The website supports values from 2 to 60 seconds., type: number, default: 6.5 }
+      - name: gallery
+        label: View gallery photographs
+        description: Images opened from the View gallery button in the cottage hero.
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{caption}" } }
+        fields:
+          - { name: image, label: Image, type: image, required: true, options: { media: images } }
+          - { name: alt, label: Image description, type: text, required: true }
+          - { name: altNl, label: "Image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: altFr, label: "Image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - { name: caption, label: Caption, type: string, required: true }
+          - { name: captionNl, label: "Caption (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: captionFr, label: "Caption (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: seo, component: seo }
+
+  - name: pages
+    label: Core pages
+    type: collection
+    path: src/content/pages
+    format: yaml-frontmatter
+    operations: { create: false, delete: false, rename: false }
+    view:
+      primary: seo.title
+      fields: [seo.title, urlStub]
+      sort: [seo.title]
+      search: [seo.title, urlStub, title]
+    fields:
+      - { name: title, label: Main heading, type: string, required: true }
+      - { name: titleNl, label: "Main heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: titleFr, label: "Main heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: urlStub, label: URL, type: string, required: true, readonly: true, pattern: "^/$|^/[a-z0-9-]+/$" }
+      - { name: intro, label: Hero introduction, type: text, required: true }
+      - { name: introNl, label: "Hero introduction (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: introFr, label: "Hero introduction (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - name: heroMediaType
+        label: Hero media type
+        description: Choose whether the page hero uses an image or a silent looping video.
+        type: select
+        default: image
+        options:
+          values:
+            - { value: image, label: Image }
+            - { value: video, label: Video }
+      - { name: heroImage, label: Hero image, type: image, options: { media: images } }
+      - { name: heroAlt, label: Hero image description, type: text }
+      - { name: heroAltNl, label: "Hero image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: heroAltFr, label: "Hero image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: heroPan, label: Pan hero image, type: boolean, default: false }
+      - { name: heroVideo, label: Hero video, description: Optional MP4 or WebM. It autoplays muted and loops., type: file, options: { media: videos, categories: [video] } }
+      - { name: heroPoster, label: Video fallback image, type: image, options: { media: images } }
+      - { name: heroPrimaryLabel, label: Hero primary button label, type: string }
+      - { name: heroPrimaryLabelNl, label: "Hero primary button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: heroPrimaryLabelFr, label: "Hero primary button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: heroPrimaryUrl, label: Hero primary button URL, type: string }
+      - { name: heroSecondaryLabel, label: Hero secondary button label, type: string }
+      - { name: heroSecondaryLabelNl, label: "Hero secondary button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: heroSecondaryLabelFr, label: "Hero secondary button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: heroSecondaryUrl, label: Hero secondary button URL, type: string }
+      - { name: sections, component: pageSections }
+      - { name: reviews, component: reviewList }
+      - { name: reviewAutoRotate, label: Rotate reviews automatically, description: Turn this on to advance the homepage review carousel automatically., type: boolean, default: true }
+      - { name: reviewIntervalSeconds, label: Seconds between reviews, description: Used when automatic rotation is enabled. The website supports values from 2 to 60 seconds., type: number, default: 6.5 }
+      - { name: seo, component: seo }
+
+  - name: subpages
+    label: Additional pages
+    type: collection
+    path: src/content/subpages
+    format: yaml-frontmatter
+    filename: "{primary}.md"
+    view:
+      primary: title
+      fields: [seo.title, slug, published]
+      sort: [title]
+      search: [title, slug, seo.title]
+    fields:
+      - { name: title, label: Main heading, type: string, required: true }
+      - { name: titleNl, label: "Main heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: titleFr, label: "Main heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: slug, label: URL slug, description: The page address without slashes, for example gardens creates /gardens/., type: string, required: true, pattern: "^[a-z0-9-]+$" }
+      - { name: published, label: Published on website, description: Turn this off to remove the page from the public website and sitemap., type: boolean, default: true, required: true }
+      - { name: showInNavigation, label: Show in main navigation, type: boolean, default: false }
+      - { name: navigationLabel, label: Navigation label, description: Optional shorter label for the main menu. If blank, the main heading is used., type: string }
+      - { name: navigationLabelNl, label: "Navigation label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: navigationLabelFr, label: "Navigation label (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: navigationOrder, label: Navigation order, description: Lower numbers appear earlier in the menu., type: number }
+      - { name: intro, label: Hero introduction, type: text, required: true }
+      - { name: introNl, label: "Hero introduction (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: introFr, label: "Hero introduction (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - name: heroMediaType
+        label: Hero media type
+        type: select
+        default: image
+        options:
+          values:
+            - { value: image, label: Image }
+            - { value: video, label: Video }
+      - { name: heroImage, label: Hero image, type: image, options: { media: images } }
+      - { name: heroAlt, label: Hero image description, type: text }
+      - { name: heroAltNl, label: "Hero image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: heroAltFr, label: "Hero image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: heroPan, label: Pan hero image, type: boolean, default: false }
+      - { name: heroVideo, label: Hero video, type: file, options: { media: videos, categories: [video] } }
+      - { name: heroPoster, label: Video fallback image, type: image, options: { media: images } }
+      - { name: heroPrimaryLabel, label: Hero primary button label, type: string }
+      - { name: heroPrimaryLabelNl, label: "Hero primary button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: heroPrimaryLabelFr, label: "Hero primary button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: heroPrimaryUrl, label: Hero primary button URL, type: string }
+      - { name: heroSecondaryLabel, label: Hero secondary button label, type: string }
+      - { name: heroSecondaryLabelNl, label: "Hero secondary button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: heroSecondaryLabelFr, label: "Hero secondary button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: heroSecondaryUrl, label: Hero secondary button URL, type: string }
+      - { name: sections, component: pageSections }
+      - { name: seo, component: seo }
+
+  - name: charities
+    label: Our charities
+    type: file
+    path: src/data/charities.json
+    format: json
+    fields:
+      - name: legacy
+        label: Legacy introduction
+        type: object
+        fields:
+          - { name: eyebrow, label: Small heading, type: string, default: Why these causes matter to us }
+          - { name: eyebrowNl, label: "Small heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: eyebrowFr, label: "Small heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: title, label: Main heading, type: string, required: true }
+          - { name: titleNl, label: "Main heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: titleFr, label: "Main heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: intro, label: Short introduction, type: text, required: true }
+          - { name: introNl, label: "Short introduction (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: introFr, label: "Short introduction (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - { name: quote, label: Family quote, type: text, required: true }
+          - { name: quoteNl, label: "Family quote (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: quoteFr, label: "Family quote (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - { name: quoteAttribution, label: Quote attribution, type: string, default: The Les Buttes family }
+      - name: events
+        label: Fundraising events
+        type: object
+        fields:
+          - { name: eyebrow, label: Small heading, type: string, default: Events }
+          - { name: eyebrowNl, label: "Small heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: eyebrowFr, label: "Small heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: title, label: Section heading, type: string, required: true }
+          - { name: titleNl, label: "Section heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: titleFr, label: "Section heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: text, label: Section introduction, type: text }
+          - { name: textNl, label: "Section introduction (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: textFr, label: "Section introduction (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - name: items
+            label: Event cards
+            description: Add, remove and reorder fundraising events.
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{title}" } }
+            fields:
+              - { name: enabled, label: Show event, type: boolean, default: true }
+              - { name: title, label: Event title, type: string, required: true }
+              - { name: titleNl, label: "Event title (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+              - { name: titleFr, label: "Event title (French)", type: string, description: "Optional French translation. English is used if empty." }
+              - { name: summary, label: Card summary, type: text, required: true }
+              - { name: summaryNl, label: "Card summary (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+              - { name: summaryFr, label: "Card summary (French)", type: text, description: "Optional French translation. English is used if empty." }
+              - { name: detailText, label: Pop-up details, type: text, required: true }
+              - { name: detailTextNl, label: "Pop-up details (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+              - { name: detailTextFr, label: "Pop-up details (French)", type: text, description: "Optional French translation. English is used if empty." }
+              - name: image
+                label: Event image
+                type: image
+                options: { media: images }
+              - { name: imageUrl, label: Temporary external image URL, type: string }
+              - { name: imageAlt, label: Image description, type: text }
+              - { name: imageAltNl, label: "Image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+              - { name: imageAltFr, label: "Image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+              - { name: date, label: Event date, type: string }
+              - { name: dateNl, label: "Event date (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+              - { name: dateFr, label: "Event date (French)", type: string, description: "Optional French translation. English is used if empty." }
+              - { name: location, label: Event location, type: string }
+              - { name: locationNl, label: "Event location (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+              - { name: locationFr, label: "Event location (French)", type: string, description: "Optional French translation. English is used if empty." }
+              - { name: actionLabel, label: Primary button label, type: string }
+              - { name: actionLabelNl, label: "Primary button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+              - { name: actionLabelFr, label: "Primary button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+              - { name: actionUrl, label: Primary button URL, type: string }
+              - { name: actionExternal, label: Open primary link in new tab, type: boolean, default: true }
+              - { name: secondaryActionLabel, label: Secondary link label, type: string }
+              - { name: secondaryActionLabelNl, label: "Secondary link label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+              - { name: secondaryActionLabelFr, label: "Secondary link label (French)", type: string, description: "Optional French translation. English is used if empty." }
+              - { name: secondaryActionUrl, label: Secondary link URL, type: string }
+              - { name: secondaryActionExternal, label: Open secondary link in new tab, type: boolean, default: true }
+
+      - name: causes
+        label: Causes we support
+        type: object
+        fields:
+          - { name: eyebrow, label: Small heading, type: string, default: Causes }
+          - { name: eyebrowNl, label: "Small heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: eyebrowFr, label: "Small heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: title, label: Section heading, type: string, required: true }
+          - { name: titleNl, label: "Section heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: titleFr, label: "Section heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: text, label: Section introduction, type: text }
+          - { name: textNl, label: "Section introduction (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: textFr, label: "Section introduction (French)", type: text, description: "Optional French translation. English is used if empty." }
+          - name: items
+            label: Charity cards
+            description: Add, remove, reorder or amend the charities shown in Causes we support.
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{title}" } }
+            fields:
+              - { name: enabled, label: Show charity, type: boolean, default: true }
+              - { name: title, label: Charity name, type: string, required: true }
+              - { name: titleNl, label: "Charity name (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+              - { name: titleFr, label: "Charity name (French)", type: string, description: "Optional French translation. English is used if empty." }
+              - { name: summary, label: Card summary, description: Short text shown on the card before the pop-up opens., type: text, required: true }
+              - { name: summaryNl, label: "Card summary (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+              - { name: summaryFr, label: "Card summary (French)", type: text, description: "Optional French translation. English is used if empty." }
+              - { name: tagline, label: Pop-up strapline, type: text }
+              - { name: taglineNl, label: "Pop-up strapline (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+              - { name: taglineFr, label: "Pop-up strapline (French)", type: text, description: "Optional French translation. English is used if empty." }
+              - name: image
+                label: Card / pop-up image
+                description: Preferred image. This takes priority over the temporary external image URL.
+                type: image
+                options: { media: images }
+              - { name: imageUrl, label: Temporary external image URL, type: string }
+              - { name: imageAlt, label: Image description, type: text }
+              - { name: imageAltNl, label: "Image description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+              - { name: imageAltFr, label: "Image description (French)", type: text, description: "Optional French translation. English is used if empty." }
+              - name: logo
+                label: Charity logo
+                description: Optional authorised logo file.
+                type: image
+                options: { media: images }
+              - { name: logoUrl, label: Temporary external logo URL, type: string }
+              - { name: logoAlt, label: Logo description, type: text }
+              - { name: logoAltNl, label: "Logo description (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+              - { name: logoAltFr, label: "Logo description (French)", type: text, description: "Optional French translation. English is used if empty." }
+              - name: detailSections
+                label: Pop-up sections
+                description: Add, remove or reorder the Who / Why / How sections shown in the charity pop-up.
+                type: object
+                list: { collapsible: { collapsed: true, summary: "{heading}" } }
+                fields:
+                  - { name: heading, label: Section heading, type: string, required: true }
+                  - { name: headingNl, label: "Section heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+                  - { name: headingFr, label: "Section heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+                  - { name: text, label: Section text, type: text, required: true }
+                  - { name: textNl, label: "Section text (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+                  - { name: textFr, label: "Section text (French)", type: text, description: "Optional French translation. English is used if empty." }
+                  - name: icon
+                    label: Icon
+                    type: select
+                    default: guests
+                    options:
+                      values:
+                        - { value: guests, label: People / organisation }
+                        - { value: heart, label: Heart / why it matters }
+                        - { value: garden, label: Garden / how we support }
+                        - { value: history, label: Heritage / history }
+                        - { value: pin, label: Location }
+              - { name: actionLabel, label: Primary button label, type: string }
+              - { name: actionLabelNl, label: "Primary button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+              - { name: actionLabelFr, label: "Primary button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+              - { name: actionUrl, label: Primary button URL, type: string }
+              - { name: actionExternal, label: Open primary link in new tab, type: boolean, default: true }
+              - { name: secondaryActionLabel, label: Secondary link label, type: string }
+              - { name: secondaryActionLabelNl, label: "Secondary link label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+              - { name: secondaryActionLabelFr, label: "Secondary link label (French)", type: string, description: "Optional French translation. English is used if empty." }
+              - { name: secondaryActionUrl, label: Secondary link URL, type: string }
+              - { name: secondaryActionExternal, label: Open secondary link in new tab, type: boolean, default: true }
+
+  - name: footer
+    label: Footer
+    type: file
+    path: src/data/footer.json
+    format: json
+    fields:
+      - name: intro
+        label: Brand message
+        type: object
+        fields:
+          - { name: enabled, label: Show brand message, type: boolean, default: true }
+          - { name: label, label: Small heading, type: string }
+          - { name: labelNl, label: "Small heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: labelFr, label: "Small heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: heading, label: Main heading, type: string }
+          - { name: headingNl, label: "Main heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: headingFr, label: "Main heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: text, label: Supporting text, type: text }
+          - { name: textNl, label: "Supporting text (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+          - { name: textFr, label: "Supporting text (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - name: logo
+        label: Footer logo
+        type: object
+        fields:
+          - { name: enabled, label: Show logo, type: boolean, default: true }
+          - { name: image, label: Logo image, type: image, options: { media: images } }
+          - { name: alt, label: Logo description, type: string }
+          - { name: altNl, label: "Logo description (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: altFr, label: "Logo description (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - name: columns
+        label: Footer columns
+        description: Add, remove or reorder footer columns and the items within them.
+        type: object
+        list: { collapsible: { collapsed: true, summary: "{title}" } }
+        fields:
+          - { name: title, label: Column heading, type: string, required: true }
+          - { name: titleNl, label: "Column heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: titleFr, label: "Column heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - name: items
+            label: Items
+            type: object
+            list: { collapsible: { collapsed: true, summary: "{label}" } }
+            fields:
+              - { name: label, label: Text, description: For plain text such as an address, line breaks are preserved., type: text, required: true }
+              - { name: labelNl, label: "Text (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+              - { name: labelFr, label: "Text (French)", type: text, description: "Optional French translation. English is used if empty." }
+              - { name: url, label: Link URL, description: Leave blank to show this as plain text. Internal paths, mailto: and tel: links are supported., type: string }
+              - name: icon
+                label: Icon
+                type: select
+                options:
+                  values:
+                    - { value: pin, label: Location }
+                    - { value: phone, label: Phone }
+                    - { value: mail, label: Email }
+                    - { value: external, label: External link }
+                    - { value: arrow, label: Arrow }
+              - { name: external, label: Open in new tab, type: boolean, default: false }
+      - name: bottom
+        label: Bottom line
+        type: object
+        fields:
+          - { name: copyrightName, label: Copyright name, type: string }
+          - { name: copyrightNameNl, label: "Copyright name (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: copyrightNameFr, label: "Copyright name (French)", type: string, description: "Optional French translation. English is used if empty." }
+          - { name: note, label: Right-hand note, type: string }
+          - { name: noteNl, label: "Right-hand note (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+          - { name: noteFr, label: "Right-hand note (French)", type: string, description: "Optional French translation. English is used if empty." }
+
+  - name: newsletter
+    label: Mailing list
+    type: file
+    path: src/data/newsletter.json
+    format: json
+    fields:
+      - { name: enabled, label: Enable mailing list sign-up, type: boolean, default: true }
+      - { name: ctaHeading, label: Home page heading, type: string, required: true }
+      - { name: ctaHeadingNl, label: "Home page heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: ctaHeadingFr, label: "Home page heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: ctaText, label: Home page text, type: text, required: true }
+      - { name: ctaTextNl, label: "Home page text (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: ctaTextFr, label: "Home page text (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: buttonLabel, label: Sign-up button label, type: string, required: true }
+      - { name: buttonLabelNl, label: "Sign-up button label (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: buttonLabelFr, label: "Sign-up button label (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: modalHeading, label: Pop-up heading, type: string, required: true }
+      - { name: modalHeadingNl, label: "Pop-up heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: modalHeadingFr, label: "Pop-up heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: modalText, label: Pop-up introduction, type: text, required: true }
+      - { name: modalTextNl, label: "Pop-up introduction (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: modalTextFr, label: "Pop-up introduction (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: consentText, label: Consent text, type: text, required: true }
+      - { name: consentTextNl, label: "Consent text (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: consentTextFr, label: "Consent text (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: privacyText, label: Privacy / unsubscribe note, type: text, required: true }
+      - { name: privacyTextNl, label: "Privacy / unsubscribe note (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: privacyTextFr, label: "Privacy / unsubscribe note (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: successHeading, label: Success heading, type: string, required: true }
+      - { name: successHeadingNl, label: "Success heading (Dutch)", type: string, description: "Optional Dutch translation. English is used if empty." }
+      - { name: successHeadingFr, label: "Success heading (French)", type: string, description: "Optional French translation. English is used if empty." }
+      - { name: successText, label: Success message, type: text, required: true }
+      - { name: successTextNl, label: "Success message (Dutch)", type: text, description: "Optional Dutch translation. English is used if empty." }
+      - { name: successTextFr, label: "Success message (French)", type: text, description: "Optional French translation. English is used if empty." }
+      - { name: endpoint, label: Signup API endpoint, description: Technical setting. This is the AWS Lambda Function URL used to store sign-ups., type: string }
+
+  - name: design
+    label: Design settings
+    type: file
+    path: src/data/design.json
+    format: json
+    fields:
+      - name: typography
+        label: Typography
+        description: Global font choices and type sizes used across all page templates. Changes here apply site-wide.
+        type: object
+        fields:
+          - name: bodyFont
+            label: Body font
+            type: select
+            required: true
+            options:
+              values:
+                - { value: systemSans, label: System sans / Inter (current) }
+                - { value: humanistSans, label: Humanist sans / Avenir }
+                - { value: classicSerif, label: Classic serif / Georgia }
+          - name: headingFont
+            label: Heading font
+            type: select
+            required: true
+            options:
+              values:
+                - { value: heritageSerif, label: Heritage serif / Iowan & Baskerville (current) }
+                - { value: georgia, label: Georgia serif }
+                - { value: systemSans, label: System sans / Inter }
+          - { name: bodySize, label: Body text size (px), type: number, required: true, description: Standard paragraph and navigation text. Current value 16. }
+          - { name: bodyLineHeight, label: Body line height, type: number, required: true, description: Current value 1.7. }
+          - { name: headingLineHeight, label: Heading line height, type: number, required: true, description: Current value 1.08. }
+          - { name: pageTitleMin, label: Page title minimum (px), type: number, required: true }
+          - { name: pageTitleMax, label: Page title maximum (px), type: number, required: true }
+          - { name: homeTitleMin, label: Homepage hero title minimum (px), type: number, required: true }
+          - { name: homeTitleMax, label: Homepage hero title maximum (px), type: number, required: true }
+          - { name: sectionTitleMin, label: Section heading minimum (px), type: number, required: true }
+          - { name: sectionTitleMax, label: Section heading maximum (px), type: number, required: true }
+          - { name: subheadingMin, label: Subheading minimum (px), type: number, required: true }
+          - { name: subheadingMax, label: Subheading maximum (px), type: number, required: true }
+          - { name: cottageTitleMin, label: Cottage card title minimum (px), type: number, required: true }
+          - { name: cottageTitleMax, label: Cottage card title maximum (px), type: number, required: true }
+          - { name: leadMin, label: Intro / lead text minimum (px), type: number, required: true }
+          - { name: leadMax, label: Intro / lead text maximum (px), type: number, required: true }
+          - { name: proseSize, label: Long-form text size (px), type: number, required: true }
+          - { name: smallCardHeadingSize, label: Small card heading size (px), type: number, required: true }
+          - { name: buttonSize, label: Button text size (px), type: number, required: true }
+          - { name: smallTextSize, label: Small text / captions size (px), type: number, required: true }
+          - { name: quoteMin, label: Quote minimum (px), type: number, required: true }
+          - { name: quoteMax, label: Quote maximum (px), type: number, required: true }
+
+  - name: site
+    label: Site settings
+    type: file
+    path: src/data/site.json
+    format: json
+    fields:
+      - { name: name, label: Site name, type: string, required: true }
+      - { name: shortName, label: Short site name, type: string, required: true }
+      - { name: url, label: Website URL, type: string, required: true }
+      - { name: email, label: Email, type: string, required: true }
+      - { name: telephoneDisplay, label: Telephone display, type: string, required: true }
+      - { name: telephoneHref, label: Telephone link value, type: string, required: true }
+      - name: analytics
+        label: Analytics
+        type: object
+        fields:
+          - { name: googleAnalyticsId, label: Google Analytics Measurement ID, description: GA4 Measurement ID, for example G-XXXXXXXXXX., type: string, pattern: "^G-[A-Z0-9]+$" }
+      - name: address
+        label: Address
+        type: object
+        fields:
+          - { name: street, label: Street, type: string }
+          - { name: locality, label: Parish / locality, type: string }
+          - { name: island, label: Island, type: string }
+          - { name: postcode, label: Postcode, type: string }
+          - { name: country, label: Country, type: string }
+      - name: coordinates
+        label: Map coordinates
+        type: object
+        fields:
+          - { name: latitude, label: Latitude, type: number }
+          - { name: longitude, label: Longitude, type: number }
+      - name: airbnb
+        label: Airbnb links
+        type: object
+        fields:
+          - { name: geranium, label: Geranium, type: string }
+          - { name: honeysuckle, label: Honeysuckle, type: string }
+
+settings:
+  cache: true
+  commit:
+    templates:
+      create: "content: add {filename}"
+      update: "content: update {filename}"
+      delete: "content: remove {filename}"
+      rename: "content: rename {oldFilename} to {newFilename}"

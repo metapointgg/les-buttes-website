@@ -1,0 +1,45 @@
+# LB-07 — SumUp hosted checkout contract (staging only)
+
+**Status:** Client and mocked tests committed; no provider credentials or real API requests. No checkout is created by an HTTP management route yet.
+
+## Contract
+
+The backend creates `POST https://api.sumup.com/v0.1/checkouts` using a **SumUp sandbox merchant**, a server-held `sup_sk_test_` API key, `checkout_reference` (unique booking/payment-attempt reference, maximum 64 characters), `merchant_code`, `amount` in GBP major units, `currency: GBP`, and `hosted_checkout: {enabled:true}`. The response must match the requested reference, amount, merchant and currency, have status `PENDING`, and provide an HTTPS `checkout.sumup.com` hosted URL. Save the checkout ID and URL against the booking using a conditional transaction *before* sharing it. The client deliberately does not perform that write or mark a booking paid.
+
+The Hosted Checkout session is available for about **30 minutes**; the booking hold is a separate lifecycle and must not be inferred from checkout expiry. Creation alone does not charge a card. SumUp checkout creation may return HTTP 409 for duplicate references; reconcile by querying the provider rather than issuing a fresh untracked checkout.
+
+## Secrets and environment separation
+
+Create a sandbox merchant and API key in the SumUp developer dashboard. Store the key in a dedicated AWS SSM SecureString or Secrets Manager secret, never CloudFormation plaintext, frontend code, logs, or the repository. Scope IAM to the one staging secret, with KMS decrypt where necessary. No production credentials, live merchant, or automatic activation. `createSumUpClient` requires an explicit enabled flag and a sandbox key prefix.
+
+## Reconciliation boundary (LB-08)
+
+On webhook, redirect, expiry, or retry, retrieve `GET /v0.1/checkouts/{checkout_id}` from SumUp. Verify checkout ID, reference, merchant, GBP amount, booking identity and successful status, and check successful transaction evidence before any booking confirmation. Deduplicate events, handle asynchronous failures, and preserve an audit trail. A browser redirect or webhook payload alone must **never** confirm a booking.
+
+## Prerequisites before enabling checkout creation
+
+- Confirm SumUp sandbox merchant supports hosted checkout for Guernsey and GBP.
+- Configure and test dedicated sandbox API key/merchant and secret access.
+- Implement conditional persistence and duplicate-reference reconciliation before returning the hosted URL.
+- Align owner approval, amount changes and checkout expiry with booking hold policy.
+- Complete LB-08 provider verification and synthetic end-to-end testing before any guest-facing flow.
+
+Source: https://developer.sumup.com/api/checkouts/create/ and https://developer.sumup.com/online-payments/checkouts/hosted-checkout/
+
+## Checkout persistence implementation (1 November)
+
+`sumup-checkout-store.mjs` now uses a two-operation DynamoDB transaction: a condition check on the authoritative booking metadata (approved/awaiting payment and matching amount) and a conditional immutable `PAYMENT#CHECKOUT` record. Reads are strongly consistent. Duplicate attempts can be classified as REGISTERED/CONFLICT/UNREGISTERED. No HTTP route or provider call invokes this yet; the missing orchestration must handle uncertain network responses and query SumUp by checkout reference before any new attempt, to prevent orphaned provider checkouts. The current one-checkout-per-booking key intentionally prevents silent replacement of an existing checkout; renewal requires an explicit policy and implementation.
+
+## Fail-closed orchestration (1 November, subsequent commit)
+
+`sumup-checkout-orchestrator.mjs` derives a deterministic reference, checks the local immutable record, requires an **authoritative provider lookup by checkout reference before creating anything**, reuses a matching pending remote checkout, and stores it atomically. If registration fails, the payment URL is withheld and a reconciliation error is returned. Unit tests cover remote duplicates, unavailable provider, mismatched amounts and storage failure.
+
+**Integration blocker:** `lookupProviderByReference` is an injected interface, not yet implemented against a verified SumUp sandbox API. If SumUp cannot reliably list or retrieve checkouts by reference, the orchestration must not be enabled; use a durable local creation intent and explicit recovery procedure instead. This is not a guarantee of provider idempotency and does not eliminate the narrow race between concurrent initial requests; the production design must add an atomic per-booking creation claim before external checkout creation.
+
+## Durable creation claim (1 November)
+
+`sumup-creation-claim.mjs` now conditionally creates `PAYMENT#CREATION_CLAIM` before any external checkout creation. The claim is deliberately non-expiring: a provider timeout may have created a checkout, so automatic retry is prohibited. The orchestration requires an actor, checks for existing claims, and marks the claim `RECONCILE_REQUIRED` after a provider checkout is observed. On uncertain outcomes, manual reconciliation is required. This closes the basic simultaneous-invocation race but is not yet a complete recovery workflow. No production or staging endpoint invokes it.
+
+## Recovery inspection
+
+`sumup-checkout-recovery.mjs` provides a read-only operator classification: NOT_STARTED, REGISTERED, CLAIM_UNRESOLVED, PROVIDER_FOUND_UNREGISTERED, PROVIDER_CONFLICT or CONFLICT. It never retries checkout creation, alters the claim, marks payment successful, or releases a URL. The provider reference lookup remains an injected interface requiring verification against SumUp before activation. Recovery is deliberately manual until that prerequisite and the checkout state machine are proven.

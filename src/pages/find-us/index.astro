@@ -1,0 +1,6 @@
+---
+import{getEntry}from'astro:content';
+import ContentPageTemplate from'../../components/templates/ContentPageTemplate.astro';
+const page=await getEntry('pages','find-us');if(!page)throw new Error('Missing');
+---
+<ContentPageTemplate pageData={page.data}/>

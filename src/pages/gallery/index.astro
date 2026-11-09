@@ -1,0 +1,136 @@
+---
+import { getEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import ResponsiveImage from '../../components/ResponsiveImage.astro';
+import Callout from '../../components/Callout.astro';
+
+const page=await getEntry('subpages','gallery');
+if(!page) throw new Error('Missing gallery content');
+const gallerySection:any=page.data.sections.find((section:any)=>section.type==='gallery'&&section.enabled!==false);
+const ctaSection:any=page.data.sections.find((section:any)=>section.type==='cta'&&section.enabled!==false);
+const images:any[]=gallerySection?.galleryImages??[];
+const categoryFor=(item:any)=>{
+  const value=`${item.image??''} ${item.caption??''}`.toLowerCase();
+  if(/petit-bot|guernsey coast|island/.test(value)) return 'guernsey';
+  if(/kitchen|sitting|bedroom|bathroom|shower|interior|dining/.test(value)) return 'interiors';
+  if(/garden|main-garden|garden-seating|outdoor/.test(value)) return 'gardens';
+  return 'cottages';
+};
+const categoryLabels:Record<string,string>={cottages:'Cottages',interiors:'Interiors',gardens:'Gardens',guernsey:'Guernsey'};
+const counts=images.reduce((acc:Record<string,number>,item:any)=>{const category=categoryFor(item);acc[category]=(acc[category]??0)+1;return acc;},{});
+const filters=['all',...Object.keys(categoryLabels).filter(category=>(counts[category]??0)>=2)];
+---
+<BaseLayout title={page.data.seo.title} description={page.data.seo.description}>
+  <PageIntro eyebrow={page.data.eyebrow} title={page.data.title} intro={page.data.intro} mediaType={page.data.heroMediaType} imageSrc={page.data.heroImage} imageAlt={page.data.heroAlt} pan={page.data.heroPan} videoSrc={page.data.heroVideo} posterSrc={page.data.heroPoster}/>
+
+  <section class="section paper gallery-page-section">
+    <div class="wrap section-builder-wide">
+      <header class="section-heading gallery-page-heading">
+        {gallerySection?.eyebrow&&<p class="eyebrow">{gallerySection.eyebrow}</p>}
+        <h2>{gallerySection?.title??'Cottages, gardens and island life'}</h2>
+        {gallerySection?.text&&<p class="lede">{gallerySection.text}</p>}
+      </header>
+
+      {filters.length>1&&<div class="gallery-filters" aria-label="Filter gallery">
+        {filters.map(filter=><button type="button" class="gallery-filter" data-gallery-filter={filter} aria-pressed={filter==='all'?'true':'false'}>{filter==='all'?'All':categoryLabels[filter]}</button>)}
+      </div>}
+
+      <div class="editorial-gallery" data-editorial-gallery>
+        {images.map((item:any,index:number)=>{
+          const dialogId=`editorial-gallery-${index}`;
+          const category=categoryFor(item);
+          return <figure class="editorial-gallery-item" data-gallery-category={category}>
+            <button type="button" class="editorial-gallery-trigger" data-gallery-open={dialogId} aria-label={`Open ${item.caption||item.alt||'gallery image'}`}>
+              <ResponsiveImage src={item.image} alt={item.alt??''} widths={[480,768,1100,1440]} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 42vw"/>
+            </button>
+            {item.caption&&<figcaption>{item.caption}</figcaption>}
+            <dialog id={dialogId} class="editorial-lightbox" aria-label={item.caption||item.alt||'Gallery image'}>
+              <div class="editorial-lightbox-frame">
+                <button type="button" class="editorial-lightbox-close" data-gallery-close aria-label="Close image">×</button>
+                <button type="button" class="editorial-lightbox-nav editorial-lightbox-prev" data-gallery-prev aria-label="Previous image">‹</button>
+                <ResponsiveImage src={item.image} alt={item.alt??''} widths={[960,1280,1600,1920]} sizes="94vw"/>
+                <button type="button" class="editorial-lightbox-nav editorial-lightbox-next" data-gallery-next aria-label="Next image">›</button>
+                {item.caption&&<p>{item.caption}</p>}
+              </div>
+            </dialog>
+          </figure>;
+        })}
+      </div>
+    </div>
+  </section>
+
+  {ctaSection&&<Callout title={ctaSection.title} text={ctaSection.text} href={ctaSection.buttonUrl??'/cottages/'} label={ctaSection.buttonLabel??'Explore our cottages'}/>} 
+</BaseLayout>
+
+<script is:inline>
+(() => {
+  const figures=Array.from(document.querySelectorAll('.editorial-gallery-item'));
+  const filterButtons=Array.from(document.querySelectorAll('[data-gallery-filter]'));
+  const visibleFigures=()=>figures.filter(figure=>!figure.hidden);
+  const openDialog=(dialog)=>{if(dialog instanceof HTMLDialogElement&&!dialog.open)dialog.showModal();};
+  const move=(dialog,delta)=>{
+    const figure=dialog.closest('.editorial-gallery-item');
+    const visible=visibleFigures();
+    const index=visible.indexOf(figure);
+    if(index<0||visible.length<2)return;
+    const next=visible[(index+delta+visible.length)%visible.length];
+    const nextDialog=next.querySelector('dialog');
+    dialog.close();
+    openDialog(nextDialog);
+  };
+  filterButtons.forEach(button=>button.addEventListener('click',()=>{
+    const category=button.getAttribute('data-gallery-filter')||'all';
+    figures.forEach(figure=>{figure.hidden=category!=='all'&&figure.getAttribute('data-gallery-category')!==category;});
+    filterButtons.forEach(item=>item.setAttribute('aria-pressed',item===button?'true':'false'));
+  }));
+  document.addEventListener('click',event=>{
+    const target=event.target instanceof Element?event.target:null;
+    const opener=target?.closest('[data-gallery-open]');
+    if(opener){openDialog(document.getElementById(opener.getAttribute('data-gallery-open')));return;}
+    const close=target?.closest('[data-gallery-close]');
+    if(close){const dialog=close.closest('dialog');if(dialog instanceof HTMLDialogElement)dialog.close();return;}
+    const prev=target?.closest('[data-gallery-prev]');
+    if(prev){const dialog=prev.closest('dialog');if(dialog instanceof HTMLDialogElement)move(dialog,-1);return;}
+    const next=target?.closest('[data-gallery-next]');
+    if(next){const dialog=next.closest('dialog');if(dialog instanceof HTMLDialogElement)move(dialog,1);return;}
+    if(target instanceof HTMLDialogElement)target.close();
+  });
+  document.addEventListener('keydown',event=>{
+    const dialog=document.querySelector('.editorial-lightbox[open]');
+    if(!(dialog instanceof HTMLDialogElement))return;
+    if(event.key==='ArrowLeft'){event.preventDefault();move(dialog,-1);}
+    if(event.key==='ArrowRight'){event.preventDefault();move(dialog,1);}
+  });
+  let startX=0;
+  document.addEventListener('touchstart',event=>{const dialog=event.target instanceof Element?event.target.closest('.editorial-lightbox[open]'):null;if(dialog)startX=event.changedTouches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',event=>{const dialog=event.target instanceof Element?event.target.closest('.editorial-lightbox[open]'):null;if(!(dialog instanceof HTMLDialogElement))return;const delta=event.changedTouches[0].clientX-startX;if(Math.abs(delta)>55)move(dialog,delta>0?-1:1);},{passive:true});
+})();
+</script>
+
+<style>
+.gallery-page-heading{max-width:48rem}
+.gallery-filters{display:flex;flex-wrap:wrap;gap:.55rem;margin:0 0 2rem}
+.gallery-filter{padding:.62rem 1rem;color:var(--green);background:transparent;border:1px solid #194c3d42;border-radius:999px;font:700 .88rem var(--body);cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.gallery-filter[aria-pressed="true"]{color:#fff;background:var(--green);border-color:var(--green)}
+.gallery-filter:focus-visible,.editorial-gallery-trigger:focus-visible,.editorial-lightbox button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.editorial-gallery{display:grid;grid-template-columns:1fr;gap:.85rem}
+.editorial-gallery-item{position:relative;overflow:hidden;min-height:18rem;margin:0;background:var(--pale);border-radius:.5rem}
+.editorial-gallery-trigger{display:block;width:100%;height:100%;min-height:18rem;padding:0;border:0;background:transparent;cursor:zoom-in}
+.editorial-gallery-trigger picture,.editorial-gallery-trigger img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .35s ease}
+.editorial-gallery-trigger:hover img{transform:scale(1.018)}
+.editorial-gallery-item figcaption{position:absolute;right:.7rem;bottom:.7rem;left:.7rem;padding:.65rem .75rem;color:#fff;background:linear-gradient(90deg,#061d18c7,#061d1838);border-radius:.3rem;font-size:.82rem;pointer-events:none}
+.editorial-lightbox{width:min(96vw,92rem);max-height:94vh;padding:0;border:0;background:#091712;box-shadow:0 30px 90px #0009}
+.editorial-lightbox::backdrop{background:#07110deb}
+.editorial-lightbox-frame{position:relative;display:grid;place-items:center;min-height:70vh}
+.editorial-lightbox picture,.editorial-lightbox img{display:block;width:100%;max-height:84vh;object-fit:contain}
+.editorial-lightbox p{width:100%;margin:0;padding:.8rem 4rem 1rem;color:#fff;text-align:center}
+.editorial-lightbox-close,.editorial-lightbox-nav{position:absolute;z-index:4;display:grid;place-items:center;color:#fff;background:#0a241dcc;border:1px solid #ffffff73;border-radius:50%;cursor:pointer}
+.editorial-lightbox-close{top:.75rem;right:.75rem;width:2.7rem;height:2.7rem;font-size:1.55rem}
+.editorial-lightbox-nav{top:50%;width:3rem;height:3rem;font-size:2rem;transform:translateY(-50%)}
+.editorial-lightbox-prev{left:.75rem}.editorial-lightbox-next{right:.75rem}
+@media(min-width:42rem){.editorial-gallery{grid-template-columns:repeat(2,1fr)}.editorial-gallery-item:nth-child(5n+1){grid-column:span 2;min-height:27rem}}
+@media(min-width:68rem){.editorial-gallery{grid-template-columns:repeat(12,1fr);grid-auto-rows:11rem}.editorial-gallery-item{min-height:0}.editorial-gallery-item:nth-child(6n+1){grid-column:span 7;grid-row:span 3}.editorial-gallery-item:nth-child(6n+2){grid-column:span 5;grid-row:span 2}.editorial-gallery-item:nth-child(6n+3){grid-column:span 5;grid-row:span 3}.editorial-gallery-item:nth-child(6n+4){grid-column:span 7;grid-row:span 2}.editorial-gallery-item:nth-child(6n+5),.editorial-gallery-item:nth-child(6n+6){grid-column:span 6;grid-row:span 2}.editorial-gallery-trigger{min-height:100%}}
+@media(max-width:40rem){.gallery-filters{overflow-x:auto;flex-wrap:nowrap;padding-bottom:.2rem;scrollbar-width:none}.gallery-filter{flex:0 0 auto}.editorial-lightbox-nav{width:2.6rem;height:2.6rem}.editorial-lightbox p{padding-inline:3rem}}
+@media(prefers-reduced-motion:reduce){.editorial-gallery-trigger img{transition:none}}
+</style>

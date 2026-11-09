@@ -1,0 +1,11 @@
+---
+import {getEntry} from 'astro:content';
+import ContactPage from '../../../components/templates/ContactPage.astro';
+import {localizedText} from '../../../lib/i18n';
+export function getStaticPaths(){return ['nl','fr'].map(lang=>({params:{lang}}));}
+const lang=Astro.params.lang as 'nl'|'fr';
+const entry=await getEntry('pages','contact');
+if(!entry)throw new Error('Missing contact content');
+const pageData=localizedText(entry.data,lang);
+---
+<ContactPage pageData={pageData}/>
