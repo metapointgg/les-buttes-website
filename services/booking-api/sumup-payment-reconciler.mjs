@@ -4,6 +4,7 @@ import {GetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {readRegisteredCheckout} from './sumup-checkout-store.mjs';
 import {verifySumUpPayment} from './sumup-payment-verification.mjs';
 import {preparePaymentConfirmation} from './sumup-payment-confirmation.mjs';
+import {APPROVED_STRICT_SHORT_STAY_POLICY} from './cancellation-policy.mjs';
 
 const BOOKING_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout,merchantCode,
@@ -21,8 +22,10 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
  // Both local records are read consistently; neither webhook nor browser data supplies payment status.
  const booking=(await db.send(new GetCommand({TableName:table,Key:key,ConsistentRead:true}))).Item;
  const registered=await readRegisteredCheckout({db,table,bookingId});
- const cancellationPolicyRecord=(await db.send(new GetCommand({TableName:table,
-  Key:{PK:'CONFIG#cancellation#all',SK:'CURRENT'},ConsistentRead:true}))).Item;
+ const cancellationPolicyRecord=isolatedTable?{PK:'CONFIG#cancellation#all',SK:'CURRENT',
+  version:'ISOLATED_ACCEPTANCE_POLICY_V1',value:APPROVED_STRICT_SHORT_STAY_POLICY}:
+  (await db.send(new GetCommand({TableName:table,
+   Key:{PK:'CONFIG#cancellation#all',SK:'CURRENT'},ConsistentRead:true}))).Item;
  if(!booking||!registered)throw Error('Authoritative booking or checkout missing');
  if(registered.bookingId!==bookingId||registered.currency!=='GBP'||
    registered.status!=='PENDING')throw Error('Registered checkout not eligible');
@@ -46,7 +49,8 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
    affectedNights:booking.units.length*(Date.parse(booking.end)-Date.parse(booking.start))/86400000};
  }
  const calendarChecks=process.env.BOOKING_AIRBNB_REQUIRED==='true'?await requireAirbnbAvailability({db,table,units:booking.units,start:booking.start,end:booking.end,now:nowEpoch}):[];
- const prepared=preparePaymentConfirmation({booking,registered,evidence,cancellationPolicyRecord,nowEpoch});
+ const prepared=preparePaymentConfirmation({booking,registered,evidence,cancellationPolicyRecord,
+  policyConditionRequired:!isolatedTable,nowEpoch});
  const items=prepared.items.map(item=>{
   const kind=Object.keys(item)[0];
   return {[kind]:{...item[kind],TableName:table}};

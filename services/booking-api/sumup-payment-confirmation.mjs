@@ -4,6 +4,7 @@ import {randomUUID} from 'node:crypto';
 import {prepareOwnerTransition} from './booking-admin-transaction-policy.mjs';
 import {validateCancellationPolicy} from './cancellation-policy.mjs';
 export function preparePaymentConfirmation({booking,registered,evidence,cancellationPolicyRecord,
+ policyConditionRequired=true,
  nowEpoch=Math.floor(Date.now()/1000)}={}){
  if(!booking||!registered||!evidence?.verified||evidence.bookingId!==booking.id||
    evidence.checkoutId!==registered.checkoutId||
@@ -42,11 +43,11 @@ export function preparePaymentConfirmation({booking,registered,evidence,cancella
    ExpressionAttributeNames:{'#reference':'reference'},
    ExpressionAttributeValues:{':checkout':registered.checkoutId,':ref':registered.reference,
     ':pence':registered.amountPence,':gbp':'GBP'}}},
-  {ConditionCheck:{Key:{PK:'CONFIG#cancellation#all',SK:'CURRENT'},
-   ConditionExpression:'#version = :version AND #value = :value',
-   ExpressionAttributeNames:{'#version':'version','#value':'value'},
-   ExpressionAttributeValues:{':version':cancellationPolicyRecord.version,':value':cancellationPolicyRecord.value}}}
  ];
+ if(policyConditionRequired)items.push({ConditionCheck:{Key:{PK:'CONFIG#cancellation#all',SK:'CURRENT'},
+  ConditionExpression:'#version = :version AND #value = :value',
+  ExpressionAttributeNames:{'#version':'version','#value':'value'},
+  ExpressionAttributeValues:{':version':cancellationPolicyRecord.version,':value':cancellationPolicyRecord.value}}});
  for(const slot of allocation.slots)items.push({Update:{Key:slot,
   UpdateExpression:'REMOVE expiresAt',
   ConditionExpression:'id = :id AND expiresAt = :expiry AND expiresAt > :now',
