@@ -70,6 +70,7 @@ export function createGuestHandler({db=client,parameterStore=ssm,fetchImpl=globa
    }
    return respond(201,{...result,notificationStatus});
   }catch(error){
+   if(error.message==='Airbnb dates unavailable')return respond(409,{error:'Dates unavailable'});
    if(error.name==='TransactionCanceledException')return respond(409,{error:'Dates unavailable or staging request limit reached'});
    if(error.message==='Verification failed')return respond(403,{error:'Human verification required'});
    if(error.message==='Published quote unavailable')return respond(503,{error:'Published price unavailable'});

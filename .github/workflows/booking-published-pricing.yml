@@ -27,7 +27,7 @@ jobs:
           node-version: 22
       - name: Install pinned booking API dependencies
         working-directory: services/booking-api
-        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check source syntax
         working-directory: services/booking-api
         run: |

@@ -1,3 +1,4 @@
+import {directCalendarPreview} from './direct-calendar-preview.mjs';
 // Staging-only administration Lambda handler. Must be deployed behind API Gateway
 // Cognito JWT authorizer. Do not expose directly or attach unauthenticated routes.
 import {createReadOnlyAdminReader} from './booking-admin-reader.mjs';
@@ -86,7 +87,7 @@ export function stagingAuthDiagnostic(event,{issuer=process.env.MANAGEMENT_COGNI
  };
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
-export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=()=>false,
+export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,writeEnabled=()=>false,
  approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout,reconciliationEnabled=()=>false,reconcilePayment}){
  return async event=>{
    try{
@@ -198,6 +199,12 @@ export function createAdminHandler({reader,writeAction,writeConfig,writeEnabled=
          throw e;
        }
      }
+     const calendarMatch=path.match(/^\/admin\/bookings\/calendar-preview\/(geranium|honeysuckle)$/);
+     if(calendarMatch){
+       if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+       if(process.env.BOOKING_ENVIRONMENT!=='staging'||typeof readCalendar!=='function')return reply(503,{error:'Calendar preview disabled'});
+       return reply(200,await readCalendar(calendarMatch[1]));
+     }
      // Read-only preflight: no state mutation and no payment confirmation.
      // The future write API must use separate routes and IAM permissions.
      const preflight=path.split('/').length===7 && path.startsWith('/admin/bookings/') && path.endsWith('/preflight') ? (()=>{ const parts=path.split('/'); return /^[0-9a-f-]{36}$/i.test(parts[3]) && parts[4]==='actions' && ['approve','decline','cancel'].includes(parts[5]) ? [path,parts[3],parts[5]] : null; })() : null;
@@ -304,7 +311,9 @@ export async function handler(event){
     try{return (await dispatchBookingLifecycleEmail({db,table,bookingId,type,transport:createStagingSesTransport()})).status;}
     catch{console.error('STAGING_LIFECYCLE_NOTIFICATION_RECONCILIATION_REQUIRED',bookingId,type);return 'RECONCILIATION_REQUIRED';}
    };
+   const calendarDb=process.env.BOOKING_ENVIRONMENT==='staging'?DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'})):null;
    deployedHandler=createAdminHandler({
+     readCalendar:calendarDb?unit=>directCalendarPreview({db:calendarDb,table,unit}):undefined,
      reader:createReadOnlyAdminReader({authorise:async request=>identityFromGateway(request)}),
      writeEnabled:()=>staging,
      approvalEnabled:()=>staging&&process.env.MANAGEMENT_APPROVAL_ENABLED==='true',
