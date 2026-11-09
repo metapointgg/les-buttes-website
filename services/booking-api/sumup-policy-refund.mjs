@@ -15,7 +15,9 @@ export async function executePolicyRefund({db,table,bookingId,readProvider,reque
  const booking=await get({PK:'BOOKING#'+bookingId,SK:'META'});
  const checkout=await get({PK:'BOOKING#'+bookingId,SK:'PAYMENT#CHECKOUT'});
  if(booking?.id!==bookingId||booking.synthetic!==true||booking.guestEmail!=='test@example.invalid'||
-   booking.source!=='direct'||booking.status!=='CANCELLED'||booking.refundStatus!=='ASSESSED'||
+   booking.source!=='direct'||booking.status!=='CANCELLED'||
+   !['ASSESSED','REFUNDED'].includes(booking.refundStatus)||
+   (booking.refundStatus==='REFUNDED'&&booking.refundedAmountPence!==booking.refundDuePence)||
    !Number.isSafeInteger(booking.refundDuePence)||booking.refundDuePence<1||
    !Number.isSafeInteger(booking.paidAmountPence)||booking.paidAmountPence<booking.refundDuePence||
    !UUID.test(booking.paymentTransactionId??'')||typeof booking.refundPolicyVersion!=='string'||
@@ -28,6 +30,8 @@ export async function executePolicyRefund({db,table,bookingId,readProvider,reque
   policyId:booking.refundPolicyId,refundPercent:booking.refundPercent};
  if(claim&&Object.entries(expected).some(([key,value])=>claim[key]!==value))
   throw Error('Refund claim mismatch');
+ if(!claim&&booking.refundStatus!=='ASSESSED')
+  throw Error('Verified refund claim required');
  const providerBefore=await readProvider(booking.paymentTransactionId);
  const verifyProvider=provider=>{
   if(provider?.transactionId!==booking.paymentTransactionId||provider.currency!=='GBP'||

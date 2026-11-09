@@ -8,11 +8,11 @@ const booking={id,synthetic:true,guestEmail:'test@example.invalid',source:'direc
  refundPolicyVersion:'version-1',refundPolicyId:'DIRECT_AIRBNB_STRICT_SHORT_STAY_V1',refundPercent:50};
 const checkout={amountPence:73500,currency:'GBP'};
 const evidence=refundedPence=>({transactionId:booking.paymentTransactionId,currency:'GBP',paidPence:73500,refundedPence,refundPending:false});
-function harness({existingClaim,postError}={}){
+function harness({existingClaim,postError,bookingOverride}={}){
  const commands=[];let reads=0,posts=0;
  const db={send:async command=>{commands.push(command);
   if(command instanceof GetCommand){const sk=command.input.Key.SK;
-   return {Item:sk==='META'?booking:sk==='PAYMENT#CHECKOUT'?checkout:existingClaim};}
+   return {Item:sk==='META'?{...booking,...bookingOverride}:sk==='PAYMENT#CHECKOUT'?checkout:existingClaim};}
   if(command instanceof PutCommand||command instanceof UpdateCommand||command instanceof TransactWriteCommand)return {};
   throw Error('unexpected');}};
  return {db,commands,readProvider:async()=>evidence(++reads===1?0:36750),
@@ -34,7 +34,7 @@ test('ambiguous provider outcome is never resubmitted',async()=>{
 test('existing verified claim returns idempotently without another POST',async()=>{
  const claim={PK:'BOOKING#'+id,SK:'REFUND#POLICY',bookingId:id,transactionId:booking.paymentTransactionId,
   amountPence:36750,policyVersion:'version-1',policyId:booking.refundPolicyId,refundPercent:50,state:'REFUNDED'};
- const h=harness({existingClaim:claim});h.readProvider=async()=>evidence(36750);
+ const h=harness({existingClaim:claim,bookingOverride:{refundStatus:'REFUNDED',refundedAmountPence:36750}});h.readProvider=async()=>evidence(36750);
  const result=await executePolicyRefund({db:h.db,table,bookingId:id,readProvider:h.readProvider,
   requestProviderRefund:h.requestProviderRefund,enabled:true});
  assert.equal(result.status,'ALREADY_REFUNDED');assert.equal(h.posts,0);
