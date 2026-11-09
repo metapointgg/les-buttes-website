@@ -1,7 +1,0 @@
----
-import {getEntry} from 'astro:content';
-import ContactPage from '../../components/templates/ContactPage.astro';
-const entry=await getEntry('pages','contact');
-if(!entry) throw new Error('Missing contact content');
----
-<ContactPage pageData={entry.data}/>

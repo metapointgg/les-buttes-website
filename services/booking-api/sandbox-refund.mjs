@@ -48,7 +48,10 @@ export async function sandboxRefund({db,bookingId,env=process.env,fetchImpl=fetc
   }
  }else if(existing.transactionId!==transactionId||existing.amountPence!==checkout.amountPence||existing.policyId!=='SYNTHETIC_FULL_REFUND_V1')throw Error('Refund claim mismatch');
  const after=await read();
- if(after.refundedPence!==checkout.amountPence||after.refundPending||after.status!=='REFUNDED')return {status:'RECONCILIATION_REQUIRED',bookingId,refundPostAttempted:requested};
+ if(after.refundedPence!==checkout.amountPence||after.refundPending||after.status!=='REFUNDED'){
+  await db.send(new UpdateCommand({TableName:table,Key:key,UpdateExpression:'SET #s = :s, providerStatus = :p, verifiedRefundPence = :a, checkedAt = :at',ExpressionAttributeNames:{'#s':'state'},ExpressionAttributeValues:{':s':'RECONCILIATION_REQUIRED',':p':after.status,':a':after.refundedPence,':at':new Date().toISOString()}}));
+  return {status:'RECONCILIATION_REQUIRED',bookingId,refundPostAttempted:requested,providerStatus:after.status,verifiedRefundPence:after.refundedPence,refundPending:after.refundPending};
+ }
  await db.send(new UpdateCommand({TableName:table,Key:key,UpdateExpression:'SET #s = :s, verifiedAt = :at',ExpressionAttributeNames:{'#s':'state'},ExpressionAttributeValues:{':s':'REFUNDED',':at':new Date().toISOString()}}));
  return {status:requested?'REFUNDED':'ALREADY_REFUNDED',bookingId,amountPence:checkout.amountPence,syntheticPolicy:true,refundPostAttempted:requested};
 }
