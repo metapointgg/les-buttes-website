@@ -49,3 +49,21 @@ test('request dispatch reads authoritative state and sends distinct guest and ow
  await assert.rejects(dispatchRequestedBookingEmails({...args,db:{send:async()=>({Item:booking})}}),/requested booking/);
  assert.equal(messages.length,2);
 });
+
+test('lifecycle payment request requires authoritative matching checkout and synthetic simulator identity',async()=>{
+ const {dispatchBookingLifecycleEmail}=await import('./booking-confirmation-email-dispatch.mjs');
+ const approved={...booking,synthetic:true,guestEmail:'test@example.invalid',status:'APPROVED_AWAITING_PAYMENT',approvedAmountGBP:735,holdExpiresAt:Math.floor(Date.now()/1000)+3600};
+ const checkout={bookingId:id,status:'PENDING',currency:'GBP',amountPence:73500,hostedCheckoutUrl:'https://checkout.sumup.com/pay/test'};
+ const messages=[];
+ const args={db:{send:async command=>({Item:command.input.Key.SK==='META'?approved:checkout})},table,bookingId:id,type:'approval_payment',
+  env:{BOOKING_ENVIRONMENT:'staging',BOOKING_LIFECYCLE_DISPATCH_ENABLED:'true',BOOKING_SES_SIMULATOR_ENABLED:'true'},
+  transport:{send:async()=>{}},send:async({message})=>{messages.push(message);return {status:'ACCEPTED_BY_SES_NOT_DELIVERED'};}};
+ await dispatchBookingLifecycleEmail(args);
+ assert.equal(messages[0].to,'success@simulator.amazonses.com');
+ assert.match(messages[0].body,/£735.00/);
+ checkout.amountPence=1;
+ await assert.rejects(dispatchBookingLifecycleEmail(args),/approved checkout/);
+ approved.synthetic=false;
+ await assert.rejects(dispatchBookingLifecycleEmail(args),/synthetic booking/);
+ assert.equal(messages.length,1);
+});

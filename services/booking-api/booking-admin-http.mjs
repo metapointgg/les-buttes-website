@@ -11,6 +11,7 @@ import {readRegisteredCheckout} from './sumup-checkout-store.mjs';
 import {paymentReconciliationEnabled} from './booking-payment-reconciliation-runtime.mjs';
 import {reconcilePaymentAndNotify} from './booking-payment-confirmation-followup.mjs';
 import {createStagingSesTransport} from './booking-staging-ses-transport.mjs';
+import {dispatchBookingLifecycleEmail} from './booking-confirmation-email-dispatch.mjs';
 // API Gateway's HTTP JWT authorizer can stringify Cognito group arrays
 // using either comma separators or spaces, with optional quoted members.
 // Parse the entire claim; never use substring matching to grant a role.
@@ -298,6 +299,11 @@ export async function handler(event){
    const table=process.env.BOOKINGS_TABLE;
    const db=staging?DynamoDBDocumentClient.from(new DynamoDBClient({}),
      {marshallOptions:{removeUndefinedValues:true}}):null;
+   const notify=async(bookingId,type)=>{
+    if(process.env.BOOKING_LIFECYCLE_DISPATCH_ENABLED!=='true')return 'DISABLED';
+    try{return (await dispatchBookingLifecycleEmail({db,table,bookingId,type,transport:createStagingSesTransport()})).status;}
+    catch{console.error('STAGING_LIFECYCLE_NOTIFICATION_RECONCILIATION_REQUIRED',bookingId,type);return 'RECONCILIATION_REQUIRED';}
+   };
    deployedHandler=createAdminHandler({
      reader:createReadOnlyAdminReader({authorise:async request=>identityFromGateway(request)}),
      writeEnabled:()=>staging,
@@ -307,15 +313,22 @@ export async function handler(event){
      reconcilePayment:staging?async args=>reconcilePaymentAndNotify({db,...args,
        transport:process.env.BOOKING_CONFIRMATION_DISPATCH_ENABLED==='true'?
         createStagingSesTransport():undefined}):undefined,
-     registerCheckout:staging?async args=>registerCheckoutWithSandbox({db,...args}):undefined,
+     registerCheckout:staging?async args=>{
+      const result=await registerCheckoutWithSandbox({db,...args});
+      return {...result,notificationStatus:await notify(args.bookingId,'approval_payment')};
+     }:undefined,
      readCheckout:staging?async ({bookingId})=>readRegisteredCheckout({db,table,bookingId}):undefined,
      writeConfig:staging?async ({operation,...args})=>operation==='rollback'?rollbackOwnerConfiguration({db,table,...args}):publishOwnerConfiguration({db,table,...args}):undefined,
-     writeAction:staging?async args=>executeOwnerTransition({
+     writeAction:staging?async args=>{
+      const result=await executeOwnerTransition({
        ...args,db,table,
        readBooking:async bookingId=>(await db.send(new GetCommand({
          TableName:table,Key:{PK:'BOOKING#'+bookingId,SK:'META'},ConsistentRead:true
        }))).Item??null
-     }):undefined
+      });
+      return {...result,...(['decline','cancel'].includes(args.action)?{
+       notificationStatus:await notify(args.bookingId,args.action==='decline'?'declined':'cancelled')}:{} )};
+     }:undefined
    });
  }
  return deployedHandler(event);
