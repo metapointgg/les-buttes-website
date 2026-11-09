@@ -1,10 +1,11 @@
-import { randomUUID } from 'node:crypto';
-import {DAY,parseDate,validBooking} from './rules.mjs';
+import { randomUUID,timingSafeEqual } from 'node:crypto';
+import {validBooking} from './rules.mjs';
 import {quoteFromPublishedMaster} from './published-pricing.mjs';
 import {slotBlocksAvailability} from './occupancy.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
-import {DynamoDBDocumentClient,QueryCommand,BatchGetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
+import {DynamoDBDocumentClient,BatchGetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {SESClient,SendEmailCommand} from '@aws-sdk/client-ses';
+import {directCalendarPreview} from './direct-calendar-preview.mjs';
 
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const ses=new SESClient({});
@@ -93,50 +94,33 @@ async function createRequest(input,event){
   try{await notifyOwner(item);}catch(e){console.error('Booking request notification failed',id,e);}
   return response(202,{received:true,reference:id});
 }
-function escapeICS(value){return String(value).replace(/[\\,;]/g,'\\$&').replace(/\n/g,'\\n');}
-function icsDate(yyyyMMdd){return yyyyMMdd.replaceAll('-','');}
+function calendarTokenMatches(candidate){
+ const expected=process.env.CALENDAR_TOKEN;
+ if(typeof candidate!=='string'||typeof expected!=='string'||candidate.length<24||candidate.length>256)return false;
+ const a=Buffer.from(candidate),b=Buffer.from(expected);
+ return a.length===b.length&&timingSafeEqual(a,b);
+}
 async function calendar(cottage,token){
-  if(!['geranium','honeysuckle'].includes(cottage)||!process.env.CALENDAR_TOKEN||token!==process.env.CALENDAR_TOKEN)return response(404,{error:'Not found'});
-  const start=new Date().toISOString().slice(0,10);
-  const end=new Date(Date.now()+730*DAY).toISOString().slice(0,10);
-  const rows=[];
-  let next;
-  do{
-    const result=await db.send(new QueryCommand({TableName:table,KeyConditionExpression:'PK = :pk AND SK BETWEEN :start AND :end',ExpressionAttributeValues:{':pk':'UNIT#'+cottage,':start':'DATE#'+start,':end':'DATE#'+end},ExclusiveStartKey:next,ConsistentRead:true}));
-    rows.push(...result.Items??[]);next=result.LastEvaluatedKey;
-  }while(next);
-  const now=nowEpoch();
-  const active=rows.filter(item=>slotBlocksAvailability(item,now)).map(item=>item.SK.slice(5)).sort();
-  // Consolidate contiguous occupied nights into one event per occupied period.
-  const spans=[];
-  for(const night of active){
-    const last=spans[spans.length-1];
-    if(last&&new Date(parseDate(last.end)+DAY).toISOString().slice(0,10)===night)last.end=night;
-    else spans.push({start:night,end:night});
-  }
-  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Les Buttes//Booking Calendar//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Les Buttes '+cottage];
-  for(const s of spans){
-    const departure=new Date(parseDate(s.end)+DAY).toISOString().slice(0,10);
-    lines.push('BEGIN:VEVENT','UID:'+escapeICS(cottage+'-'+s.start+'@lesbuttes.com'),'DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''),
-      'DTSTART;VALUE=DATE:'+icsDate(s.start),'DTEND;VALUE=DATE:'+icsDate(departure),
-      'SUMMARY:Unavailable','END:VEVENT');
-  }
-  lines.push('END:VCALENDAR');
-  return response(200,lines.join('\r\n')+'\r\n',{'Content-Type':'text/calendar; charset=utf-8','Cache-Control':'no-cache, no-store'});
+  if(!['geranium','honeysuckle'].includes(cottage)||!calendarTokenMatches(token))return response(404,{error:'Not found'});
+  const result=await directCalendarPreview({db,table,unit:cottage});
+  return response(200,result.calendar,{'Content-Type':'text/calendar; charset=utf-8',
+    'Cache-Control':'private, no-cache, no-store, must-revalidate','X-Robots-Tag':'noindex, nofollow'});
 }
 export async function handler(event){
   const path=event.rawPath||'';
-  if(process.env.BOOKING_ENVIRONMENT==='staging'){
+  const method=event.requestContext?.http?.method||event.httpMethod;
+  const calendarMatch=method==='GET'?path.match(/^\/calendar\/([^/]+)\/(geranium|honeysuckle)\.ics$/):null;
+  if(process.env.BOOKING_ENVIRONMENT==='staging'&&!calendarMatch){
     const incoming=event.headers?.['x-lesbuttes-staging-token']??event.headers?.['X-LesButtes-Staging-Token'];
     const expected=process.env.STAGING_API_TOKEN;
     if(!expected||expected.length<24||incoming!==expected)return response(404,{error:'Not found'});
   }
-  const method=event.requestContext?.http?.method||event.httpMethod;
   if(method==='OPTIONS')return response(204,'');
   if(method==='GET'&&path==='/health')return response(200,{status:'ok',acceptingRequests:process.env.BOOKING_REQUESTS_ENABLED==='true'});
   if(method==='GET'&&path.startsWith('/calendar/')){
-    const match=path.match(/^\/calendar\/([^/]+)\/(geranium|honeysuckle)\.ics$/);
-    return match?calendar(match[2],match[1]):response(404,{error:'Not found'});
+    if(!calendarMatch)return response(404,{error:'Not found'});
+    try{return await calendar(calendarMatch[2],calendarMatch[1]);}
+    catch(error){console.error('Outbound calendar generation failed',calendarMatch[2],error);return response(503,{error:'Calendar temporarily unavailable'});}
   }
   if((method==='POST'&&path==='/requests')||(method==='GET'&&path==='/availability')){
     if(process.env.BOOKING_REQUESTS_ENABLED!=='true')return response(503,{error:'Direct booking requests are not open yet'});

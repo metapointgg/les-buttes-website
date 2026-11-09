@@ -23,12 +23,21 @@ export async function directCalendarPreview({db,table,unit,now=Math.floor(Date.n
   if(booking.status!=='CONFIRMED'&&(!Number.isSafeInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=now))continue;
   days.push(row.SK.slice(5));
  }
+ const unique=[...new Set(days)].sort(),spans=[];
+ for(const day of unique){
+  const previous=spans.at(-1);
+  if(previous&&nextDay(previous.end)===day)previous.end=day;
+  else spans.push({start:day,end:day});
+ }
  const stamp=new Date(now*1000).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
- const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Les Buttes//Direct availability//EN','CALSCALE:GREGORIAN'];
- for(const day of [...new Set(days)].sort())lines.push('BEGIN:VEVENT',
-  'UID:'+createHash('sha256').update(unit+':'+day).digest('hex').slice(0,32)+'@lesbuttes.com',
-  'DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+day.replaceAll('-',''),
-  'DTEND;VALUE=DATE:'+nextDay(day).replaceAll('-',''),'SUMMARY:Reserved','TRANSP:OPAQUE','END:VEVENT');
+ const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Les Buttes//Direct availability//EN',
+  'CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Les Buttes '+unit,
+  'REFRESH-INTERVAL;VALUE=DURATION:PT15M','X-PUBLISHED-TTL:PT15M'];
+ for(const span of spans)lines.push('BEGIN:VEVENT',
+  'UID:'+createHash('sha256').update(unit+':'+span.start).digest('hex').slice(0,32)+'@lesbuttes.com',
+  'DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+span.start.replaceAll('-',''),
+  'DTEND;VALUE=DATE:'+nextDay(span.end).replaceAll('-',''),'SUMMARY:Unavailable',
+  'DESCRIPTION:Unavailable','TRANSP:OPAQUE','STATUS:CONFIRMED','END:VEVENT');
  lines.push('END:VCALENDAR');
- return {unit,mode:'OWNER_REVIEW_ONLY',externalPublishingEnabled:false,reservedNights:days.length,calendar:lines.join('\r\n')+'\r\n'};
+ return {unit,mode:'OWNER_REVIEW_ONLY',externalPublishingEnabled:false,reservedNights:unique.length,calendar:lines.join('\r\n')+'\r\n'};
 }
