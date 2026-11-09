@@ -38,7 +38,7 @@ export async function sandboxRefund({db,bookingId,env=process.env,fetchImpl=fetc
   // Synthetic 100% / zero-fee fixture only. Never publish this as business policy.
   await db.send(new PutCommand({TableName:table,Item:{...key,bookingId,transactionId,amountPence:checkout.amountPence,policyId:'SYNTHETIC_FULL_REFUND_V1',refundBasisPoints:10000,feePence:0,state:'REQUESTED',createdAt:new Date().toISOString()},ConditionExpression:'attribute_not_exists(PK)'}));
   try{
-   const response=await fetchImpl('https://api.sumup.com/v1.0/merchants/'+encodeURIComponent(merchantCode)+'/payments/'+transactionId+'/refunds',{method:'POST',headers,body:JSON.stringify({amount:checkout.amountPence/100}),signal:AbortSignal.timeout(12000)});
+   const response=await fetchImpl('https://api.sumup.com/v1.0/merchants/'+encodeURIComponent(merchantCode)+'/payments/'+transactionId+'/refunds',{method:'POST',headers,body:'{}',signal:AbortSignal.timeout(12000)});
    requested=true;
    if(!response.ok)throw Error('Provider refund rejected: '+response.status);
   }catch(error){
@@ -50,7 +50,7 @@ export async function sandboxRefund({db,bookingId,env=process.env,fetchImpl=fetc
  const after=await read();
  if(after.refundedPence!==checkout.amountPence||after.refundPending||after.status!=='REFUNDED'){
   await db.send(new UpdateCommand({TableName:table,Key:key,UpdateExpression:'SET #s = :s, providerStatus = :p, verifiedRefundPence = :a, checkedAt = :at',ExpressionAttributeNames:{'#s':'state'},ExpressionAttributeValues:{':s':'RECONCILIATION_REQUIRED',':p':after.status,':a':after.refundedPence,':at':new Date().toISOString()}}));
-  return {status:'RECONCILIATION_REQUIRED',bookingId,refundPostAttempted:requested,providerStatus:after.status,verifiedRefundPence:after.refundedPence,refundPending:after.refundPending};
+  return {status:'RECONCILIATION_REQUIRED',bookingId,refundPostAttempted:requested,providerStatus:after.status,providerSimpleStatus:after.simple_status??null,verifiedRefundPence:after.refundedPence,refundPending:after.refundPending};
  }
  await db.send(new UpdateCommand({TableName:table,Key:key,UpdateExpression:'SET #s = :s, verifiedAt = :at',ExpressionAttributeNames:{'#s':'state'},ExpressionAttributeValues:{':s':'REFUNDED',':at':new Date().toISOString()}}));
  return {status:requested?'REFUNDED':'ALREADY_REFUNDED',bookingId,amountPence:checkout.amountPence,syntheticPolicy:true,refundPostAttempted:requested};
