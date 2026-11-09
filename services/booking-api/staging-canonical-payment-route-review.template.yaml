@@ -44,6 +44,16 @@ Parameters:
     AllowedValues: ['false', 'true']
     Default: 'false'
     Description: Staging synthetic SumUp policy-refund acceptance only; never enable in production.
+  StagingConfirmationDispatchEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+    Description: Staging SES simulator confirmation delivery only; IAM prevents delivery to real recipients.
+  StagingLifecycleDispatchEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+    Description: Staging SES simulator lifecycle delivery only; IAM prevents delivery to real recipients.
 Conditions:
   AutomaticReconciliation: !Equals [!Ref AutomaticReconciliationEnabled, 'true']
   ApprovedStagingDeployment: !Equals [!Ref DeploymentEnabled, 'true']
@@ -128,7 +138,7 @@ Resources:
         S3ObjectVersion: !Ref ReviewedArtifactVersion
       Environment:
         Variables:
-          BOOKING_LIFECYCLE_DISPATCH_ENABLED: 'false'
+          BOOKING_LIFECYCLE_DISPATCH_ENABLED: !Ref StagingLifecycleDispatchEnabled
           BOOKING_SES_SIMULATOR_ENABLED: 'true'
           BOOKING_SES_REGION: us-east-1
           BOOKING_SES_SANDBOX_ACK: 'true'
@@ -146,7 +156,7 @@ Resources:
           MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED: !Ref StagingPaymentWritesEnabled
           MANAGEMENT_APPROVAL_ENABLED: 'false'
           MANAGEMENT_CHECKOUT_ENABLED: 'false'
-          BOOKING_CONFIRMATION_DISPATCH_ENABLED: 'false'
+          BOOKING_CONFIRMATION_DISPATCH_ENABLED: !Ref StagingConfirmationDispatchEnabled
           BOOKING_EMAILS_ENABLED: 'false'
   PaymentReconciliationIntegration:
     Type: AWS::ApiGatewayV2::Integration

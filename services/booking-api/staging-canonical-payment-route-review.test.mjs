@@ -25,8 +25,9 @@ test('LB-09 draft restricts staging transaction and SumUp secret permissions, wi
  assert.match(template,/StagingPaymentWritesEnabled:\n    Type: String\n    AllowedValues: \['false', 'true'\]\n    Default: 'false'/);
  for(const flag of ['MANAGEMENT_WRITES_ENABLED','MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED'])
   assert.ok(template.includes(flag+': !Ref StagingPaymentWritesEnabled'),flag);
- for(const flag of ['BOOKING_CONFIRMATION_DISPATCH_ENABLED','BOOKING_EMAILS_ENABLED'])
-  assert.ok(template.includes(flag+": 'false'"),flag);
+ assert.match(template,/BOOKING_CONFIRMATION_DISPATCH_ENABLED: !Ref StagingConfirmationDispatchEnabled/);
+ assert.match(template,/BOOKING_LIFECYCLE_DISPATCH_ENABLED: !Ref StagingLifecycleDispatchEnabled/);
+ assert.match(template,/BOOKING_EMAILS_ENABLED: 'false'/);
  assert.match(template,/S3ObjectVersion: !Ref ReviewedArtifactVersion/);
  assert.match(template,/S3Bucket: !Ref ReviewedArtifactBucket/);
  assert.match(template,/S3Key: !Ref ReviewedArtifactKey/);
@@ -50,9 +51,10 @@ test('LB-09 CloudFormation review template has one coherent parameter and resour
  assert.doesNotMatch(template,/REPLACE_WITH_REVIEWED|AllowedPattern: '[^'\n]*Type: String/);
 });
 
-test('SES sending is restricted to the simulator and disabled by default',()=>{
+test('SES sending is restricted to the simulator and each dispatch path is disabled by default',()=>{
  assert.match(template,/ses:SendEmail/);
  assert.match(template,/ses:Recipients: \[success@simulator\.amazonses\.com\]/);
  assert.match(template,/ses:FromAddress: info@lesbuttes\.com/);
- assert.match(template,/BOOKING_LIFECYCLE_DISPATCH_ENABLED: 'false'/);
+ for(const parameter of ['StagingConfirmationDispatchEnabled','StagingLifecycleDispatchEnabled'])
+  assert.match(template,new RegExp(parameter+":\\n    Type: String\\n    AllowedValues: \\['false', 'true'\\]\\n    Default: 'false'"));
 });
