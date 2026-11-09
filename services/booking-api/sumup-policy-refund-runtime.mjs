@@ -3,14 +3,15 @@ import {loadSandboxSumUpCredentials,checkSandboxSumUpConnectivity} from './sumup
 import {executePolicyRefund} from './sumup-policy-refund.mjs';
 
 export async function executeSandboxPolicyRefund({db,table,bookingId,env=process.env,
- fetchImpl=fetch,ssm=new SSMClient({region:'eu-west-2'})}={}){
+ fetchImpl=fetch,ssm=new SSMClient({region:'eu-west-2'}),execute=executePolicyRefund,
+ verifyMerchant=checkSandboxSumUpConnectivity,loadCredentials=loadSandboxSumUpCredentials}={}){
  if(env.BOOKING_ENVIRONMENT!=='staging'||env.AWS_REGION!=='eu-west-2'||
    env.BOOKING_SANDBOX_POLICY_REFUND_ACCEPTANCE!=='true')
   throw Error('Sandbox policy refund acceptance disabled');
  try{
-  const merchant=await checkSandboxSumUpConnectivity({ssm,region:'eu-west-2'});
+  const merchant=await verifyMerchant({ssm,region:'eu-west-2'});
   if(!merchant.sandboxVerified||!merchant.merchantMatched)throw Error('Sandbox merchant required');
-  const {apiKey,merchantCode}=await loadSandboxSumUpCredentials({ssm,region:'eu-west-2'});
+  const {apiKey,merchantCode}=await loadCredentials({ssm,region:'eu-west-2'});
   const headers={Authorization:'Bearer '+apiKey,'Content-Type':'application/json'};
   const readProvider=async transactionId=>{
    const response=await fetchImpl('https://api.sumup.com/v2.1/merchants/'+encodeURIComponent(merchantCode)+'/transactions?id='+encodeURIComponent(transactionId),
@@ -28,10 +29,15 @@ export async function executeSandboxPolicyRefund({db,table,bookingId,env=process
     refundPending:refunds.some(event=>!['REFUNDED','SUCCESSFUL','FAILED'].includes(event.status))};
   };
   const requestProviderRefund=async({transactionId,amountPence,full})=>{
-   const response=await fetchImpl('https://api.sumup.com/v1.0/merchants/'+encodeURIComponent(merchantCode)+'/payments/'+encodeURIComponent(transactionId)+'/refunds',
-    {method:'POST',headers,body:full?'{}':JSON.stringify({amount:amountPence/100}),signal:AbortSignal.timeout(12000)});
+   // SumUp's current merchant-payment refund endpoint documents major units,
+   // but its sandbox repeatedly interpreted partial amounts as minor units
+   // (£402.50 became £4.02). Use the provider's established transaction
+   // refund endpoint, whose official examples and SDKs use major units.
+   const options={method:'POST',headers,signal:AbortSignal.timeout(12000)};
+   if(!full)options.body=JSON.stringify({amount:amountPence/100});
+   const response=await fetchImpl('https://api.sumup.com/v0.1/me/refund/'+encodeURIComponent(transactionId),options);
    if(!response.ok)throw Error('Provider refund rejected: '+response.status);
   };
-  return executePolicyRefund({db,table,bookingId,readProvider,requestProviderRefund,enabled:true});
+  return execute({db,table,bookingId,readProvider,requestProviderRefund,enabled:true});
  }finally{ssm.destroy?.();}
 }
