@@ -1,12 +1,6 @@
 name: LB-08 isolated management CREATE-only change-set preview
 on:
   workflow_dispatch:
-  push:
-    branches: [feature/direct-booking-requests-27-night]
-    paths:
-      - '.github/workflows/lb08-isolated-management-preview.yml'
-      - 'services/booking-api/staging-management-preview-isolated.template.yaml'
-      - 'services/booking-api/lb08-isolated-management-review-cli.mjs'
 permissions:
   contents: read
   id-token: write

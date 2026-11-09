@@ -30,27 +30,30 @@ jobs:
           code="$(curl --silent --show-error --max-time 15 --output /tmp/a09-unauth-response --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' --data '{"approved":true,"usePublishedQuote":true}' "$endpoint")"
           test "$code" = '401' || { echo "Expected API Gateway 401, received $code"; exit 1; }
           echo 'API Gateway rejected unauthenticated owner action with HTTP 401.' >> "$GITHUB_STEP_SUMMARY"
-      - name: Verify canonical API route and write-disabled Lambda
+      - name: Verify canonical API route and approved staging safeguards
         shell: bash
         run: |
           set -euo pipefail
           test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
           stack='les-buttes-canonical-owner-actions-staging'
-          test "$(aws cloudformation describe-stacks --stack-name "$stack" --query 'Stacks[0].StackStatus' --output text)" = 'CREATE_COMPLETE'
+          status="$(aws cloudformation describe-stacks --stack-name "$stack" --query 'Stacks[0].StackStatus' --output text)"
+          test "$status" = 'CREATE_COMPLETE' || test "$status" = 'UPDATE_COMPLETE' 
           route='POST /admin/bookings/{bookingId}/actions/{action}'
           route_id="$(aws apigatewayv2 get-routes --api-id i2irz87c82 --query "Items[?RouteKey=='$route' && AuthorizationType=='JWT' && AuthorizerId=='q9ukxh'].RouteId | [0]" --output text)"
           test -n "$route_id" && test "$route_id" != 'None'
           fn="$(aws cloudformation describe-stack-resource --stack-name "$stack" --logical-resource-id OwnerActionFunction --query 'StackResourceDetail.PhysicalResourceId' --output text)"
           test -n "$fn" && test "$fn" != 'None'
           test "$(aws lambda get-function-configuration --function-name "$fn" --query State --output text)" = 'Active'
-          for flag in MANAGEMENT_WRITES_ENABLED MANAGEMENT_APPROVAL_ENABLED MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED; do
-            test "$(aws lambda get-function-configuration --function-name "$fn" --query "Environment.Variables.$flag" --output text)" = 'false'
+          for flag in MANAGEMENT_WRITES_ENABLED MANAGEMENT_APPROVAL_ENABLED; do
+            test "$(aws lambda get-function-configuration --function-name "$fn" --query "Environment.Variables.$flag" --output text)" = 'true'
           done
           test "$(aws lambda get-function-configuration --function-name "$fn" --query 'Environment.Variables.BOOKING_ENVIRONMENT' --output text)" = 'staging'
+          test "$(aws lambda get-function-configuration --function-name "$fn" --query 'Environment.Variables.MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED' --output text)" = 'false'
+          test "$(aws lambda get-function-configuration --function-name "$fn" --query 'Environment.Variables.BOOKING_AIRBNB_REQUIRED' --output text)" = 'true'
           {
             echo '## Canonical owner-action staging verification'
-            echo "Stack: $stack (CREATE_COMPLETE)"
+            echo "Stack: $stack ($status)"
             echo "JWT route ID: $route_id"
-            echo 'Lambda active; booking writes, approvals and reconciliation disabled.'
+            echo 'Lambda active; authorised synthetic staging approval enabled.'
             echo 'No booking writes, route mutations or deployment operations performed.'
           } >> "$GITHUB_STEP_SUMMARY"

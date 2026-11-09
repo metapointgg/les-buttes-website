@@ -67,12 +67,9 @@ export async function runIsolatedBookingAcceptance({env=process.env,clientFactor
      claimed.amountPence!==100||claimed.currency!=='GBP'||
      confirmedSlots.some(s=>s?.id!==id||s.expiresAt!==undefined))
    throw Error('Atomic confirmation strong-readback mismatch');
-  let replayRejected=false;
-  try{
-   await reconcileVerifiedPayment({db,table,bookingId:id,merchantCode,isolatedAcceptance:true,
+  const replay=await reconcileVerifiedPayment({db,table,bookingId:id,merchantCode,isolatedAcceptance:true,
     fetchCheckout:async()=>fixture,nowEpoch:now});
-  }catch(error){replayRejected=/Booking state mismatch|not eligible/.test(error.message);}
-  if(!replayRejected)throw Error('Synthetic payment replay was not rejected');
+  if(replay.status!=='ALREADY_CONFIRMED')throw Error('Synthetic payment replay was not idempotent');
   const audits=await db.send(new QueryCommand({TableName:table,
    KeyConditionExpression:'PK = :pk AND begins_with(SK, :prefix)',
    ExpressionAttributeValues:{':pk':bookingKey.PK,':prefix':'AUDIT#'},
@@ -80,7 +77,7 @@ export async function runIsolatedBookingAcceptance({env=process.env,clientFactor
   if(audits.Items?.length!==1||audits.Items[0]?.action!=='payment_confirmed')
    throw Error('Expected exactly one payment confirmation audit');
   output={confirmed:true,affectedNights:7,claimVerified:true,
-   auditRecords:1,replayRejected:true,syntheticBookingId:id,
+   auditRecords:1,replayIdempotent:true,syntheticBookingId:id,
    note:'Synthetic provider fixture and isolated DynamoDB; no actual SumUp payment'};
  }finally{
   // The isolated test table is never shared with live services. Cleanup also

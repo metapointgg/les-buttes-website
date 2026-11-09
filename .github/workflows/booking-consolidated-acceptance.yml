@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   consolidated-acceptance:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -110,7 +110,8 @@ jobs:
           const browser=await chromium.launch({headless:true});
           try{
             const page=await browser.newPage();
-            const errors=[];
+            const errors=[],mutations=[];
+            page.on('request',request=>{if(request.method()==='POST'&&request.url().includes('75im3kpaq6'))mutations.push(request.url());});
             page.on('pageerror',error=>errors.push(error.message));
             await page.goto('https://d123fnjf47zmyp.cloudfront.net/book/',{waitUntil:'domcontentloaded'});
             await page.locator('[data-discovery-search] [name="arrival"]').fill('2027-07-03');
@@ -130,9 +131,10 @@ jobs:
             await page.locator('[data-booking-step="4"]:visible').waitFor();
             const details=(await page.locator('[data-details-price]').innerText()).trim();
             if(review!==details)throw Error('Authoritative review/details prices disagree: '+review+' / '+details);
-            if(await page.locator('[data-preview-guest-details] button[type="submit"]:enabled').count())throw Error('Unsafe booking submission enabled');
+            if(new URL(page.url()).hostname!=='d123fnjf47zmyp.cloudfront.net')throw Error('Synthetic form outside staging preview');
+            if(mutations.length)throw Error('Read-only browser check submitted a booking');
             if(errors.length)throw Error('Browser JS errors: '+errors.join('; '));
-            console.log('PASS: four-step browser journey, authoritative review/details '+review+', submission disabled');
+            console.log('PASS: four-step browser journey, authoritative review/details '+review+', no booking submitted');
           }finally{await browser.close();}
           JS
       - name: Layer 4 - release evidence and remaining gates
