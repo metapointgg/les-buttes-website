@@ -1,6 +1,7 @@
 // Dedicated entrypoint for the canonical staging payment reconciliation route.
 // Defence in depth: the API Gateway JWT authorizer is still mandatory.
 import {handler as adminHandler} from './booking-admin-http.mjs';
+import {authorisedPaymentSchedule,reconcileScheduledPayments} from './staging-payment-schedule.mjs';
 
 const PAYMENT_ROUTE=/^\/admin\/bookings\/[0-9a-f-]{36}\/payment\/reconcile$/i;
 const deny=(statusCode,error)=>({
@@ -10,6 +11,7 @@ const deny=(statusCode,error)=>({
 });
 
 export async function handler(event){
+  if(authorisedPaymentSchedule(event))return reconcileScheduledPayments(event);
   if(event?.requestContext?.http?.method!=='POST'||
      !PAYMENT_ROUTE.test(event?.rawPath??''))
     return deny(404,'Not found');
