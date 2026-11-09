@@ -52,7 +52,10 @@ if(widget){
     (quoteOnlyEnabled||Boolean(bookingApi))&&!localPreview;
   // Submission is separately gated and cannot be enabled by an API URL alone.
   // The private staging API is never an acceptable browser endpoint.
-  const requestEnabled=import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&
+  const syntheticRequestEnabled=import.meta.env.PUBLIC_BOOKING_SYNTHETIC_REQUESTS_ENABLED==='true'&&
+    window.location.hostname==='d123fnjf47zmyp.cloudfront.net'&&hostedReadOnlyEnabled&&quoteOnlyEnabled&&liveQuoteEnabled;
+  const syntheticRequestUrl='https://75im3kpaq6.execute-api.eu-west-2.amazonaws.com/request';
+  const requestEnabled=syntheticRequestEnabled||import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&
     Boolean(bookingApi)&&!quoteOnlyEnabled&&liveQuoteEnabled&&import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY&&
     import.meta.env.PUBLIC_BOOKING_REQUESTS_APPROVED==='true';
 
@@ -379,9 +382,7 @@ if(widget){
     fill('[data-details-price]',liveQuoteEnabled&&authoritativeQuote?.key===quoteKey()?money(Number(authoritativeQuote.totalGBP)):money(q.indicativeDirectTotalGBP));
     setStep(4);
   });
-  // Preview details never leave the browser: no POST/fetch, booking request, session
-  // storage, analytics event, payment handler or confirmation exists in this step.
-  // The draft has no submission endpoint; validation is for local preview feedback only.
+  // Submission requires an explicit build flag and an authoritative quote.
   const firstNameField=detailsForm.elements.namedItem('firstName') as HTMLInputElement;
   const lastNameField=detailsForm.elements.namedItem('lastName') as HTMLInputElement;
   const emailField=detailsForm.elements.namedItem('email') as HTMLInputElement;
@@ -407,7 +408,21 @@ if(widget){
   let submitting=false;
   const siteKey=import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY??'';
   const challengeSlot=document.createElement('div');
-  if(requestEnabled&&confirmButton){
+  if(syntheticRequestEnabled&&confirmButton){
+    firstNameField.value='Synthetic';
+    lastNameField.value='Guest';
+    emailField.value='test@example.invalid';
+    phoneField.value='01481000000';
+    for(const field of [firstNameField,lastNameField,emailField,phoneField])field.readOnly=true;
+    const notice=document.createElement('p');
+    notice.textContent='Staging test booking. Uses synthetic guest details and sandbox payment only.';
+    detailsForm.prepend(notice);
+    confirmButton.textContent='Submit synthetic booking request';
+    confirmButton.type='submit';
+    confirmButton.disabled=false;
+    confirmButton.setAttribute('aria-disabled','false');
+  }
+  if(requestEnabled&&!syntheticRequestEnabled&&confirmButton){
     challengeSlot.setAttribute('data-turnstile-slot','');
     confirmButton.before(challengeSlot);
     confirmButton.type='submit';
@@ -438,7 +453,7 @@ if(widget){
     if(!requestEnabled||!confirmButton||submitting)return;
     if(!detailsForm.reportValidity()||!consentField.checked||
        !firstNameField.value.trim()||!lastNameField.value.trim()||
-       phoneField.value.replace(/\\D/g,'').length<7)return;
+       phoneField.value.replace(/\D/g,'').length<7)return;
     submitting=true;
     confirmButton.disabled=true;
     try{
@@ -447,11 +462,15 @@ if(widget){
       if(!q||!q.meetsDraftMinimum||!await checkAuthoritativeQuote()||
          authoritativeQuote?.key!==quoteKey())throw Error('The selected dates or price are no longer available.');
       const turnstile=(window as typeof window & {turnstile?:{getResponse:()=>string;reset:()=>void}}).turnstile;
-      const token=turnstile?.getResponse()??'';
+      const token=syntheticRequestEnabled?'XXXX.DUMMY.TOKEN.XXXX':turnstile?.getResponse()??'';
       if(!token)throw Error('Please complete the verification challenge.');
-      const response=await fetch(bookingApi+'/requests',{
+      const response=await fetch(syntheticRequestEnabled?syntheticRequestUrl:bookingApi+'/requests',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
+        body:JSON.stringify(syntheticRequestEnabled?{
+          unit:choice,start:arrival.value,end:departure.value,adults:filters.adults,children:filters.children,
+          firstName:'Synthetic',lastName:'Guest',email:'test@example.invalid',telephone:'01481000000',
+          consent:true,notes:'',turnstileToken:token
+        }:{
           unit:choice,start:arrival.value,end:departure.value,
           guests:filters.adults+filters.children,
           name:firstNameField.value.trim()+' '+lastNameField.value.trim(),
@@ -459,7 +478,7 @@ if(widget){
           consent:true,notes:'',website:'',turnstileToken:token
         })
       });
-      if(response.status!==202)throw Error(response.status===409?
+      if(response.status!==(syntheticRequestEnabled?201:202))throw Error(response.status===409?
         'These dates have just become unavailable. Please select another stay.':
         'Your booking request could not be submitted. Please try again.');
       const result=await response.json() as {received?:boolean;reference?:string};
