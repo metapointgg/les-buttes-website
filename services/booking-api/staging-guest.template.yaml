@@ -74,6 +74,7 @@ Resources:
           BOOKING_SES_SANDBOX_ACK: 'true'
           BOOKING_SES_FROM: info@lesbuttes.com
           BOOKING_SES_TEST_RECIPIENTS: success@simulator.amazonses.com
+          BOOKING_AIRBNB_REQUIRED: 'true'
           BOOKING_ENVIRONMENT: staging
           BOOKING_STAGING_GUEST_WRITES:
             Fn::If:
@@ -112,6 +113,7 @@ Resources:
             Action:
             - dynamodb:PutItem
             - dynamodb:UpdateItem
+            - dynamodb:ConditionCheckItem
             Resource:
               Fn::Sub: arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ExistingStagingTable}
           - Ref: AWS::NoValue

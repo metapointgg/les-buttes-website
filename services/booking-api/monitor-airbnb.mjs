@@ -1,5 +1,6 @@
+import {saveAirbnbSnapshot} from './airbnb-availability.mjs';
 // Private scheduled staging-only Lambda. Reads Airbnb exports and the master booking table.
-// NEVER writes to booking-table rows, auto-imports or cancels reservations.
+// Optional inbound snapshots never overwrite direct reservation/date records.
 // The two Airbnb bearer URLs exist only in SSM SecureString parameters.
 import {SSMClient,GetParameterCommand} from '@aws-sdk/client-ssm';
 import {SNSClient,PublishCommand} from '@aws-sdk/client-sns';
@@ -32,6 +33,7 @@ async function saveState(unit,state){
   await db.send(new PutCommand({TableName:MONITOR_STATE_TABLE,Item:{PK:'UNIT#'+unit,...state}}));
 }
 async function publish(subject,message){
+  if(process.env.MONITOR_ALERTS_ENABLED==='false')return;
   // Only dates/exception counts: no full feed, Airbnb secret URL, guest name or contact details.
   await sns.send(new PublishCommand({TopicArn:MONITOR_SNS_TOPIC_ARN,Subject:subject.slice(0,95),Message:message}));
 }
@@ -78,8 +80,10 @@ async function getMetadata(rows){
 }
 async function inspect(entry){
   const previous=await getState(entry.unit);
+  const startedAt=Math.floor(Date.now()/1000);
   try{
     const feed=parseAirbnbCalendar(await getCalendarText(entry));
+    if(process.env.BOOKING_AIRBNB_SYNC_ENABLED==='true')await saveAirbnbSnapshot({db,table:BOOKINGS_TABLE,unit:entry.unit,blockedNights:feed.blockedNights,from:MONITOR_FROM_DATE,to:MONITOR_TO_DATE,startedAt});
     const rows=await getSlots(entry.unit);
     const metadata=await getMetadata(rows);
     const audit=compareAirbnbBlocks(feed.blockedNights,rows,metadata,{
@@ -102,6 +106,9 @@ async function inspect(entry){
       'baseline',report.isBaseline);
     return {unit:entry.unit,checked:true,reviewRequired:report.shouldAlert,baseline:report.isBaseline};
   }catch(e){
+    if(process.env.BOOKING_AIRBNB_SYNC_ENABLED==='true'&&e.name!=='ConditionalCheckFailedException'){
+      try{await saveAirbnbSnapshot({db,table:BOOKINGS_TABLE,unit:entry.unit,from:MONITOR_FROM_DATE,to:MONITOR_TO_DATE,startedAt:Math.floor(Date.now()/1000)+1,verified:false});}catch{}
+    }
     // Do not log e.message: third-party/network SDK errors may contain secret URLs.
     console.error('Airbnb calendar monitor failed for:',entry.unit,'type:',e.name||'Error');
     if(!previous?.errorNotified){

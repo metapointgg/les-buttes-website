@@ -1,3 +1,4 @@
+import {requireAirbnbAvailability} from './airbnb-availability.mjs';
 // Existing isolated guest API: synthetic staging only, no emails or payments.
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
@@ -50,9 +51,11 @@ export function createGuestHandler({db=client,parameterStore=ssm,fetchImpl=globa
      return reply.ok&&validChallengeResponse({secret,token,data:await reply.json(),origin,testEnabled});
     },
     loadQuote:selection=>quoteFromPublishedMaster({db,table,...selection}),
-    writeHold:async hold=>db.send(new TransactWriteCommand({TransactItems:[
+    writeHold:async hold=>{
+     const calendarChecks=env.BOOKING_AIRBNB_REQUIRED==='true'?await requireAirbnbAvailability({db,table,units:hold.meta.units,start:hold.meta.start,end:hold.meta.end}):[];
+     return db.send(new TransactWriteCommand({TransactItems:[...calendarChecks,
      ...syntheticQuotaItems({table,ip,secret:await readSecret()}),
-     ...hold.items.map(x=>({Put:{...x.Put,TableName:table}}))],ClientRequestToken:hold.meta.id}))
+     ...hold.items.map(x=>({Put:{...x.Put,TableName:table}}))],ClientRequestToken:hold.meta.id}));}
    });
    let notificationStatus='DISABLED';
    if(env.BOOKING_REQUEST_DISPATCH_ENABLED==='true'){

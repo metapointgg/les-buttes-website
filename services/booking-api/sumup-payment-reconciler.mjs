@@ -1,3 +1,4 @@
+import {requireAirbnbAvailability} from './airbnb-availability.mjs';
 // LB-08: staging-only, fail-closed payment reconciliation. No HTTP route.
 import {GetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {readRegisteredCheckout} from './sumup-checkout-store.mjs';
@@ -42,6 +43,7 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
   return {status:'ALREADY_CONFIRMED',bookingId,transactionId:evidence.transactionId,
    affectedNights:booking.units.length*(Date.parse(booking.end)-Date.parse(booking.start))/86400000};
  }
+ const calendarChecks=process.env.BOOKING_AIRBNB_REQUIRED==='true'?await requireAirbnbAvailability({db,table,units:booking.units,start:booking.start,end:booking.end,now:nowEpoch}):[];
  const prepared=preparePaymentConfirmation({booking,registered,evidence,nowEpoch});
  const items=prepared.items.map(item=>{
   const kind=Object.keys(item)[0];
@@ -50,7 +52,7 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
  // A retry after a lost response will fail its conditions; it must not emit another audit entry.
  // No ambiguous transaction cancellation is treated as success without an authoritative reread.
  try {
-  await db.send(new TransactWriteCommand({TransactItems:items,
+  await db.send(new TransactWriteCommand({TransactItems:[...calendarChecks,...items],
    ClientRequestToken:prepared.eventId}));
  } catch(error) {
   // A network failure may occur after DynamoDB commits. Never blindly retry or

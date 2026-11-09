@@ -20,6 +20,7 @@ Resources:
       ReservedConcurrentExecutions: 2
       Environment:
         Variables:
+          BOOKING_AIRBNB_REQUIRED: 'true'
           BOOKING_ENVIRONMENT: staging
           BOOKINGS_TABLE: !Ref ExistingStagingTable
           ALLOWED_PREVIEW_ORIGIN: !Ref PreviewOrigin

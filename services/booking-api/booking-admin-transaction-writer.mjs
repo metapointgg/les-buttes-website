@@ -1,3 +1,4 @@
+import {requireAirbnbAvailability} from './airbnb-availability.mjs';
 // Host-only reusable writer. No HTTP route, no payment confirmation.
 // Caller supplies a strongly consistent booking read and an authorised identity.
 import {randomUUID} from 'node:crypto';
@@ -114,6 +115,7 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    }
  }
  items.push({Put:{TableName:table,Item:audit,ConditionExpression:'attribute_not_exists(PK)'}});
+ if(action==='approve'&&process.env.BOOKING_AIRBNB_REQUIRED==='true')items.push(...await requireAirbnbAvailability({db,table,units:booking.units,start:booking.start,end:booking.end,now:nowEpoch}));
  await db.send(new TransactWriteCommand({TransactItems:items,ClientRequestToken:transitionId}));
  return {id:bookingId,from:decision.from,to:decision.to,affectedNights:decision.slots.length,auditId:transitionId};
 }

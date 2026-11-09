@@ -421,6 +421,7 @@ Resources:
       Timeout: 90
       Environment:
         Variables:
+          BOOKING_AIRBNB_SYNC_ENABLED: 'true'
           BOOKING_ENVIRONMENT: !Ref BookingEnvironment
           BOOKINGS_TABLE: !Ref BookingTable
           MONITOR_STATE_TABLE: !Ref CalendarMonitorCheckpointTable
@@ -432,7 +433,7 @@ Resources:
       Policies:
         - Statement:
             Effect: Allow
-            Action: ['dynamodb:Query', 'dynamodb:BatchGetItem']
+            Action: ['dynamodb:Query', 'dynamodb:BatchGetItem', 'dynamodb:PutItem']
             Resource: !GetAtt BookingTable.Arn
         - Statement:
             Effect: Allow
@@ -452,9 +453,9 @@ Resources:
         EveryFourHours:
           Type: Schedule
           Properties:
-            Schedule: rate(4 hours)
+            Schedule: rate(15 minutes)
             Enabled: true
-            Description: Review live Airbnb calendars against isolated Les Buttes staging booking dates every four hours; never auto-edit bookings.
+            Description: Review live Airbnb calendars against isolated Les Buttes staging booking dates every four hours; reconcile external availability snapshots without editing reservations.
 
 Outputs:
   ManagementApiUrl:

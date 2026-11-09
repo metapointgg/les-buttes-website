@@ -1,3 +1,4 @@
+import {requireAirbnbAvailability} from './airbnb-availability.mjs';
 // Isolated read-only staging quote route. No guest data or writes.
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,GetCommand,QueryCommand} from '@aws-sdk/lib-dynamodb';
@@ -14,9 +15,10 @@ export function validateQuoteQuery(q){
     guests>(units.length===2?10:units[0]==='geranium'?4:6))throw Error('Invalid guest count');
  return {units,start:q.start,end:q.end,guests};
 }
-export async function stagingQuote(q,{db,table}){
+export async function stagingQuote(q,{db,table,airbnbRequired=process.env.BOOKING_AIRBNB_REQUIRED==='true'}){
  if(!db||!table)throw Error('Booking master unavailable');
  const {units,start,end,guests}=validateQuoteQuery(q);
+ if(airbnbRequired)await requireAirbnbAvailability({db,table,units,start,end});
  const results=[];
  for(const unit of units){
   const pricing=(await db.send(new GetCommand({TableName:table,

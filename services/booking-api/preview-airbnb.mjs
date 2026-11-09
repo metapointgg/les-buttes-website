@@ -39,7 +39,7 @@ export function parseAirbnbCalendar(source){
     }
     if(inEvent)fields.push(line);
   }
-  if(inEvent)throw new Error('Unclosed calendar event');
+  if(inEvent||!lines.some(l=>l.trim()==='END:VCALENDAR'))throw new Error('Unclosed calendar event');
   const blocked=new Set();
   for(const r of ranges){
     for(let day=parseDate(r.start);day<parseDate(r.end);day+=DAY){

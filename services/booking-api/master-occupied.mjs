@@ -1,3 +1,4 @@
+import {validateAirbnbSnapshot} from './airbnb-availability.mjs';
 // Read-only availability calculation over authoritative DynamoDB UNIT/DATE slots.
 // Guest names, booking identifiers, payment data and private calendar URLs are NEVER read.
 import {slotBlocksAvailability} from './occupancy.mjs';
@@ -9,7 +10,7 @@ export const UNITS=['geranium','honeysuckle'];
 const oneDay=86400000;
 export function nextDay(date){return new Date(Date.parse(date+'T00:00:00.000Z')+oneDay).toISOString().slice(0,10);}
 
-export async function masterOccupied({db,table,nowEpoch=Math.floor(Date.now()/1000),capturedAt=new Date().toISOString()}){
+export async function masterOccupied({db,table,nowEpoch=Math.floor(Date.now()/1000),capturedAt=new Date().toISOString(),airbnbRequired=process.env.BOOKING_AIRBNB_REQUIRED==='true'}){
   if(!db||!table)throw Error('Availability master database is not configured');
   const blocked={};
   for(const unit of UNITS){
@@ -33,6 +34,11 @@ export async function masterOccupied({db,table,nowEpoch=Math.floor(Date.now()/10
       }
       cursor=result.LastEvaluatedKey;
     }while(cursor);
+    if(airbnbRequired){
+      const response=await db.send({input:{TableName:table,ConsistentRead:true,KeyConditionExpression:'PK = :pk AND SK = :sk',ExpressionAttributeValues:{':pk':'UNIT#'+unit,':sk':'AIRBNB#CURRENT'}}});
+      const snapshot=validateAirbnbSnapshot(response.Items?.[0],{unit,start:FIRST_NIGHT,end:CHECKOUT,now:nowEpoch});
+      dates.push(...snapshot.blockedNights);
+    }
     const ranges=[];
     for(const date of [...new Set(dates)].sort()){
       const last=ranges[ranges.length-1];
