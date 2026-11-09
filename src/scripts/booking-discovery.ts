@@ -28,7 +28,7 @@ if(widget){
     hostedReadOnlyEnabled?(import.meta.env.PUBLIC_BOOKING_AVAILABILITY_URL??null):null;
   let fetchSequence=0;
   const lang=widget.dataset.locale==='fr'?'fr-FR':widget.dataset.locale==='nl'?'nl-NL':'en-GB';
-  const money=(v:number)=>new Intl.NumberFormat(lang,{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(v);
+  const money=(v:number)=>new Intl.NumberFormat(lang,{style:'currency',currency:'GBP',minimumFractionDigits:0,maximumFractionDigits:2}).format(v);
   const readable=(date:string,opts:Intl.DateTimeFormatOptions)=>new Intl.DateTimeFormat(lang,{...opts,timeZone:'UTC'}).format(new Date(date+'T00:00:00Z'));
   const rangeLabel=(start:string,end:string)=>new Intl.DateTimeFormat(lang,{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).formatRange(new Date(start+'T00:00:00Z'),new Date(end+'T00:00:00Z'));
   const formatDay=(date:string)=>readable(date,{weekday:'long',day:'numeric',month:'long'});
@@ -268,7 +268,7 @@ if(widget){
           ].filter(Boolean).join(' ');
           button.title=formatDay(date)+': '+(d.status==='occupied'?tr('dateBlocked'):
             d.status==='closed'?tr('closed'):d.status==='unknown'?tr('masterOffline'):tr('possibleDate'));
-          button.setAttribute('aria-label',button.title+(d.rateGBP?' · '+money(d.rateGBP):''));
+          button.setAttribute('aria-label',button.title+(!liveQuoteEnabled&&d.rateGBP?' · '+money(d.rateGBP):''));
           button.setAttribute('aria-pressed',String(markedStart||markedEnd));
           const num=document.createElement('span');num.className='calendar-day';
           num.textContent=String(Number(date.slice(-2)));
@@ -359,10 +359,18 @@ if(widget){
     // illustrative preview rate. Do not compare illustrative Airbnb savings
     // against an authoritative direct quote.
     if(liveQuoteEnabled&&authoritativeQuote?.key===quoteKey()){
+      summaryLines.replaceChildren();
+      const cottages=document.createElement('p');
+      cottages.textContent=quote.units.map(item=>item.unit==='geranium'?'Geranium':'Honeysuckle').join(' + ');
+      summaryLines.append(cottages);
       fill('[data-summary-direct]',money(Number(authoritativeQuote.totalGBP)));
+      const priceLabel=widget.querySelector<HTMLElement>('[data-summary-direct]')?.previousElementSibling;
+      if(priceLabel)priceLabel.textContent='Published direct price';
+      const priceNote=summarySection.querySelector<HTMLElement>('.discover-snapshot-note');
+      if(priceNote)priceNote.textContent='Price calculated from the published booking database. Availability and price are checked again when you submit.';
       for(const selector of ['[data-summary-airbnb]','[data-summary-saving]']){
         const element=widget.querySelector<HTMLElement>(selector);
-        if(element?.parentElement)element.parentElement.hidden=true;
+        if(element?.parentElement){element.parentElement.hidden=true;element.parentElement.style.display='none';}
       }
     }
     setStep(3);
