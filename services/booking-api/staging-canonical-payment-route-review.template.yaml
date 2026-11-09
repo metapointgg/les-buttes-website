@@ -39,6 +39,11 @@ Parameters:
     AllowedValues: ['false', 'true']
     Default: 'false'
     Description: Separate owner-approved switch; never enable for initial route deployment.
+  StagingPolicyRefundAcceptanceEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+    Description: Staging synthetic SumUp policy-refund acceptance only; never enable in production.
 Conditions:
   AutomaticReconciliation: !Equals [!Ref AutomaticReconciliationEnabled, 'true']
   ApprovedStagingDeployment: !Equals [!Ref DeploymentEnabled, 'true']
@@ -131,6 +136,7 @@ Resources:
           BOOKING_SES_TEST_RECIPIENTS: success@simulator.amazonses.com
           BOOKING_AUTOMATIC_RECONCILIATION_ENABLED: !Ref AutomaticReconciliationEnabled
           BOOKING_SANDBOX_REFUND_ACCEPTANCE: 'false'
+          BOOKING_SANDBOX_POLICY_REFUND_ACCEPTANCE: !Ref StagingPolicyRefundAcceptanceEnabled
           BOOKING_AIRBNB_REQUIRED: 'true'
           BOOKING_ENVIRONMENT: staging
           MANAGEMENT_COGNITO_ISSUER: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa

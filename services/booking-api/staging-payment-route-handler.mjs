@@ -1,4 +1,5 @@
 import {sandboxRefund} from './sandbox-refund.mjs';
+import {executeSandboxPolicyRefund} from './sumup-policy-refund-runtime.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient} from '@aws-sdk/lib-dynamodb';
 // Dedicated entrypoint for the canonical staging payment reconciliation route.
@@ -14,6 +15,13 @@ const deny=(statusCode,error)=>({
 });
 
 export async function handler(event){
+  if(!event?.requestContext&&event?.source==='lesbuttes.staging.policy-refund-acceptance'&&
+    event.account==='145608514666'&&event.region==='eu-west-2'&&
+    event.policyId==='DIRECT_AIRBNB_STRICT_SHORT_STAY_V1'){
+    const db=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
+    try{return await executeSandboxPolicyRefund({db,table:process.env.BOOKINGS_TABLE,
+      bookingId:event.bookingId});}finally{db.destroy?.();}
+  }
   if(!event?.requestContext&&event?.source==='lesbuttes.staging.refund-acceptance'&&event.account==='145608514666'&&event.region==='eu-west-2'&&event.policyId==='SYNTHETIC_FULL_REFUND_V1'){
     const db=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
     try{return await sandboxRefund({db,bookingId:event.bookingId});}finally{db.destroy?.();}
