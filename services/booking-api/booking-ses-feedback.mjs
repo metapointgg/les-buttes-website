@@ -45,10 +45,28 @@ export async function reconcileAuthenticatedSesFeedback({
  const event=parseSesFeedback(payload);
  const record=(await db.send(new GetCommand({TableName:table,Key:event.key,
   ConsistentRead:true}))).Item;
- if(!record||record.sesMessageId!==event.messageId||
+ const uncertain=record&&!record.sesMessageId&&['CLAIMED','RECONCILIATION_REQUIRED'].includes(record.state);
+ if(!record||(!uncertain&&record.sesMessageId!==event.messageId)||
     record.to!==event.recipient||record.bookingId!==event.bookingId||
     record.type!==event.type||record.templateId!==event.templateId)
   throw Error('SES feedback cannot be matched to authoritative outbox');
+ if(uncertain){
+  // Signed SES feedback can recover a lost send acknowledgement without resending.
+  // Bind only a matching sender, recipient, permanent claim and plausible send time.
+  const sentAt=Date.parse(payload.mail?.timestamp),claimedAt=Date.parse(record.claimedAt),observedAt=Date.parse(now());
+  if(payload.mail?.source!==record.sender||!Number.isFinite(sentAt)||!Number.isFinite(claimedAt)||
+     !Number.isFinite(observedAt)||sentAt<claimedAt-60000||sentAt>observedAt+60000)
+   throw Error('Uncertain SES claim cannot be correlated');
+  try{
+   await db.send(new UpdateCommand({TableName:table,Key:event.key,
+    UpdateExpression:'SET #state = :next, sesMessageId = :messageId, feedbackAt = :now, recoveredFromUncertain = :recovered',
+    ConditionExpression:'#state = :previous AND attribute_not_exists(sesMessageId) AND #recipient = :recipient AND claimedAt = :claimedAt',
+    ExpressionAttributeNames:{'#state':'state','#recipient':'to'},
+    ExpressionAttributeValues:{':next':event.state,':messageId':event.messageId,':now':now(),':recovered':true,
+     ':previous':record.state,':recipient':event.recipient,':claimedAt':record.claimedAt}}));
+  }catch(error){if(error?.name==='ConditionalCheckFailedException')return {status:'CONCURRENT_RECONCILIATION',state:null};throw error;}
+  return {status:'RECOVERED_FROM_VERIFIED_FEEDBACK',state:event.state,bookingId:event.bookingId};
+ }
  const previous=record.state;
  if(terminal.has(previous)||previous===event.state)
   return {status:'IGNORED_ALREADY_RECONCILED',state:previous};

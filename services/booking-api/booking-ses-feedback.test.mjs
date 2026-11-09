@@ -74,3 +74,13 @@ test('LB-09 refused feedback when provider acknowledgement never recorded',async
  await assert.rejects(reconcile(s,'Delivery'),/provider acceptance/);
  assert.equal(s.writes,0);
 });
+test('signed provider feedback recovers an uncertain send without resending',async()=>{
+ const uncertain={...record,state:'RECONCILIATION_REQUIRED',sender:'info@lesbuttes.com',claimedAt:'2026-11-03T20:59:00.000Z'};
+ delete uncertain.sesMessageId;
+ const payload=event('Delivery');payload.mail.source=uncertain.sender;payload.mail.timestamp='2026-11-03T20:59:01.000Z';
+ const s=makeStore(uncertain);
+ const result=await reconcile(s,'Delivery',{notification:{Type:'Notification',Message:JSON.stringify(payload)}});
+ assert.equal(result.status,'RECOVERED_FROM_VERIFIED_FEEDBACK');assert.equal(s.writes,1);
+ payload.mail.source='wrong@example.invalid';
+ await assert.rejects(reconcile(makeStore(uncertain),'Delivery',{notification:{Type:'Notification',Message:JSON.stringify(payload)}}),/cannot be correlated/);
+});
