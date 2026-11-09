@@ -417,6 +417,10 @@ if(widget){
     const notice=document.createElement('p');
     notice.textContent='Staging test booking. Uses synthetic guest details and sandbox payment only.';
     detailsForm.prepend(notice);
+    const previewNote=widget.querySelector<HTMLElement>('.discover-preview-note');
+    if(previewNote)previewNote.textContent=notice.textContent;
+    const requestNote=widget.querySelector<HTMLElement>('.discover-request-note');
+    if(requestNote)requestNote.textContent='Test requests reserve staging dates and require owner approval.';
     confirmButton.textContent='Submit synthetic booking request';
     confirmButton.type='submit';
     confirmButton.disabled=false;

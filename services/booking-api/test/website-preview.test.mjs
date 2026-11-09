@@ -74,7 +74,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discovery,/type="button" class="button discover-request" disabled aria-disabled="true"/);
   assert.ok(discoveryScript.includes("confirmButton.type='submit'"));
   assert.ok(discoveryScript.includes("confirmButton.setAttribute('aria-disabled','false')"));
-  assert.ok(discoveryScript.includes("if(requestEnabled&&confirmButton)"));
+  assert.ok(discoveryScript.includes("if(requestEnabled&&!syntheticRequestEnabled&&confirmButton)"));
   assert.ok(discoveryScript.includes("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"));
 
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
@@ -85,7 +85,8 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   // Validation is now allowed, but preview submission must still be prevented.
   assert.match(discoveryScript,/detailsForm.addEventListener\('submit',async event=>/);
   assert.match(discoveryScript,/if\(!requestEnabled&&confirmButton\)confirmButton.disabled=true/);
-  assert.match(discoveryScript,/response.status!==202/);
+  assert.ok(discoveryScript.includes("response.status!==(syntheticRequestEnabled?201:202)"));
+  assert.ok(discoveryScript.includes("window.location.hostname==='d123fnjf47zmyp.cloudfront.net'"));
   assert.match(discoveryScript,/await checkAuthoritativeQuote\(\)/);
   // Numeric GBP totals must be accepted; a double-escaped digit class rejects every quote.
   assert.ok(!discoveryScript.includes(String.raw`/^\\\\d+`));
