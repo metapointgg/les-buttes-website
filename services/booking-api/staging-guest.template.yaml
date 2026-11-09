@@ -22,6 +22,10 @@ Parameters:
     AllowedValues:
     - 'false'
     - 'true'
+  EnableSimulatorEmails:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['false', 'true']
   EnableTestChallenge:
     Type: String
     Default: 'false'
@@ -61,6 +65,15 @@ Resources:
       ReservedConcurrentExecutions: 2
       Environment:
         Variables:
+          BOOKING_REQUEST_DISPATCH_ENABLED:
+            Ref: EnableSimulatorEmails
+          BOOKING_SES_SIMULATOR_ENABLED: 'true'
+          BOOKING_EMAILS_ENABLED:
+            Ref: EnableSimulatorEmails
+          BOOKING_SES_REGION: us-east-1
+          BOOKING_SES_SANDBOX_ACK: 'true'
+          BOOKING_SES_FROM: info@lesbuttes.com
+          BOOKING_SES_TEST_RECIPIENTS: success@simulator.amazonses.com
           BOOKING_ENVIRONMENT: staging
           BOOKING_STAGING_GUEST_WRITES:
             Fn::If:
@@ -77,6 +90,14 @@ Resources:
             Ref: EnableTestChallenge
       Policies:
       - Statement:
+        - Effect: Allow
+          Action: ses:SendEmail
+          Resource: arn:aws:ses:us-east-1:145608514666:identity/lesbuttes.com
+          Condition:
+            StringEquals:
+              ses:FromAddress: info@lesbuttes.com
+            ForAllValues:StringEquals:
+              ses:Recipients: [success@simulator.amazonses.com]
         - Effect: Allow
           Action:
           - dynamodb:Query

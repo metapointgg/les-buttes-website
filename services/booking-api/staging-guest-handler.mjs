@@ -5,6 +5,8 @@ import {SSMClient,GetParameterCommand} from '@aws-sdk/client-ssm';
 import {createStagingGuestRequest} from './staging-guest-request.mjs';
 import {syntheticQuotaItems} from './staging-guest-quota.mjs';
 import {quoteFromPublishedMaster} from './published-pricing.mjs';
+import {dispatchRequestedBookingEmails} from './booking-confirmation-email-dispatch.mjs';
+import {createStagingSesTransport} from './booking-staging-ses-transport.mjs';
 
 const client=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
 const ssm=new SSMClient({region:'eu-west-2'});
@@ -52,7 +54,18 @@ export function createGuestHandler({db=client,parameterStore=ssm,fetchImpl=globa
      ...syntheticQuotaItems({table,ip,secret:await readSecret()}),
      ...hold.items.map(x=>({Put:{...x.Put,TableName:table}}))],ClientRequestToken:hold.meta.id}))
    });
-   return respond(201,result);
+   let notificationStatus='DISABLED';
+   if(env.BOOKING_REQUEST_DISPATCH_ENABLED==='true'){
+    try{
+     await dispatchRequestedBookingEmails({db,table,bookingId:result.reference,env,
+      transport:createStagingSesTransport({env})});
+     notificationStatus='ACCEPTED_OR_PREVIOUSLY_CLAIMED';
+    }catch{
+     notificationStatus='RECONCILIATION_REQUIRED';
+     console.error('STAGING_REQUEST_NOTIFICATION_RECONCILIATION_REQUIRED',result.reference);
+    }
+   }
+   return respond(201,{...result,notificationStatus});
   }catch(error){
    if(error.name==='TransactionCanceledException')return respond(409,{error:'Dates unavailable or staging request limit reached'});
    if(error.message==='Verification failed')return respond(403,{error:'Human verification required'});

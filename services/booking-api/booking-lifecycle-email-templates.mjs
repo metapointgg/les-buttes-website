@@ -5,6 +5,8 @@ const ID=/^[0-9a-f]{8}-[0-9a-f-]{27,36}$/i;
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 const COTTAGES=new Set(['Geranium','Honeysuckle','Geranium and Honeysuckle']);
 const TYPES=Object.freeze({
+ requested:'requested_v1',
+ owner_request:'owner_request_v1',
  approval_payment:'approval_payment_v1',
  declined:'declined_v1',
  confirmed:'confirmed_v1',
@@ -50,6 +52,13 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
  const footer='Les Buttes Holiday Cottages\nPlease reply to the email you received if you need assistance.';
  let subject,lines;
  switch(type){
+  case 'requested':
+  case 'owner_request':
+   if(booking.status!=='REQUESTED')throw Error('Requested booking state required');
+   subject=type==='owner_request'?'Les Buttes – booking request awaiting review':'Les Buttes – booking request received';
+   lines=[type==='owner_request'?'A booking request is awaiting your review in the management application.':'We have received your booking request.',
+    stay,reference,'The reservation is provisional and requires owner approval. No payment has been taken.'];
+   break;
   case 'approval_payment':{
    // An untrusted booking event cannot manufacture approval or payment amount.
    if(booking.status!=='APPROVED_AWAITING_PAYMENT'||

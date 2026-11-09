@@ -36,3 +36,16 @@ test('dispatch disabled in production or without explicit feature flag before re
    env:{...env,...overrides},transport:{send:async()=>{}}}),/disabled/);
  assert.equal(reads,0);
 });
+
+test('request dispatch reads authoritative state and sends distinct guest and owner events',async()=>{
+ const {dispatchRequestedBookingEmails}=await import('./booking-confirmation-email-dispatch.mjs');
+ const messages=[];
+ const args={db:{send:async command=>{assert.equal(command.input.ConsistentRead,true);return {Item:{...booking,status:'REQUESTED',reservationStatus:'PENDING_REVIEW'}};}},
+  table,bookingId:id,env:{BOOKING_ENVIRONMENT:'staging',BOOKING_REQUEST_DISPATCH_ENABLED:'true',BOOKING_OWNER_EMAIL:'owner@example.com'},
+  transport:{send:async()=>{}},send:async({message})=>{messages.push(message);return {status:'ALREADY_CLAIMED'};}};
+ await dispatchRequestedBookingEmails(args);
+ assert.deepEqual(messages.map(m=>[m.type,m.to]),[['requested','verified@example.com'],['owner_request','owner@example.com']]);
+ await assert.rejects(dispatchRequestedBookingEmails({...args,env:{...args.env,BOOKING_ENVIRONMENT:'production'}}),/disabled/);
+ await assert.rejects(dispatchRequestedBookingEmails({...args,db:{send:async()=>({Item:booking})}}),/requested booking/);
+ assert.equal(messages.length,2);
+});

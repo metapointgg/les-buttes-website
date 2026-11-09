@@ -2,7 +2,7 @@
 // SES domain/DKIM verification in us-east-1 does not remove SES sandbox restrictions.
 const FROM=/^[A-Z0-9._%+-]+@lesbuttes\.com$/i;
 const EMAIL=/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-const TYPES=new Set(['approval_payment','declined','confirmed','cancelled','hold_expired','delivery_failure']);
+const TYPES=new Set(['requested','owner_request','approval_payment','declined','confirmed','cancelled','hold_expired','delivery_failure']);
 const TEMPLATE=/^[a-z0-9][a-z0-9_-]{1,80}$/;
 function normaliseEmail(value){
  return typeof value==='string'&&EMAIL.test(value.trim())?value.trim().toLowerCase():null;
