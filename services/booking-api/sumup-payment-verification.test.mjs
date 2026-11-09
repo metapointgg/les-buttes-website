@@ -31,6 +31,15 @@ test('LB-08 rejects amount, merchant, currency, checkout and booking mismatches'
 });
 test('LB-08 rejects ambiguous transaction evidence',()=>{
  assert.equal(verify({provider:{...provider,transactions:[...provider.transactions,...provider.transactions]}}).verified,false);
+ assert.equal(verify({provider:{...provider,transactions:[...provider.transactions,{id:'pending-12345',status:'PENDING'}]}}).verified,false);
+});
+
+test('a declined card attempt followed by one successful sandbox payment is unambiguous',()=>{
+ const result=verify({provider:{...provider,transactions:[
+  {id:'failed-12345',status:'FAILED',amount:1630,currency:'GBP',merchant_code:'MTEST123'},
+  ...provider.transactions]}});
+ assert.equal(result.verified,true);
+ assert.equal(result.transactionId,'transaction-12345');
 });
 
 test('LB-08 rejects transaction-level amount currency or merchant manipulation',()=>{

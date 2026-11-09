@@ -29,9 +29,12 @@ export function verifySumUpPayment({registered,provider,booking,now=new Date()}=
  // Provider transaction must be independently returned by the checkout read.
  // A webhook event or redirect alone is not payment evidence.
  const tx=provider.transactions;
- if(!Array.isArray(tx)||tx.length!==1||tx[0]?.status!=='SUCCESSFUL'||
-    !TX.test(tx[0]?.id??''))return fail('Successful provider transaction missing or ambiguous');
- const payment=tx[0];
+ if(!Array.isArray(tx)||tx.some(item=>!item||!['SUCCESSFUL','FAILED'].includes(item.status)))
+  return fail('Successful provider transaction missing or ambiguous');
+ const successful=tx.filter(item=>item.status==='SUCCESSFUL');
+ if(successful.length!==1||!TX.test(successful[0]?.id??''))
+  return fail('Successful provider transaction missing or ambiguous');
+ const payment=successful[0];
  const paidAmount=Number(payment.amount);
  if(payment.currency!=='GBP'||payment.merchant_code!==registered.merchantCode||
     !Number.isFinite(paidAmount)||Math.round(paidAmount*100)!==expected||
@@ -40,5 +43,5 @@ export function verifySumUpPayment({registered,provider,booking,now=new Date()}=
  if(!(now instanceof Date)||Number.isNaN(now.getTime()))return fail('Invalid verification time');
  return {verified:true,checkoutId:registered.checkoutId,bookingId:booking.id,
    reference:registered.reference,amountPence:expected,currency:'GBP',
-   transactionId:tx[0].id,verifiedAt:now.toISOString()};
+   transactionId:payment.id,verifiedAt:now.toISOString()};
 }
