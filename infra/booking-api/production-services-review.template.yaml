@@ -48,6 +48,14 @@ Resources:
         AllowMethods: [GET, POST, OPTIONS]
         AllowHeaders: [content-type]
         MaxAge: 300
+  ProductionApiAccessLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/apigateway/les-buttes-booking-production-read
+      RetentionInDays: 90
   ProductionApiStage:
     Condition: CorrectAccountAndRegion
     Type: AWS::ApiGatewayV2::Stage
@@ -55,6 +63,63 @@ Resources:
       ApiId: !Ref ProductionApi
       StageName: $default
       AutoDeploy: true
+      DefaultRouteSettings:
+        DetailedMetricsEnabled: true
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+      AccessLogSettings:
+        DestinationArn: !GetAtt ProductionApiAccessLogGroup.Arn
+        Format: >-
+          {"requestId":"$context.requestId","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","routeKey":"$context.routeKey","status":"$context.status","responseLength":"$context.responseLength","integrationError":"$context.integrationErrorMessage"}
+
+  CalendarReadLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes/production/calendar-read
+      RetentionInDays: 90
+  AvailabilityReadLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes/production/availability-read
+      RetentionInDays: 90
+  QuoteReadLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes/production/quote-read
+      RetentionInDays: 90
+  DisabledRequestLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes/production/request-disabled
+      RetentionInDays: 90
+  ProductionAdminReadLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes/production/admin-read
+      RetentionInDays: 90
+  CalendarMonitorLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes/production/calendar-monitor
+      RetentionInDays: 90
 
   CalendarReadRole:
     Condition: CorrectAccountAndRegion
@@ -80,8 +145,8 @@ Resources:
                   - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/calendar/geranium-token
                   - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/calendar/honeysuckle-token
               - Effect: Allow
-                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
-                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt CalendarReadLogGroup.Arn
   CalendarReadFunction:
     Condition: CorrectAccountAndRegion
     Type: AWS::Lambda::Function
@@ -92,6 +157,11 @@ Resources:
       Timeout: 15
       MemorySize: 256
       ReservedConcurrentExecutions: 4
+      LoggingConfig:
+        LogGroup: !Ref CalendarReadLogGroup
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
       Code:
         S3Bucket: !Ref ReviewedArtifactBucket
         S3Key: !Ref ReviewedArtifactKey
@@ -153,8 +223,8 @@ Resources:
                 Action: dynamodb:Query
                 Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
               - Effect: Allow
-                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
-                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt AvailabilityReadLogGroup.Arn
   AvailabilityReadFunction:
     Condition: CorrectAccountAndRegion
     Type: AWS::Lambda::Function
@@ -165,6 +235,11 @@ Resources:
       Timeout: 15
       MemorySize: 256
       ReservedConcurrentExecutions: 4
+      LoggingConfig:
+        LogGroup: !Ref AvailabilityReadLogGroup
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
       Code:
         S3Bucket: !Ref ReviewedArtifactBucket
         S3Key: !Ref ReviewedArtifactKey
@@ -217,8 +292,8 @@ Resources:
                 Action: [dynamodb:GetItem, dynamodb:Query]
                 Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
               - Effect: Allow
-                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
-                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt QuoteReadLogGroup.Arn
   QuoteReadFunction:
     Condition: CorrectAccountAndRegion
     Type: AWS::Lambda::Function
@@ -229,6 +304,11 @@ Resources:
       Timeout: 15
       MemorySize: 256
       ReservedConcurrentExecutions: 4
+      LoggingConfig:
+        LogGroup: !Ref QuoteReadLogGroup
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
       Code:
         S3Bucket: !Ref ReviewedArtifactBucket
         S3Key: !Ref ReviewedArtifactKey
@@ -280,8 +360,8 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
-                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
-                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt DisabledRequestLogGroup.Arn
   DisabledRequestFunction:
     Condition: CorrectAccountAndRegion
     Type: AWS::Lambda::Function
@@ -292,6 +372,11 @@ Resources:
       Timeout: 5
       MemorySize: 128
       ReservedConcurrentExecutions: 2
+      LoggingConfig:
+        LogGroup: !Ref DisabledRequestLogGroup
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
       Code:
         S3Bucket: !Ref ReviewedArtifactBucket
         S3Key: !Ref ReviewedArtifactKey
@@ -349,8 +434,8 @@ Resources:
                   - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
                   - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}/index/BookingRequestsIndex
               - Effect: Allow
-                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
-                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt ProductionAdminReadLogGroup.Arn
   ProductionAdminReadFunction:
     Condition: CorrectAccountAndRegion
     Type: AWS::Lambda::Function
@@ -361,6 +446,11 @@ Resources:
       Timeout: 15
       MemorySize: 256
       ReservedConcurrentExecutions: 2
+      LoggingConfig:
+        LogGroup: !Ref ProductionAdminReadLogGroup
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
       Code:
         S3Bucket: !Ref ReviewedArtifactBucket
         S3Key: !Ref ReviewedArtifactKey
@@ -452,6 +542,8 @@ Resources:
                 Condition:
                   ForAllValues:StringEquals:
                     dynamodb:LeadingKeys: [UNIT#geranium, UNIT#honeysuckle]
+                  'Null':
+                    dynamodb:LeadingKeys: 'false'
               - Effect: Allow
                 Action: [dynamodb:GetItem, dynamodb:PutItem]
                 Resource: !GetAtt CalendarMonitorCheckpointTable.Arn
@@ -464,8 +556,8 @@ Resources:
                 Action: sns:Publish
                 Resource: !Ref OperationalAlertTopicArn
               - Effect: Allow
-                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
-                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt CalendarMonitorLogGroup.Arn
   CalendarMonitorFunction:
     Condition: CorrectAccountAndRegion
     Type: AWS::Lambda::Function
@@ -476,6 +568,11 @@ Resources:
       Timeout: 90
       MemorySize: 256
       ReservedConcurrentExecutions: 1
+      LoggingConfig:
+        LogGroup: !Ref CalendarMonitorLogGroup
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
       Code:
         S3Bucket: !Ref ReviewedArtifactBucket
         S3Key: !Ref ReviewedArtifactKey

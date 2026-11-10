@@ -35,5 +35,16 @@ test('only inbound snapshots can write the production table',()=>{
  assert.match(source,/ProductionInboundCalendarSnapshot/);
  assert.match(source,/Action: dynamodb:PutItem/);
  assert.match(source,/dynamodb:LeadingKeys: \[UNIT#geranium, UNIT#honeysuckle\]/);
+ assert.match(source,/'Null':\s+dynamodb:LeadingKeys: 'false'/);
  assert.doesNotMatch(source,/dynamodb:(?:UpdateItem|DeleteItem|TransactWriteItems)/);
+});
+
+test('production API and functions have bounded structured operational logging',()=>{
+ assert.match(source,/ProductionApiAccessLogGroup:[\s\S]*RetentionInDays: 90/);
+ assert.match(source,/AccessLogSettings:[\s\S]*DestinationArn: !GetAtt ProductionApiAccessLogGroup\.Arn/);
+ assert.match(source,/ThrottlingBurstLimit: 20/);
+ assert.match(source,/ThrottlingRateLimit: 10/);
+ assert.equal((source.match(/RetentionInDays: 90/g)??[]).length,7);
+ assert.equal((source.match(/LogFormat: JSON/g)??[]).length,6);
+ assert.doesNotMatch(source,/Action: \[logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents\]/);
 });
