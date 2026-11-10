@@ -42,7 +42,11 @@ export async function verifyProductionSumUpMerchant({ssm,env=process.env,fetchIm
   {method:'GET',headers:{Authorization:'Bearer '+apiKey,Accept:'application/json'},signal:AbortSignal.timeout(8000)});
  if(!response.ok)throw Error('SumUp merchant verification failed: '+response.status);
  const merchant=await response.json();
- if(merchant?.merchant_code!==merchantCode||merchant?.sandbox!==false||merchant?.default_currency!=='GBP')
-  throw Error('Configured SumUp merchant is not a live GBP merchant');
- return {merchantMatched:true,live:true,currency:'GBP'};
+ const merchantMatched=merchant?.merchant_code===merchantCode;
+ const sandboxReported=typeof merchant?.sandbox==='boolean';
+ const currency=typeof merchant?.default_currency==='string'?merchant.default_currency:
+  (typeof merchant?.currency==='string'?merchant.currency:null);
+ const live=sandboxReported&&merchant.sandbox===false;
+ return {verified:merchantMatched&&live&&currency==='GBP',merchantMatched,live,
+  sandboxReported,currency};
 }

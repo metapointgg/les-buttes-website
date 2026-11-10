@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {productionPaymentsEnabled,loadProductionSumUpCredentials,createVerifiedProductionSumUpClient} from './sumup-production-runtime.mjs';
+import {productionPaymentsEnabled,loadProductionSumUpCredentials,createVerifiedProductionSumUpClient,verifyProductionSumUpMerchant} from './sumup-production-runtime.mjs';
 const table='les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2';
 const enabled={BOOKING_ENVIRONMENT:'production',AWS_REGION:'eu-west-2',BOOKINGS_TABLE:table,PAYMENTS_ENABLED:'true',LIVE_PAYMENTS_APPROVED:'true'};
 test('production payment runtime is disabled unless every release gate matches',async()=>{
@@ -14,4 +14,12 @@ test('production credentials use fixed paths and verified live merchant',async()
 test('production runtime refuses sandbox or mismatched merchant before client creation',async()=>{
  const ssm={send:async command=>command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'MLIVE123'}}};
  for(const merchant of [{merchant_code:'MLIVE123',sandbox:true},{merchant_code:'OTHER123',sandbox:false},{}]){let created=0;await assert.rejects(createVerifiedProductionSumUpClient({ssm,env:enabled,fetchImpl:async()=>({ok:true,json:async()=>merchant}),clientFactory:()=>{created++;}}),/Live SumUp merchant verification required/);assert.equal(created,0);}
+});
+test('read-only production verification returns safe merchant facts without credentials',async()=>{
+ const ssm={send:async command=>command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'MLIVE123'}}};
+ const env={BOOKING_ENVIRONMENT:'production',AWS_REGION:'eu-west-2',PRODUCTION_PROVIDER_VERIFICATION_ENABLED:'true'};
+ const verified=await verifyProductionSumUpMerchant({ssm,env,fetchImpl:async()=>({ok:true,json:async()=>({merchant_code:'MLIVE123',sandbox:false,default_currency:'GBP'})})});
+ assert.deepEqual(verified,{verified:true,merchantMatched:true,live:true,sandboxReported:true,currency:'GBP'});
+ const incomplete=await verifyProductionSumUpMerchant({ssm,env,fetchImpl:async()=>({ok:true,json:async()=>({merchant_code:'MLIVE123',currency:'GBP'})})});
+ assert.deepEqual(incomplete,{verified:false,merchantMatched:true,live:false,sandboxReported:false,currency:'GBP'});
 });
