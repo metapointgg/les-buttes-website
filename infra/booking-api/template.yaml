@@ -410,6 +410,25 @@ Resources:
       AlarmActions:
         - !Ref CalendarMonitorAlertTopic
 
+  BookingApiFailureAlarm:
+    Condition: MonitoringEnabledCondition
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Staging booking API failed; new requests and outbound calendars may be unavailable.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref BookingFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref CalendarMonitorAlertTopic
+
   CalendarMonitorFunction:
     Condition: MonitoringEnabledCondition
     Type: AWS::Serverless::Function
