@@ -112,7 +112,17 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
    // authoritative merchant immediately before every payment-capable POST.
    const merchant=await call('/v1/merchants/'+encodeURIComponent(merchantCode));
    const expectedSandbox=providerEnvironment==='sandbox';
-   if(merchant?.merchant_code!==merchantCode||merchant?.sandbox!==expectedSandbox)
+   const currency=merchant?.default_currency??merchant?.currency;
+   // SumUp can omit the optional sandbox field on real merchant responses.
+   // In that case accept ONLY the independently approved GBP live merchant;
+   // never infer live status from an arbitrary API key or missing field.
+   const approvedLiveCode=merchantCode==='M9BE4KMN';
+   const knownSandboxCode=merchantCode==='MGV5J9QV';
+   const liveEnvironment=(merchant?.sandbox===false||
+     (merchant?.sandbox==null&&approvedLiveCode))&&
+     !knownSandboxCode&&currency==='GBP';
+   const environmentMatches=expectedSandbox?merchant?.sandbox===true:liveEnvironment;
+   if(merchant?.merchant_code!==merchantCode||!environmentMatches)
     throw Error((expectedSandbox?'Sandbox':'Live')+' merchant verification required');
    const request=buildCheckoutRequest({...input,merchantCode});
    const response=await call(CHECKOUT,{method:'POST',body:JSON.stringify(request)});
