@@ -88,7 +88,9 @@ export function stagingAuthDiagnostic(event,{issuer=process.env.MANAGEMENT_COGNI
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
 export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,writeEnabled=()=>false,
- approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout,reconciliationEnabled=()=>false,reconcilePayment}){
+ approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout,reconciliationEnabled=()=>false,reconcilePayment,
+ deploymentAllowed=()=>process.env.BOOKING_ENVIRONMENT==='staging',
+ writeDeploymentAllowed=()=>process.env.BOOKING_ENVIRONMENT==='staging'&&process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')}){
  return async event=>{
    try{
      const method=event?.requestContext?.http?.method;
@@ -106,8 +108,7 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
        const configMatch=path.match(/^\/admin\/config\/(pricing|stay-rules|cancellation|payments|business|arrival-departure|terms)\/(geranium|honeysuckle|all)\/(publish|rollback)$/);
        if(configMatch){
          if(id.role!=='owner')return reply(403,{error:'Forbidden'});
-         if(process.env.BOOKING_ENVIRONMENT!=='staging'||!process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||
-           !writeEnabled()||typeof writeConfig!=='function')return reply(503,{error:'Management writes disabled'});
+         if(!writeDeploymentAllowed()||!writeEnabled()||typeof writeConfig!=='function')return reply(503,{error:'Management writes disabled'});
          if(event.isBase64Encoded||typeof event.body!=='string'||event.body.length>22000)return reply(400,{error:'Invalid request'});
          let payload;
          try{payload=JSON.parse(event.body);}catch{return reply(400,{error:'Invalid request'});}
@@ -128,8 +129,7 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
        const paymentMatch=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/payment\/reconcile$/i);
        if(paymentMatch){
          if(id.role!=='owner')return reply(403,{error:'Forbidden'});
-         if(process.env.BOOKING_ENVIRONMENT!=='staging'||
-            !process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||!writeEnabled()||
+         if(!writeDeploymentAllowed()||!writeEnabled()||
             !reconciliationEnabled()||typeof reconcilePayment!=='function')
            return reply(503,{error:'Payment reconciliation disabled'});
          if(event.isBase64Encoded||event.body!=='{}')
@@ -144,8 +144,7 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
        const checkoutMatch=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/checkout\/register$/i);
        if(checkoutMatch){
          if(id.role!=='owner')return reply(403,{error:'Forbidden'});
-         if(process.env.BOOKING_ENVIRONMENT!=='staging'||
-            !process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||
+         if(!writeDeploymentAllowed()||
             !writeEnabled()||!checkoutEnabled()||typeof registerCheckout!=='function')
            return reply(503,{error:'Checkout registration disabled'});
          if(event.isBase64Encoded||event.body!=='{}')
@@ -159,8 +158,7 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
        }
        if(!match)return reply(405,{error:'Method not allowed'});
        if(id.role!=='owner')return reply(403,{error:'Forbidden'});
-       if(process.env.BOOKING_ENVIRONMENT!=='staging'||!process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')||
-          !writeEnabled()||typeof writeAction!=='function')
+       if(!writeDeploymentAllowed()||!writeEnabled()||typeof writeAction!=='function')
          return reply(503,{error:'Management writes disabled'});
        if(event.isBase64Encoded||typeof event.body!=='string'||event.body.length>4096)
          return reply(400,{error:'Invalid request'});
@@ -202,7 +200,7 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
      const calendarMatch=path.match(/^\/admin\/bookings\/calendar-preview\/(geranium|honeysuckle)$/);
      if(calendarMatch){
        if(id.role!=='owner')return reply(403,{error:'Forbidden'});
-       if(process.env.BOOKING_ENVIRONMENT!=='staging'||typeof readCalendar!=='function')return reply(503,{error:'Calendar preview disabled'});
+       if(!deploymentAllowed()||typeof readCalendar!=='function')return reply(503,{error:'Calendar preview disabled'});
        return reply(200,await readCalendar(calendarMatch[1]));
      }
      // Read-only preflight: no state mutation and no payment confirmation.
@@ -222,7 +220,7 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
      const checkoutStatus=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/checkout\/status$/i);
      if(checkoutStatus){
        if(id.role!=='owner')return reply(403,{error:'Forbidden'});
-       if(process.env.BOOKING_ENVIRONMENT!=='staging'||typeof readCheckout!=='function')
+       if(!deploymentAllowed()||typeof readCheckout!=='function')
          return reply(503,{error:'Checkout status unavailable'});
        const record=await reader.getBooking(event,checkoutStatus[1]);
        if(!record)return reply(404,{error:'Not found'});
@@ -231,8 +229,10 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
        // booking state is updated only by provider-verified reconciliation.
        const confirmed=record.status==='CONFIRMED'&&record.reservationStatus==='CONFIRMED';
        let hostedCheckoutUrl;
-       if(record.id===checkoutStatus[1]&&record.synthetic===true&&
-          record.guestEmail==='test@example.invalid'&&record.source==='direct'&&
+       const environmentIdentity=process.env.BOOKING_ENVIRONMENT==='staging'?
+         record.synthetic===true&&record.guestEmail==='test@example.invalid':
+         process.env.BOOKING_ENVIRONMENT==='production'&&record.synthetic!==true;
+       if(record.id===checkoutStatus[1]&&environmentIdentity&&record.source==='direct'&&
           record.status==='APPROVED_AWAITING_PAYMENT'&&record.reservationStatus==='AWAITING_PAYMENT'&&
           Number.isSafeInteger(record.holdExpiresAt)&&record.holdExpiresAt>Math.floor(Date.now()/1000)&&
           checkout?.bookingId===record.id&&checkout.status==='PENDING'&&checkout.currency==='GBP'&&
@@ -248,7 +248,7 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
        }
        return reply(200,{bookingId:checkoutStatus[1],
          registered:Boolean(checkout),bookingConfirmed:confirmed,
-         ...(hostedCheckoutUrl?{hostedCheckoutUrl,sandbox:true}:{}),
+         ...(hostedCheckoutUrl?{hostedCheckoutUrl,sandbox:process.env.BOOKING_ENVIRONMENT==='staging'}:{}),
          ...(confirmed?{confirmationRecordedAt:record.paidAt??null}:{}),
          ...(checkout?{checkoutId:checkout.checkoutId,
            registrationStatus:checkout.status,

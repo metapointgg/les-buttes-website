@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  Les Buttes production read services. Customer booking writes, payments, refunds
-  and email are intentionally absent. Reuses the protected production booking table
-  and existing management Cognito authoriser.
+  Les Buttes production booking services. Transactional capabilities are deployed
+  behind independent default-off release gates and reuse the protected production
+  booking table and existing management Cognito authoriser.
 Parameters:
   ProductionBookingTableName:
     Type: String
@@ -32,6 +32,38 @@ Parameters:
   CalendarTokenSsmPrefix:
     Type: String
     AllowedValues: [/les-buttes/booking/production/calendar]
+  BookingRequestsEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+  LiveBookingsApproved:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+  ManagementWritesEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+  ManagementApprovalEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+  ManagementCheckoutEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+  ManagementPaymentReconciliationEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+  PaymentsEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
+  LivePaymentsApproved:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
 Conditions:
   CorrectAccountAndRegion: !And
     - !Equals [!Ref AWS::AccountId, '145608514666']
@@ -103,6 +135,22 @@ Resources:
     UpdateReplacePolicy: Retain
     Properties:
       LogGroupName: /aws/lambda/les-buttes/production/request-disabled
+      RetentionInDays: 90
+  ProductionAdminTransactionLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes/production/admin-transaction
+      RetentionInDays: 90
+  ProductionProviderVerificationLogGroup:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: /aws/lambda/les-buttes/production/provider-verification
       RetentionInDays: 90
   ProductionAdminReadLogGroup:
     Condition: CorrectAccountAndRegion
@@ -355,10 +403,16 @@ Resources:
             Principal: {Service: lambda.amazonaws.com}
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: ProductionRequestBoundaryLogsOnly
+        - PolicyName: ProductionRequestTransactionBoundary
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:BatchGetItem, dynamodb:Query, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:DeleteItem, dynamodb:ConditionCheckItem, dynamodb:TransactWriteItems]
+                Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/turnstile/secret
               - Effect: Allow
                 Action: [logs:CreateLogStream, logs:PutLogEvents]
                 Resource: !GetAtt DisabledRequestLogGroup.Arn
@@ -367,10 +421,10 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Runtime: nodejs22.x
-      Handler: production-request-disabled-handler.handler
+      Handler: production-request-handler.handler
       Role: !GetAtt DisabledRequestRole.Arn
-      Timeout: 5
-      MemorySize: 128
+      Timeout: 15
+      MemorySize: 256
       ReservedConcurrentExecutions: 2
       LoggingConfig:
         LogGroup: !Ref DisabledRequestLogGroup
@@ -385,8 +439,12 @@ Resources:
         Variables:
           BOOKING_ENVIRONMENT: production
           BOOKINGS_TABLE: !Ref ProductionBookingTableName
-          BOOKING_REQUESTS_ENABLED: 'false'
-          PAYMENTS_ENABLED: 'false'
+          BOOKING_REQUESTS_ENABLED: !Ref BookingRequestsEnabled
+          LIVE_BOOKINGS_APPROVED: !Ref LiveBookingsApproved
+          BOOKING_AIRBNB_REQUIRED: 'true'
+          NOTIFY_FROM: info@lesbuttes.com
+          NOTIFY_TO: info@lesbuttes.com
+          PAYMENTS_ENABLED: !Ref PaymentsEnabled
           REFUNDS_ENABLED: 'false'
           EMAILS_ENABLED: 'false'
   DisabledRequestIntegration:
@@ -404,6 +462,13 @@ Resources:
       ApiId: !Ref ProductionApi
       RouteKey: POST /request
       Target: !Sub integrations/${DisabledRequestIntegration}
+  ProductionRequestsRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ProductionApi
+      RouteKey: POST /requests
+      Target: !Sub integrations/${DisabledRequestIntegration}
   DisabledRequestPermission:
     Condition: CorrectAccountAndRegion
     Type: AWS::Lambda::Permission
@@ -412,6 +477,14 @@ Resources:
       FunctionName: !Ref DisabledRequestFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProductionApi}/*/POST/request
+  ProductionRequestsPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DisabledRequestFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProductionApi}/*/POST/requests
 
   ProductionAdminReadRole:
     Condition: CorrectAccountAndRegion
@@ -506,6 +579,160 @@ Resources:
       FunctionName: !Ref ProductionAdminReadFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CanonicalManagementApiId}/*/GET/admin/production/*
+
+  ProductionAdminTransactionRole:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProductionBookingTransactions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Query, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:DeleteItem, dynamodb:ConditionCheckItem, dynamodb:TransactWriteItems]
+                Resource:
+                  - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
+                  - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}/index/BookingRequestsIndex
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/sumup/api-key
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/sumup/merchant-code
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt ProductionAdminTransactionLogGroup.Arn
+  ProductionAdminTransactionFunction:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: production-admin-transaction-handler.handler
+      Role: !GetAtt ProductionAdminTransactionRole.Arn
+      Timeout: 120
+      MemorySize: 256
+      ReservedConcurrentExecutions: 2
+      LoggingConfig:
+        LogGroup: !Ref ProductionAdminTransactionLogGroup
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: production
+          BOOKINGS_TABLE: !Ref ProductionBookingTableName
+          BOOKING_AIRBNB_REQUIRED: 'true'
+          MANAGEMENT_COGNITO_ISSUER: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa
+          MANAGEMENT_COGNITO_CLIENT_ID: 2mjmimjh7oc8h00d4nngrc1akj
+          MANAGEMENT_WRITES_ENABLED: !Ref ManagementWritesEnabled
+          MANAGEMENT_APPROVAL_ENABLED: !Ref ManagementApprovalEnabled
+          MANAGEMENT_CHECKOUT_ENABLED: !Ref ManagementCheckoutEnabled
+          MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED: !Ref ManagementPaymentReconciliationEnabled
+          LIVE_BOOKINGS_APPROVED: !Ref LiveBookingsApproved
+          PAYMENTS_ENABLED: !Ref PaymentsEnabled
+          LIVE_PAYMENTS_APPROVED: !Ref LivePaymentsApproved
+          EMAILS_ENABLED: 'false'
+          REFUNDS_ENABLED: 'false'
+  ProductionAdminTransactionIntegration:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ProductionAdminTransactionFunction.Arn
+      PayloadFormatVersion: '2.0'
+  ProductionOwnerActionRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      RouteKey: POST /admin/production/bookings/{bookingId}/actions/{action}
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub integrations/${ProductionAdminTransactionIntegration}
+  ProductionCheckoutRegisterRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      RouteKey: POST /admin/production/bookings/{bookingId}/checkout/register
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub integrations/${ProductionAdminTransactionIntegration}
+  ProductionPaymentReconcileRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      RouteKey: POST /admin/production/bookings/{bookingId}/payment/reconcile
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub integrations/${ProductionAdminTransactionIntegration}
+  ProductionAdminTransactionPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProductionAdminTransactionFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CanonicalManagementApiId}/*/POST/admin/production/*
+
+  ProductionProviderVerificationRole:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProductionProviderReadOnlyVerification
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/sumup/api-key
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/sumup/merchant-code
+              - Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !GetAtt ProductionProviderVerificationLogGroup.Arn
+  ProductionProviderVerificationFunction:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: production-provider-verification-handler.handler
+      Role: !GetAtt ProductionProviderVerificationRole.Arn
+      Timeout: 15
+      MemorySize: 128
+      ReservedConcurrentExecutions: 1
+      LoggingConfig:
+        LogGroup: !Ref ProductionProviderVerificationLogGroup
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: production
+          PRODUCTION_PROVIDER_VERIFICATION_ENABLED: 'true'
 
   CalendarMonitorCheckpointTable:
     Condition: CorrectAccountAndRegion
@@ -707,3 +934,7 @@ Outputs:
     Value: !Ref QuoteReadFunction
   DisabledRequestFunctionName:
     Value: !Ref DisabledRequestFunction
+  ProductionAdminTransactionFunctionName:
+    Value: !Ref ProductionAdminTransactionFunction
+  ProductionProviderVerificationFunctionName:
+    Value: !Ref ProductionProviderVerificationFunction

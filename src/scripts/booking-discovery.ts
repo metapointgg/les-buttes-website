@@ -489,7 +489,8 @@ if(widget){
           guests:filters.adults+filters.children,
           name:firstNameField.value.trim()+' '+lastNameField.value.trim(),
           email:emailField.value.trim(),telephone:phoneField.value.trim(),
-          consent:true,notes:'',website:'',turnstileToken:token
+          consent:true,notes:'',website:'',turnstileToken:token,
+          termsAcceptance:{accepted:true,termsVersion:'LB-DIRECT-2027-01',privacyVersion:'LB-PRIVACY-2027-01'}
         })
       });
       if(response.status!==(syntheticRequestEnabled?201:202))throw Error(response.status===409?

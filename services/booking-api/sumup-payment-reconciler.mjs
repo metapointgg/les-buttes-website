@@ -5,6 +5,7 @@ import {readRegisteredCheckout} from './sumup-checkout-store.mjs';
 import {verifySumUpPayment} from './sumup-payment-verification.mjs';
 import {preparePaymentConfirmation} from './sumup-payment-confirmation.mjs';
 import {APPROVED_STRICT_SHORT_STAY_POLICY} from './cancellation-policy.mjs';
+import {productionPaymentsEnabled} from './sumup-production-runtime.mjs';
 
 const BOOKING_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout,merchantCode,
@@ -13,11 +14,12 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
  const isolatedTable=isolatedAcceptance===true&&table==='les-buttes-lb08-staging-isolated-acceptance'&&
    process.env.BOOKING_ENVIRONMENT==='staging'&&process.env.AWS_REGION==='eu-west-2'&&
    process.env.BOOKINGS_TABLE===table&&process.env.LB08_ISOLATED_BOOKING_ACCEPTANCE==='yes';
- if(!db?.send||!(stagingTable||isolatedTable)||
+ const productionTable=productionPaymentsEnabled({...process.env,BOOKINGS_TABLE:table});
+ if(!db?.send||!(stagingTable||isolatedTable||productionTable)||
    !BOOKING_ID.test(bookingId??'')||typeof fetchCheckout!=='function'||
    typeof merchantCode!=='string'||!merchantCode.trim()||
    !Number.isSafeInteger(nowEpoch)||nowEpoch<0)
-  throw Error('Staging payment reconciler is not configured');
+  throw Error('Payment reconciler is not configured');
  const key={PK:'BOOKING#'+bookingId,SK:'META'};
  // Both local records are read consistently; neither webhook nor browser data supplies payment status.
  const booking=(await db.send(new GetCommand({TableName:table,Key:key,ConsistentRead:true}))).Item;

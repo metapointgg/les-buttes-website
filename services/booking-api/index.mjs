@@ -3,10 +3,11 @@ import {validBooking} from './rules.mjs';
 import {quoteFromPublishedMaster} from './published-pricing.mjs';
 import {slotBlocksAvailability} from './occupancy.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
-import {DynamoDBDocumentClient,BatchGetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
+import {DynamoDBDocumentClient,BatchGetCommand,GetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {SESClient,SendEmailCommand} from '@aws-sdk/client-ses';
 import {SSMClient,GetParameterCommand} from '@aws-sdk/client-ssm';
 import {directCalendarPreview} from './direct-calendar-preview.mjs';
+import {validateTermsAcceptance} from './booking-terms-acceptance.mjs';
 
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const ses=new SESClient({});
@@ -78,14 +79,26 @@ async function createRequest(input,event){
   if(process.env.BOOKING_ENVIRONMENT==='staging' && input.email!=='test@example.invalid')return response(400,{error:'Use synthetic test@example.invalid data only in staging'});
   const guestName=typeof input.name==='string'?input.name.trim():'';
   const guestEmail=typeof input.email==='string'?input.email.trim():'';
+  const guestTelephone=typeof input.telephone==='string'?input.telephone.trim():'';
   const notes=typeof input.notes==='string'?input.notes.trim():'';
-  if(guestName.length<2||guestName.length>120||guestEmail.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)||notes.length>1500||input.consent!==true)return response(400,{error:'Invalid guest contact details or consent'});
+  if(guestName.length<2||guestName.length>120||guestEmail.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)||
+    (process.env.BOOKING_ENVIRONMENT==='production'&&
+      (guestTelephone.length<7||guestTelephone.length>40||!/^[+0-9() .-]+$/.test(guestTelephone)))||
+    notes.length>1500||input.consent!==true)return response(400,{error:'Invalid guest contact details or consent'});
   const verified=await verifyChallenge(input.turnstileToken,event.requestContext?.http?.sourceIp);
   if(!verified)return response(403,{error:'Verification failed'});
+  let termsEvidence={};
+  if(process.env.BOOKING_ENVIRONMENT==='production'){
+    try{
+      const terms=(await db.send(new GetCommand({TableName:table,
+        Key:{PK:'CONFIG#terms#all',SK:'CURRENT'},ConsistentRead:true}))).Item;
+      termsEvidence=validateTermsAcceptance({acceptance:input.termsAcceptance,termsRecord:terms});
+    }catch{return response(409,{error:'Current booking terms must be accepted'});}
+  }
   const id=randomUUID();
   const requestedAt=new Date().toISOString();
   const expiresAt=nowEpoch()+24*60*60;
-  const item={PK:'BOOKING#'+id,SK:'META',GSI1PK:'BOOKING_REQUESTS',GSI1SK:requestedAt+'#'+id,id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,notes,quote,source:'direct',
+  const item={PK:'BOOKING#'+id,SK:'META',GSI1PK:'BOOKING_REQUESTS',GSI1SK:requestedAt+'#'+id,id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,guestTelephone,notes,quote,source:'direct',...termsEvidence,
     ...(process.env.BOOKING_ENVIRONMENT==='staging'?{synthetic:true}:{}),
     reservationStatus:'PENDING_REVIEW',status:'REQUESTED',requestedAt,holdExpiresAt:expiresAt,expiresAt:nowEpoch()+90*86400};
   const transact=[{Put:{TableName:table,Item:item,ConditionExpression:'attribute_not_exists(PK)'}}];
@@ -137,7 +150,7 @@ export async function handler(event){
     try{return await calendar(calendarMatch[2],calendarMatch[1]);}
     catch(error){console.error('Outbound calendar generation failed',calendarMatch[2],error);return response(503,{error:'Calendar temporarily unavailable'});}
   }
-  if((method==='POST'&&path==='/requests')||(method==='GET'&&path==='/availability')){
+  if((method==='POST'&&(path==='/requests'||path==='/request'))||(method==='GET'&&path==='/availability')){
     if(process.env.BOOKING_REQUESTS_ENABLED!=='true')return response(503,{error:'Direct booking requests are not open yet'});
     if(!table||!process.env.TURNSTILE_SECRET||(process.env.BOOKING_ENVIRONMENT!=='staging'&&(!process.env.NOTIFY_FROM||!process.env.NOTIFY_TO)))return response(503,{error:'Service not configured'});
     // Published Cloudflare demo credentials may be used in the private staging stack only.

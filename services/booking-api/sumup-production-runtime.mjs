@@ -22,6 +22,27 @@ export async function createVerifiedProductionSumUpClient({ssm,env=process.env,f
  const response=await fetchImpl('https://api.sumup.com/v1/merchants/'+encodeURIComponent(merchantCode),{method:'GET',headers:{Authorization:'Bearer '+apiKey,Accept:'application/json'}});
  if(!response.ok)throw Error('SumUp API request failed: '+response.status);
  const merchant=await response.json();
- if(merchant?.merchant_code!==merchantCode||merchant?.sandbox!==false)throw Error('Live SumUp merchant verification required');
- return clientFactory({apiKey,merchantCode,fetchImpl,enabled:true,providerEnvironment:'live'});
+ if(merchant?.merchant_code!==merchantCode||merchant?.sandbox!==false||merchant?.default_currency!=='GBP')
+  throw Error('Live SumUp merchant verification required (GBP)');
+ const client=clientFactory({apiKey,merchantCode,fetchImpl,enabled:true,providerEnvironment:'live'});
+ Object.defineProperty(client,'merchantCode',{value:merchantCode,enumerable:false,writable:false});
+ return client;
+}
+
+export async function verifyProductionSumUpMerchant({ssm,env=process.env,fetchImpl=globalThis.fetch}={}){
+ if(env.BOOKING_ENVIRONMENT!=='production'||env.AWS_REGION!=='eu-west-2'||
+  env.PRODUCTION_PROVIDER_VERIFICATION_ENABLED!=='true'||!ssm?.send||typeof fetchImpl!=='function')
+  throw Error('Production provider verification disabled');
+ const key=await ssm.send(new GetParameterCommand({Name:PATHS.key,WithDecryption:true}));
+ const merchantParam=await ssm.send(new GetParameterCommand({Name:PATHS.merchant,WithDecryption:false}));
+ const apiKey=key?.Parameter?.Value,merchantCode=merchantParam?.Parameter?.Value;
+ if(typeof apiKey!=='string'||!apiKey.startsWith('sup_sk_')||
+  typeof merchantCode!=='string'||!/^[A-Z0-9]{6,20}$/.test(merchantCode))throw Error('Production credentials invalid');
+ const response=await fetchImpl('https://api.sumup.com/v1/merchants/'+encodeURIComponent(merchantCode),
+  {method:'GET',headers:{Authorization:'Bearer '+apiKey,Accept:'application/json'},signal:AbortSignal.timeout(8000)});
+ if(!response.ok)throw Error('SumUp merchant verification failed: '+response.status);
+ const merchant=await response.json();
+ if(merchant?.merchant_code!==merchantCode||merchant?.sandbox!==false||merchant?.default_currency!=='GBP')
+  throw Error('Configured SumUp merchant is not a live GBP merchant');
+ return {merchantMatched:true,live:true,currency:'GBP'};
 }

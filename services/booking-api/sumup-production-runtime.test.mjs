@@ -8,7 +8,7 @@ test('production payment runtime is disabled unless every release gate matches',
 });
 test('production credentials use fixed paths and verified live merchant',async()=>{
  const commands=[];const ssm={send:async command=>{commands.push(command.input);return command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'MLIVE123'}};}};let clientArgs;
- const client=await createVerifiedProductionSumUpClient({ssm,env:enabled,fetchImpl:async(url,options)=>{assert.equal(url,'https://api.sumup.com/v1/merchants/MLIVE123');assert.match(options.headers.Authorization,/^Bearer sup_sk_/);return {ok:true,json:async()=>({merchant_code:'MLIVE123',sandbox:false})};},clientFactory:args=>(clientArgs=args,{verified:true})});
+ const client=await createVerifiedProductionSumUpClient({ssm,env:enabled,fetchImpl:async(url,options)=>{assert.equal(url,'https://api.sumup.com/v1/merchants/MLIVE123');assert.match(options.headers.Authorization,/^Bearer sup_sk_/);return {ok:true,json:async()=>({merchant_code:'MLIVE123',sandbox:false,default_currency:'GBP'})};},clientFactory:args=>(clientArgs=args,{verified:true})});
  assert.deepEqual(client,{verified:true});assert.deepEqual(commands,[{Name:'/les-buttes/booking/production/sumup/api-key',WithDecryption:true},{Name:'/les-buttes/booking/production/sumup/merchant-code',WithDecryption:false}]);assert.equal(clientArgs.providerEnvironment,'live');
 });
 test('production runtime refuses sandbox or mismatched merchant before client creation',async()=>{

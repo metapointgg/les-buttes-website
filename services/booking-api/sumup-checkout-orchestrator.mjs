@@ -2,6 +2,7 @@
 import {createHash} from 'node:crypto';
 import {readRegisteredCheckout,registerCheckout,reconcileCheckoutRegistration} from './sumup-checkout-store.mjs';
 import {acquireCreationClaim,readCreationClaim,markCreationClaimForReconciliation} from './sumup-creation-claim.mjs';
+import {productionPaymentsEnabled} from './sumup-production-runtime.mjs';
 const UUID=/^[0-9a-f-]{36}$/i;
 export const checkoutReference=bookingId=>{
  if(!UUID.test(bookingId??''))throw Error('Invalid booking ID');
@@ -9,7 +10,9 @@ export const checkoutReference=bookingId=>{
 };
 export async function createAndRegisterCheckout({db,table,bookingId,amountPence,sumup,
   lookupProviderByReference,actor,nowEpoch=Math.floor(Date.now()/1000)}={}){
- if(!db?.send||!table?.toLowerCase().includes('staging')||!sumup?.createCheckout||
+ const allowedTable=table?.toLowerCase().includes('staging')||
+  productionPaymentsEnabled({...process.env,BOOKINGS_TABLE:table});
+ if(!db?.send||!allowedTable||!sumup?.createCheckout||
    (typeof lookupProviderByReference!=='function'&&
     typeof sumup.listCheckoutsByReference!=='function'))
   throw Error('Staging checkout orchestration unavailable');

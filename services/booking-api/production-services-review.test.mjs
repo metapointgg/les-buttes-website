@@ -6,17 +6,20 @@ const source=readFileSync(new URL('../../infra/booking-api/production-services-r
 const terms=readFileSync(new URL('./BOOKING_TERMS_DRAFT_2027.md',import.meta.url),'utf8');
 const paymentTerms=readFileSync(new URL('./DIRECT_BOOKING_TERMS_PAYMENT_DRAFT.md',import.meta.url),'utf8');
 
-test('production services reuse the isolated table and keep the deployed request boundary disabled',()=>{
+test('production services reuse the isolated table and keep every transactional release gate disabled by default',()=>{
  assert.match(source,/ProductionBookingTableName/);
  assert.match(source,/les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2/);
  assert.match(source,/RouteKey: POST \/request/);
- assert.match(source,/ProductionRequestBoundaryLogsOnly/);
- assert.match(source,/PAYMENTS_ENABLED: 'false'/);
+ assert.match(source,/ProductionRequestTransactionBoundary/);
+ assert.match(source,/PaymentsEnabled:[\s\S]{0,120}Default: 'false'/);
+ assert.match(source,/LivePaymentsApproved:[\s\S]{0,120}Default: 'false'/);
  assert.match(source,/REFUNDS_ENABLED: 'false'/);
  assert.match(source,/EMAILS_ENABLED: 'false'/);
- assert.doesNotMatch(source,/Action:\s*\[?ses:|sumup/i);
- assert.match(source,/BOOKING_REQUESTS_ENABLED: 'false'/);
- assert.match(source,/MANAGEMENT_WRITES_ENABLED: 'false'/);
+ assert.doesNotMatch(source,/Action:\s*\[?ses:/i);
+ assert.match(source,/BookingRequestsEnabled:[\s\S]{0,120}Default: 'false'/);
+ assert.match(source,/ManagementWritesEnabled:[\s\S]{0,120}Default: 'false'/);
+ assert.match(source,/parameter\/les-buttes\/booking\/production\/turnstile\/secret/);
+ assert.match(source,/parameter\/les-buttes\/booking\/production\/sumup\/api-key/);
 });
 
 test('production quote route has read-only database permissions',()=>{
@@ -33,12 +36,15 @@ test('production feeds use two independently managed secure parameters',()=>{
  assert.match(source,/GET \/calendar\/\{proxy\+\}/);
 });
 
-test('only inbound snapshots can write the production table',()=>{
+test('production writes are confined to the calendar importer and default-off transactional roles',()=>{
  assert.match(source,/ProductionInboundCalendarSnapshot/);
  assert.match(source,/Action: dynamodb:PutItem/);
  assert.match(source,/dynamodb:LeadingKeys: \[UNIT#geranium, UNIT#honeysuckle\]/);
  assert.match(source,/'Null':\s+dynamodb:LeadingKeys: 'false'/);
- assert.doesNotMatch(source,/dynamodb:(?:UpdateItem|DeleteItem|TransactWriteItems)/);
+ assert.match(source,/PolicyName: ProductionRequestTransactionBoundary[\s\S]{0,900}dynamodb:TransactWriteItems/);
+ assert.match(source,/PolicyName: ProductionBookingTransactions[\s\S]{0,900}dynamodb:TransactWriteItems/);
+ assert.match(source,/MANAGEMENT_WRITES_ENABLED: !Ref ManagementWritesEnabled/);
+ assert.match(source,/BOOKING_REQUESTS_ENABLED: !Ref BookingRequestsEnabled/);
 });
 
 test('production API and functions have bounded structured operational logging',()=>{
@@ -46,8 +52,8 @@ test('production API and functions have bounded structured operational logging',
  assert.match(source,/AccessLogSettings:[\s\S]*DestinationArn: !GetAtt ProductionApiAccessLogGroup\.Arn/);
  assert.match(source,/ThrottlingBurstLimit: 20/);
  assert.match(source,/ThrottlingRateLimit: 10/);
- assert.equal((source.match(/RetentionInDays: 90/g)??[]).length,7);
- assert.equal((source.match(/LogFormat: JSON/g)??[]).length,6);
+ assert.equal((source.match(/RetentionInDays: 90/g)??[]).length,9);
+ assert.equal((source.match(/LogFormat: JSON/g)??[]).length,8);
  assert.doesNotMatch(source,/Action: \[logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents\]/);
 });
 
