@@ -39,3 +39,14 @@ test('accepts the published 2027 pricing-band schema and rejects gaps',()=>{
  assert.throws(()=>validateConfig({kind:'pricing',unit:'geranium',value:{...value,bands:[value.bands[0],{...value.bands[1],start:'2027-04-04'}]}}),/band/);
  assert.throws(()=>validateConfig({kind:'pricing',unit:'geranium',value:{...value,bands:[{...value.bands[0],nightlyGBP:'0.00'},value.bands[1]]}}),/band/);
 });
+
+test('accepts only the owner-approved guest terms identity and URLs',()=>{
+ const value={termsId:'LB-DIRECT-2027',termsVersion:'LB-DIRECT-2027-01',
+  privacyVersion:'LB-PRIVACY-2027-01',contractingParty:'Les Buttes Holiday Cottage',
+  checkInLocal:'16:00',checkOutLocal:'10:00',timeZone:'Europe/Guernsey',
+  contactEmail:'info@lesbuttes.com',termsUrl:'https://lesbuttes.com/terms/',
+  privacyUrl:'https://lesbuttes.com/privacy/',contentSha256:'a'.repeat(64),approvedAt:'2026-11-10'};
+ assert.equal(validateConfig({kind:'terms',unit:'all',value}),true);
+ assert.throws(()=>validateConfig({kind:'terms',unit:'all',value:{...value,termsUrl:'https://example.com/terms'}}),/approved guest terms/);
+ assert.throws(()=>validateConfig({kind:'terms',unit:'geranium',value}),/approved guest terms/);
+});

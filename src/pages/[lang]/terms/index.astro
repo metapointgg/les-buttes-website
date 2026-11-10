@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageIntro from '../../../components/PageIntro.astro';
+import {languageFromPath} from '../../../lib/i18n';
+export function getStaticPaths(){return [{params:{lang:'nl'}},{params:{lang:'fr'}}]}
+const language=languageFromPath(Astro.url.pathname);
+const copy=language==='nl'?{
+ title:'Boekingsvoorwaarden',intro:'Deze voorwaarden gelden voor rechtstreekse boekingen van Geranium en Honeysuckle tot maximaal 27 nachten.',
+ who:'Met wie sluit u de overeenkomst?',whoText:'Uw overeenkomst is met Les Buttes Holiday Cottage, Rue des Raies, St Pierre du Bois, Guernsey GY7 9SF. Stuur boekings- en annuleringsberichten naar info@lesbuttes.com.',
+ request:'Aanvraag, goedkeuring en bevestiging',requestText:'Een aanvraag is nog geen bevestigde boeking. Wij controleren eerst het huisje, de data, het aantal gasten en de prijs. Na goedkeuring ontvangt u de volledige prijs, deze voorwaarden en een veilige SumUp-betaallink. De boeking is pas bevestigd nadat wij de volledige betaling onafhankelijk hebben geverifieerd en een schriftelijke bevestiging hebben verzonden.',
+ price:'Prijs en betaling',priceText:'Het schriftelijk meegedeelde totaalbedrag is de prijs van de accommodatie. Er zijn geen boekings-, administratie-, service- of annuleringskosten. SumUp verwerkt kaartbetalingen; stuur ons geen kaartgegevens per e-mail.',
+ arrival:'Aankomst en vertrek',arrivalText:'Inchecken kan vanaf 16.00 uur en uitchecken moet uiterlijk om 10.00 uur, lokale tijd op Guernsey.',
+ guests:'Gasten',guestsText:'Geranium biedt plaats aan maximaal vier overnachtende gasten en Honeysuckle aan maximaal zes. De boeker verstrekt juiste contact- en gastgegevens. Eventuele voorwaarden of huisregels die deel uitmaken van de boeking worden vóór betaling meegedeeld.',
+ cancel:'Annulering en terugbetaling',cancelIntro:'Termijnen worden berekend vanaf 16.00 uur lokale tijd op Guernsey op de aankomstdatum. De annulering geldt zodra wij uw schriftelijke bericht op info@lesbuttes.com ontvangen.',
+ rules:['Als de bevestiging ten minste zeven volle dagen vóór het inchecken plaatsvond, ontvangt u bij annulering binnen 24 uur na de schriftelijke bevestiging 100% terug.','Na die eerste periode ontvangt u bij annulering ten minste zeven volle dagen vóór het inchecken 50% terug.','Bij annulering minder dan zeven volle dagen vóór het inchecken, of na het inchecken, geldt normaal geen terugbetaling.'],
+ rights:'Een terugbetaling is nooit hoger dan het daadwerkelijk betaalde bedrag. Deze regels beperken geen dwingende wettelijke rechten of remedies wanneer wij de accommodatie niet leveren.',
+ host:'Als wij de accommodatie niet kunnen leveren',hostText:'Als wij een bevestigde boeking annuleren omdat wij het huisje niet kunnen leveren, betalen wij de accommodatie volledig terug en nemen wij zo spoedig mogelijk contact met u op.',
+ privacy:'Privacy en recht',privacyText:'Wij gebruiken boekingsgegevens om aanvragen te beoordelen, verblijven te beheren, betalingen te verwerken en aan wettelijke verplichtingen te voldoen. Lees onze privacyverklaring. Op deze voorwaarden is het recht van het Baljuwschap Guernsey van toepassing. De rechtbanken van Guernsey zijn bevoegd, zonder beperking van uw dwingende rechten.',
+ privacyLink:'privacyverklaring',version:'Voorwaarden versie LB-DIRECT-2027-01 · goedgekeurd op 10 november 2026'
+}:{
+ title:'Conditions de réservation',intro:'Ces conditions s’appliquent aux réservations directes de Geranium et Honeysuckle pour des séjours de 27 nuits maximum.',
+ who:'Votre cocontractant',whoText:'Votre contrat est conclu avec Les Buttes Holiday Cottage, Rue des Raies, St Pierre du Bois, Guernsey GY7 9SF. Envoyez toute demande de réservation ou d’annulation à info@lesbuttes.com.',
+ request:'Demande, approbation et confirmation',requestText:'L’envoi d’une demande ne constitue pas une réservation confirmée. Nous vérifions d’abord le gîte, les dates, le nombre de voyageurs et le prix. Après approbation, vous recevrez le prix total, les présentes conditions et un lien de paiement SumUp sécurisé. La réservation n’est confirmée qu’après vérification indépendante du paiement intégral et envoi de notre confirmation écrite.',
+ price:'Prix et paiement',priceText:'Le montant total communiqué par écrit est le prix de l’hébergement. Aucun frais de réservation, d’administration, de service ou d’annulation n’est facturé. SumUp traite les paiements par carte ; ne nous envoyez aucune donnée de carte par courriel.',
+ arrival:'Arrivée et départ',arrivalText:'L’arrivée est possible à partir de 16 h 00 et le départ doit avoir lieu avant 10 h 00, heure locale de Guernesey.',
+ guests:'Voyageurs',guestsText:'Geranium accueille jusqu’à quatre personnes et Honeysuckle jusqu’à six. La personne qui réserve doit fournir des coordonnées et informations exactes. Toute restriction ou règle faisant partie de la réservation sera communiquée avant le paiement.',
+ cancel:'Annulation et remboursement',cancelIntro:'Les délais sont calculés à partir de 16 h 00, heure locale de Guernesey, le jour d’arrivée. L’annulation prend effet à la réception de votre avis écrit à info@lesbuttes.com.',
+ rules:['Si la confirmation a eu lieu au moins sept jours complets avant l’arrivée, une annulation dans les 24 heures suivant la confirmation écrite donne droit à un remboursement de 100 %.','Après cette période initiale, une annulation au moins sept jours complets avant l’arrivée donne droit à un remboursement de 50 %.','Une annulation moins de sept jours complets avant l’arrivée, ou après l’arrivée, ne donne normalement droit à aucun remboursement.'],
+ rights:'Le remboursement ne peut dépasser le montant effectivement payé. Ces règles ne limitent aucun droit impératif ni vos recours si nous ne fournissons pas l’hébergement.',
+ host:'Si nous ne pouvons pas fournir l’hébergement',hostText:'Si nous annulons une réservation confirmée parce que nous ne pouvons pas fournir le gîte, nous rembourserons intégralement l’hébergement et vous informerons rapidement.',
+ privacy:'Confidentialité et droit applicable',privacyText:'Nous utilisons les informations de réservation pour examiner les demandes, gérer les séjours, traiter les paiements et respecter nos obligations légales. Consultez notre politique de confidentialité. Les présentes conditions sont régies par le droit du Bailliage de Guernesey. Les tribunaux de Guernesey sont compétents, sans limiter vos droits impératifs.',
+ privacyLink:'politique de confidentialité',version:'Conditions version LB-DIRECT-2027-01 · approuvées le 10 novembre 2026'
+};
+---
+<BaseLayout title={`${copy.title} | Les Buttes Holiday Cottages`} description={copy.intro}>
+ <div class="wrap"><PageIntro eyebrow="Les Buttes" title={copy.title} intro={copy.intro}/></div>
+ <section class="section-tight paper"><div class="narrow prose">
+  <p><strong>{copy.version}</strong></p>
+  <h2>{copy.who}</h2><p>{copy.whoText}</p>
+  <h2>{copy.request}</h2><p>{copy.requestText}</p>
+  <h2>{copy.price}</h2><p>{copy.priceText}</p>
+  <h2>{copy.arrival}</h2><p>{copy.arrivalText}</p>
+  <h2>{copy.guests}</h2><p>{copy.guestsText}</p>
+  <h2>{copy.cancel}</h2><p>{copy.cancelIntro}</p><ul>{copy.rules.map(rule=><li>{rule}</li>)}</ul><p>{copy.rights}</p>
+  <h2>{copy.host}</h2><p>{copy.hostText}</p>
+  <h2>{copy.privacy}</h2><p>{copy.privacyText} <a href={`/${language}/privacy/`}>{copy.privacyLink}</a>.</p>
+ </div></section>
+</BaseLayout>

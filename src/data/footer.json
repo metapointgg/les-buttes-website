@@ -112,6 +112,12 @@
           "url": "/privacy/",
           "icon": "",
           "external": false
+        },
+        {
+          "label": "Booking terms",
+          "url": "/terms/",
+          "icon": "",
+          "external": false
         }
       ],
       "titleNl": "Ontdek",
@@ -120,7 +126,7 @@
   ],
   "bottom": {
     "copyrightName": "Les Buttes Holiday Cottages",
-    "note": "Bookings are made securely through Airbnb.",
+    "note": "Direct bookings are confirmed only after owner approval and verified payment.",
     "noteNl": "Reserveringen worden veilig via Airbnb gemaakt.",
     "noteFr": "Les réservations s'effectuent en toute sécurité sur Airbnb."
   }

@@ -55,6 +55,15 @@ export function validateConfig({kind,unit='all',value}){
     if(unit!=='all')throw Error('Arrival and departure policy must apply to all cottages');
     validateArrivalDeparturePolicy(value);
   }
+  if(kind==='terms'){
+    if(unit!=='all'||value.termsId!=='LB-DIRECT-2027'||value.termsVersion!=='LB-DIRECT-2027-01'||
+      value.privacyVersion!=='LB-PRIVACY-2027-01'||value.contractingParty!=='Les Buttes Holiday Cottage'||
+      value.checkInLocal!=='16:00'||value.checkOutLocal!=='10:00'||
+      value.timeZone!=='Europe/Guernsey'||value.contactEmail!=='info@lesbuttes.com'||
+      value.termsUrl!=='https://lesbuttes.com/terms/'||value.privacyUrl!=='https://lesbuttes.com/privacy/'||
+      typeof value.contentSha256!=='string'||!/^[a-f0-9]{64}$/.test(value.contentSha256)||
+      value.approvedAt!=='2026-11-10')throw Error('Invalid approved guest terms');
+  }
   if(kind==='payments'){
     if(!Number.isInteger(value.depositPercent)||value.depositPercent<0||value.depositPercent>100||!Number.isInteger(value.balanceDueDays)||value.balanceDueDays<0)throw Error('Invalid payment policy');
   }
