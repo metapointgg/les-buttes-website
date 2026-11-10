@@ -13,8 +13,10 @@ export async function loadProductionTurnstileSecret({ssm,env=process.env}={}){
  return secret;
 }
 export function productionEmailGate(env=process.env){
- return productionRequestGate(env)&&env.EMAILS_ENABLED==='true'&&env.LIVE_EMAILS_APPROVED==='true'&&
+ return env.BOOKING_ENVIRONMENT==='production'&&TABLE.test(env.BOOKINGS_TABLE??'')&&
+  env.EMAILS_ENABLED==='true'&&env.LIVE_EMAILS_APPROVED==='true'&&
   env.BOOKING_SES_REGION==='us-east-1'&&env.BOOKING_SES_SIMULATOR_ENABLED!=='true'&&
-  /^[^@\s]+@lesbuttes\.com$/i.test(env.BOOKING_SES_FROM??'');
+  env.BOOKING_SES_FROM==='bookings@lesbuttes.com'&&
+  env.BOOKING_OWNER_EMAIL==='mike@lesbuttes.com';
 }
 export function allowedProductionOrigin(origin){return ORIGINS.has(origin);}

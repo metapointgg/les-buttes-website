@@ -14,8 +14,15 @@ test('production services reuse the isolated table and keep every transactional 
  assert.match(source,/PaymentsEnabled:[\s\S]{0,120}Default: 'false'/);
  assert.match(source,/LivePaymentsApproved:[\s\S]{0,120}Default: 'false'/);
  assert.match(source,/REFUNDS_ENABLED: 'false'/);
- assert.match(source,/EMAILS_ENABLED: 'false'/);
- assert.doesNotMatch(source,/Action:\s*\[?ses:/i);
+ assert.match(source,/EmailsEnabled:[\s\S]{0,120}Default: 'false'/);
+ assert.match(source,/LiveEmailsApproved:[\s\S]{0,120}Default: 'false'/);
+ assert.match(source,/EMAILS_ENABLED: !Ref EmailsEnabled/);
+ assert.match(source,/LIVE_EMAILS_APPROVED: !Ref LiveEmailsApproved/);
+ assert.match(source,/Action: ses:SendEmail/);
+ assert.doesNotMatch(source,/ses:\*/i);
+ assert.match(source,/identity\/lesbuttes\.com/);
+ assert.match(source,/BOOKING_SES_FROM: bookings@lesbuttes\.com/);
+ assert.match(source,/BOOKING_OWNER_EMAIL: mike@lesbuttes\.com/);
  assert.match(source,/BookingRequestsEnabled:[\s\S]{0,120}Default: 'false'/);
  assert.match(source,/ManagementWritesEnabled:[\s\S]{0,120}Default: 'false'/);
  assert.match(source,/parameter\/les-buttes\/booking\/production\/turnstile\/secret/);
@@ -45,6 +52,8 @@ test('production writes are confined to the calendar importer and default-off tr
  assert.match(source,/PolicyName: ProductionBookingTransactions[\s\S]{0,900}dynamodb:TransactWriteItems/);
  assert.match(source,/MANAGEMENT_WRITES_ENABLED: !Ref ManagementWritesEnabled/);
  assert.match(source,/BOOKING_REQUESTS_ENABLED: !Ref BookingRequestsEnabled/);
+ assert.match(source,/BOOKING_REQUEST_DISPATCH_ENABLED: !Ref EmailsEnabled/);
+ assert.match(source,/BOOKING_LIFECYCLE_DISPATCH_ENABLED: !Ref EmailsEnabled/);
 });
 
 test('production API and functions have bounded structured operational logging',()=>{

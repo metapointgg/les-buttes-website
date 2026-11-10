@@ -437,6 +437,13 @@ if(widget){
     confirmButton.setAttribute('aria-disabled','false');
   }
   if(requestEnabled&&!syntheticRequestEnabled&&confirmButton){
+    const previewNote=widget.querySelector<HTMLElement>('.discover-preview-note');
+    if(previewNote)previewNote.textContent='Direct booking requests are open. Every request remains subject to owner approval; no payment is taken at this stage.';
+    const requestNote=widget.querySelector<HTMLElement>('.discover-request-note');
+    if(requestNote)requestNote.textContent='Your request will temporarily hold the selected dates while the owner reviews it.';
+    const detailsIntro=widget.querySelector<HTMLElement>('[data-booking-step="4"] .journey-stage-heading p:last-child');
+    if(detailsIntro)detailsIntro.textContent='Enter the lead guest details for this reservation request.';
+    confirmButton.textContent='Submit reservation request';
     challengeSlot.setAttribute('data-turnstile-slot','');
     confirmButton.before(challengeSlot);
     confirmButton.type='submit';

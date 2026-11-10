@@ -12,7 +12,7 @@ test('production Turnstile secret uses one fixed encrypted parameter and rejects
  await assert.rejects(loadProductionTurnstileSecret({env:base,ssm:{send:async()=>({Parameter:{Value:'1x0000000000000000000000000000000AA'}})}}),/invalid/);
 });
 test('production email gate is pinned to verified SES region and Les Buttes sender',()=>{
- const ok={...base,EMAILS_ENABLED:'true',LIVE_EMAILS_APPROVED:'true',BOOKING_SES_REGION:'us-east-1',BOOKING_SES_FROM:'bookings@lesbuttes.com',BOOKING_SES_SIMULATOR_ENABLED:'false'};
+ const ok={...base,EMAILS_ENABLED:'true',LIVE_EMAILS_APPROVED:'true',BOOKING_SES_REGION:'us-east-1',BOOKING_SES_FROM:'bookings@lesbuttes.com',BOOKING_OWNER_EMAIL:'mike@lesbuttes.com',BOOKING_SES_SIMULATOR_ENABLED:'false'};
  assert.equal(productionEmailGate(ok),true);
- for(const patch of [{LIVE_EMAILS_APPROVED:'false'},{BOOKING_SES_REGION:'eu-west-2'},{BOOKING_SES_FROM:'guest@example.com'},{BOOKING_SES_SIMULATOR_ENABLED:'true'}])assert.equal(productionEmailGate({...ok,...patch}),false);
+ for(const patch of [{LIVE_EMAILS_APPROVED:'false'},{BOOKING_SES_REGION:'eu-west-2'},{BOOKING_SES_FROM:'guest@example.com'},{BOOKING_OWNER_EMAIL:'owner@example.com'},{BOOKING_SES_SIMULATOR_ENABLED:'true'}])assert.equal(productionEmailGate({...ok,...patch}),false);
 });

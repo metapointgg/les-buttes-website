@@ -47,14 +47,14 @@ test('preview per-cottage seven-night rounding reproduces the existing direct ag
 });
 test('hidden page never enables submissions from API URL alone; EN/NL/FR use same page and noindex',()=>{
   const page=readFileSync(new URL('../../../src/components/BookingRequestPage.astro',import.meta.url),'utf8');
-  const script=readFileSync(new URL('../../../src/scripts/booking-form.ts',import.meta.url),'utf8');
   const sitemap=readFileSync(new URL('../../../src/pages/sitemap.xml.ts',import.meta.url),'utf8');
   const header=readFileSync(new URL('../../../src/components/Header.astro',import.meta.url),'utf8');
-  assert.match(page,/PUBLIC_BOOKING_REQUESTS_ENABLED==='true'/);
+  const deployment=readFileSync(new URL('../../../.github/workflows/deploy.yml',import.meta.url),'utf8');
   assert.match(page,/noindex>/);
   const discovery=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
   const discoveryScript=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
   assert.match(page,/<BookingDiscoveryPreview\/>/);
+  assert.doesNotMatch(page,/data-booking-form|booking-form/);
   assert.match(discovery,/data-discovery-search/);
   assert.match(discovery,/data-discovery-calendars/);
   assert.match(discovery,/data-discovery-summary/);
@@ -76,6 +76,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.ok(discoveryScript.includes("confirmButton.type='submit'"));
   assert.ok(discoveryScript.includes("confirmButton.setAttribute('aria-disabled','false')"));
   assert.ok(discoveryScript.includes("if(requestEnabled&&!syntheticRequestEnabled&&confirmButton)"));
+  assert.ok(discoveryScript.includes("confirmButton.textContent='Submit reservation request'"));
   assert.ok(discoveryScript.includes("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"));
 
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
@@ -94,16 +95,21 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.ok(discoveryScript.includes(String.raw`/^\d+(?:\.\d{1,2})?$/`));
 
   assert.match(discovery,/type="email" name="email"[^>]*required/);
-  assert.match(discovery,/type="tel" name="telephone"[^>]*pattern=/);
-  assert.match(page,/data-mode="live"/);
-  assert.match(script,/if\(form\.dataset\.mode==='preview'\)/);
-  assert.match(script,/previewBookingQuote/);
+  assert.match(discovery,/type="tel" name="telephone"[^>]*pattern=[^>]*required/);
+  assert.equal((discovery.match(/data-booking-step=/g)??[]).length,4);
+  assert.match(discovery,/LB-DIRECT-2027-01/);
+  assert.ok(discoveryScript.includes("termsVersion:'LB-DIRECT-2027-01'"));
+  assert.ok(discoveryScript.includes("privacyVersion:'LB-PRIVACY-2027-01'"));
+  assert.doesNotMatch(page,/data-mode="live"|booking-form/);
+  assert.match(deployment,/PUBLIC_BOOKING_TURNSTILE_SITE_KEY: '0x4AAAAAAF7u2N5Mlj1-UsnQ'/);
+  assert.match(deployment,/PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'/);
+  assert.match(deployment,/PUBLIC_BOOKING_REQUESTS_APPROVED: 'false'/);
   // Client-inserted rows do not have Astro's scope attribute; keep selectors global.
   assert.match(discovery,/\.discover-summary-lines :global\(\.summary-line\)/);
   assert.match(discovery,/\.discover-calendar-grids :global\(\.calendar-days button\)/);
   // Preview dates must be human-readable and use explicit UTC to avoid TZ off-by-one.
-  assert.match(script,/\.formatRange\(/);
-  assert.match(script,/timeZone:'UTC'/);
+  assert.match(discoveryScript,/\.formatRange\(/);
+  assert.match(discoveryScript,/timeZone:'UTC'/);
 
   assert.ok(!sitemap.includes("'/book/'"));
   assert.ok(!header.includes('href:"/book/"'));

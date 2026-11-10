@@ -7,19 +7,21 @@ test('production payment runtime is disabled unless every release gate matches',
  for(const patch of [{PAYMENTS_ENABLED:'false'},{LIVE_PAYMENTS_APPROVED:'false'},{BOOKING_ENVIRONMENT:'staging'},{BOOKINGS_TABLE:'les-buttes-booking-staging-BookingTable-X'}]){let calls=0;await assert.rejects(loadProductionSumUpCredentials({env:{...enabled,...patch},ssm:{send:async()=>{calls++;}}}),/not approved/);assert.equal(calls,0);}
 });
 test('production credentials use fixed paths and verified live merchant',async()=>{
- const commands=[];const ssm={send:async command=>{commands.push(command.input);return command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'MLIVE123'}};}};let clientArgs;
- const client=await createVerifiedProductionSumUpClient({ssm,env:enabled,fetchImpl:async(url,options)=>{assert.equal(url,'https://api.sumup.com/v1/merchants/MLIVE123');assert.match(options.headers.Authorization,/^Bearer sup_sk_/);return {ok:true,json:async()=>({merchant_code:'MLIVE123',sandbox:false,default_currency:'GBP'})};},clientFactory:args=>(clientArgs=args,{verified:true})});
+ const commands=[];const ssm={send:async command=>{commands.push(command.input);return command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'M9BE4KMN'}};}};let clientArgs;
+ const client=await createVerifiedProductionSumUpClient({ssm,env:enabled,fetchImpl:async(url,options)=>{assert.equal(url,'https://api.sumup.com/v1/merchants/M9BE4KMN');assert.match(options.headers.Authorization,/^Bearer sup_sk_/);return {ok:true,json:async()=>({merchant_code:'M9BE4KMN',default_currency:'GBP'})};},clientFactory:args=>(clientArgs=args,{verified:true})});
  assert.deepEqual(client,{verified:true});assert.deepEqual(commands,[{Name:'/les-buttes/booking/production/sumup/api-key',WithDecryption:true},{Name:'/les-buttes/booking/production/sumup/merchant-code',WithDecryption:false}]);assert.equal(clientArgs.providerEnvironment,'live');
 });
 test('production runtime refuses sandbox or mismatched merchant before client creation',async()=>{
- const ssm={send:async command=>command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'MLIVE123'}}};
- for(const merchant of [{merchant_code:'MLIVE123',sandbox:true},{merchant_code:'OTHER123',sandbox:false},{}]){let created=0;await assert.rejects(createVerifiedProductionSumUpClient({ssm,env:enabled,fetchImpl:async()=>({ok:true,json:async()=>merchant}),clientFactory:()=>{created++;}}),/Live SumUp merchant verification required/);assert.equal(created,0);}
+ const liveSsm={send:async command=>command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'M9BE4KMN'}}};
+ for(const merchant of [{merchant_code:'M9BE4KMN',sandbox:true,default_currency:'GBP'},{merchant_code:'MGV5J9QV',default_currency:'GBP'},{merchant_code:'M9BE4KMN',default_currency:'EUR'},{}]){let created=0;await assert.rejects(createVerifiedProductionSumUpClient({ssm:liveSsm,env:enabled,fetchImpl:async()=>({ok:true,json:async()=>merchant}),clientFactory:()=>{created++;}}),/Live SumUp merchant verification required/);assert.equal(created,0);}
+ const sandboxSsm={send:async command=>command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'MGV5J9QV'}}};
+ await assert.rejects(createVerifiedProductionSumUpClient({ssm:sandboxSsm,env:enabled,fetchImpl:async()=>{throw Error('must not call provider');}}),/merchant code missing or invalid/);
 });
 test('read-only production verification returns safe merchant facts without credentials',async()=>{
- const ssm={send:async command=>command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'MLIVE123'}}};
+ const ssm={send:async command=>command.input.Name.endsWith('api-key')?{Parameter:{Value:'sup_sk_live_mock'}}:{Parameter:{Value:'M9BE4KMN'}}};
  const env={BOOKING_ENVIRONMENT:'production',AWS_REGION:'eu-west-2',PRODUCTION_PROVIDER_VERIFICATION_ENABLED:'true'};
- const verified=await verifyProductionSumUpMerchant({ssm,env,fetchImpl:async()=>({ok:true,json:async()=>({merchant_code:'MLIVE123',sandbox:false,default_currency:'GBP'})})});
- assert.deepEqual(verified,{verified:true,merchantMatched:true,live:true,sandboxReported:true,currency:'GBP'});
- const incomplete=await verifyProductionSumUpMerchant({ssm,env,fetchImpl:async()=>({ok:true,json:async()=>({merchant_code:'MLIVE123',currency:'GBP'})})});
- assert.deepEqual(incomplete,{verified:false,merchantMatched:true,live:false,sandboxReported:false,currency:'GBP'});
+ const verified=await verifyProductionSumUpMerchant({ssm,env,fetchImpl:async()=>({ok:true,json:async()=>({merchant_code:'M9BE4KMN',sandbox:false,default_currency:'GBP'})})});
+ assert.deepEqual(verified,{verified:true,merchantMatched:true,live:true,sandboxReported:true,currency:'GBP',verificationStrategy:'approved-live-code-and-provider-flag'});
+ const omitted=await verifyProductionSumUpMerchant({ssm,env,fetchImpl:async()=>({ok:true,json:async()=>({merchant_code:'M9BE4KMN',currency:'GBP'})})});
+ assert.deepEqual(omitted,{verified:true,merchantMatched:true,live:true,sandboxReported:false,currency:'GBP',verificationStrategy:'approved-live-code'});
 });

@@ -35,6 +35,8 @@ jobs:
           PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'
           PUBLIC_BOOKING_SYNTHETIC_REQUESTS_ENABLED: 'false'
           PUBLIC_BOOKING_REQUESTS_APPROVED: 'false'
+          PUBLIC_BOOKING_REQUEST_API_URL: 'https://c7x0ongl4d.execute-api.eu-west-2.amazonaws.com'
+          PUBLIC_BOOKING_TURNSTILE_SITE_KEY: '0x4AAAAAAF7u2N5Mlj1-UsnQ'
           PUBLIC_BOOKING_READ_ONLY_ENABLED: 'true'
           PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED: 'true'
           PUBLIC_BOOKING_READ_ONLY_ALLOWED_HOSTS: 'lesbuttes.com,www.lesbuttes.com'
@@ -44,6 +46,7 @@ jobs:
           npm run build
           grep -RqlF 'c7x0ongl4d.execute-api.eu-west-2.amazonaws.com/quote' dist/_astro/
           grep -RqlF 'c7x0ongl4d.execute-api.eu-west-2.amazonaws.com/availability' dist/_astro/
+          grep -RqlF '0x4AAAAAAF7u2N5Mlj1-UsnQ' dist/_astro/
           if grep -RqlF 'PUBLIC_BOOKING_REQUESTS_APPROVED' dist/; then
             echo 'Build unexpectedly contains an uncompiled booking activation flag' >&2
             exit 1

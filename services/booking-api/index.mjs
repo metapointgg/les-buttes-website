@@ -4,13 +4,14 @@ import {quoteFromPublishedMaster} from './published-pricing.mjs';
 import {slotBlocksAvailability} from './occupancy.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,BatchGetCommand,GetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
-import {SESClient,SendEmailCommand} from '@aws-sdk/client-ses';
 import {SSMClient,GetParameterCommand} from '@aws-sdk/client-ssm';
 import {directCalendarPreview} from './direct-calendar-preview.mjs';
 import {validateTermsAcceptance} from './booking-terms-acceptance.mjs';
+import {dispatchRequestedProductionBookingEmails} from './booking-production-email-dispatch.mjs';
+import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
+import {productionEmailGate} from './production-integration-gates.mjs';
 
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
-const ses=new SESClient({});
 const ssm=new SSMClient({});
 const table=process.env.BOOKINGS_TABLE;
 const calendarTokens=new Map();
@@ -48,27 +49,13 @@ async function verifyChallenge(token,ip){
   return (await result.json()).success===true;
 }
 async function notifyOwner(booking){
-  // SES sender must be verified and the account must have permission to email the recipient.
   if(process.env.BOOKING_ENVIRONMENT==='staging'){
     console.info('STAGING ONLY: synthetic request created, no email dispatched:',booking.id);
     return;
   }
-  const from=process.env.NOTIFY_FROM,to=process.env.NOTIFY_TO;
-  if(!from||!to)throw Error('Owner notification email is not configured');
-  const body=[
-    'A new Les Buttes booking request requires review. No booking is confirmed.',
-    'Reference: '+booking.id,
-    'Property: '+booking.unit,
-    'Dates: '+booking.start+' to '+booking.end+' (departure)',
-    'Guests: '+booking.guests,
-    'Indicative total: GBP '+booking.quote.totalGBP+' (to be confirmed before payment)',
-    'Name: '+booking.guestName,
-    'Email: '+booking.guestEmail,
-    'Notes: '+(booking.notes||'None'),
-    'Review the request against confirmed Airbnb reservations before approving.',
-    'Only send a SumUp payment link after approval. Record confirmation after verifying payment.'
-  ].join('\n');
-  await ses.send(new SendEmailCommand({Source:from,Destination:{ToAddresses:[to]},Message:{Subject:{Data:'Les Buttes request '+booking.id},Body:{Text:{Data:body}}}}));
+  if(!productionEmailGate(process.env))throw Error('Production request email integration disabled');
+  await dispatchRequestedProductionBookingEmails({db,table,bookingId:booking.id,
+    transport:createProductionSesTransport(),env:process.env});
 }
 async function createRequest(input,event){
   if(input.website)return response(202,{received:true});
@@ -152,7 +139,9 @@ export async function handler(event){
   }
   if((method==='POST'&&(path==='/requests'||path==='/request'))||(method==='GET'&&path==='/availability')){
     if(process.env.BOOKING_REQUESTS_ENABLED!=='true')return response(503,{error:'Direct booking requests are not open yet'});
-    if(!table||!process.env.TURNSTILE_SECRET||(process.env.BOOKING_ENVIRONMENT!=='staging'&&(!process.env.NOTIFY_FROM||!process.env.NOTIFY_TO)))return response(503,{error:'Service not configured'});
+    if(!table||!process.env.TURNSTILE_SECRET||
+      (process.env.BOOKING_ENVIRONMENT!=='staging'&&!productionEmailGate(process.env)))
+      return response(503,{error:'Service not configured'});
     // Published Cloudflare demo credentials may be used in the private staging stack only.
     if(process.env.BOOKING_ENVIRONMENT!=='staging'&&/^[123]x0000000000000000000000000000000AA$/.test(process.env.TURNSTILE_SECRET))return response(503,{error:'Production challenge verification is not configured'});
     try{
