@@ -33,5 +33,5 @@ export function quotePublishedBands(unit,start,end,pricing){
   totalPence+=amount;
  }
  return {unit,currency:'GBP',nights,totalGBP:(totalPence/100).toFixed(2),
-         priceSource:'published-staging-pricing',bookingConfirmed:false};
+         priceSource:'published-booking-master-pricing',bookingConfirmed:false};
 }
