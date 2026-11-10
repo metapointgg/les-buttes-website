@@ -1,0 +1,54 @@
+{
+  "status": "PROPOSED_ONLY_NOT_APPROVED_OR_DEPLOYED",
+  "notes": "2027 Option B suggested monthly nightly rates from the earlier Les Buttes pricing review. Not yet approved as final rates. No March 20-31 rate is agreed, and school holiday overlays remain unconfirmed. DO NOT supply this JSON to BOOKING_RATES_JSON in production without approval and complete coverage.",
+  "periods": [
+    {
+      "start": "2027-04-01",
+      "end": "2027-04-30",
+      "geranium": 185,
+      "honeysuckle": 215
+    },
+    {
+      "start": "2027-05-01",
+      "end": "2027-05-31",
+      "geranium": 205,
+      "honeysuckle": 230
+    },
+    {
+      "start": "2027-06-01",
+      "end": "2027-06-30",
+      "geranium": 215,
+      "honeysuckle": 240
+    },
+    {
+      "start": "2027-07-01",
+      "end": "2027-07-31",
+      "geranium": 235,
+      "honeysuckle": 265
+    },
+    {
+      "start": "2027-08-01",
+      "end": "2027-08-31",
+      "geranium": 250,
+      "honeysuckle": 285
+    },
+    {
+      "start": "2027-09-01",
+      "end": "2027-09-30",
+      "geranium": 210,
+      "honeysuckle": 235
+    },
+    {
+      "start": "2027-10-01",
+      "end": "2027-10-01",
+      "geranium": 185,
+      "honeysuckle": 215
+    }
+  ],
+  "potentialHolidayOverlaysNotIncluded": [
+    "Easter: Geranium GBP 200-210 and Honeysuckle GBP 230-240",
+    "May half-term: Geranium GBP 225 and Honeysuckle GBP 250",
+    "22-31 July: Geranium GBP 250 and Honeysuckle GBP 285",
+    "August: Geranium GBP 260-265 and Honeysuckle GBP 295-300"
+  ]
+}

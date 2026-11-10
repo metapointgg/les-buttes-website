@@ -1,0 +1,86 @@
+name: LB-08 isolated atomic booking acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/direct-booking-requests-27-night
+    paths:
+      - '.github/workflows/lb08-isolated-booking-acceptance.yml'
+      - 'services/booking-api/lb08-isolated-request-hold-acceptance.mjs'
+      - 'services/booking-api/lb08-isolated-booking-acceptance.mjs'
+      - 'services/booking-api/lb08-isolated-request-hold-acceptance.test.mjs'
+      - 'services/booking-api/booking-admin-transaction-writer-a09.test.mjs'
+      - 'services/booking-api/booking-admin-transaction-writer.mjs'
+      - 'services/booking-api/a09-isolated-owner-transition-acceptance.mjs'
+      - 'services/booking-api/booking-admin-http-a09.test.mjs'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: lb08-isolated-booking-acceptance
+  cancel-in-progress: false
+
+jobs:
+  isolated-acceptance:
+    name: Verify isolated synthetic booking holds
+    if: ${{ github.ref == 'refs/heads/feature/direct-booking-requests-27-night' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BOOKING_ENVIRONMENT: staging
+      AWS_REGION: eu-west-2
+      AWS_DEFAULT_REGION: eu-west-2
+      BOOKINGS_TABLE: les-buttes-lb08-staging-isolated-acceptance
+      LB08_ISOLATED_BOOKING_ACCEPTANCE: 'yes'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install booking API dependencies
+        run: npm --prefix services/booking-api install --no-package-lock --no-audit --no-fund
+      - name: Validate source and run safety regression tests
+        run: |
+          set -euo pipefail
+          npm --prefix services/booking-api run check
+          node --test services/booking-api/lb08-isolated-request-hold-acceptance.test.mjs
+          node --test services/booking-api/booking-admin-transaction-writer-a09.test.mjs
+          node --test services/booking-api/booking-admin-http-a09.test.mjs
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
+          aws-region: eu-west-2
+      # Re-run after the isolated-table IAM policy includes ConditionCheckItem.
+      - name: Verify AWS identity and dedicated table before any write
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
+          arn="$(aws dynamodb describe-table --table-name "$BOOKINGS_TABLE" --query Table.TableArn --output text)"
+          status="$(aws dynamodb describe-table --table-name "$BOOKINGS_TABLE" --query Table.TableStatus --output text)"
+          test "$arn" = 'arn:aws:dynamodb:eu-west-2:145608514666:table/les-buttes-lb08-staging-isolated-acceptance'
+          test "$status" = 'ACTIVE'
+      - name: Run synthetic atomic hold and conflict acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm --prefix services/booking-api run probe:lb08:isolated-request-hold
+          echo 'A08 isolated synthetic hold and collision acceptance completed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Run A09 isolated owner approval and decline acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check services/booking-api/a09-isolated-owner-transition-acceptance.mjs
+          node services/booking-api/a09-isolated-owner-transition-acceptance.mjs
+          echo 'A09 isolated owner approval and decline acceptance completed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Run synthetic payment confirmation and replay acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node services/booking-api/lb08-isolated-booking-acceptance.mjs
+          echo 'LB08 synthetic payment reconciliation acceptance completed.' >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,59 @@
+name: Verify canonical staging owner-action infrastructure (read only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+    paths:
+      - '.github/workflows/canonical-owner-action-live-verification.yml'
+      - 'infra/booking-api/a09-live-verification-readonly-iam-policy.json'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
+          aws-region: eu-west-2
+          role-session-name: owner-route-read-only-verification
+      - name: Verify API Gateway rejects requests without Cognito credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint='https://i2irz87c82.execute-api.eu-west-2.amazonaws.com/admin/bookings/11111111-1111-4111-8111-111111111111/actions/approve'
+          code="$(curl --silent --show-error --max-time 15 --output /tmp/a09-unauth-response --write-out '%{http_code}' --request POST --header 'Content-Type: application/json' --data '{"approved":true,"usePublishedQuote":true}' "$endpoint")"
+          test "$code" = '401' || { echo "Expected API Gateway 401, received $code"; exit 1; }
+          echo 'API Gateway rejected unauthenticated owner action with HTTP 401.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify canonical API route and approved staging safeguards
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
+          stack='les-buttes-canonical-owner-actions-staging'
+          status="$(aws cloudformation describe-stacks --stack-name "$stack" --query 'Stacks[0].StackStatus' --output text)"
+          test "$status" = 'CREATE_COMPLETE' || test "$status" = 'UPDATE_COMPLETE' 
+          route='POST /admin/bookings/{bookingId}/actions/{action}'
+          route_id="$(aws apigatewayv2 get-routes --api-id i2irz87c82 --query "Items[?RouteKey=='$route' && AuthorizationType=='JWT' && AuthorizerId=='q9ukxh'].RouteId | [0]" --output text)"
+          test -n "$route_id" && test "$route_id" != 'None'
+          fn="$(aws cloudformation describe-stack-resource --stack-name "$stack" --logical-resource-id OwnerActionFunction --query 'StackResourceDetail.PhysicalResourceId' --output text)"
+          test -n "$fn" && test "$fn" != 'None'
+          test "$(aws lambda get-function-configuration --function-name "$fn" --query State --output text)" = 'Active'
+          for flag in MANAGEMENT_WRITES_ENABLED MANAGEMENT_APPROVAL_ENABLED; do
+            test "$(aws lambda get-function-configuration --function-name "$fn" --query "Environment.Variables.$flag" --output text)" = 'true'
+          done
+          test "$(aws lambda get-function-configuration --function-name "$fn" --query 'Environment.Variables.BOOKING_ENVIRONMENT' --output text)" = 'staging'
+          test "$(aws lambda get-function-configuration --function-name "$fn" --query 'Environment.Variables.MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED' --output text)" = 'false'
+          test "$(aws lambda get-function-configuration --function-name "$fn" --query 'Environment.Variables.BOOKING_AIRBNB_REQUIRED' --output text)" = 'true'
+          {
+            echo '## Canonical owner-action staging verification'
+            echo "Stack: $stack ($status)"
+            echo "JWT route ID: $route_id"
+            echo 'Lambda active; authorised synthetic staging approval enabled.'
+            echo 'No booking writes, route mutations or deployment operations performed.'
+          } >> "$GITHUB_STEP_SUMMARY"

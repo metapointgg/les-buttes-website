@@ -1,0 +1,102 @@
+name: Deploy isolated booking preview website (staging only)
+on:
+  push:
+    branches: [feature/direct-booking-requests-27-night]
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: les-buttes-isolated-booking-preview
+  cancel-in-progress: false
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Build synthetic booking preview
+        env:
+          PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'
+          PUBLIC_BOOKING_SYNTHETIC_REQUESTS_ENABLED: 'true'
+          PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED: 'true'
+          PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED: 'true'
+          PUBLIC_BOOKING_STAGING_QUOTE_URL: 'https://yo8p94y63b.execute-api.eu-west-2.amazonaws.com/quote'
+          PUBLIC_BOOKING_AVAILABILITY_URL: 'https://ktmv4x1i3b.execute-api.eu-west-2.amazonaws.com/availability'
+          PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS: 'd123fnjf47zmyp.cloudfront.net'
+        run: |
+          set -euo pipefail
+          npm test
+          node scripts/check-booking-staging-readiness.mjs
+          test -s dist/book/index.html
+          test -s dist/fr/book/index.html
+          test -s dist/nl/book/index.html
+          # Astro inlines PUBLIC_* settings into hashed browser bundles.
+          # Fail deployment if the actual browser script lacks the quote endpoint.
+          if ! grep -RqlF 'yo8p94y63b.execute-api.eu-west-2.amazonaws.com/quote' dist/_astro/; then
+            echo "Authoritative staging quote endpoint missing from built browser assets" >&2
+            exit 1
+          fi
+          if grep -Eqi 'data-mode=["'\''"]live|data-booking-form' dist/book/index.html; then
+            echo "Unsafe live booking form in staging build" >&2
+            exit 1
+          fi
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-booking-private-staging-deploy
+          aws-region: eu-west-2
+      - name: Verify target AWS account
+        run: test "$(aws sts get-caller-identity --query Account --output text)" = "145608514666"
+      - name: Upload to isolated private staging bucket
+        run: |
+          set -euo pipefail
+          aws s3 sync dist/ s3://les-buttes-booking-preview-staging-145608514666/ --delete --exclude 'management/*' --only-show-errors
+          aws cloudfront create-invalidation --distribution-id E3A3ONLRMX3AKJ --paths '/*'
+          echo "Staging preview: https://d123fnjf47zmyp.cloudfront.net/" >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify published CloudFront booking page and browser quote bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          import time
+          import urllib.request
+          from urllib.parse import urljoin
+
+          base = 'https://d123fnjf47zmyp.cloudfront.net'
+          expected = 'yo8p94y63b.execute-api.eu-west-2.amazonaws.com/quote'
+          for attempt in range(1, 7):
+              try:
+                  with urllib.request.urlopen(base + '/book/', timeout=20) as response:
+                      html = response.read().decode('utf-8')
+                      assert response.status == 200
+                  scripts = re.findall(r'<script[^>]+src="([^"]+)"', html)
+                  # Astro may emit module imports instead of script src attributes.
+                  scripts += re.findall(r'"(/_astro/[^"]+\\.js)"', html)
+                  scripts = list(dict.fromkeys(scripts))
+                  if not scripts:
+                      raise AssertionError('No browser JavaScript references found on booking page')
+                  found = False
+                  for src in scripts:
+                      if not src.startswith('/_astro/') and not src.startswith(base + '/_astro/'):
+                          continue
+                      with urllib.request.urlopen(urljoin(base, src), timeout=20) as asset:
+                          if expected in asset.read().decode('utf-8'):
+                              found = True
+                              break
+                  if not found:
+                      raise AssertionError('Published browser scripts do not contain staging quote endpoint')
+                  print('Published /book/ HTTP 200; authoritative quote endpoint found in served browser JavaScript')
+                  break
+              except Exception as exc:
+                  print(f'Attempt {attempt}/6: {exc}', flush=True)
+                  if attempt == 6:
+                      raise
+                  time.sleep(10)
+          PY
+          echo "Synthetic test requests enabled on the isolated preview. Owner approval and sandbox checkout use the management application." >> "$GITHUB_STEP_SUMMARY"
