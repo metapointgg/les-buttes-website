@@ -56,3 +56,20 @@ test('LB-08 refuses unregistered provider checkout and does not claim success',a
  }finally{if(prior===undefined)delete process.env.BOOKING_ENVIRONMENT;
   else process.env.BOOKING_ENVIRONMENT=prior;}
 });
+test('production checkout core requires both live approval gates and production table',async()=>{
+ const productionTable='les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2';
+ const env={BOOKING_ENVIRONMENT:'production',AWS_REGION:'eu-west-2',BOOKINGS_TABLE:productionTable,
+  PAYMENTS_ENABLED:'true',LIVE_PAYMENTS_APPROVED:'true'};
+ let calls=0;
+ const result=await registerApprovedBookingCheckout({db:{send:async()=>({Item:booking})},
+  table:productionTable,bookingId:id,identity,sumup:{},nowEpoch:100,env,
+  orchestrate:async args=>(calls++,{status:'REGISTERED',record:{bookingId:id,
+   amountPence:args.amountPence,currency:'GBP',status:'PENDING',checkoutId:'checkout-live-123'}})});
+ assert.equal(result.checkoutId,'checkout-live-123');assert.equal(calls,1);
+ for(const patch of [{LIVE_PAYMENTS_APPROVED:'false'},{PAYMENTS_ENABLED:'false'},
+  {BOOKINGS_TABLE:table}])await assert.rejects(registerApprovedBookingCheckout({
+   db:{send:async()=>({Item:booking})},table:patch.BOOKINGS_TABLE??productionTable,
+   bookingId:id,identity,sumup:{},nowEpoch:100,env:{...env,...patch},
+   orchestrate:async()=>{calls++;}}),/unavailable/);
+ assert.equal(calls,1);
+});

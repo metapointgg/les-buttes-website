@@ -3,17 +3,20 @@
 // No public endpoint; deployed handler keeps checkout registration disabled.
 import {GetCommand} from '@aws-sdk/lib-dynamodb';
 import {createAndRegisterCheckout} from './sumup-checkout-orchestrator.mjs';
+import {productionPaymentsEnabled} from './sumup-production-runtime.mjs';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const TABLE=/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/;
+const STAGING_TABLE=/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/;
 export async function registerApprovedBookingCheckout({db,table,bookingId,identity,
  sumup,orchestrate=createAndRegisterCheckout,
- nowEpoch=Math.floor(Date.now()/1000)}={}){
- if(process.env.BOOKING_ENVIRONMENT!=='staging'||!TABLE.test(table??'')||
+ nowEpoch=Math.floor(Date.now()/1000),env=process.env}={}){
+ const environmentAllowed=env.BOOKING_ENVIRONMENT==='staging'&&STAGING_TABLE.test(table??'')||
+  productionPaymentsEnabled({...env,BOOKINGS_TABLE:table});
+ if(!environmentAllowed||
     !db?.send||typeof orchestrate!=='function'||!sumup||
     identity?.role!=='owner'||typeof identity.subject!=='string'||
     !identity.subject.trim()||!UUID.test(bookingId??'')||
     !Number.isSafeInteger(nowEpoch)||nowEpoch<0)
-  throw Error('Staging checkout registration unavailable');
+  throw Error('Checkout registration unavailable');
  const booking=(await db.send(new GetCommand({TableName:table,
   Key:{PK:'BOOKING#'+bookingId,SK:'META'},ConsistentRead:true}))).Item;
  if(!booking||booking.id!==bookingId||booking.source!=='direct'||
