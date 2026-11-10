@@ -1,0 +1,450 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Les Buttes production read services. Customer booking writes, payments, refunds
+  and email are intentionally absent. Reuses the protected production booking table
+  and existing management Cognito authoriser.
+Parameters:
+  ProductionBookingTableName:
+    Type: String
+    AllowedValues: [les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2]
+  ReviewedArtifactBucket:
+    Type: String
+  ReviewedArtifactKey:
+    Type: String
+  ReviewedArtifactVersion:
+    Type: String
+  CanonicalManagementApiId:
+    Type: String
+    AllowedValues: [i2irz87c82]
+  CognitoAuthorizerId:
+    Type: String
+    AllowedValues: [q9ukxh]
+  OperationalAlertTopicArn:
+    Type: String
+    AllowedValues:
+      - arn:aws:sns:eu-west-2:145608514666:les-buttes-booking-staging-CalendarMonitorAlertTopic-XJ0iLZwbKUnS
+  GeraniumAirbnbUrlSsmPath:
+    Type: String
+    AllowedValues: [/les-buttes/booking/production/airbnb/geranium-url]
+  HoneysuckleAirbnbUrlSsmPath:
+    Type: String
+    AllowedValues: [/les-buttes/booking/production/airbnb/honeysuckle-url]
+  CalendarTokenSsmPrefix:
+    Type: String
+    AllowedValues: [/les-buttes/booking/production/calendar]
+Conditions:
+  CorrectAccountAndRegion: !And
+    - !Equals [!Ref AWS::AccountId, '145608514666']
+    - !Equals [!Ref AWS::Region, eu-west-2]
+Resources:
+  ProductionApi:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: les-buttes-booking-production-read
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins: [https://lesbuttes.com, https://www.lesbuttes.com]
+        AllowMethods: [GET, OPTIONS]
+        AllowHeaders: [content-type]
+        MaxAge: 300
+  ProductionApiStage:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ProductionApi
+      StageName: $default
+      AutoDeploy: true
+
+  CalendarReadRole:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProductionCalendarReadOnly
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Query]
+                Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/calendar/geranium-token
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/calendar/honeysuckle-token
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+  CalendarReadFunction:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt CalendarReadRole.Arn
+      Timeout: 15
+      MemorySize: 256
+      ReservedConcurrentExecutions: 4
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: production
+          BOOKINGS_TABLE: !Ref ProductionBookingTableName
+          BOOKING_REQUESTS_ENABLED: 'false'
+          BOOKING_AIRBNB_REQUIRED: 'true'
+          CALENDAR_TOKEN_SSM_PREFIX: !Ref CalendarTokenSsmPrefix
+  CalendarReadIntegration:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ProductionApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt CalendarReadFunction.Arn
+      PayloadFormatVersion: '2.0'
+  CalendarHealthRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ProductionApi
+      RouteKey: GET /health
+      Target: !Sub integrations/${CalendarReadIntegration}
+  CalendarFeedRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ProductionApi
+      RouteKey: GET /calendar/{proxy+}
+      Target: !Sub integrations/${CalendarReadIntegration}
+  CalendarReadPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CalendarReadFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProductionApi}/*/GET/*
+
+  AvailabilityReadRole:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProductionAvailabilityReadOnly
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: dynamodb:Query
+                Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+  AvailabilityReadFunction:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: production-availability-handler.handler
+      Role: !GetAtt AvailabilityReadRole.Arn
+      Timeout: 15
+      MemorySize: 256
+      ReservedConcurrentExecutions: 4
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: production
+          BOOKINGS_TABLE: !Ref ProductionBookingTableName
+          BOOKING_AIRBNB_REQUIRED: 'true'
+  AvailabilityReadIntegration:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ProductionApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt AvailabilityReadFunction.Arn
+      PayloadFormatVersion: '2.0'
+  AvailabilityReadRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ProductionApi
+      RouteKey: GET /availability
+      Target: !Sub integrations/${AvailabilityReadIntegration}
+  AvailabilityReadPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AvailabilityReadFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProductionApi}/*/GET/availability
+
+  ProductionAdminReadRole:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProductionBookingManagementReadOnly
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Query]
+                Resource:
+                  - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
+                  - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}/index/BookingRequestsIndex
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+  ProductionAdminReadFunction:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: production-admin-read-handler.handler
+      Role: !GetAtt ProductionAdminReadRole.Arn
+      Timeout: 15
+      MemorySize: 256
+      ReservedConcurrentExecutions: 2
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: production
+          BOOKINGS_TABLE: !Ref ProductionBookingTableName
+          BOOKING_REQUESTS_INDEX: BookingRequestsIndex
+          MANAGEMENT_WRITES_ENABLED: 'false'
+          MANAGEMENT_COGNITO_ISSUER: https://cognito-idp.eu-west-2.amazonaws.com/eu-west-2_Wvo0I3cTa
+          MANAGEMENT_COGNITO_CLIENT_ID: 2mjmimjh7oc8h00d4nngrc1akj
+  ProductionAdminReadIntegration:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ProductionAdminReadFunction.Arn
+      PayloadFormatVersion: '2.0'
+  ProductionBookingsRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      RouteKey: GET /admin/production/bookings
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub integrations/${ProductionAdminReadIntegration}
+  ProductionBookingsProxyRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      RouteKey: GET /admin/production/bookings/{proxy+}
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub integrations/${ProductionAdminReadIntegration}
+  ProductionConfigProxyRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      RouteKey: GET /admin/production/config/{proxy+}
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub integrations/${ProductionAdminReadIntegration}
+  ProductionAdminReadPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ProductionAdminReadFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${CanonicalManagementApiId}/*/GET/admin/production/*
+
+  CalendarMonitorCheckpointTable:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification: {SSEEnabled: true}
+      PointInTimeRecoverySpecification: {PointInTimeRecoveryEnabled: true}
+      AttributeDefinitions: [{AttributeName: PK, AttributeType: S}]
+      KeySchema: [{AttributeName: PK, KeyType: HASH}]
+  CalendarMonitorRole:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProductionInboundCalendarSnapshot
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Query, dynamodb:BatchGetItem]
+                Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
+              - Effect: Allow
+                Action: dynamodb:PutItem
+                Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
+                Condition:
+                  ForAllValues:StringEquals:
+                    dynamodb:LeadingKeys: [UNIT#geranium, UNIT#honeysuckle]
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem]
+                Resource: !GetAtt CalendarMonitorCheckpointTable.Arn
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource:
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/airbnb/geranium-url
+                  - !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/les-buttes/booking/production/airbnb/honeysuckle-url
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref OperationalAlertTopicArn
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+  CalendarMonitorFunction:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: monitor-airbnb.handler
+      Role: !GetAtt CalendarMonitorRole.Arn
+      Timeout: 90
+      MemorySize: 256
+      ReservedConcurrentExecutions: 1
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: production
+          BOOKINGS_TABLE: !Ref ProductionBookingTableName
+          BOOKING_AIRBNB_SYNC_ENABLED: 'true'
+          MONITOR_STATE_TABLE: !Ref CalendarMonitorCheckpointTable
+          MONITOR_SNS_TOPIC_ARN: !Ref OperationalAlertTopicArn
+          MONITOR_GERANIUM_SSM: !Ref GeraniumAirbnbUrlSsmPath
+          MONITOR_HONEYSUCKLE_SSM: !Ref HoneysuckleAirbnbUrlSsmPath
+          MONITOR_FROM_DATE: '2027-03-20'
+          MONITOR_TO_DATE: '2027-10-02'
+          MONITOR_ALERTS_ENABLED: 'true'
+  CalendarMonitorSchedule:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: rate(15 minutes)
+      State: ENABLED
+      Targets:
+        - Id: ProductionInboundCalendarMonitor
+          Arn: !GetAtt CalendarMonitorFunction.Arn
+  CalendarMonitorPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CalendarMonitorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt CalendarMonitorSchedule.Arn
+      SourceAccount: !Ref AWS::AccountId
+
+  CalendarReadFailureAlarm:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{Name: FunctionName, Value: !Ref CalendarReadFunction}]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OperationalAlertTopicArn]
+  AvailabilityReadFailureAlarm:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{Name: FunctionName, Value: !Ref AvailabilityReadFunction}]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OperationalAlertTopicArn]
+  ProductionAdminReadFailureAlarm:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{Name: FunctionName, Value: !Ref ProductionAdminReadFunction}]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OperationalAlertTopicArn]
+  CalendarMonitorFailureAlarm:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Period: 3600
+      Dimensions: [{Name: FunctionName, Value: !Ref CalendarMonitorFunction}]
+      Statistic: Sum
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OperationalAlertTopicArn]
+Outputs:
+  ProductionApiUrl:
+    Value: !GetAtt ProductionApi.ApiEndpoint
+  CalendarReadFunctionName:
+    Value: !Ref CalendarReadFunction
+  AvailabilityReadFunctionName:
+    Value: !Ref AvailabilityReadFunction
+  ProductionAdminReadFunctionName:
+    Value: !Ref ProductionAdminReadFunction
+  CalendarMonitorFunctionName:
+    Value: !Ref CalendarMonitorFunction

@@ -10,7 +10,7 @@ export const UNITS=['geranium','honeysuckle'];
 const oneDay=86400000;
 export function nextDay(date){return new Date(Date.parse(date+'T00:00:00.000Z')+oneDay).toISOString().slice(0,10);}
 
-export async function masterOccupied({db,table,nowEpoch=Math.floor(Date.now()/1000),capturedAt=new Date().toISOString(),airbnbRequired=process.env.BOOKING_AIRBNB_REQUIRED==='true'}){
+export async function masterOccupied({db,table,nowEpoch=Math.floor(Date.now()/1000),capturedAt=new Date().toISOString(),airbnbRequired=process.env.BOOKING_AIRBNB_REQUIRED==='true',mode='LIVE_STAGING_MASTER_READ_ONLY'}){
   if(!db||!table)throw Error('Availability master database is not configured');
   const blocked={};
   for(const unit of UNITS){
@@ -48,6 +48,6 @@ export async function masterOccupied({db,table,nowEpoch=Math.floor(Date.now()/10
     blocked[unit]=ranges;
   }
   return {
-    mode:'LIVE_STAGING_MASTER_READ_ONLY',capturedAt,firstNight:FIRST_NIGHT,lastNight:LAST_NIGHT,lastCheckout:CHECKOUT,blocked
+    mode,capturedAt,firstNight:FIRST_NIGHT,lastNight:LAST_NIGHT,lastCheckout:CHECKOUT,blocked
   };
 }

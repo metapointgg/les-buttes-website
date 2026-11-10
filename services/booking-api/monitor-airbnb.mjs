@@ -1,5 +1,5 @@
 import {saveAirbnbSnapshot} from './airbnb-availability.mjs';
-// Private scheduled staging-only Lambda. Reads Airbnb exports and the master booking table.
+// Private scheduled Lambda. Reads Airbnb exports and writes only verified availability snapshots.
 // Optional inbound snapshots never overwrite direct reservation/date records.
 // The two Airbnb bearer URLs exist only in SSM SecureString parameters.
 import {SSMClient,GetParameterCommand} from '@aws-sdk/client-ssm';
@@ -19,11 +19,16 @@ const units=[
   {unit:'honeysuckle',param:process.env.MONITOR_HONEYSUCKLE_SSM}
 ];
 function guard(){
-  if(BOOKING_ENVIRONMENT!=='staging'||!BOOKINGS_TABLE?.toLowerCase().includes('staging')||
-     !MONITOR_STATE_TABLE?.toLowerCase().includes('staging')||
+  const tablePattern=BOOKING_ENVIRONMENT==='staging'?
+    /^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/:
+    /^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
+  const statePattern=BOOKING_ENVIRONMENT==='staging'?/staging/i:/production/i;
+  const parameterPrefix='/les-buttes/booking/'+BOOKING_ENVIRONMENT+'/airbnb/';
+  if(!['staging','production'].includes(BOOKING_ENVIRONMENT)||!tablePattern.test(BOOKINGS_TABLE??'')||
+     !statePattern.test(MONITOR_STATE_TABLE??'')||
      !MONITOR_SNS_TOPIC_ARN||!MONITOR_FROM_DATE||!MONITOR_TO_DATE||
-     units.some(v=>!v.param?.startsWith('/les-buttes/booking/staging/airbnb/')))
-    throw Error('Staging calendar monitor is not configured safely');
+     units.some(v=>!v.param?.startsWith(parameterPrefix)))
+    throw Error('Calendar monitor is not configured safely');
 }
 async function getState(unit){
   const r=await db.send(new GetCommand({TableName:MONITOR_STATE_TABLE,Key:{PK:'UNIT#'+unit},ConsistentRead:true}));
@@ -94,7 +99,7 @@ async function inspect(entry){
     });
     if(report.shouldAlert){
       const message=monitorMessage(entry.unit,report,MONITOR_FROM_DATE,MONITOR_TO_DATE);
-      await publish('Les Buttes staging Airbnb calendar REVIEW: '+entry.unit,message);
+      await publish('Les Buttes '+BOOKING_ENVIRONMENT+' Airbnb calendar REVIEW: '+entry.unit,message);
       console.info('Calendar review alert published:',entry.unit);
     }
     await saveState(entry.unit,{
@@ -112,9 +117,9 @@ async function inspect(entry){
     // Do not log e.message: third-party/network SDK errors may contain secret URLs.
     console.error('Airbnb calendar monitor failed for:',entry.unit,'type:',e.name||'Error');
     if(!previous?.errorNotified){
-      await publish('Les Buttes staging Airbnb MONITOR FAILED: '+entry.unit,
+      await publish('Les Buttes '+BOOKING_ENVIRONMENT+' Airbnb MONITOR FAILED: '+entry.unit,
         'Automatic calendar check failed for '+entry.unit+'. No booking dates were changed.\n'+
-        'The feed, configuration or staging master needs manual investigation.\n'+
+        'The feed, configuration or '+BOOKING_ENVIRONMENT+' master needs manual investigation.\n'+
         'Check AWS CloudWatch logs for the calendar monitor. Do not assume the calendar is current.');
       await saveState(entry.unit,{...previous,errorNotified:true,lastErrorAt:new Date().toISOString()});
     }

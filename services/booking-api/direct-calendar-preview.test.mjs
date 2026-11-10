@@ -21,3 +21,12 @@ test('export coalesces adjacent direct nights without exposing booking identifie
  assert.match(result.calendar,/DTSTART;VALUE=DATE:20270410\r\nDTEND;VALUE=DATE:20270412/);
  assert.doesNotMatch(result.calendar,/booking-/);
 });
+
+test('production feed is not limited to the 2027 season',async()=>{
+ const rows=[{PK:'UNIT#geranium',SK:'DATE#2028-04-01',id:'future'}];
+ const db={send:async c=>c.input.KeyConditionExpression?{Items:rows}:{Item:{source:'direct',status:'CONFIRMED',
+  units:['geranium'],start:'2028-04-01',end:'2028-04-02'}}};
+ const result=await directCalendarPreview({db,table:'les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2',
+  unit:'geranium',now:100});
+ assert.match(result.calendar,/DTSTART;VALUE=DATE:20280401\r\nDTEND;VALUE=DATE:20280402/);
+});

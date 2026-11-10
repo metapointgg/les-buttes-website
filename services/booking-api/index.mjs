@@ -5,11 +5,14 @@ import {slotBlocksAvailability} from './occupancy.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,BatchGetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {SESClient,SendEmailCommand} from '@aws-sdk/client-ses';
+import {SSMClient,GetParameterCommand} from '@aws-sdk/client-ssm';
 import {directCalendarPreview} from './direct-calendar-preview.mjs';
 
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const ses=new SESClient({});
+const ssm=new SSMClient({});
 const table=process.env.BOOKINGS_TABLE;
+const calendarTokens=new Map();
 
 function response(statusCode,body,headers={}){
   return {statusCode,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers},body:typeof body==='string'?body:JSON.stringify(body)};
@@ -96,14 +99,24 @@ async function createRequest(input,event){
   try{await notifyOwner(item);}catch(e){console.error('Booking request notification failed',id,e);}
   return response(202,{received:true,reference:id});
 }
-function calendarTokenMatches(candidate){
- const expected=process.env.CALENDAR_TOKEN;
+async function calendarTokenMatches(cottage,candidate){
+ let expected=process.env[cottage.toUpperCase()+'_CALENDAR_TOKEN']??process.env.CALENDAR_TOKEN;
+ const prefix=process.env.CALENDAR_TOKEN_SSM_PREFIX;
+ if(!expected&&prefix){
+  const name=prefix.replace(/\/+$/,'')+'/'+cottage+'-token';
+  expected=calendarTokens.get(name);
+  if(!expected){
+   const result=await ssm.send(new GetParameterCommand({Name:name,WithDecryption:true}));
+   expected=result.Parameter?.Value;
+   if(typeof expected==='string'&&expected.length>=32)calendarTokens.set(name,expected);
+  }
+ }
  if(typeof candidate!=='string'||typeof expected!=='string'||candidate.length<24||candidate.length>256)return false;
  const a=Buffer.from(candidate),b=Buffer.from(expected);
  return a.length===b.length&&timingSafeEqual(a,b);
 }
 async function calendar(cottage,token){
-  if(!['geranium','honeysuckle'].includes(cottage)||!calendarTokenMatches(token))return response(404,{error:'Not found'});
+  if(!['geranium','honeysuckle'].includes(cottage)||!await calendarTokenMatches(cottage,token))return response(404,{error:'Not found'});
   const result=await directCalendarPreview({db,table,unit:cottage});
   return response(200,result.calendar,{'Content-Type':'text/calendar; charset=utf-8',
     'Cache-Control':'private, no-cache, no-store, must-revalidate','X-Robots-Tag':'noindex, nofollow'});

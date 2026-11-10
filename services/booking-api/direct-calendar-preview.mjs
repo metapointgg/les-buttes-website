@@ -2,7 +2,7 @@
 // Subscribing an external channel to the feed remains an explicit owner action.
 import {createHash} from 'node:crypto';
 import {QueryCommand,GetCommand} from '@aws-sdk/lib-dynamodb';
-import {FIRST_NIGHT,LAST_NIGHT,nextDay} from './master-occupied.mjs';
+import {nextDay} from './master-occupied.mjs';
 import {slotBlocksAvailability} from './occupancy.mjs';
 export async function directCalendarPreview({db,table,unit,now=Math.floor(Date.now()/1000)}){
  if(!['geranium','honeysuckle'].includes(unit)||
@@ -11,7 +11,7 @@ export async function directCalendarPreview({db,table,unit,now=Math.floor(Date.n
  const rows=[];let cursor;
  do{const page=await db.send(new QueryCommand({TableName:table,ConsistentRead:true,
   KeyConditionExpression:'PK = :pk AND SK BETWEEN :start AND :end',
-  ExpressionAttributeValues:{':pk':'UNIT#'+unit,':start':'DATE#'+FIRST_NIGHT,':end':'DATE#'+LAST_NIGHT},ExclusiveStartKey:cursor}));
+  ExpressionAttributeValues:{':pk':'UNIT#'+unit,':start':'DATE#0000-01-01',':end':'DATE#9999-12-31'},ExclusiveStartKey:cursor}));
   rows.push(...page.Items??[]);cursor=page.LastEvaluatedKey;
  }while(cursor);
  const bookings=new Map(),days=[];
