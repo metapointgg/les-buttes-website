@@ -61,7 +61,8 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discovery,/disabled aria-disabled="true"/);
   assert.match(discoveryScript,/indicativeSelection/);
   assert.match(discoveryScript,/localPreview\?'http:\/\/127\.0\.0\.1:4328\/availability'/);
-  assert.match(discoveryScript,/PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true'/);
+  assert.match(discoveryScript,/PUBLIC_BOOKING_READ_ONLY_ENABLED\?\?/);
+  assert.match(discoveryScript,/PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED\)==='true'/);
   assert.match(discoveryScript,/hostedReadOnlyEnabled\?\(import\.meta\.env\.PUBLIC_BOOKING_AVAILABILITY_URL\?\?null\):null/);
   assert.match(discoveryScript,/if\(!availabilityUrl\)\{clearMasterAvailability\(\);return false;\}/);
   // The new journey can submit only with explicit approval and verification.

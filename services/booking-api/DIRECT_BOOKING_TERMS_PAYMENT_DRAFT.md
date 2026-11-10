@@ -1,5 +1,5 @@
 # Les Buttes — Direct booking terms and payment design (DRAFT)
-Updated 24 October 2026. Status: OWNER AND GUERNSEY LEGAL REVIEW REQUIRED. Do not publish, merge booking activation, email to guests, or collect payment on the basis of this draft.
+Updated 10 November 2026. Status: OWNER AND GUERNSEY LEGAL REVIEW REQUIRED. Do not publish, merge booking activation, email to guests, or collect payment on the basis of this draft. `BOOKING_TERMS_DRAFT_2027.md` is the current consolidated draft; where this design note differs, that consolidated draft and the published versioned database policy take precedence.
 
 ## Model and contract formation
 1. Guest chooses eligible cottage(s), 2027 Saturday-to-Saturday dates, party size and reviews an indicative price.
@@ -10,13 +10,13 @@ Updated 24 October 2026. Status: OWNER AND GUERNSEY LEGAL REVIEW REQUIRED. Do no
 6. If payment fails, expires, is reversed, or a price/date mismatch is found, do not confirm; release or review the hold according to the agreed policy. Support refund and chargeback reconciliation.
 7. No outgoing Airbnb calendar update should be assumed until its integration is proven; reconcile calendars before acceptance.
 
-## Draft commercial choices — not approved
-- **Deposit:** recommend 25% of total on owner acceptance, with remainder due 56 days before arrival. For a booking inside 56 days, full payment on acceptance.
-- **Refund policy for guest cancellations:** recommend full refund of payments received if cancelled at least 56 full days before local check-in; within 56 days consider a graduated and clearly disclosed schedule rather than blanket forfeiture. **Specific percentages, handling of deposit, statutory exceptions, insurance advice, refunds if the dates relet and exceptional circumstances require owner and legal approval.**
+## Approved commercial architecture; guest terms still require legal approval
+- **Payment:** the standard intended payment is the full owner-approved amount. No deposit or instalment option is configured.
+- **Refund policy for guest cancellations:** use the versioned Strict-style business rules already published in the booking configuration: 100% within 24 hours of confirmation when confirmation occurred at least seven full days before check-in; otherwise 50% when cancellation occurs at least seven full days before check-in; otherwise 0%, subject always to statutory rights, host fault and a separately approved exception. Exact check-in time and final guest-facing wording remain approval blockers.
 - **Owner cancellations:** full refund and prompt notification as a baseline, with legal review of further obligations.
 - **Refund administration:** use original payment route where possible, keep transaction evidence and avoid promising exact processing time.
 - **Prices:** customer quote records the agreed full price, any separate taxes/fees (if relevant), and payment dates. October 2026 preview prices are indicative only. No automatic '11% saving' promise until final rate methodology approved.
-- **Check-in/out:** times to be confirmed. Saturday arrival and Saturday departure already configured for this pilot; any low-season exceptions require explicit rule decisions.
+- **Check-in/out:** times remain to be confirmed. Saturday arrival and Saturday departure and the published 3/5/7-night seasonal minimum rules are configured; any exception requires an explicitly versioned rule change.
 - **Occupancy:** Geranium max 4 guests/2 bedrooms; Honeysuckle max 6 guests/3 bedrooms; both together max 10/5 bedrooms. Fire and occupancy rules to be verified.
 - **Property terms:** maximum occupancy, child supervision, smoking, pets, quiet hours, parking, accessibility, housekeeping, damage reporting, late arrival and force majeure need agreed wording and factual verification.
 

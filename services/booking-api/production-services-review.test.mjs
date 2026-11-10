@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const source=readFileSync(new URL('../../infra/booking-api/production-services-review.template.yaml',import.meta.url),'utf8');
+const terms=readFileSync(new URL('./BOOKING_TERMS_DRAFT_2027.md',import.meta.url),'utf8');
+const paymentTerms=readFileSync(new URL('./DIRECT_BOOKING_TERMS_PAYMENT_DRAFT.md',import.meta.url),'utf8');
 
 test('production services reuse the isolated table and keep the deployed request boundary disabled',()=>{
  assert.match(source,/ProductionBookingTableName/);
@@ -47,4 +49,11 @@ test('production API and functions have bounded structured operational logging',
  assert.equal((source.match(/RetentionInDays: 90/g)??[]).length,7);
  assert.equal((source.match(/LogFormat: JSON/g)??[]).length,6);
  assert.doesNotMatch(source,/Action: \[logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents\]/);
+});
+
+test('unpublished terms drafts do not contradict the approved full-payment Strict policy',()=>{
+ assert.match(terms,/approved Strict-style direct-booking business rules/);
+ assert.match(paymentTerms,/standard intended payment is the full owner-approved amount/);
+ assert.match(paymentTerms,/100% within 24 hours of confirmation/);
+ assert.doesNotMatch(paymentTerms,/25%|56 full days|within 56 days/);
 });

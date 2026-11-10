@@ -12,7 +12,7 @@
 - **What is included in the price:** [CLEANING, LINEN, UTILITIES, WIFI ETC. — CONFIRM]; identify any compulsory extra charges before offering a payable amount. No hidden fees.
 - **Pets/smoking/parties/quiet hours/damage/security arrangements:** [OWNER TO APPROVE] — do not silently copy unverified Airbnb house rules.
 - **Maximum overnight occupancy:** Geranium 4; Honeysuckle 6; both cottages together 10, subject to the relevant visitor accommodation permits.
-- **Cancellation policy:** proposed Firm-style refund schedule in Section 6, subject to final owner and legal approval.
+- **Cancellation policy:** approved Strict-style direct-booking business rules in Section 6, with the guest-facing wording still subject to final owner and legal approval.
 - **Governing law / complaints / regulatory disclosures / permit numbers:** [LOCAL LEGAL REVIEW REQUIRED].
 - **Privacy notice:** identify data controller, privacy-policy URL, lawful purposes, AWS/SumUp/email-service processors, retention period, sharing, cross-border disclosures and individual rights. Do not make unsupported privacy promises.
 
@@ -101,7 +101,7 @@ Send a durable copy of the accepted terms with the payment request and retain a 
 
 ## References reviewed 24 October 2026
 
-- Airbnb's current short-stay Firm policy and 24-hour cancellation window: https://www.airbnb.com/resources/hosting-homes/a/choosing-cancellation-policies-19 and https://www.airbnb.com/help/article/475
+- Airbnb's current short-stay Strict policy and 24-hour cancellation window: https://www.airbnb.com/resources/hosting-homes/a/choosing-cancellation-policies-19 and https://www.airbnb.com/help/article/475
 - Airbnb announcement removing standard Strict policy for new bookings from 1 October 2025: https://www.airbnb.com/help/article/3832
 - Guernsey Trading Standards (Fair Trading) Ordinance, 2023 — section 85(1)(i) specific-date accommodation exclusion, **confirm against enacted current text**: https://parliament.gg/parliamentary-business/assets/propositions/p2023-9
 - Guernsey Trading Standards guidance: https://www.applebyglobal.com/publications/trading-standards-application-to-your-business/
