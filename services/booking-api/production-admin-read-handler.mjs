@@ -26,6 +26,10 @@ export async function handler(event){
   // it neither registers checkouts nor initiates payments.
   const db=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
   deployed=createAdminHandler({reader,
+   // The shared admin HTTP handler defaults checkout status to staging.
+   // Permit this read-only endpoint solely for the pinned production table.
+   deploymentAllowed:()=>process.env.BOOKING_ENVIRONMENT==='production'&&
+    TABLE.test(process.env.BOOKINGS_TABLE??''),
    readCheckout:({bookingId})=>readRegisteredCheckout({db,table:process.env.BOOKINGS_TABLE,bookingId}),
    writeEnabled:()=>false});
  }

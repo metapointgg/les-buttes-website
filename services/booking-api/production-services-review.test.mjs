@@ -81,3 +81,12 @@ test('production owner checkout status is readable through JWT-protected read-on
  assert.match(code,/writeEnabled:\(\)=>false/);
  assert.match(source,/GET \/admin\/production\/bookings\/\{proxy\+\}/);
 });
+
+
+test('production checkout status does not inherit the staging-only reader gate',()=>{
+ const source=readFileSync(new URL('./production-admin-read-handler.mjs',import.meta.url),'utf8');
+ assert.match(source,/deploymentAllowed:\(\)=>process\.env\.BOOKING_ENVIRONMENT==='production'/);
+ assert.match(source,/TABLE\.test\(process\.env\.BOOKINGS_TABLE\?\?''\)/);
+ assert.match(source,/readCheckout:\(\{bookingId\}\)=>readRegisteredCheckout/);
+ assert.match(source,/writeEnabled:\(\)=>false/);
+});
