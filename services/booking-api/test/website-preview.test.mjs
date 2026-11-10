@@ -73,7 +73,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   // the authoritative read-only quote API must remain available as well.
   assert.ok(discoveryScript.includes("bookingApi==='https://c7x0ongl4d.execute-api.eu-west-2.amazonaws.com'"));
   assert.ok(discoveryScript.includes("quoteOnlyEnabled&&liveQuoteEnabled&&productionRequestApi"));
-  assert.doesNotMatch(discoveryScript,/Boolean\\(bookingApi\\)&&!quoteOnlyEnabled/);
+  assert.ok(!discoveryScript.includes("Boolean(bookingApi)&&!quoteOnlyEnabled"));
   assert.ok(discoveryScript.includes("bookingApi+'/requests'"));
   // The preview button is inert by default, but must become a real submit control
   // when the explicitly approved request feature is enabled.
