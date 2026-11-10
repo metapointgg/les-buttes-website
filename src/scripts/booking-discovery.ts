@@ -19,10 +19,12 @@ if(widget){
   const next=widget.querySelector<HTMLButtonElement>('[data-next-month]')!;
   const localPreview=['localhost','127.0.0.1'].includes(window.location.hostname);
   // Guest availability uses a separate public, date-only endpoint; no sign-in.
-  // Explicit host allowlist prevents the staging calendar from leaking into production.
-  const allowedHosts=(import.meta.env.PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS??'')
+  // Each build must explicitly allow its own host and read-only environment.
+  const allowedHosts=(import.meta.env.PUBLIC_BOOKING_READ_ONLY_ALLOWED_HOSTS??
+    import.meta.env.PUBLIC_BOOKING_STAGING_ALLOWED_HOSTS??'')
     .split(',').map((host:string)=>host.trim().toLowerCase()).filter(Boolean);
-  const hostedReadOnlyEnabled=import.meta.env.PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true' &&
+  const hostedReadOnlyEnabled=(import.meta.env.PUBLIC_BOOKING_READ_ONLY_ENABLED??
+    import.meta.env.PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED)==='true' &&
     allowedHosts.includes(window.location.hostname.toLowerCase()) && !localPreview;
   const availabilityUrl=localPreview?'http://127.0.0.1:4328/availability':
     hostedReadOnlyEnabled?(import.meta.env.PUBLIC_BOOKING_AVAILABILITY_URL??null):null;
@@ -42,12 +44,12 @@ if(widget){
   // A server-authoritative quote is mandatory before advancing from review.
   // The existing staging read-only master never authorises a request or payment.
   const bookingApi=(import.meta.env.PUBLIC_BOOKING_REQUEST_API_URL??'').trim().replace(/\/$/,'');
-  // Quote-only staging API is separate from the booking request API.
-  // It must never be used on production or as a booking submission endpoint.
-  const stagingQuoteUrl=hostedReadOnlyEnabled?
-    (import.meta.env.PUBLIC_BOOKING_STAGING_QUOTE_URL??'').trim(): '';
-  const quoteOnlyEnabled=Boolean(stagingQuoteUrl)&&
-    /^https:\/\/[a-z0-9.-]+\.execute-api\.eu-west-2\.amazonaws\.com\/quote$/i.test(stagingQuoteUrl);
+  // A quote-only API is separate from the booking request API and can never submit.
+  const quoteUrl=hostedReadOnlyEnabled?
+    (import.meta.env.PUBLIC_BOOKING_QUOTE_URL??
+      import.meta.env.PUBLIC_BOOKING_STAGING_QUOTE_URL??'').trim(): '';
+  const quoteOnlyEnabled=Boolean(quoteUrl)&&
+    /^https:\/\/[a-z0-9.-]+\.execute-api\.eu-west-2\.amazonaws\.com\/quote$/i.test(quoteUrl);
   const liveQuoteEnabled=import.meta.env.PUBLIC_BOOKING_AUTHORITATIVE_QUOTES_ENABLED==='true'&&
     (quoteOnlyEnabled||Boolean(bookingApi))&&!localPreview;
   // Submission is separately gated and cannot be enabled by an API URL alone.
@@ -68,7 +70,7 @@ if(widget){
     const params=new URLSearchParams({unit:choice,start:arrival.value,end:departure.value,
       guests:String(filters.adults+filters.children)});
     try{
-      const response=await fetch(quoteOnlyEnabled?stagingQuoteUrl+'?'+params:
+      const response=await fetch(quoteOnlyEnabled?quoteUrl+'?'+params:
         bookingApi+'/availability?'+params,{cache:'no-store',headers:{Accept:'application/json'}});
       if(!response.ok)return false;
       const result=await response.json() as {
