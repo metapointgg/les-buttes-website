@@ -6,7 +6,8 @@ const discovery=readFileSync('src/scripts/booking-discovery.ts','utf8');
 assert.match(page,/PUBLIC_BOOKING_REQUESTS_ENABLED==='true'/,'Guest submissions must remain explicitly gated');
 assert.match(page,/Boolean\(apiUrl&&turnstileKey\)/,'Guest submissions require API and Turnstile configuration');
 assert.match(discovery,/if\(!availabilityUrl\)\{clearMasterAvailability\(\);return false;\}/,'Hosted preview must fail closed without a configured availability source');
-assert.match(discovery,/PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED==='true'/,'Hosted read-only availability must be explicitly gated');
+assert.match(discovery,/PUBLIC_BOOKING_READ_ONLY_ENABLED\?\?/,'Hosted read-only availability must use an environment-specific gate');
+assert.match(discovery,/PUBLIC_BOOKING_STAGING_READ_ONLY_ENABLED\)==='true'/,'Staging read-only availability fallback must remain explicitly gated');
 assert.match(discovery,/hostedReadOnlyEnabled\?\(import\.meta\.env\.PUBLIC_BOOKING_AVAILABILITY_URL\?\?null\):null/,'Hosted availability must use a separate public read-only path');
 assert.match(discovery,/127\.0\.0\.1:4328\/availability/,'Local master bridge must remain explicit');
 for(const language of ['','fr/','nl/']){
