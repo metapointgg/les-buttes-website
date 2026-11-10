@@ -4,12 +4,24 @@ import {readFileSync} from 'node:fs';
 
 const source=readFileSync(new URL('../../infra/booking-api/production-services-review.template.yaml',import.meta.url),'utf8');
 
-test('production services reuse the isolated table and expose no customer write route',()=>{
+test('production services reuse the isolated table and keep the deployed request boundary disabled',()=>{
  assert.match(source,/ProductionBookingTableName/);
  assert.match(source,/les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2/);
- assert.doesNotMatch(source,/RouteKey:\s*POST|Action:\s*\[?ses:|sumup/i);
+ assert.match(source,/RouteKey: POST \/request/);
+ assert.match(source,/ProductionRequestBoundaryLogsOnly/);
+ assert.match(source,/PAYMENTS_ENABLED: 'false'/);
+ assert.match(source,/REFUNDS_ENABLED: 'false'/);
+ assert.match(source,/EMAILS_ENABLED: 'false'/);
+ assert.doesNotMatch(source,/Action:\s*\[?ses:|sumup/i);
  assert.match(source,/BOOKING_REQUESTS_ENABLED: 'false'/);
  assert.match(source,/MANAGEMENT_WRITES_ENABLED: 'false'/);
+});
+
+test('production quote route has read-only database permissions',()=>{
+ assert.match(source,/RouteKey: GET \/quote/);
+ assert.match(source,/PolicyName: ProductionQuoteReadOnly/);
+ assert.match(source,/Action: \[dynamodb:GetItem, dynamodb:Query\]/);
+ assert.doesNotMatch(source,/ProductionQuoteReadOnly[\s\S]{0,900}dynamodb:(?:PutItem|UpdateItem|DeleteItem|TransactWriteItems)/);
 });
 
 test('production feeds use two independently managed secure parameters',()=>{

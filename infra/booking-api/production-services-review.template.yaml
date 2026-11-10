@@ -45,7 +45,7 @@ Resources:
       ProtocolType: HTTP
       CorsConfiguration:
         AllowOrigins: [https://lesbuttes.com, https://www.lesbuttes.com]
-        AllowMethods: [GET, OPTIONS]
+        AllowMethods: [GET, POST, OPTIONS]
         AllowHeaders: [content-type]
         MaxAge: 300
   ProductionApiStage:
@@ -197,6 +197,136 @@ Resources:
       FunctionName: !Ref AvailabilityReadFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProductionApi}/*/GET/availability
+
+  QuoteReadRole:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProductionQuoteReadOnly
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:Query]
+                Resource: !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProductionBookingTableName}
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+  QuoteReadFunction:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: production-quote-handler.handler
+      Role: !GetAtt QuoteReadRole.Arn
+      Timeout: 15
+      MemorySize: 256
+      ReservedConcurrentExecutions: 4
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: production
+          BOOKINGS_TABLE: !Ref ProductionBookingTableName
+          BOOKING_AIRBNB_REQUIRED: 'true'
+          PRODUCTION_QUOTE_ENABLED: 'true'
+          BOOKING_REQUESTS_ENABLED: 'false'
+  QuoteReadIntegration:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ProductionApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt QuoteReadFunction.Arn
+      PayloadFormatVersion: '2.0'
+  QuoteReadRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ProductionApi
+      RouteKey: GET /quote
+      Target: !Sub integrations/${QuoteReadIntegration}
+  QuoteReadPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref QuoteReadFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProductionApi}/*/GET/quote
+
+  DisabledRequestRole:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProductionRequestBoundaryLogsOnly
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*
+  DisabledRequestFunction:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: production-request-disabled-handler.handler
+      Role: !GetAtt DisabledRequestRole.Arn
+      Timeout: 5
+      MemorySize: 128
+      ReservedConcurrentExecutions: 2
+      Code:
+        S3Bucket: !Ref ReviewedArtifactBucket
+        S3Key: !Ref ReviewedArtifactKey
+        S3ObjectVersion: !Ref ReviewedArtifactVersion
+      Environment:
+        Variables:
+          BOOKING_ENVIRONMENT: production
+          BOOKINGS_TABLE: !Ref ProductionBookingTableName
+          BOOKING_REQUESTS_ENABLED: 'false'
+          PAYMENTS_ENABLED: 'false'
+          REFUNDS_ENABLED: 'false'
+          EMAILS_ENABLED: 'false'
+  DisabledRequestIntegration:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ProductionApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt DisabledRequestFunction.Arn
+      PayloadFormatVersion: '2.0'
+  DisabledRequestRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ProductionApi
+      RouteKey: POST /request
+      Target: !Sub integrations/${DisabledRequestIntegration}
+  DisabledRequestPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DisabledRequestFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProductionApi}/*/POST/request
 
   ProductionAdminReadRole:
     Condition: CorrectAccountAndRegion
@@ -437,6 +567,34 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       TreatMissingData: notBreaching
       AlarmActions: [!Ref OperationalAlertTopicArn]
+  QuoteReadFailureAlarm:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{Name: FunctionName, Value: !Ref QuoteReadFunction}]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OperationalAlertTopicArn]
+  DisabledRequestFailureAlarm:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{Name: FunctionName, Value: !Ref DisabledRequestFunction}]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref OperationalAlertTopicArn]
 Outputs:
   ProductionApiUrl:
     Value: !GetAtt ProductionApi.ApiEndpoint
@@ -448,3 +606,7 @@ Outputs:
     Value: !Ref ProductionAdminReadFunction
   CalendarMonitorFunctionName:
     Value: !Ref CalendarMonitorFunction
+  QuoteReadFunctionName:
+    Value: !Ref QuoteReadFunction
+  DisabledRequestFunctionName:
+    Value: !Ref DisabledRequestFunction
