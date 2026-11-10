@@ -3,6 +3,8 @@ import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,QueryCommand,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {reconcilePaymentAndNotify} from './booking-payment-confirmation-followup.mjs';
 import {createStagingSesTransport} from './booking-staging-ses-transport.mjs';
+import {expireApprovedPaymentHold} from './booking-payment-hold-expiry.mjs';
+import {dispatchBookingLifecycleEmail} from './booking-confirmation-email-dispatch.mjs';
 const RULE='arn:aws:events:eu-west-2:145608514666:rule/les-buttes-sandbox-payment-reconciliation';
 export function authorisedPaymentSchedule(event,env=process.env){
  return env.BOOKING_ENVIRONMENT==='staging'&&env.BOOKING_AUTOMATIC_RECONCILIATION_ENABLED==='true'&&
@@ -12,7 +14,8 @@ export function authorisedPaymentSchedule(event,env=process.env){
   /^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/.test(env.BOOKINGS_TABLE??'');
 }
 export async function reconcileScheduledPayments(event,{env=process.env,db,
- reconcile=reconcilePaymentAndNotify,now=()=>Math.floor(Date.now()/1000)}={}){
+ reconcile=reconcilePaymentAndNotify,expire=expireApprovedPaymentHold,
+ dispatch=dispatchBookingLifecycleEmail,now=()=>Math.floor(Date.now()/1000)}={}){
  if(!authorisedPaymentSchedule(event,env))throw Error('Scheduled reconciliation disabled');
  const own=!db;
  db??=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
@@ -28,7 +31,24 @@ export async function reconcileScheduledPayments(event,{env=process.env,db,
     const candidate=record.Item;
     if(!candidate)continue;
     if(candidate.status!=='APPROVED_AWAITING_PAYMENT'||candidate.synthetic!==true||candidate.guestEmail!=='test@example.invalid')continue;
-    if(!Number.isSafeInteger(candidate.holdExpiresAt)||candidate.holdExpiresAt<=now()){counts.expired++;continue;}
+    const evaluatedAt=now();
+    if(!Number.isSafeInteger(candidate.holdExpiresAt)){counts.pendingOrReview++;continue;}
+    if(candidate.holdExpiresAt<=evaluatedAt){
+     try{
+      await expire({db,table:env.BOOKINGS_TABLE,booking:candidate,nowEpoch:evaluatedAt});
+      counts.expired++;
+      if(env.BOOKING_LIFECYCLE_DISPATCH_ENABLED==='true'){
+       try{await dispatch({db,table:env.BOOKINGS_TABLE,bookingId:candidate.id,type:'hold_expired',
+        transport:createStagingSesTransport({env}),env});}
+       catch{console.error('STAGING_HOLD_EXPIRY_NOTIFICATION_RECONCILIATION_REQUIRED',candidate.id);}
+      }
+     }catch(error){
+      counts.pendingOrReview++;
+      console.error('STAGING_HOLD_EXPIRY_REVIEW',candidate.id,
+       String(error?.message??error?.name??'unknown').slice(0,240));
+     }
+     continue;
+    }
     const checkout=await db.send(new GetCommand({TableName:env.BOOKINGS_TABLE,Key:{PK:'BOOKING#'+candidate.id,SK:'PAYMENT#CHECKOUT'},ConsistentRead:true}));
     if(!checkout.Item)continue;
     try{
