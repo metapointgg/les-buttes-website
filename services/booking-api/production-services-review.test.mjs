@@ -72,3 +72,12 @@ test('unpublished terms drafts do not contradict the approved full-payment Stric
  assert.match(paymentTerms,/100% within 24 hours of confirmation/);
  assert.doesNotMatch(paymentTerms,/25%|56 full days|within 56 days/);
 });
+
+
+test('production owner checkout status is readable through JWT-protected read-only route',()=>{
+ const code=readFileSync(new URL('./production-admin-read-handler.mjs',import.meta.url),'utf8');
+ assert.match(code,/readRegisteredCheckout/);
+ assert.match(code,/readCheckout:\(\{bookingId\}\)=>readRegisteredCheckout/);
+ assert.match(code,/writeEnabled:\(\)=>false/);
+ assert.match(source,/GET \/admin\/production\/bookings\/\{proxy\+\}/);
+});
