@@ -41,14 +41,21 @@ async function available(units,nights){
   const now=nowEpoch();
   return found.every(slot=>!slotBlocksAvailability(slot,now));
 }
-async function verifyChallenge(token,ip){
+export function validTurnstileResult(data,origin,environment=process.env.BOOKING_ENVIRONMENT){
+  if(data?.success!==true)return false;
+  if(environment!=='production')return true;
+  const hosts={'https://lesbuttes.com':'lesbuttes.com',
+    'https://www.lesbuttes.com':'www.lesbuttes.com'};
+  return Object.hasOwn(hosts,origin??'')&&data.hostname===hosts[origin];
+}
+async function verifyChallenge(token,ip,origin){
   const secret=process.env.TURNSTILE_SECRET;
   if(!secret||!token||typeof token!=='string'||token.length>2048)return false;
   const params=new URLSearchParams({secret,response:token});
   if(ip)params.set('remoteip',ip);
   const result=await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify',{method:'POST',body:params,signal:AbortSignal.timeout(6000)});
   if(!result.ok)return false;
-  return (await result.json()).success===true;
+  return validTurnstileResult(await result.json(),origin);
 }
 async function notifyOwner(booking){
   if(process.env.BOOKING_ENVIRONMENT==='staging'){
@@ -93,7 +100,8 @@ async function createRequest(input,event){
     (process.env.BOOKING_ENVIRONMENT==='production'&&
       (guestTelephone.length<7||guestTelephone.length>40||!/^[+0-9() .-]+$/.test(guestTelephone)))||
     notes.length>1500||input.consent!==true)return response(400,{error:'Invalid guest contact details or consent'});
-  const verified=await verifyChallenge(input.turnstileToken,event.requestContext?.http?.sourceIp);
+  const verified=await verifyChallenge(input.turnstileToken,event.requestContext?.http?.sourceIp,
+    event.headers?.origin??event.headers?.Origin);
   if(!verified)return response(403,{error:'Verification failed'});
   let termsEvidence={};
   if(process.env.BOOKING_ENVIRONMENT==='production'){

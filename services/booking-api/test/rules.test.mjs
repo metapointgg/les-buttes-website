@@ -71,3 +71,17 @@ test('production published rules override missing environment rules and enforce 
   const incomplete={...published,maximumStays:[]};
   assert.equal(validBooking({unit:'geranium',start:'2027-04-03',end:'2027-04-10',guests:2},incomplete).serverError,true);
 });
+
+test('production Turnstile responses require the exact approved hostname',async()=>{
+  const {validTurnstileResult}=await import('../index.mjs');
+  const accepted={success:true,hostname:'lesbuttes.com'};
+  assert.equal(validTurnstileResult(accepted,'https://lesbuttes.com','production'),true);
+  assert.equal(validTurnstileResult({...accepted,hostname:'www.lesbuttes.com'},'https://www.lesbuttes.com','production'),true);
+  for(const [data,origin] of [
+    [{success:false,hostname:'lesbuttes.com'},'https://lesbuttes.com'],
+    [{success:true,hostname:'attacker.example'},'https://lesbuttes.com'],
+    [accepted,'https://attacker.example'],
+    [accepted,undefined],
+    [accepted,'https://www.lesbuttes.com']
+  ])assert.equal(validTurnstileResult(data,origin,'production'),false);
+});
