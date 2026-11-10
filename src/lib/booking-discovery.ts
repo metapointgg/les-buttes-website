@@ -8,7 +8,7 @@ export type CalendarDay={date:string;status:'closed'|'occupied'|'possible'|'unkn
 export type CottageCandidate={unit:CottageChoice;maxGuests:number;bedrooms:number;listedAs:'possible'|'occupied'|'not-checked'};
 export const COTTAGES:readonly CottageUnit[]=['geranium','honeysuckle'] as const;
 export type MasterAvailability={
-  mode:'LIVE_STAGING_MASTER_READ_ONLY';capturedAt:string;
+  mode:'LIVE_STAGING_MASTER_READ_ONLY'|'LIVE_PRODUCTION_MASTER_READ_ONLY';capturedAt:string;
   firstNight:string;lastNight:string;lastCheckout:string;
   blocked:Record<CottageUnit,Array<{from:string;to:string}>>
 };
@@ -20,7 +20,8 @@ export function clearMasterAvailability(){liveMaster=null;}
 export function setMasterAvailability(value:unknown){
   if(!value||typeof value!=='object')throw Error('masterUnavailable');
   const v=value as MasterAvailability;
-  if(v.mode!=='LIVE_STAGING_MASTER_READ_ONLY'||v.firstNight!==preview.firstNight||
+  if(!['LIVE_STAGING_MASTER_READ_ONLY','LIVE_PRODUCTION_MASTER_READ_ONLY'].includes(v.mode)||
+    v.firstNight!==preview.firstNight||
     v.lastNight!==preview.lastNight||v.lastCheckout!==preview.lastCheckout||
     !v.blocked||typeof v.capturedAt!=='string'||!Number.isFinite(Date.parse(v.capturedAt))||
     Math.abs(Date.now()-Date.parse(v.capturedAt))>120000)throw Error('masterUnavailable');

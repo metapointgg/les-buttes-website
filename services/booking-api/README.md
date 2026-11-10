@@ -33,7 +33,7 @@ No confirmed Airbnb or reserved off-Airbnb booking should be retrospectively rep
 - Every request **requires host approval**. No payment is requested at submission. The website displays a provisional quote based on explicitly configured nightly rates for both cottages.
 - Hold the dates for 24 hours pending review; host approval extends the hold 48 hours while awaiting full payment.
 - After reviewing the request, host creates a **SumUp payment link** for the agreed full price and sends it with booking terms. The guest has not booked until payment has been independently verified and the host marks it confirmed.
-- **Cancellation terms remain NOT APPROVED.** The original Strict-policy assumption is obsolete for current Airbnb short stays. Proposed Guernsey-reviewed terms use a **Firm-style** 24h/30-day/7-day refund schedule; see [BOOKING_TERMS_DRAFT_2027.md](BOOKING_TERMS_DRAFT_2027.md). Do not request payment, auto-refund or enforce any draft terms until final owner/legal approval, explicit guest acknowledgement and operational verification.
+- **Cancellation terms are owner-approved but not yet activated.** Version `LB-DIRECT-2027-01` uses the approved Strict-style 24-hour/seven-day schedule; see [BOOKING_TERMS_DRAFT_2027.md](BOOKING_TERMS_DRAFT_2027.md). Do not request payment or enforce the terms until the published version is recorded against the booking, the guest has explicitly accepted it and production payment/email verification is complete.
 - The master calendar exports held and confirmed nights in private no-PII .ics feeds for Airbnb to import. Airbnb calendar updates **are delayed**, so never approve an Airbnb request without checking the master calendar; when accepting Airbnb requests, enter a manual block first.
 - A previously confirmed Airbnb reservation **always wins over a new direct request** and must be imported or blocked before enabling the direct channel.
 
@@ -84,7 +84,7 @@ Cloudflare Turnstile is required on public requests (free tier, externally hoste
 
 ## Guest direct-booking terms — DRAFT ONLY
 
-A **Guernsey-aware, unapproved** guest terms draft now exists at [BOOKING_TERMS_DRAFT_2027.md](BOOKING_TERMS_DRAFT_2027.md). It covers contract formation, full SumUp payment after manual approval, the candidate Firm-style cancellation timetable, statutory protections, host cancellation, refund handling and privacy/permit/contracting-party sign-off. It is **not live**, is not a legal opinion, and must not be sent as final terms or used to take payment. Direct-booking approval/payment remains blocked operationally pending versioned guest acknowledgement and real merchant testing.
+The owner-approved release candidate at [BOOKING_TERMS_DRAFT_2027.md](BOOKING_TERMS_DRAFT_2027.md) covers contract formation, full SumUp payment after manual approval, the Strict-style cancellation timetable, statutory protections, host cancellation, refund handling and privacy. It is **not active** until version `LB-DIRECT-2027-01` is published to booking configuration and recorded with guest acknowledgement. It is not a legal opinion. Direct-booking approval/payment remains operationally blocked pending that versioned acknowledgement and real merchant testing.
 
 ## Owner-only split-savings direct quote workflow (draft)
 

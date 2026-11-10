@@ -1,20 +1,19 @@
-# Les Buttes Holiday Cottages — proposed direct-booking terms (2027)
+# Les Buttes Holiday Cottages — direct-booking terms (2027)
 
-> **DRAFT FOR OWNER AND GUERNSEY LEGAL REVIEW — NOT APPROVED, NOT PUBLISHED, NOT FOR GUEST SIGNATURE OR PAYMENT.**
-> **Version:** draft-2026-10-24-01. This file is not a contract and must not be sent as approved terms. Airbnb booking policies do not govern direct bookings.
+> **Owner-approved release candidate — not active until the production booking service records this exact version against the booking.**
+> **Version:** `LB-DIRECT-2027-01`, approved 10 November 2026. Airbnb booking policies do not govern direct bookings.
 
-## Decisions and blanks requiring approval
+## Approved booking particulars
 
-- **Contracting party:** [FULL LEGAL ENTITY / INDIVIDUAL NAME], legal/business address [ADDRESS], booking enquiries [VERIFIED EMAIL].
+- **Contracting party:** Les Buttes Holiday Cottage, Rue des Raies, St Pierre du Bois, Guernsey GY7 9SF. Booking and privacy enquiries: info@lesbuttes.com.
 - **Accommodation:** Geranium or Honeysuckle at Les Buttes Holiday Cottages, Guernsey, or both as specified in the written booking confirmation.
-- **Arrival/departure times:** check-in [TIME], checkout [TIME], Guernsey local time. These values must be verified and used consistently in all cancellation calculations. Dates without agreed times are insufficient to automate refund deadlines.
-- **Guest contact and emergency/assistance contact:** [CONTACT DETAILS] and [LOCAL EMERGENCY CONTACT].
-- **What is included in the price:** [CLEANING, LINEN, UTILITIES, WIFI ETC. — CONFIRM]; identify any compulsory extra charges before offering a payable amount. No hidden fees.
-- **Pets/smoking/parties/quiet hours/damage/security arrangements:** [OWNER TO APPROVE] — do not silently copy unverified Airbnb house rules.
+- **Arrival/departure times:** check-in from 16:00 and checkout by 10:00, Europe/Guernsey local time. These times are used consistently in cancellation calculations.
+- **Guest contact:** info@lesbuttes.com. Arrival and local assistance details are supplied with the booking confirmation.
+- **Included services and house rules:** any property-specific inclusions, restrictions or rules forming part of a booking must be supplied before payment. Nothing not disclosed before payment becomes a compulsory charge or material restriction.
 - **Maximum overnight occupancy:** Geranium 4; Honeysuckle 6; both cottages together 10, subject to the relevant visitor accommodation permits.
-- **Cancellation policy:** approved Strict-style direct-booking business rules in Section 6, with the guest-facing wording still subject to final owner and legal approval.
-- **Governing law / complaints / regulatory disclosures / permit numbers:** [LOCAL LEGAL REVIEW REQUIRED].
-- **Privacy notice:** identify data controller, privacy-policy URL, lawful purposes, AWS/SumUp/email-service processors, retention period, sharing, cross-border disclosures and individual rights. Do not make unsupported privacy promises.
+- **Cancellation policy:** approved Strict-style direct-booking business rules in Section 6.
+- **Governing law:** Bailiwick of Guernsey law, with disputes subject to the jurisdiction of the Guernsey courts, without restricting any mandatory consumer rights.
+- **Privacy notice:** the current notice at https://lesbuttes.com/privacy/ identifies the controller, purposes, service providers and guest rights under the Data Protection (Bailiwick of Guernsey) Law, 2017.
 
 ## 1. Booking request, acceptance and confirmation
 
@@ -22,7 +21,7 @@ A direct-booking enquiry is **a request, not an accepted reservation**. The owne
 
 If a request is approved, Les Buttes will provide the exact cottage(s), arrival/departure dates, guest count, **complete agreed GBP price**, cancellation terms and a secure SumUp payment link, with a clear time limit for paying. No payment should be requested until the guest has been able to read and expressly accept the **final approved** terms.
 
-The standard intended payment is the **full agreed amount**, paid using the owner-issued secure link. A prospective booking becomes confirmed only after the owner independently verifies receipt and amount of payment and issues written confirmation. Until then it is **RESERVED / awaiting completion**, not paid/confirmed. No auto-debit, deposits, instalments or extra payment charges are implied.
+The standard payment is the **full agreed amount**, paid using the owner-issued secure link. A prospective booking becomes confirmed only after the owner independently verifies receipt and amount of payment and issues written confirmation. Until then it is **RESERVED / awaiting completion**, not paid/confirmed. No auto-debit, deposits, instalments or extra payment charges are implied.
 
 ## 2. Guest names, occupancy and use
 
@@ -36,8 +35,6 @@ The owner-agreed written total is the accommodation price payable. It may be low
 
 The guest must see a single unambiguous total, the component prices for each cottage when both are booked, any compulsory extras, and any applicable taxes, **before** paying. The host must not subsequently increase the price without the guest's express agreement. SumUp processes card payments; Les Buttes must independently check the successful payment in the merchant account before confirming.
 
-For the existing 28 August–4 September 2027 two-cottage reservation, the agreed accommodation prices are **Geranium £1,450, Honeysuckle £1,650, total £3,100**, but as of 24 October 2026 the AWS record shows **paymentVerified=false, bookingConfirmed=false**. This remains a protected reservation, not a paid booking, until verified.
-
 ## 4. Check-in, care and problems during the stay
 
 Arrival and departure instructions, parking, keys and a local point of contact will be provided before travel. Guests should promptly report any safety hazard, defect, damage or material difference from the advertised property so that Les Buttes can investigate and remedy the situation.
@@ -48,9 +45,9 @@ These terms do **not** exclude or limit rights or remedies that cannot lawfully 
 
 Changes to cottages, dates, guest count or other material terms require written agreement. Availability and price will be rechecked before any amended arrangement is accepted. An enquiry to change a booking does not itself cancel or modify the existing booking.
 
-## 6. Guest cancellation and refunds — APPROVED BUSINESS RULES, TERMS NOT YET PUBLISHED
+## 6. Guest cancellation and refunds
 
-**The exact times must be confirmed before this clause can be used or coded.** Cancellation deadlines are measured backwards from the agreed local check-in time on the arrival date, using **Europe/Guernsey** time. The cancellation notice must be sent to the verified booking contact channel in writing; the date/time received will be acknowledged by Les Buttes.
+Cancellation deadlines are measured backwards from **16:00 Europe/Guernsey time** on the arrival date. The cancellation notice must be sent to info@lesbuttes.com in writing; the date and time received will be acknowledged by Les Buttes.
 
 Subject to consumer law and other specific written agreements:
 
@@ -60,7 +57,7 @@ Subject to consumer law and other specific written agreements:
 4. The initial 24-hour rule takes priority when applicable. A guest's refund is never more than actually paid. No booking, administration, service or cancellation fee is charged or withheld, and no non-refundable discounted option is offered.
 5. Les Buttes may choose to offer additional goodwill refunds in writing, without changing the underlying policy for other guests.
 
-These are the approved direct-booking business rules for stays of up to 27 nights, aligned to Airbnb's current **Strict** short-stay policy without Airbnb platform fees. Airbnb's contract is not incorporated into the direct-booking contract. The complete customer terms and exact arrival/departure times still require approval before publication.
+These are the approved direct-booking business rules for stays of up to 27 nights, aligned to Airbnb's current **Strict** short-stay policy without Airbnb platform fees. Airbnb's contract is not incorporated into the direct-booking contract.
 
 **Legislation note:** Section 85(1)(i) of the **Trading Standards (Fair Trading) (Guernsey) Ordinance, 2023** as published in the States' 2023 legislative materials excludes accommodation supplied for specified dates from the general distance-contract cancellation chapter. Confirm this provision in the **currently enacted/consolidated text** and review all other consumer protections and unfair-term restrictions with Guernsey-qualified advisers before issuing an enforceable policy. A specific-date accommodation exception is **not** a general waiver of consumer rights or compensation for host breach.
 
@@ -78,26 +75,25 @@ Refunds should normally return through the original payment method using verifie
 
 ## 9. Privacy and use of booking information
 
-Les Buttes will use guest enquiry and reservation details to respond to enquiries, assess availability, administer and fulfil bookings, process payments through SumUp and comply with legal obligations. The final privacy notice must identify the responsible data controller, data categories, legal grounds, processors (including AWS infrastructure and any email services), retention and overseas transfers as applicable, data-subject rights and the verified contact for enquiries.
+Les Buttes will use guest enquiry and reservation details to respond to enquiries, assess availability, administer and fulfil bookings, process payments through SumUp and comply with legal obligations. The privacy notice identifies the responsible data controller, data categories, purposes, processors, retention approach, overseas processing, data-subject rights and the verified contact for enquiries.
 
 The **Data Protection (Bailiwick of Guernsey) Law, 2017** applies. Do not collect payment-card details by email, store them in the master booking record, or include private Airbnb iCalendar tokens in any guest material.
 
 ## 10. Confirmation and policy-version evidence
 
-Once owner/legal review has approved the final terms, every guest should receive the same version **before being asked to pay**, with an explicit method to accept it. The owner should record **terms version, date/time presented, acknowledgement timestamp/method, booking reference, agreed sum and applicable cancellation cutoff dates**.
+Every guest must receive the same numbered version **before being asked to pay**, with an explicit method to accept it. The owner must record **terms version, date/time presented, acknowledgement timestamp/method, booking reference, agreed sum and applicable cancellation cutoff dates**.
 
 Send a durable copy of the accepted terms with the payment request and retain a copy of the guest confirmation. Never send a SumUp payment link from an unapproved terms draft.
 
-## Owner approval checklist (hard blockers)
+## Release controls
 
-- [ ] Confirm contracting party, verified postal/email contacts and correct holder of Guernsey accommodation permits.
-- [ ] Confirm check-in/check-out local times, and guests' notice/cancellation contact address.
-- [ ] Have the direct cancellation, refund, unfair-term, host liability and statutory-rights clauses checked against Guernsey law (including the specific-date accommodation exemption).
-- [ ] Decide on refunds within seven days, during a stay, travel disruption, compassionate cancellations and reletting after cancellation.
-- [ ] Confirm whether compulsory fees/taxes exist and how they are itemised/refunded.
-- [ ] Confirm house rules, access, parking, safety, damage/complaints and any deposits (currently none configured).
-- [ ] Update booking/privacy notices, retention, controller/processor disclosures and any required consent evidence; translate approved text consistently to NL/FR.
-- [ ] Approve a numbered version of terms. Do not turn on payment or guest booking acceptance until approval, technical terms-acceptance evidence and real SumUp/SES testing are complete.
+- [x] Contracting party, postal/email contact and check-in/check-out times approved by the owner.
+- [x] Strict-style short-stay cancellation percentages and deadlines approved by the owner.
+- [x] No booking, administration, service or cancellation fees and no non-refundable discounted option.
+- [ ] Publish this numbered version in the booking configuration and website.
+- [ ] Record the exact version, presentation time and guest acceptance before payment.
+- [ ] Complete production Turnstile, live SumUp and SES verification before enabling requests.
+- [ ] Obtain Guernsey-qualified legal review if the owner requires independent legal assurance; this source file is not a legal opinion.
 
 ## References reviewed 24 October 2026
 
