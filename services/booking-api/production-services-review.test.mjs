@@ -90,3 +90,16 @@ test('production checkout status does not inherit the staging-only reader gate',
  assert.match(source,/readCheckout:\(\{bookingId\}\)=>readRegisteredCheckout/);
  assert.match(source,/writeEnabled:\(\)=>false/);
 });
+
+
+test('production reconciliation uses existing transaction Lambda with an independently disabled schedule',()=>{
+ const transaction=readFileSync(new URL('./production-admin-transaction-handler.mjs',import.meta.url),'utf8');
+ assert.match(source,/AutomaticPaymentReconciliationEnabled:[\s\S]{0,120}Default: 'false'/);
+ assert.match(source,/PaymentScheduleActivated: !And/);
+ assert.match(source,/State: !If \[PaymentScheduleActivated, ENABLED, DISABLED\]/);
+ assert.match(source,/Name: les-buttes-production-payment-reconciliation/);
+ assert.match(source,/SourceArn: !GetAtt ProductionPaymentReconciliationSchedule\.Arn/);
+ assert.match(source,/BOOKING_AUTOMATIC_RECONCILIATION_ENABLED: !Ref AutomaticPaymentReconciliationEnabled/);
+ assert.match(transaction,/reconcileScheduledProductionPayments\(event\)/);
+ assert.match(transaction,/if\(event\?\.source==='aws\.events'/);
+});

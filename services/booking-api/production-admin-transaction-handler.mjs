@@ -9,6 +9,7 @@ import {productionReconciliationEnabled,reconcileOwnerLivePayment} from './produ
 import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
 import {dispatchProductionBookingLifecycleEmail} from './booking-production-email-dispatch.mjs';
 import {productionEmailGate} from './production-integration-gates.mjs';
+import {reconcileScheduledProductionPayments} from './production-payment-schedule.mjs';
 
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
 const reply=(statusCode,error)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({error})});
@@ -18,6 +19,8 @@ const writesEnabled=()=>deploymentAllowed()&&process.env.MANAGEMENT_WRITES_ENABL
 
 export async function handler(event){
  if(!deploymentAllowed())return reply(503,'Production booking management unavailable');
+ if(event?.source==='aws.events'||event?.['detail-type']==='Scheduled Event')
+  return reconcileScheduledProductionPayments(event);
  const path=event?.rawPath??'';
  if(!path.startsWith('/admin/production/'))return reply(404,'Not found');
  if(!event?.requestContext?.authorizer?.jwt?.claims)return reply(403,'Forbidden');

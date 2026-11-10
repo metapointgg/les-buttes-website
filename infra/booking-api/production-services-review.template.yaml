@@ -56,6 +56,10 @@ Parameters:
     Type: String
     AllowedValues: ['false', 'true']
     Default: 'false'
+  AutomaticPaymentReconciliationEnabled:
+    Type: String
+    AllowedValues: ['false', 'true']
+    Default: 'false'
   PaymentsEnabled:
     Type: String
     AllowedValues: ['false', 'true']
@@ -76,6 +80,15 @@ Conditions:
   CorrectAccountAndRegion: !And
     - !Equals [!Ref AWS::AccountId, '145608514666']
     - !Equals [!Ref AWS::Region, eu-west-2]
+  PaymentScheduleActivated: !And
+    - !Equals [!Ref AutomaticPaymentReconciliationEnabled, 'true']
+    - !Equals [!Ref LiveBookingsApproved, 'true']
+    - !Equals [!Ref ManagementWritesEnabled, 'true']
+    - !Equals [!Ref ManagementPaymentReconciliationEnabled, 'true']
+    - !Equals [!Ref PaymentsEnabled, 'true']
+    - !Equals [!Ref LivePaymentsApproved, 'true']
+    - !Equals [!Ref EmailsEnabled, 'true']
+    - !Equals [!Ref LiveEmailsApproved, 'true']
 Resources:
   ProductionApi:
     Condition: CorrectAccountAndRegion
@@ -656,6 +669,7 @@ Resources:
           MANAGEMENT_APPROVAL_ENABLED: !Ref ManagementApprovalEnabled
           MANAGEMENT_CHECKOUT_ENABLED: !Ref ManagementCheckoutEnabled
           MANAGEMENT_PAYMENT_RECONCILIATION_ENABLED: !Ref ManagementPaymentReconciliationEnabled
+          BOOKING_AUTOMATIC_RECONCILIATION_ENABLED: !Ref AutomaticPaymentReconciliationEnabled
           LIVE_BOOKINGS_APPROVED: !Ref LiveBookingsApproved
           PAYMENTS_ENABLED: !Ref PaymentsEnabled
           LIVE_PAYMENTS_APPROVED: !Ref LivePaymentsApproved
@@ -667,6 +681,26 @@ Resources:
           BOOKING_OWNER_EMAIL: mike@lesbuttes.com
           BOOKING_SES_SIMULATOR_ENABLED: 'false'
           REFUNDS_ENABLED: 'false'
+  ProductionPaymentReconciliationSchedule:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Events::Rule
+    Properties:
+      Name: les-buttes-production-payment-reconciliation
+      ScheduleExpression: rate(2 minutes)
+      State: !If [PaymentScheduleActivated, ENABLED, DISABLED]
+      Targets:
+        - Id: ProductionPaymentReconciliation
+          Arn: !GetAtt ProductionAdminTransactionFunction.Arn
+  ProductionPaymentReconciliationPermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProductionAdminTransactionFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ProductionPaymentReconciliationSchedule.Arn
+      SourceAccount: !Ref AWS::AccountId
+
   ProductionAdminTransactionIntegration:
     Condition: CorrectAccountAndRegion
     Type: AWS::ApiGatewayV2::Integration
