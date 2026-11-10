@@ -32,6 +32,16 @@ test('unavailable, stale, or malformed master is fail-closed; no 2026 fallback',
   assert.equal(masterConnected(),true);
 });
 
+test('accepts the production date-only master contract without weakening validation',()=>{
+ clearMasterAvailability();
+ setMasterAvailability({mode:'LIVE_PRODUCTION_MASTER_READ_ONLY',capturedAt:new Date().toISOString(),
+  firstNight:fixture.firstNight,lastNight:fixture.lastNight,lastCheckout:'2027-10-02',blocked:fixture.blocked});
+ assert.equal(masterConnected(),true);
+ assert.throws(()=>setMasterAvailability({mode:'UNKNOWN',capturedAt:new Date().toISOString(),
+  firstNight:fixture.firstNight,lastNight:fixture.lastNight,lastCheckout:'2027-10-02',blocked:fixture.blocked}),/masterUnavailable/);
+ injectMaster();
+});
+
 
 test('groups and bedroom requirements return suitable cottages or both only',()=>{
   assert.deepEqual(matchingCottages(filter()),['geranium','honeysuckle']);
