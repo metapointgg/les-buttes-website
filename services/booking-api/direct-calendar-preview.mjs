@@ -1,10 +1,13 @@
-// Owner-only review output. This module does not publish or connect a calendar.
+// Public-safe, token-protected iCalendar generation from the booking master.
+// Subscribing an external channel to the feed remains an explicit owner action.
 import {createHash} from 'node:crypto';
 import {QueryCommand,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {FIRST_NIGHT,LAST_NIGHT,nextDay} from './master-occupied.mjs';
 import {slotBlocksAvailability} from './occupancy.mjs';
 export async function directCalendarPreview({db,table,unit,now=Math.floor(Date.now()/1000)}){
- if(!['geranium','honeysuckle'].includes(unit)||!/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/.test(table??''))throw Error('Staging calendar preview only');
+ if(!['geranium','honeysuckle'].includes(unit)||
+    !/^les-buttes-booking-(?:staging|production-data)-BookingTable-[A-Za-z0-9]+$/.test(table??''))
+   throw Error('Unsupported booking master');
  const rows=[];let cursor;
  do{const page=await db.send(new QueryCommand({TableName:table,ConsistentRead:true,
   KeyConditionExpression:'PK = :pk AND SK BETWEEN :start AND :end',
@@ -39,5 +42,6 @@ export async function directCalendarPreview({db,table,unit,now=Math.floor(Date.n
   'DTEND;VALUE=DATE:'+nextDay(span.end).replaceAll('-',''),'SUMMARY:Unavailable',
   'DESCRIPTION:Unavailable','TRANSP:OPAQUE','STATUS:CONFIRMED','END:VEVENT');
  lines.push('END:VCALENDAR');
- return {unit,mode:'OWNER_REVIEW_ONLY',externalPublishingEnabled:false,reservedNights:unique.length,calendar:lines.join('\r\n')+'\r\n'};
+ return {unit,mode:'READ_ONLY_ICAL_FEED',feedReady:true,externalSubscriptionActivated:false,
+  reservedNights:unique.length,calendar:lines.join('\r\n')+'\r\n'};
 }
