@@ -35,8 +35,10 @@ export function validateCheckoutResponse(checkout,request){
    amountPence:Math.round(request.amount*100),currency:'GBP',status:checkout.status,
    hostedCheckoutUrl:url.toString()};
 }
-export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetch,enabled=false}={}){
+export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetch,enabled=false,
+ providerEnvironment='sandbox'}={}){
  if(!enabled)throw Error('SumUp integration disabled');
+ if(!['sandbox','live'].includes(providerEnvironment))throw Error('Invalid SumUp provider environment');
  if(typeof apiKey!=='string'||!apiKey.startsWith('sup_sk_'))
    throw Error('Secret API key required');
  if(typeof fetchImpl!=='function')throw Error('Fetch client missing');
@@ -106,11 +108,12 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
   },
 
   async createCheckout(input){
-   // A generic secret key is NOT evidence of sandbox identity. Check the
-   // authoritative merchant immediately before any payment-capable POST.
+   // A generic secret key is not evidence of provider environment. Check the
+   // authoritative merchant immediately before every payment-capable POST.
    const merchant=await call('/v1/merchants/'+encodeURIComponent(merchantCode));
-   if(merchant?.merchant_code!==merchantCode||merchant?.sandbox!==true)
-    throw Error('Sandbox merchant verification required');
+   const expectedSandbox=providerEnvironment==='sandbox';
+   if(merchant?.merchant_code!==merchantCode||merchant?.sandbox!==expectedSandbox)
+    throw Error((expectedSandbox?'Sandbox':'Live')+' merchant verification required');
    const request=buildCheckoutRequest({...input,merchantCode});
    const response=await call(CHECKOUT,{method:'POST',body:JSON.stringify(request)});
    return validateCheckoutResponse(response,request);

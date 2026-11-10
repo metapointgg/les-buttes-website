@@ -49,6 +49,26 @@ test('LB-08 checkout never posts if authenticated merchant is not a sandbox',asy
  }
 });
 
+test('production checkout requires an explicit live mode and authoritative non-sandbox merchant',async()=>{
+ const calls=[];
+ const client=createSumUpClient({enabled:true,providerEnvironment:'live',
+  apiKey:'sup_sk_mock',merchantCode:input.merchantCode,
+  fetchImpl:async(url,options)=>{calls.push({url,options});
+   if(url.endsWith('/v1/merchants/MTEST123'))return {ok:true,json:async()=>({merchant_code:'MTEST123',sandbox:false})};
+   return {ok:true,json:async()=>({id:'checkout-live-12345678',checkout_reference:input.reference,
+    merchant_code:input.merchantCode,currency:'GBP',amount:1630.45,status:'PENDING',
+    hosted_checkout_url:'https://checkout.sumup.com/pay/checkout-live-12345678'})};
+  }});
+ assert.equal((await client.createCheckout(input)).amountPence,163045);
+ assert.equal(calls.length,2);
+ const wrong=createSumUpClient({enabled:true,providerEnvironment:'live',
+  apiKey:'sup_sk_mock',merchantCode:input.merchantCode,
+  fetchImpl:async()=>({ok:true,json:async()=>({merchant_code:'MTEST123',sandbox:true})})});
+ await assert.rejects(wrong.createCheckout(input),/Live merchant verification required/);
+ assert.throws(()=>createSumUpClient({enabled:true,providerEnvironment:'production',
+  apiKey:'sup_sk_mock',merchantCode:input.merchantCode}),/provider environment/);
+});
+
 test('LB-08 reference lookup hydrates each result with authoritative checkout GET',async()=>{
  const calls=[],reference='lb-1234567890abcdef';
  const checkout={id:'eb6a0f73-c344-42b4-95ec-70aa296d1496',
