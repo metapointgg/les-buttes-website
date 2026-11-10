@@ -14,11 +14,15 @@ test('schedule processes only unexpired synthetic approved checkouts and isolate
  let calls=0;
  const records=[{...base,id:'pending'},{...base,id:'paid'},{...base,id:'expired',holdExpiresAt:50},{...base,id:'real',synthetic:false},{...base,id:'confirmed',status:'CONFIRMED'}];
  const db={send:async c=>c.input.IndexName?{Items:records.map(({id,status})=>({id,status}))}:c.input.Key.SK==='META'?{Item:records.find(r=>'BOOKING#'+r.id===c.input.Key.PK)}:{Item:{}}};
- let expirations=0;
- const result=await reconcileScheduledPayments(event,{env,db,now:()=>100,
- expire:async({booking,nowEpoch})=>{expirations++;assert.equal(booking.id,'expired');assert.equal(nowEpoch,100);return {status:'EXPIRED'};},
- reconcile:async({bookingId,identity})=>{
-  calls++;assert.equal(identity.subject,'system:staging-sandbox-payment-reconciliation');if(bookingId==='pending')throw Error('Payment pending');return {status:'CONFIRMED'};
- }});
- assert.deepEqual(result,{confirmed:1,pendingOrReview:1,expired:1});assert.equal(calls,2);assert.equal(expirations,1);
+ let expirations=0,errors=0;const originalError=console.error;console.error=()=>errors++;
+ try{
+  const result=await reconcileScheduledPayments(event,{env,db,now:()=>100,
+   expire:async({booking,nowEpoch})=>{expirations++;assert.equal(booking.id,'expired');assert.equal(nowEpoch,100);return {status:'EXPIRED'};},
+   reconcile:async({bookingId,identity})=>{
+    calls++;assert.equal(identity.subject,'system:staging-sandbox-payment-reconciliation');
+    if(bookingId==='pending')throw Error('Payment not verified: Provider has not confirmed payment');return {status:'CONFIRMED'};
+   }});
+  assert.deepEqual(result,{confirmed:1,pending:1,review:0,pendingOrReview:1,expired:1});
+ }finally{console.error=originalError;}
+ assert.equal(errors,0);assert.equal(calls,2);assert.equal(expirations,1);
 });

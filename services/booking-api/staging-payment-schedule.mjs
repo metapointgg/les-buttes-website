@@ -19,7 +19,7 @@ export async function reconcileScheduledPayments(event,{env=process.env,db,
  if(!authorisedPaymentSchedule(event,env))throw Error('Scheduled reconciliation disabled');
  const own=!db;
  db??=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}));
- const counts={confirmed:0,pendingOrReview:0,expired:0};
+ const counts={confirmed:0,pending:0,review:0,pendingOrReview:0,expired:0};
  try{
   let cursor;
   do{
@@ -32,7 +32,7 @@ export async function reconcileScheduledPayments(event,{env=process.env,db,
     if(!candidate)continue;
     if(candidate.status!=='APPROVED_AWAITING_PAYMENT'||candidate.synthetic!==true||candidate.guestEmail!=='test@example.invalid')continue;
     const evaluatedAt=now();
-    if(!Number.isSafeInteger(candidate.holdExpiresAt)){counts.pendingOrReview++;continue;}
+    if(!Number.isSafeInteger(candidate.holdExpiresAt)){counts.pendingOrReview++;counts.review++;continue;}
     if(candidate.holdExpiresAt<=evaluatedAt){
      try{
       await expire({db,table:env.BOOKINGS_TABLE,booking:candidate,nowEpoch:evaluatedAt});
@@ -43,7 +43,7 @@ export async function reconcileScheduledPayments(event,{env=process.env,db,
        catch{console.error('STAGING_HOLD_EXPIRY_NOTIFICATION_RECONCILIATION_REQUIRED',candidate.id);}
       }
      }catch(error){
-      counts.pendingOrReview++;
+      counts.pendingOrReview++;counts.review++;
       console.error('STAGING_HOLD_EXPIRY_REVIEW',candidate.id,
        String(error?.message??error?.name??'unknown').slice(0,240));
      }
@@ -56,9 +56,13 @@ export async function reconcileScheduledPayments(event,{env=process.env,db,
       identity:{role:'owner',subject:'system:staging-sandbox-payment-reconciliation'},transport:createStagingSesTransport({env})});
      counts.confirmed++;
     }catch(error){
-     counts.pendingOrReview++;
-     console.error('STAGING_PAYMENT_RECONCILIATION_REVIEW',candidate.id,
-      String(error?.message??error?.name??'unknown').slice(0,240));
+      const reason=String(error?.message??error?.name??'unknown').slice(0,240);
+      counts.pendingOrReview++;
+      if(reason==='Payment not verified: Provider has not confirmed payment')counts.pending++;
+      else{
+       counts.review++;
+       console.error('STAGING_PAYMENT_RECONCILIATION_REVIEW',candidate.id,reason);
+      }
     }
    }
    cursor=page.LastEvaluatedKey;
