@@ -20,6 +20,8 @@ const provider={id:checkout.checkoutId,checkout_reference:checkout.reference,
  merchant_code:'ABCDEF12',amount:1630,currency:'GBP',status:'PAID',
  transactions:[{id:'transaction-12345',status:'SUCCESSFUL',amount:1630,currency:'GBP',merchant_code:'ABCDEF12'}]};
 const policy={PK:'CONFIG#cancellation#all',SK:'CURRENT',version:'2026-11-09T22:00:00.000Z#approved',value:APPROVED_STRICT_SHORT_STAY_POLICY};
+const arrival={PK:'CONFIG#arrival-departure#all',SK:'CURRENT',version:'2026-11-10T00:00:00.000Z#approved',
+ value:{timezone:'Europe/Guernsey',checkInLocalTime:'12:00',checkOutLocalTime:'10:00'}};
 function harness(providerResponse=provider){
  const claims=new Set();let writes=0,providerReads=0;
  const db={send:async command=>{
@@ -31,6 +33,7 @@ function harness(providerResponse=provider){
   if(command instanceof GetCommand){
    assert.equal(command.input.ConsistentRead,true);
    if(command.input.Key.PK==='CONFIG#cancellation#all')return {Item:policy};
+   if(command.input.Key.PK==='CONFIG#arrival-departure#all')return {Item:arrival};
    return {Item:command.input.Key.SK==='META'?booking:checkout};
   }
   if(command instanceof TransactWriteCommand){writes++;return {};}

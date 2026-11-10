@@ -26,6 +26,10 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
   version:'ISOLATED_ACCEPTANCE_POLICY_V1',value:APPROVED_STRICT_SHORT_STAY_POLICY}:
   (await db.send(new GetCommand({TableName:table,
    Key:{PK:'CONFIG#cancellation#all',SK:'CURRENT'},ConsistentRead:true}))).Item;
+ const arrivalDepartureRecord=isolatedTable?{PK:'CONFIG#arrival-departure#all',SK:'CURRENT',
+  version:'ISOLATED_ACCEPTANCE_ARRIVAL_V1',value:{timezone:'Europe/Guernsey',checkInLocalTime:'12:00',checkOutLocalTime:'10:00',testOnly:true}}:
+  (await db.send(new GetCommand({TableName:table,
+   Key:{PK:'CONFIG#arrival-departure#all',SK:'CURRENT'},ConsistentRead:true}))).Item;
  if(!booking||!registered)throw Error('Authoritative booking or checkout missing');
  if(registered.bookingId!==bookingId||registered.currency!=='GBP'||
    registered.status!=='PENDING')throw Error('Registered checkout not eligible');
@@ -49,7 +53,7 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
    affectedNights:booking.units.length*(Date.parse(booking.end)-Date.parse(booking.start))/86400000};
  }
  const calendarChecks=process.env.BOOKING_AIRBNB_REQUIRED==='true'?await requireAirbnbAvailability({db,table,units:booking.units,start:booking.start,end:booking.end,now:nowEpoch}):[];
- const prepared=preparePaymentConfirmation({booking,registered,evidence,cancellationPolicyRecord,
+ const prepared=preparePaymentConfirmation({booking,registered,evidence,cancellationPolicyRecord,arrivalDepartureRecord,
   policyConditionRequired:!isolatedTable,nowEpoch});
  const items=prepared.items.map(item=>{
   const kind=Object.keys(item)[0];

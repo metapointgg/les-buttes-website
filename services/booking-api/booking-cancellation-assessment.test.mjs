@@ -6,6 +6,7 @@ const version='2026-11-09T22:00:00.000Z#approved';
 const policyRecord={PK:'CONFIG#cancellation#all',SK:'VERSION#'+version,version,value:APPROVED_STRICT_SHORT_STAY_POLICY};
 const booking={source:'direct',status:'CONFIRMED',reservationStatus:'CONFIRMED',
  cancellationPolicyVersion:version,cancellationPolicyId:APPROVED_STRICT_SHORT_STAY_POLICY.policyId,
+ arrivalDepartureVersion:'arrival-v1',confirmedAt:'2027-03-01T12:00:00Z',
  paidAt:'2027-03-01T12:00:00Z',paidAmountPence:73500,paymentTransactionId:'transaction-12345',
  checkInAt:'2027-04-03T14:00:00+01:00',start:'2027-04-03',end:'2027-04-10'};
 test('assessment uses immutable booking policy and exact paid amount',()=>{

@@ -24,6 +24,8 @@ const provider={id:checkoutId,checkout_reference:reference,merchant_code:merchan
  id:txId,status:'SUCCESSFUL',amount:1,currency:'GBP',merchant_code:merchantCode}]};
 const table='les-buttes-booking-staging-BookingTable-LB08FIXTURE';
 const policy={PK:'CONFIG#cancellation#all',SK:'CURRENT',version:'2026-11-09T22:00:00.000Z#approved',value:APPROVED_STRICT_SHORT_STAY_POLICY};
+const arrival={PK:'CONFIG#arrival-departure#all',SK:'CURRENT',version:'2026-11-10T00:00:00.000Z#approved',
+ value:{timezone:'Europe/Guernsey',checkInLocalTime:'12:00',checkOutLocalTime:'10:00'}};
 function adapter(){
  const commands=[];let state='AWAITING_PAYMENT';let auditWrites=0;
  return {commands,get auditWrites(){return auditWrites;},
@@ -34,6 +36,7 @@ function adapter(){
    assert.equal(command.input.ConsistentRead,true);
    const {PK,SK}=command.input.Key;
    if(PK==='CONFIG#cancellation#all')return {Item:policy};
+   if(PK==='CONFIG#arrival-departure#all')return {Item:arrival};
    if(PK==='BOOKING#'+id&&SK==='META')
     return {Item:state==='CONFIRMED'?{...booking,status:'CONFIRMED',
       reservationStatus:'CONFIRMED',paymentTransactionId:txId,
@@ -45,22 +48,23 @@ function adapter(){
   }
   assert.ok(command instanceof TransactWriteCommand);
   const operations=command.input.TransactItems;
-  assert.equal(operations.length,12);
+  assert.equal(operations.length,13);
   assert.ok(operations.every(op=>Object.values(op)[0].TableName===table));
   assert.deepEqual(operations[0].Update.Key,{PK:'BOOKING#'+id,SK:'META'});
   assert.deepEqual(operations[1].ConditionCheck.Key,{PK:'BOOKING#'+id,SK:'PAYMENT#CHECKOUT'});
   assert.equal(operations[2].ConditionCheck.Key.PK,'CONFIG#cancellation#all');
-  assert.deepEqual(operations.slice(3,10).map(op=>op.Update.Key),
+  assert.equal(operations[3].ConditionCheck.Key.PK,'CONFIG#arrival-departure#all');
+  assert.deepEqual(operations.slice(4,11).map(op=>op.Update.Key),
    Array.from({length:7},(_,i)=>({PK:'UNIT#geranium',
      SK:'DATE#2027-08-'+String(28+i).padStart(2,'0')}))
      .map((key,i)=>i<4?key:{PK:key.PK,SK:'DATE#2027-09-0'+(i-3)}));
-  for(const slot of operations.slice(3,10)){
+  for(const slot of operations.slice(4,11)){
    assert.match(slot.Update.ConditionExpression,/id = :id AND expiresAt = :expiry/);
    assert.equal(slot.Update.ExpressionAttributeValues[':id'],id);
   }
-  assert.equal(operations[10].Put.Item.PK,'PAYMENT_TRANSACTION#'+txId);
-  assert.equal(operations[10].Put.Item.amountPence,100);
-  assert.equal(operations[11].Put.Item.action,'payment_confirmed');
+  assert.equal(operations[11].Put.Item.PK,'PAYMENT_TRANSACTION#'+txId);
+  assert.equal(operations[11].Put.Item.amountPence,100);
+  assert.equal(operations[12].Put.Item.action,'payment_confirmed');
   if(state==='CONFIRMED')
    throw Object.assign(new Error('Transaction cancelled'),{name:'TransactionCanceledException'});
   state='CONFIRMED';auditWrites++;return {};

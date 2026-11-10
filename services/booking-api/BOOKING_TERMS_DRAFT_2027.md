@@ -48,20 +48,19 @@ These terms do **not** exclude or limit rights or remedies that cannot lawfully 
 
 Changes to cottages, dates, guest count or other material terms require written agreement. Availability and price will be rechecked before any amended arrangement is accepted. An enquiry to change a booking does not itself cancel or modify the existing booking.
 
-## 6. Guest cancellation and refunds — PROPOSED FIRMLIKE POLICY (NOT APPROVED)
+## 6. Guest cancellation and refunds — APPROVED BUSINESS RULES, TERMS NOT YET PUBLISHED
 
 **The exact times must be confirmed before this clause can be used or coded.** Cancellation deadlines are measured backwards from the agreed local check-in time on the arrival date, using **Europe/Guernsey** time. The cancellation notice must be sent to the verified booking contact channel in writing; the date/time received will be acknowledged by Les Buttes.
 
 Subject to consumer law and other specific written agreements:
 
 1. **24-hour initial cancellation period:** if the booking has been confirmed **at least seven full days** before check-in, the guest can cancel within **24 hours of receiving written booking confirmation** for a **100% refund of the agreed booking amount**.
-2. **30-day refund period:** otherwise, cancellation **at least 30 full days before check-in** yields a **100% refund**.
-3. **7–30 days before check-in:** cancellation **at least seven full days but fewer than 30 full days** before check-in yields a **50% refund**.
-4. **Under seven days / after check-in:** no ordinary discretionary cancellation refund is offered, subject to statutory rights, host fault, agreed exceptional circumstances or a separate written concession.
-5. The initial 24-hour rule takes priority when applicable. A guest's refund is never more than actually paid. All percentages apply to the **agreed full guest price**, with any separately itemised compulsory fees/taxes handled explicitly and lawfully; **no invented non-refundable card fee** will be withheld.
-6. Les Buttes may choose to offer additional goodwill refunds in writing, without changing the underlying policy for other guests.
+2. **After the initial period:** cancellation **at least seven full days before check-in** yields a **50% refund** of the amount paid.
+3. **Under seven days / after check-in:** no ordinary discretionary cancellation refund is offered, subject to statutory rights, host fault, agreed exceptional circumstances or a separate written concession.
+4. The initial 24-hour rule takes priority when applicable. A guest's refund is never more than actually paid. No booking, administration, service or cancellation fee is charged or withheld, and no non-refundable discounted option is offered.
+5. Les Buttes may choose to offer additional goodwill refunds in writing, without changing the underlying policy for other guests.
 
-This is a **proposed direct policy**, based broadly on Airbnb's **current Firm short-stay structure**, *not* the obsolete standard Strict policy. These Airbnb policy terms are not automatically incorporated into off-platform contracts.
+These are the approved direct-booking business rules for stays of up to 27 nights, aligned to Airbnb's current **Strict** short-stay policy without Airbnb platform fees. Airbnb's contract is not incorporated into the direct-booking contract. The complete customer terms and exact arrival/departure times still require approval before publication.
 
 **Legislation note:** Section 85(1)(i) of the **Trading Standards (Fair Trading) (Guernsey) Ordinance, 2023** as published in the States' 2023 legislative materials excludes accommodation supplied for specified dates from the general distance-contract cancellation chapter. Confirm this provision in the **currently enacted/consolidated text** and review all other consumer protections and unfair-term restrictions with Guernsey-qualified advisers before issuing an enforceable policy. A specific-date accommodation exception is **not** a general waiver of consumer rights or compensation for host breach.
 

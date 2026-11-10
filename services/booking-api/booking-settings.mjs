@@ -3,6 +3,7 @@
 // These functions are intentionally not exposed as public HTTP handlers.
 import {GetCommand,QueryCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {validateCancellationPolicy} from './cancellation-policy.mjs';
+import {validateArrivalDeparturePolicy} from './arrival-departure-policy.mjs';
 const KIND=['pricing','stay-rules','cancellation','payments','business','arrival-departure','terms'];
 const UNIT=['geranium','honeysuckle','all'];
 const ISO=/^\d{4}-\d{2}-\d{2}$/;
@@ -49,6 +50,10 @@ export function validateConfig({kind,unit='all',value}){
   }
   if(kind==='cancellation'){
     validateCancellationPolicy(value);
+  }
+  if(kind==='arrival-departure'){
+    if(unit!=='all')throw Error('Arrival and departure policy must apply to all cottages');
+    validateArrivalDeparturePolicy(value);
   }
   if(kind==='payments'){
     if(!Number.isInteger(value.depositPercent)||value.depositPercent<0||value.depositPercent>100||!Number.isInteger(value.balanceDueDays)||value.balanceDueDays<0)throw Error('Invalid payment policy');

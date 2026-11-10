@@ -3,7 +3,9 @@
 import {randomUUID} from 'node:crypto';
 import {prepareOwnerTransition} from './booking-admin-transaction-policy.mjs';
 import {validateCancellationPolicy} from './cancellation-policy.mjs';
+import {guernseyLocalInstant,validateArrivalDeparturePolicy} from './arrival-departure-policy.mjs';
 export function preparePaymentConfirmation({booking,registered,evidence,cancellationPolicyRecord,
+ arrivalDepartureRecord,
  policyConditionRequired=true,
  nowEpoch=Math.floor(Date.now()/1000)}={}){
  if(!booking||!registered||!evidence?.verified||evidence.bookingId!==booking.id||
@@ -23,21 +25,31 @@ export function preparePaymentConfirmation({booking,registered,evidence,cancella
    cancellationPolicyRecord.SK!=='CURRENT'||typeof cancellationPolicyRecord.version!=='string'||
    cancellationPolicyRecord.version.length<8)throw Error('Published cancellation policy required');
  validateCancellationPolicy(cancellationPolicyRecord.value);
+ if(!arrivalDepartureRecord||arrivalDepartureRecord.PK!=='CONFIG#arrival-departure#all'||
+   arrivalDepartureRecord.SK!=='CURRENT'||typeof arrivalDepartureRecord.version!=='string'||
+   arrivalDepartureRecord.version.length<8)throw Error('Published arrival and departure policy required');
+ validateArrivalDeparturePolicy(arrivalDepartureRecord.value);
+ if(arrivalDepartureRecord.value.testOnly===true&&booking.synthetic!==true)
+  throw Error('Test arrival and departure policy requires synthetic booking');
  const allocation=prepareOwnerTransition({identity:{role:'owner'},action:'cancel',
   booking:{...booking,status:'CONFIRMED',reservationStatus:'CONFIRMED'},reason:'Payment verification allocation',nowEpoch});
  if(!allocation.allowed)throw Error(allocation.reason);
  if(allocation.slots.length+4>100)throw Error('Confirmation transaction exceeds limit');
  const eventId=randomUUID(),stamp=new Date(nowEpoch*1000).toISOString();
+ const nights=(Date.parse(booking.end+'T00:00:00Z')-Date.parse(booking.start+'T00:00:00Z'))/86400000;
+ if(!Number.isInteger(nights)||nights<1||nights>27)throw Error('Invalid booking dates');
+ const checkInAt=guernseyLocalInstant(booking.start,arrivalDepartureRecord.value.checkInLocalTime);
  const key={PK:'BOOKING#'+booking.id,SK:'META'};
  const amount=registered.amountPence/100;
  const items=[
-  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, paidAmountPence = :pence, paymentTransactionId = :tx, updatedAt = :stamp, cancellationPolicyVersion = :policyVersion, cancellationPolicyId = :policyId REMOVE expiresAt, holdExpiresAt',
+  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, confirmedAt = :stamp, paidAmountPence = :pence, paymentTransactionId = :tx, updatedAt = :stamp, cancellationPolicyVersion = :policyVersion, cancellationPolicyId = :policyId, arrivalDepartureVersion = :arrivalVersion, checkInAt = :checkInAt, nights = :nights REMOVE expiresAt, holdExpiresAt',
    ConditionExpression:'#status = :approved AND reservationStatus = :awaiting AND id = :id AND #source = :direct AND approvedAmountGBP = :amount AND holdExpiresAt = :expiry AND holdExpiresAt > :now AND #units = :units AND #start = :start AND #end = :end',
    ExpressionAttributeNames:{'#status':'status','#source':'source','#units':'units','#start':'start','#end':'end'},
    ExpressionAttributeValues:{':confirmed':'CONFIRMED',':approved':'APPROVED_AWAITING_PAYMENT',':awaiting':'AWAITING_PAYMENT',
     ':id':booking.id,':direct':'direct',':amount':amount,':expiry':booking.holdExpiresAt,':now':nowEpoch,
     ':units':booking.units,':start':booking.start,':end':booking.end,':stamp':stamp,':tx':evidence.transactionId,
     ':policyVersion':cancellationPolicyRecord.version,':policyId':cancellationPolicyRecord.value.policyId,
+    ':arrivalVersion':arrivalDepartureRecord.version,':checkInAt':checkInAt,':nights':nights,
     ':pence':registered.amountPence}}},
   {ConditionCheck:{Key:{PK:'BOOKING#'+booking.id,SK:'PAYMENT#CHECKOUT'},
    ConditionExpression:'checkoutId = :checkout AND #reference = :ref AND amountPence = :pence AND currency = :gbp',
@@ -49,6 +61,10 @@ export function preparePaymentConfirmation({booking,registered,evidence,cancella
   ConditionExpression:'#version = :version AND #value = :value',
   ExpressionAttributeNames:{'#version':'version','#value':'value'},
   ExpressionAttributeValues:{':version':cancellationPolicyRecord.version,':value':cancellationPolicyRecord.value}}});
+ if(policyConditionRequired)items.push({ConditionCheck:{Key:{PK:'CONFIG#arrival-departure#all',SK:'CURRENT'},
+  ConditionExpression:'#version = :version AND #value = :value',
+  ExpressionAttributeNames:{'#version':'version','#value':'value'},
+  ExpressionAttributeValues:{':version':arrivalDepartureRecord.version,':value':arrivalDepartureRecord.value}}});
  for(const slot of allocation.slots)items.push({Update:{Key:slot,
   UpdateExpression:'REMOVE expiresAt',
   ConditionExpression:'id = :id AND expiresAt = :expiry AND expiresAt > :now',
