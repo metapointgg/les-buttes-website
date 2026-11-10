@@ -416,7 +416,11 @@ if(widget){
   const confirmButton=detailsForm.querySelector<HTMLButtonElement>('[disabled]');
   const status=validation;
   let submitting=false;
-  const siteKey=import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY??'';
+  const siteKey=(import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY??'').trim();
+  // The public Site Key may be exposed in the read-only website. Retain it in
+  // the built four-stage page even when guest submissions are disabled; this
+  // does not load Turnstile or enable the release-gated request action.
+  if(siteKey)widget.dataset.turnstileSiteKey=siteKey;
   const challengeSlot=document.createElement('div');
   if(syntheticRequestEnabled&&confirmButton){
     firstNameField.value='Synthetic';
