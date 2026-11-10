@@ -57,9 +57,12 @@ if(widget){
   const syntheticRequestEnabled=import.meta.env.PUBLIC_BOOKING_SYNTHETIC_REQUESTS_ENABLED==='true'&&
     window.location.hostname==='d123fnjf47zmyp.cloudfront.net'&&hostedReadOnlyEnabled&&quoteOnlyEnabled&&liveQuoteEnabled;
   const syntheticRequestUrl='https://75im3kpaq6.execute-api.eu-west-2.amazonaws.com/request';
+  // Production needs the separate read-only quote endpoint AND the write-capable
+  // production API. A quote-only endpoint is never a request destination.
+  const productionRequestApi=bookingApi==='https://c7x0ongl4d.execute-api.eu-west-2.amazonaws.com';
   const requestEnabled=syntheticRequestEnabled||import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&
-    Boolean(bookingApi)&&!quoteOnlyEnabled&&liveQuoteEnabled&&import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY&&
-    import.meta.env.PUBLIC_BOOKING_REQUESTS_APPROVED==='true';
+    import.meta.env.PUBLIC_BOOKING_REQUESTS_APPROVED==='true'&&hostedReadOnlyEnabled&&
+    quoteOnlyEnabled&&liveQuoteEnabled&&productionRequestApi&&Boolean(import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY);
 
   let authoritativeQuote:{key:string;totalGBP:string}|null=null;
   const quoteKey=()=>JSON.stringify([choice,arrival.value,departure.value,filters.adults+filters.children]);
