@@ -82,3 +82,45 @@ test('LB-08 lookup errors fail closed before obtaining creation claim',async()=>
  assert.equal(claims,0);
  assert.equal(creations,0);
 });
+
+
+const LIVE_TABLE='les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2';
+const LIVE_KEYS=['BOOKING_ENVIRONMENT','AWS_REGION','BOOKINGS_TABLE','PAYMENTS_ENABLED','LIVE_PAYMENTS_APPROVED'];
+async function withLivePaymentEnvironment(enabled,work){
+ const previous=Object.fromEntries(LIVE_KEYS.map(key=>[key,process.env[key]]));
+ try{
+  Object.assign(process.env,{BOOKING_ENVIRONMENT:'production',AWS_REGION:'eu-west-2',
+   BOOKINGS_TABLE:LIVE_TABLE,PAYMENTS_ENABLED:enabled?'true':'false',
+   LIVE_PAYMENTS_APPROVED:enabled?'true':'false'});
+  return await work();
+ }finally{
+  for(const [key,value] of Object.entries(previous)){
+   if(value===undefined)delete process.env[key];else process.env[key]=value;
+  }
+ }
+}
+
+test('live checkout creation atomically claims and registers only after both production payment approvals',async()=>{
+ await withLivePaymentEnvironment(true,async()=>{
+  const calls=[];
+  const db={send:async command=>{calls.push(command.input);return {};}};
+  const result=await createAndRegisterCheckout({db,table:LIVE_TABLE,bookingId,
+   amountPence:163000,actor:'production-owner',
+   sumup:{listCheckoutsByReference:async()=>[],createCheckout:async input=>({
+    ...checkout,reference:input.reference,amountPence:input.amountPence
+   })}});
+  assert.equal(result.status,'REGISTERED');
+  assert.equal(result.record.amountPence,163000);
+  assert.equal(calls.filter(x=>x.TransactItems).length,1);
+  assert.equal(calls.filter(x=>x.Item?.status==='CREATING').length,1);
+  assert.equal(calls.filter(x=>x.UpdateExpression).length,1);
+ });
+ await withLivePaymentEnvironment(false,async()=>{
+  let called=0;
+  const db={send:async()=>{called++;return {};}};
+  await assert.rejects(createAndRegisterCheckout({db,table:LIVE_TABLE,bookingId,
+   amountPence:163000,actor:'production-owner',
+   sumup:{listCheckoutsByReference:async()=>[],createCheckout:async()=>{throw Error('Must not call provider');}}}),/unavailable/);
+  assert.equal(called,0);
+ });
+});

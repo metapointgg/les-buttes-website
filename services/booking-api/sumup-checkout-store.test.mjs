@@ -12,7 +12,7 @@ test('LB-07 registration is atomic and bound to approved booking state and amoun
  assert.equal(tx.TransactItems[0].ConditionCheck.ExpressionAttributeValues[':amount'],1630);
  assert.equal(tx.TransactItems[0].ConditionCheck.ExpressionAttributeValues[':approved'],'APPROVED_AWAITING_PAYMENT');
  assert.equal(tx.TransactItems[1].Put.ConditionExpression,'attribute_not_exists(PK)');
- await assert.rejects(registerCheckout({db,table:'booking-production',bookingId,checkout,reference:checkout.reference}),/Staging/);
+ await assert.rejects(registerCheckout({db,table:'booking-production',bookingId,checkout,reference:checkout.reference}),/unavailable/);
  await assert.rejects(registerCheckout({db,table:'booking-staging',bookingId,checkout:{...checkout,amountPence:0},reference:checkout.reference}),/Invalid/);
 });
 test('LB-07 duplicate registration compares immutable checkout identity',async()=>{

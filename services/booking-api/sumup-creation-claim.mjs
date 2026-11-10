@@ -3,13 +3,14 @@
 // Uncertain provider responses are NOT safe to retry automatically.
 import {PutCommand,GetCommand,UpdateCommand} from '@aws-sdk/lib-dynamodb';
 import {randomUUID} from 'node:crypto';
+import {checkoutWriteTableAllowed} from './sumup-checkout-store.mjs';
 const UUID=/^[0-9a-f-]{36}$/i;
 export function creationClaimKey(bookingId){
  if(!UUID.test(bookingId??''))throw Error('Invalid booking ID');
  return {PK:'BOOKING#'+bookingId,SK:'PAYMENT#CREATION_CLAIM'};
 }
 export async function acquireCreationClaim({db,table,bookingId,reference,amountPence,actor}={}){
- if(!db?.send||!table?.toLowerCase().includes('staging'))throw Error('Staging checkout claim unavailable');
+ if(!db?.send||!checkoutWriteTableAllowed(table))throw Error('Checkout creation claim unavailable');
  if(typeof reference!=='string'||!/^lb-[a-f0-9]{32}$/.test(reference)||
    !Number.isSafeInteger(amountPence)||amountPence<1||
    typeof actor!=='string'||!actor.trim())throw Error('Invalid creation claim');
@@ -24,7 +25,7 @@ export async function readCreationClaim({db,table,bookingId}={}){
  return (await db.send(new GetCommand({TableName:table,Key:creationClaimKey(bookingId),ConsistentRead:true}))).Item??null;
 }
 export async function markCreationClaimForReconciliation({db,table,bookingId,claimId,checkoutId=null}={}){
- if(!db?.send||!table?.toLowerCase().includes('staging'))throw Error('Staging checkout claim unavailable');
+ if(!db?.send||!checkoutWriteTableAllowed(table))throw Error('Checkout creation claim unavailable');
  if(typeof claimId!=='string'||!UUID.test(claimId)||checkoutId!==null&&
    (typeof checkoutId!=='string'||!/^[A-Za-z0-9-]{8,100}$/.test(checkoutId)))
   throw Error('Invalid checkout claim identity');

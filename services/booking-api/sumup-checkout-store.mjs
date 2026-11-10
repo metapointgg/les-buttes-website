@@ -1,6 +1,15 @@
 // LB-07: conditional, durable checkout registration in the authoritative booking table.
 // This module deliberately does not create charges or confirm reservations.
 import {GetCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
+import {productionPaymentsEnabled} from './sumup-production-runtime.mjs';
+
+// Live payment writes share the exact environment, table and release gates
+// used by the SumUp client. Staging remains independently available.
+export function checkoutWriteTableAllowed(table,env=process.env){
+ const staging=typeof table==='string'&&table.toLowerCase().includes('staging')&&
+  env.BOOKING_ENVIRONMENT!=='production';
+ return staging||productionPaymentsEnabled({...env,BOOKINGS_TABLE:table});
+}
 const ID=/^[0-9a-f-]{36}$/i;
 const CHECKOUT=/^[A-Za-z0-9-]{8,100}$/;
 const REF=/^[A-Za-z0-9_-]{6,64}$/;
@@ -17,7 +26,7 @@ export function validateCheckoutRecord({bookingId,checkout,reference}={}){
  return true;
 }
 export async function registerCheckout({db,table,bookingId,checkout,reference,nowEpoch=Math.floor(Date.now()/1000)}={}){
- if(!db?.send||!table?.toLowerCase().includes('staging'))throw Error('Staging checkout writer unavailable');
+ if(!db?.send||!checkoutWriteTableAllowed(table))throw Error('Checkout registration unavailable');
  validateCheckoutRecord({bookingId,checkout,reference});
  const key=checkoutKey(bookingId);
  const record={...key,bookingId,checkoutId:checkout.checkoutId,reference,

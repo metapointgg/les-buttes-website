@@ -15,7 +15,7 @@ test('LB-07 claim is permanent, atomic and uniquely identifies booking',async()=
  assert.match(put.ConditionExpression,/claimId = :id/);
  assert.equal(put.ExpressionAttributeValues[':reconcile'],'RECONCILE_REQUIRED');
  await assert.rejects(acquireCreationClaim({db,table:'booking-production',bookingId,
-  reference:'lb-12345678901234567890123456789012',amountPence:150000,actor:'owner'}),/Staging/);
+  reference:'lb-12345678901234567890123456789012',amountPence:150000,actor:'owner'}),/unavailable/);
 });
 test('LB-07 reads claims consistently',async()=>{
  let input;
