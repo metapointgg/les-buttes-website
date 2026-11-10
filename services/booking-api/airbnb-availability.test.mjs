@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {saveAirbnbSnapshot,requireAirbnbAvailability,validateAirbnbSnapshot} from './airbnb-availability.mjs';
 import {parseAirbnbCalendar} from './preview-airbnb.mjs';
 const selection={unit:'honeysuckle',start:'2027-05-08',end:'2027-05-15',now:1000};
@@ -25,4 +26,13 @@ test('changed and cancelled feeds replace only their snapshot; direct reservatio
 });
 test('truncated feed is rejected rather than interpreted as cancelled reservations',()=>{
  assert.throws(()=>parseAirbnbCalendar('BEGIN:VCALENDAR\n'),/Unclosed/);
+});
+
+test('production request writer checks Airbnb snapshots atomically before reserving a cottage',()=>{
+  const source=readFileSync(new URL('./index.mjs',import.meta.url),'utf8');
+  assert.match(source,/import \{requireAirbnbAvailability\} from '\.\/airbnb-availability\.mjs'/);
+  assert.match(source,/calendarChecks=await requireAirbnbAvailability\(\{db,table,units:result\.units/);
+  assert.match(source,/const transact=\[\.\.\.calendarChecks,\{Put:/);
+  assert.match(source,/PRODUCTION_AIRBNB_AVAILABILITY_UNVERIFIED/);
+  assert.match(source,/currentRequestRules\(\)/);
 });

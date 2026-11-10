@@ -1,5 +1,7 @@
 import { randomUUID,timingSafeEqual } from 'node:crypto';
 import {validBooking} from './rules.mjs';
+import {readSetting,validateConfig} from './booking-settings.mjs';
+import {requireAirbnbAvailability} from './airbnb-availability.mjs';
 import {quoteFromPublishedMaster} from './published-pricing.mjs';
 import {slotBlocksAvailability} from './occupancy.mjs';
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
@@ -57,9 +59,28 @@ async function notifyOwner(booking){
   await dispatchRequestedProductionBookingEmails({db,table,bookingId:booking.id,
     transport:createProductionSesTransport(),env:process.env});
 }
+// Production requests must use the current, owner-published booking rules;
+// unlike staging, production deliberately has no BOOKING_RULES_JSON override.
+async function currentRequestRules(){
+  if(process.env.BOOKING_ENVIRONMENT!=='production')return undefined;
+  const record=await readSetting(db,table,'stay-rules','all');
+  if(!record?.version||!(record.status==='PUBLISHED'||typeof record.approvedBy==='string'))
+    throw Error('Published booking rules unavailable');
+  validateConfig({kind:'stay-rules',unit:'all',value:record.value});
+  const ranges=record.value.ranges;
+  if(ranges.some(range=>!range.arrivalWeekdays.includes(6)||!range.departureWeekdays.includes(6)))
+    throw Error('Published weekly booking rules unavailable');
+  return {openSeasons:ranges.map(x=>({start:x.from,end:x.to})),
+    minimumStays:ranges.map(x=>({start:x.from,end:x.to,nights:x.minNights})),
+    maximumStays:ranges.map(x=>({start:x.from,end:x.to,nights:x.maxNights}))};
+}
 async function createRequest(input,event){
   if(input.website)return response(202,{received:true});
-  const result=validBooking(input);
+  let configuredRules;
+  try{configuredRules=await currentRequestRules();}
+  catch(error){console.error('PRODUCTION_BOOKING_RULES_UNAVAILABLE',error?.name??'Error');
+    return response(503,{error:'Booking rules temporarily unavailable'});}
+  const result=validBooking(input,configuredRules);
   if(result.error)return response(result.serverError?503:400,{error:result.error});
   const quote=await quoteFromPublishedMaster({db,table,units:result.units,nights:result.nights});
   if(quote.error)return response(503,{error:quote.error});
@@ -88,7 +109,21 @@ async function createRequest(input,event){
   const item={PK:'BOOKING#'+id,SK:'META',GSI1PK:'BOOKING_REQUESTS',GSI1SK:requestedAt+'#'+id,id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,guestTelephone,notes,quote,source:'direct',...termsEvidence,
     ...(process.env.BOOKING_ENVIRONMENT==='staging'?{synthetic:true}:{}),
     reservationStatus:'PENDING_REVIEW',status:'REQUESTED',requestedAt,holdExpiresAt:expiresAt,expiresAt:nowEpoch()+90*86400};
-  const transact=[{Put:{TableName:table,Item:item,ConditionExpression:'attribute_not_exists(PK)'}}];
+  // A production request must check the latest verified inbound Airbnb snapshot
+  // for EACH cottage. Atomic version checks prevent a stale read being accepted
+  // if an Airbnb reconciliation replaces the snapshot before the hold is written.
+  let calendarChecks=[];
+  if(process.env.BOOKING_ENVIRONMENT==='production'){
+    try{calendarChecks=await requireAirbnbAvailability({db,table,units:result.units,
+      start:input.start,end:input.end});}
+    catch(error){
+      if(error?.message==='Airbnb dates unavailable')
+        return response(409,{error:'Requested dates are no longer available'});
+      console.error('PRODUCTION_AIRBNB_AVAILABILITY_UNVERIFIED',error?.name??'Error');
+      return response(503,{error:'Current Airbnb availability cannot be verified'});
+    }
+  }
+  const transact=[...calendarChecks,{Put:{TableName:table,Item:item,ConditionExpression:'attribute_not_exists(PK)'}}];
   for(const key of slotsFor(result.units,result.nights))transact.push({Put:{TableName:table,Item:{...key,id,expiresAt},ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',ExpressionAttributeValues:{':now':nowEpoch()}}});
   try{
     await db.send(new TransactWriteCommand({TransactItems:transact,ClientRequestToken:id}));

@@ -56,3 +56,18 @@ test('Guernsey local date follows BST and GMT, not AWS UTC',()=>{
   assert.equal(guernseyToday(new Date('2026-12-01T23:30:00Z')),'2026-12-01');
   assert.equal(guernseyToday(new Date('2027-03-29T23:30:00Z')),'2027-03-30');
 });
+
+test('production published rules override missing environment rules and enforce seasonal maximum',()=>{
+  process.env.BOOKING_RULES_JSON='{}';
+  const published={
+    openSeasons:[{start:'2027-03-20',end:'2027-10-01'}],
+    minimumStays:[{start:'2027-03-20',end:'2027-10-01',nights:7}],
+    maximumStays:[{start:'2027-03-20',end:'2027-10-01',nights:14}]
+  };
+  assert.equal(validBooking({unit:'geranium',start:'2027-04-03',end:'2027-04-10',guests:2},published).nights.length,7);
+  assert.match(validBooking({unit:'geranium',start:'2027-04-03',end:'2027-04-24',guests:2},published).error,/published maximum/);
+  const overlapping={...published,minimumStays:[...published.minimumStays,{start:'2027-04-01',end:'2027-04-30',nights:7}]};
+  assert.equal(validBooking({unit:'geranium',start:'2027-04-03',end:'2027-04-10',guests:2},overlapping).serverError,true);
+  const incomplete={...published,maximumStays:[]};
+  assert.equal(validBooking({unit:'geranium',start:'2027-04-03',end:'2027-04-10',guests:2},incomplete).serverError,true);
+});
