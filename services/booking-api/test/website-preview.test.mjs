@@ -235,3 +235,27 @@ test('search stage uses a single two-click calendar instead of two native date p
  for(const label of ['Select your dates','Kies uw data','Choisissez vos dates'])
    assert.ok(translations.includes(label));
 });
+
+test('booking journey uses an Edit search pill, hides test copy and retains live validation',()=>{
+ const page=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
+ const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+ const copy=readFileSync(new URL('../../../src/lib/booking-discovery-copy.ts',import.meta.url),'utf8');
+ assert.match(page,/class="journey-edit-search-button"[^>]*data-back-to-filter/);
+ assert.match(page,/journey-stage-heading-with-action/);
+ assert.match(page,/margin-left:auto/);
+ assert.doesNotMatch(page,/class="discover-snapshot-note"/);
+ assert.doesNotMatch(page,/class="discover-preview-note" role="note"/);
+ assert.doesNotMatch(page,/\{t\.previewNoSubmit\}/);
+ for(const forbidden of ['OWNER PAYMENT EMAIL TEST','OWNER EMAIL TEST ONLY',
+  'Price calculated from the published booking database.',
+  'Availability from the booking master at the time displayed.']){
+  assert.ok(!page.includes(forbidden)&&!script.includes(forbidden),forbidden);
+ }
+ assert.match(copy,/direct:'Price'/);
+ assert.match(copy,/direct:'Prijs'/);
+ assert.match(copy,/direct:'Prix'/);
+ assert.match(script,/priceLabel\.textContent=tr\('direct'\)/);
+ assert.match(script,/quote\.meetsDraftMinimum\?'':tr\('tooShort'\)/);
+ assert.match(script,/reviewNext\.disabled=!masterConnected\(\)\|\|!q\|\|!q\.meetsDraftMinimum/);
+ assert.match(script,/controlledOwnerTest/);
+});
