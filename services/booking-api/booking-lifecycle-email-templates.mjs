@@ -1,3 +1,4 @@
+import {renderBrandedBookingHtml} from './booking-branded-email-html.mjs';
 // LB-09: pure lifecycle email templates; never sends, charges, confirms payment or edits bookings.
 // Only verified/authoritative inputs supplied by the calling orchestration may be rendered.
 // The owner must approve customer-facing wording before any staging/production enablement.
@@ -57,8 +58,8 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
   case 'owner_request':
    if(booking.status!=='REQUESTED')throw Error('Requested booking state required');
    subject=type==='owner_request'?'Les Buttes – booking request awaiting review':'Les Buttes – booking request received';
-   lines=[type==='owner_request'?'A booking request is awaiting your review in the management application.':'We have received your booking request.',
-    stay,reference,'The reservation is provisional and requires owner approval. No payment has been taken.'];
+   lines=[type==='owner_request'?'A booking request is awaiting your review in the management application.':'Thank you for choosing Les Buttes. We have received your request and will review the dates shortly.',
+    stay,reference,'This is a provisional request, not a confirmed reservation. We will email you once the owner has reviewed it. No payment has been taken.'];
    break;
   case 'approval_payment':{
    // An untrusted booking event cannot manufacture approval or payment amount.
@@ -68,30 +69,30 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
     throw Error('Authoritative approved checkout required');
    const url=safeUrl(checkout.hostedCheckoutUrl);
    subject='Les Buttes – complete your booking payment';
-   lines=['Your booking request has been approved, subject to payment.',
+   lines=['Good news — your requested dates have been approved. To secure your stay, please complete payment using the link below.',
     stay,reference,'Amount due: '+money(checkout.amountPence),
     'Pay securely using the SumUp hosted checkout:',url,
-    'Your reservation is not confirmed until payment has been verified.'];
+    'Your booking will be confirmed once your payment has been verified. We will email you to confirm this.'];
    break;
   }
   case 'confirmed':
    if(booking.status!=='CONFIRMED'||booking.paymentVerified!==true)
     throw Error('Verified booking confirmation required');
    subject='Les Buttes – booking confirmed';
-   lines=['Your reservation is confirmed.',stay,reference,
-    'We will provide your arrival information separately.'];
+   lines=['Thank you for booking directly with Les Buttes. Your payment has been verified and your cottage is reserved for your stay.',stay,reference,
+    'Check-in is from 4.00 pm and check-out is by 10.00 am. We will send you arrival information before your stay. We look forward to welcoming you to Guernsey.'];
    break;
   case 'declined':
    if(booking.status!=='DECLINED')throw Error('Declined booking state required');
    subject='Les Buttes – booking request update';
-   lines=['We are sorry, but we cannot accept your booking request.',stay,reference,
+   lines=['Thank you for your interest in Les Buttes. Unfortunately, we are unable to accept this booking request. Please contact us if you would like help with alternative dates.',stay,reference,
     'No payment is requested.'];
    break;
   case 'cancelled':
    if(booking.status!=='CANCELLED')throw Error('Cancelled booking state required');
    subject='Les Buttes – booking cancellation';
    // Cancellation never implies a refund. Verified refunds are communicated by a separate email.
-   lines=['Your booking has been cancelled.',stay,reference];
+   lines=['Your booking has been cancelled and the dates have been released. If you would like to arrange another stay, please get in touch.',stay,reference];
    break;
   case 'refund_confirmed':
    if(booking.status!=='CANCELLED'||booking.refundStatus!=='REFUNDED'||
@@ -118,5 +119,6 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
  if(reason!==undefined)clean(reason,{max:300}); // Never echo unreviewed operational notes.
  const body=[...lines,'',footer].join('\n');
  if(body.length>15000||subject.length>160)throw Error('Rendered email too long');
- return {type,templateId:TYPES[type],bookingId:id,subject,body};
+ return {type,templateId:TYPES[type],bookingId:id,subject,body,
+  html:renderBrandedBookingHtml({type,body})};
 }
