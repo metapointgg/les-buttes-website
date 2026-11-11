@@ -30,7 +30,7 @@ test('LB-09 payment instructions require approved booking and matching GBP check
  const data=fixture.approval_payment;
  const rendered=renderBookingLifecycleEmail({type:'approval_payment',...data});
  assert.match(rendered.body,/£1630\.00/);
- assert.match(rendered.body,/not confirmed until payment has been verified/);
+ assert.match(rendered.body,/confirmed once your payment has been verified/);
  for(const broken of [
   {booking:{...data.booking,status:'REQUESTED'}},
   {booking:{...data.booking,approvedAmountPence:180000}},
