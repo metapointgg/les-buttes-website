@@ -44,7 +44,13 @@ export async function createAndRegisterCheckout({db,table,bookingId,amountPence,
    throw Error('Provider checkout mismatch; manual reconciliation required');
  }else if(Array.isArray(remote)&&remote.length===0){
   // Never blindly retry after a timeout. A later call must query the provider again.
-  checkout=await sumup.createCheckout({reference,amountPence});
+  // The owner-only production email test never needs an indefinite payment
+  // link. SumUp enforces the expiry independently of our booking hold.
+  const testExpiry=process.env.BOOKING_ENVIRONMENT==='production'&&
+    process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'?
+    new Date((nowEpoch+2*3600)*1000).toISOString():null;
+  checkout=await sumup.createCheckout({reference,amountPence,
+    ...(testExpiry?{validUntil:testExpiry}:{})});
  }else{
   throw Error('Provider lookup must return an authoritative list');
  }

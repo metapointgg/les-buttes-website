@@ -124,3 +124,26 @@ test('live checkout creation atomically claims and registers only after both pro
   assert.equal(called,0);
  });
 });
+
+
+test('second owner-only production checkout expires at SumUp after two hours',async()=>{
+ await withLivePaymentEnvironment(true,async()=>{
+  const previous=process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED;
+  process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED='true';
+  try{
+   const nowEpoch=1794420000,inputs=[];
+   const db={send:async()=>({})};
+   const result=await createAndRegisterCheckout({db,table:LIVE_TABLE,bookingId,
+    amountPence:100,actor:'controlled-email-owner',nowEpoch,
+    sumup:{listCheckoutsByReference:async()=>[],createCheckout:async input=>{
+     inputs.push(input);return {...checkout,amountPence:100};
+    }}});
+   assert.equal(result.status,'REGISTERED');
+   assert.equal(inputs.length,1);
+   assert.equal(inputs[0].validUntil,new Date((nowEpoch+7200)*1000).toISOString());
+  }finally{
+   if(previous===undefined)delete process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED;
+   else process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED=previous;
+  }
+ });
+});
