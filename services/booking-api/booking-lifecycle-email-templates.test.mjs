@@ -6,7 +6,7 @@ const base={bookingId,cottage:'Geranium',checkIn:'2027-08-28',checkOut:'2027-09-
 const fixture={
  approval_payment:{booking:{...base,status:'APPROVED_AWAITING_PAYMENT',approvedAmountPence:163000},
  checkout:{bookingId,status:'PENDING',currency:'GBP',amountPence:163000,
- hostedCheckoutUrl:'https://checkout.sumup.com/pay/fixture'}},
+ hostedCheckoutUrl:'https://checkout.sumup.com/pay/c-123e4567-e89b-42d3-a456-426614174000'}},
  confirmed:{booking:{...base,status:'CONFIRMED',paymentVerified:true}},
  declined:{booking:{...base,status:'DECLINED'}},
  cancelled:{booking:{...base,status:'CANCELLED'}},
@@ -63,4 +63,17 @@ test('LB-09 rejects malformed dates, invented cottages, control characters and u
  ])assert.throws(()=>renderBookingLifecycleEmail({type:'declined',
   booking:{...booking,status:'DECLINED'}}));
  assert.throws(()=>renderBookingLifecycleEmail({type:'payment_received',booking:base}));
+});
+
+test('branded HTML keeps verified stay, secure payment URL and readable plain text',()=>{
+ const {body,html}=renderBookingLifecycleEmail({type:'approval_payment',...fixture.approval_payment});
+ assert.match(html,/Les Buttes/);
+ assert.match(html,/background:#194c3d/);
+ assert.match(html,/Pay securely with SumUp/);
+ assert.match(html,/checkout\.sumup\.com\/pay\/c-123e4567/);
+ assert.match(html,/£1630\.00/);
+ assert.match(body,/checkout\.sumup\.com\/pay\/c-123e4567/);
+ const cancelled=renderBookingLifecycleEmail({type:'cancelled',...fixture.cancelled});
+ assert.doesNotMatch(cancelled.html,/refund/i);
+ assert.match(cancelled.html,/Your booking has been cancelled/);
 });
