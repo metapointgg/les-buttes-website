@@ -32,7 +32,8 @@ test('production request writer checks Airbnb snapshots atomically before reserv
   const source=readFileSync(new URL('./index.mjs',import.meta.url),'utf8');
   assert.match(source,/import \{requireAirbnbAvailability\} from '\.\/airbnb-availability\.mjs'/);
   assert.match(source,/calendarChecks=await requireAirbnbAvailability\(\{db,table,units:result\.units/);
-  assert.match(source,/const transact=\[\.\.\.calendarChecks,\{Put:/);
+  assert.match(source,/const transact=\[\.\.\.calendarChecks,/);
+  assert.match(source,/controlledTestBookingClaim\(table,id\)/);
   assert.match(source,/PRODUCTION_AIRBNB_AVAILABILITY_UNVERIFIED/);
   assert.match(source,/currentRequestRules\(\)/);
 });
