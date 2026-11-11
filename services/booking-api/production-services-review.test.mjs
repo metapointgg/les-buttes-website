@@ -103,3 +103,18 @@ test('production reconciliation uses existing transaction Lambda with an indepen
  assert.match(transaction,/reconcileScheduledProductionPayments\(event\)/);
  assert.match(transaction,/if\(event\?\.source==='aws\.events'/);
 });
+
+
+test('one-time £1 live acceptance is server-bound and default-off without changing published pricing',()=>{
+ const request=readFileSync(new URL('./production-request-handler.mjs',import.meta.url),'utf8');
+ const index=readFileSync(new URL('./index.mjs',import.meta.url),'utf8');
+ const admin=readFileSync(new URL('./production-admin-transaction-handler.mjs',import.meta.url),'utf8');
+ assert.match(source,/ControlledTestOnlyEnabled:[\s\S]{0,125}Default: 'false'/);
+ assert.match(source,/BOOKING_CONTROLLED_TEST_ONLY_ENABLED: !Ref ControlledTestOnlyEnabled/g);
+ assert.match(source,/parameter\/les-buttes\/booking\/production\/test\/one-time-access/);
+ assert.match(request,/matchesControlledAccess\(input\.testAccessCode,testAccess\)/);
+ assert.match(request,/delete input\.testAccessCode/);
+ assert.match(index,/controlledTestBookingClaim\(table,id\)/);
+ assert.match(admin,/args\.approval\?\.amountPence!==TEST_APPROVAL_PENCE/);
+ assert.match(admin,/Number\(booking\.approvedAmountGBP\)!==1/);
+});
