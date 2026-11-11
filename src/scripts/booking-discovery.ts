@@ -224,6 +224,9 @@ if(widget){
       departure.value=date;
       rangePendingStart=null;
       pendingStart=null;
+      // The search calendar may find dates available in only one cottage.
+      // Re-evaluate which cottage is selected using the completed date range.
+      choice=null;
       month=arrival.value.slice(0,7);
       closeRangePicker(true);
       rangeMessage.textContent='';
