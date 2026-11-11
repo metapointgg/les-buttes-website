@@ -10,6 +10,7 @@ import {createProductionSesTransport} from './booking-production-ses-transport.m
 import {dispatchProductionBookingLifecycleEmail} from './booking-production-email-dispatch.mjs';
 import {productionEmailGate} from './production-integration-gates.mjs';
 import {controlledTestBooking,TEST_APPROVAL_PENCE} from './controlled-production-test.mjs';
+import {deactivateAndReleaseControlledUnpaidBooking} from './production-unpaid-test-deactivation.mjs';
 import {reconcileScheduledProductionPayments} from './production-payment-schedule.mjs';
 
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
@@ -40,6 +41,12 @@ export async function handler(event){
    approvalEnabled:()=>writesEnabled()&&process.env.MANAGEMENT_APPROVAL_ENABLED==='true',
    checkoutEnabled:()=>productionCheckoutEnabled(process.env),
    reconciliationEnabled:()=>productionReconciliationEnabled(process.env),
+   deactivationEnabled:()=>process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'&&
+     productionCheckoutEnabled(process.env),
+   deactivateCheckout:async args=>{
+    const result=await deactivateAndReleaseControlledUnpaidBooking({db,table,...args,env:process.env});
+    return {...result,notificationStatus:await notify(args.bookingId,'cancelled')};
+   },
    registerCheckout:async args=>{
     if(process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'){
      const {Item:booking}=await db.send(new GetCommand({TableName:table,

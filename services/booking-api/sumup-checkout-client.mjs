@@ -132,6 +132,17 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
    if(typeof checkoutId!=='string'||!/^[A-Za-z0-9-]{8,100}$/.test(checkoutId))
     throw Error('Invalid checkout ID');
    return call(CHECKOUT+'/'+encodeURIComponent(checkoutId));
+  },
+  async deactivateCheckout(checkoutId){
+   if(providerEnvironment!=='live'||typeof checkoutId!=='string'||
+      !/^[A-Za-z0-9-]{8,100}$/.test(checkoutId))
+    throw Error('Live checkout deactivation unavailable');
+   // SumUp DELETE /v0.1/checkouts/{id} deactivates only an unprocessed checkout.
+   const result=await call(CHECKOUT+'/'+encodeURIComponent(checkoutId),{method:'DELETE'});
+   if(result?.id!==checkoutId||result?.merchant_code!==merchantCode||
+      result?.currency!=='GBP'||result?.status!=='EXPIRED')
+     throw Error('Provider did not confirm an expired checkout');
+   return result;
   }
  };
 }

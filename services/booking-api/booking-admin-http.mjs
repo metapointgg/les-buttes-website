@@ -88,7 +88,9 @@ export function stagingAuthDiagnostic(event,{issuer=process.env.MANAGEMENT_COGNI
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
 export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,writeEnabled=()=>false,
- approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout,reconciliationEnabled=()=>false,reconcilePayment,
+ approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout,
+ deactivateCheckout, deactivationEnabled=()=>false,
+ reconciliationEnabled=()=>false,reconcilePayment,
  deploymentAllowed=()=>process.env.BOOKING_ENVIRONMENT==='staging',
  writeDeploymentAllowed=()=>process.env.BOOKING_ENVIRONMENT==='staging'&&process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')}){
  return async event=>{
@@ -139,6 +141,26 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
            if(/not verified|missing|mismatch|not eligible|disabled|reconciliation|TransactionCanceled/.test(e?.message??''))
              return reply(409,{error:'Payment not confirmed; reconcile with provider before retrying'});
            throw e;
+         }
+       }
+       const deactivateMatch=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/checkout\/deactivate$/i);
+       if(deactivateMatch){
+         if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+         if(!writeDeploymentAllowed()||!writeEnabled()||!deactivationEnabled()||
+           typeof deactivateCheckout!=='function')return reply(503,{error:'Controlled checkout deactivation disabled'});
+         if(event.isBase64Encoded||typeof event.body!=='string'||event.body.length>1200)
+           return reply(400,{error:'Invalid request'});
+         let payload;
+         try{payload=JSON.parse(event.body);}catch{return reply(400,{error:'Invalid request'});}
+         if(!payload||typeof payload!=='object'||Array.isArray(payload)||
+           Object.keys(payload).some(key=>key!=='reason')||
+           typeof payload.reason!=='string'||payload.reason.trim().length<5||payload.reason.length>1000)
+           return reply(400,{error:'A recorded deactivation reason is required'});
+         try{return reply(200,await deactivateCheckout({
+           bookingId:deactivateMatch[1],identity:id,reason:payload.reason.trim()}));}
+         catch(e){
+           console.error('CONTROLLED_UNPAID_CHECKOUT_DEACTIVATION_REVIEW',e?.name??'Error');
+           return reply(409,{error:'Provider payment status or booking state requires owner review; dates remain reserved'});
          }
        }
        const checkoutMatch=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/checkout\/register$/i);
