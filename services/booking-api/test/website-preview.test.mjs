@@ -200,7 +200,7 @@ test('owner-only £1 acceptance requires explicit URL and private code; normal s
  const discovery=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
  const workflow=readFileSync(new URL('../../../.github/workflows/deploy.yml',import.meta.url),'utf8');
  assert.match(discovery,/PUBLIC_BOOKING_CONTROLLED_TEST_ENABLED==='true'/);
- assert.match(discovery,/get\('owner-test'\)==='geranium-2027'/);
+ assert.match(discovery,/get\('owner-test'\)==='payment-email-2027'/);
  assert.match(discovery,/testAccessCode:oneTimeAccess/);
  assert.match(discovery,/choice!=='geranium'/);
  assert.match(discovery,/mike@un1ty\.gg/);
