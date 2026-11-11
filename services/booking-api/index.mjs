@@ -12,6 +12,7 @@ import {validateTermsAcceptance} from './booking-terms-acceptance.mjs';
 import {dispatchRequestedProductionBookingEmails} from './booking-production-email-dispatch.mjs';
 import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
 import {productionEmailGate} from './production-integration-gates.mjs';
+import {controlledTestRequest,controlledTestBookingClaim} from './controlled-production-test.mjs';
 
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const ssm=new SSMClient({});
@@ -82,6 +83,9 @@ async function currentRequestRules(){
     maximumStays:ranges.map(x=>({start:x.from,end:x.to,nights:x.maxNights}))};
 }
 async function createRequest(input,event){
+  if(process.env.BOOKING_ENVIRONMENT==='production'&&
+    process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'&&!controlledTestRequest(input))
+    return response(403,{error:'Controlled production test only'});
   if(input.website)return response(202,{received:true});
   let configuredRules;
   try{configuredRules=await currentRequestRules();}
@@ -131,7 +135,11 @@ async function createRequest(input,event){
       return response(503,{error:'Current Airbnb availability cannot be verified'});
     }
   }
-  const transact=[...calendarChecks,{Put:{TableName:table,Item:item,ConditionExpression:'attribute_not_exists(PK)'}}];
+  const controlled=process.env.BOOKING_ENVIRONMENT==='production'&&
+    process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true';
+  const transact=[...calendarChecks,
+    ...(controlled?[controlledTestBookingClaim(table,id)]:[]),
+    {Put:{TableName:table,Item:item,ConditionExpression:'attribute_not_exists(PK)'}}];
   for(const key of slotsFor(result.units,result.nights))transact.push({Put:{TableName:table,Item:{...key,id,expiresAt},ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',ExpressionAttributeValues:{':now':nowEpoch()}}});
   try{
     await db.send(new TransactWriteCommand({TransactItems:transact,ClientRequestToken:id}));
