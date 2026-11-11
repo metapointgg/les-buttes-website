@@ -35,7 +35,10 @@ export function renderBrandedBookingHtml({type,body}={}){
   'Please reply to the email you received if you need assistance.']);
  const detail=new Set([stay,reference,amount,candidate,...footers]);
  const content=lines.filter(x=>!detail.has(x)).map(textRow).join('');
- const [cottage,dates]=stay.split(' | ');
+ const [cottage,isoDates]=stay.split(' | ');
+ const [arrival,departure]=isoDates.split(' to ');
+ const formatDate=value=>new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(value+'T00:00:00Z'));
+ const dates=formatDate(arrival)+' – '+formatDate(departure);
  const status=type==='requested'?'REQUEST RECEIVED':
   type==='approval_payment'?'PAYMENT REQUIRED':
   type==='confirmed'?'BOOKING CONFIRMED':
