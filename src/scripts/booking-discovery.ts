@@ -60,7 +60,15 @@ if(widget){
   // Production needs the separate read-only quote endpoint AND the write-capable
   // production API. A quote-only endpoint is never a request destination.
   const productionRequestApi=bookingApi==='https://c7x0ongl4d.execute-api.eu-west-2.amazonaws.com';
-  const requestEnabled=syntheticRequestEnabled||import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&
+  // Owner acceptance URL is explicit, but the API still requires the private
+  // one-time SSM token, exact Geranium details and a single conditional claim.
+  const controlledOwnerTest=import.meta.env.PUBLIC_BOOKING_CONTROLLED_TEST_ENABLED==='true'&&
+    window.location.hostname==='lesbuttes.com'&&
+    new URLSearchParams(window.location.search).get('owner-test')==='geranium-2027'&&
+    quoteOnlyEnabled&&liveQuoteEnabled&&productionRequestApi&&
+    Boolean(import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY);
+  const requestEnabled=syntheticRequestEnabled||controlledOwnerTest||
+    import.meta.env.PUBLIC_BOOKING_REQUESTS_ENABLED==='true'&&
     import.meta.env.PUBLIC_BOOKING_REQUESTS_APPROVED==='true'&&hostedReadOnlyEnabled&&
     quoteOnlyEnabled&&liveQuoteEnabled&&productionRequestApi&&Boolean(import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY);
 
@@ -445,12 +453,16 @@ if(widget){
   }
   if(requestEnabled&&!syntheticRequestEnabled&&confirmButton){
     const previewNote=widget.querySelector<HTMLElement>('.discover-preview-note');
-    if(previewNote)previewNote.textContent='Direct booking requests are open. Every request remains subject to owner approval; no payment is taken at this stage.';
+    if(previewNote)previewNote.textContent=controlledOwnerTest?
+      'OWNER TEST: Geranium, 3–10 April 2027. Published quotation £735; owner may approve this single booking for £1. Normal bookings remain closed.':
+      'Direct booking requests are open. Every request remains subject to owner approval; no payment is taken at this stage.';
     const requestNote=widget.querySelector<HTMLElement>('.discover-request-note');
-    if(requestNote)requestNote.textContent='Your request will temporarily hold the selected dates while the owner reviews it.';
+    if(requestNote)requestNote.textContent=controlledOwnerTest?
+      'OWNER TEST ONLY: use mike@un1ty.gg and Geranium 3–10 April 2027. An AWS one-time access code is required when submitting.':
+      'Your request will temporarily hold the selected dates while the owner reviews it.';
     const detailsIntro=widget.querySelector<HTMLElement>('[data-booking-step="4"] .journey-stage-heading p:last-child');
     if(detailsIntro)detailsIntro.textContent='Enter the lead guest details for this reservation request.';
-    confirmButton.textContent='Submit reservation request';
+    confirmButton.textContent=controlledOwnerTest?'Submit controlled owner test request':'Submit reservation request';
     challengeSlot.setAttribute('data-turnstile-slot','');
     confirmButton.before(challengeSlot);
     confirmButton.type='submit';
@@ -492,6 +504,14 @@ if(widget){
       const turnstile=(window as typeof window & {turnstile?:{getResponse:()=>string;reset:()=>void}}).turnstile;
       const token=syntheticRequestEnabled?'XXXX.DUMMY.TOKEN.XXXX':turnstile?.getResponse()??'';
       if(!token)throw Error('Please complete the verification challenge.');
+      if(controlledOwnerTest&&(choice!=='geranium'||arrival.value!=='2027-04-03'||
+        departure.value!=='2027-04-10'||filters.adults+filters.children!==2||
+        emailField.value.trim().toLowerCase()!=='mike@un1ty.gg'))
+        throw Error('Owner test requires Geranium, 3–10 April 2027, two guests and mike@un1ty.gg.');
+      const oneTimeAccess=controlledOwnerTest?
+        (window.prompt('Enter the one-time controlled test access code from AWS Parameter Store')??'').trim():undefined;
+      if(controlledOwnerTest&&(!oneTimeAccess||oneTimeAccess.length<32))
+        throw Error('A valid one-time test access code is required.');
       const response=await fetch(syntheticRequestEnabled?syntheticRequestUrl:bookingApi+'/requests',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify(syntheticRequestEnabled?{
@@ -504,7 +524,8 @@ if(widget){
           name:firstNameField.value.trim()+' '+lastNameField.value.trim(),
           email:emailField.value.trim(),telephone:phoneField.value.trim(),
           consent:true,notes:'',website:'',turnstileToken:token,
-          termsAcceptance:{accepted:true,termsVersion:'LB-DIRECT-2027-01',privacyVersion:'LB-PRIVACY-2027-01'}
+          termsAcceptance:{accepted:true,termsVersion:'LB-DIRECT-2027-01',privacyVersion:'LB-PRIVACY-2027-01'},
+          ...(controlledOwnerTest?{testAccessCode:oneTimeAccess}:{})
         })
       });
       if(response.status!==(syntheticRequestEnabled?201:202))throw Error(response.status===409?

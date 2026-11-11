@@ -193,3 +193,17 @@ test('hidden booking journey has four separate navigable steps and cannot confir
   assert.match(page,/data-preview-guest-details[^>]*autocomplete="off"/);
   assert.match(page,/disabled aria-disabled="true"/);
 });
+
+
+test('owner-only £1 acceptance requires explicit URL and private code; normal site flags remain disabled',()=>{
+ const discovery=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+ const workflow=readFileSync(new URL('../../../.github/workflows/deploy.yml',import.meta.url),'utf8');
+ assert.match(discovery,/PUBLIC_BOOKING_CONTROLLED_TEST_ENABLED==='true'/);
+ assert.match(discovery,/get\('owner-test'\)==='geranium-2027'/);
+ assert.match(discovery,/testAccessCode:oneTimeAccess/);
+ assert.match(discovery,/choice!=='geranium'/);
+ assert.match(discovery,/mike@un1ty\.gg/);
+ assert.match(workflow,/PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'/);
+ assert.match(workflow,/PUBLIC_BOOKING_REQUESTS_APPROVED: 'false'/);
+ assert.match(workflow,/PUBLIC_BOOKING_CONTROLLED_TEST_ENABLED: 'true'/);
+});
