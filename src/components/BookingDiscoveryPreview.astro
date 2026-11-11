@@ -18,7 +18,6 @@ const properties=[
       <p class="eyebrow">{t.eyebrow}</p>
       <h1>{t.title}</h1>
       <p class="lede">{t.intro}</p>
-      <div class="discover-preview-note" role="note">{t.preview}</div>
     </header>
     <nav class="journey-progress" aria-label={t.stepLabel}>
       <ol>
@@ -88,10 +87,10 @@ const properties=[
       </div>
     </section>
     <section class="journey-screen" data-booking-step="2" aria-labelledby="journey-two-heading" hidden>
-      <div class="journey-stage-heading">
-        <p class="eyebrow">02 / 04</p><h2 id="journey-two-heading">{t.stepChoose}</h2>
-        <p data-journey-selection></p>
-        <button class="journey-text-button" type="button" data-back-to-filter>{t.editSearch}</button>
+      <div class="journey-stage-heading journey-stage-heading-with-action">
+        <div><p class="eyebrow">02 / 04</p><h2 id="journey-two-heading">{t.stepChoose}</h2>
+        <p data-journey-selection></p></div>
+        <button class="journey-edit-search-button" type="button" data-back-to-filter>{t.editSearch}</button>
       </div>
               <section class="discover-results" aria-labelledby="discover-results-title">
           <div class="discover-section-heading">
@@ -140,7 +139,6 @@ const properties=[
           <div class="discover-calendar-grids" data-discovery-calendars></div>
           <p class="discover-calendar-message" data-calendar-message role="status" aria-live="polite"></p>
           <div class="calendar-footer"><button type="button" class="button" data-continue-review disabled>{t.continueReview}</button><p class="journey-action-note" data-selection-feedback role="status">{t.chooseHint}</p></div>
-          <p class="discover-snapshot-note">{t.notConfirmed}</p>
         </section>
 
     </section>
@@ -163,8 +161,6 @@ const properties=[
           </dl>
           <p class="discover-minimum" data-summary-minimum></p>
           
-          <p class="discover-request-note">{t.reviewHelp}</p>
-          <p class="discover-snapshot-note">{t.snapshot}</p>
           <div class="journey-actions">
         <button type="button" class="button button-secondary" data-back-to-cottages>{t.editDates}</button>
         <button type="button" class="button" data-continue-details>{t.continueDetails}</button>
@@ -198,7 +194,6 @@ const properties=[
           <p data-details-stay></p>
           <p>{t.yourParty}: <strong data-details-guests></strong></p>
           <div class="journey-recap-total"><span>{t.direct}</span><strong data-details-price></strong></div>
-          <p class="discover-snapshot-note">{t.snapshot}</p>
         </aside>
       </div>
       <div class="journey-actions">
@@ -335,7 +330,11 @@ const properties=[
 .journey-stage-heading{margin:0 0 1.4rem}
 .journey-stage-heading h2{font-size:clamp(1.7rem,3vw,2.3rem);margin:.2rem 0 .5rem}
 .journey-stage-heading>p:not(.eyebrow){color:var(--soft);font-size:.95rem;margin:.3rem 0}
-.journey-stage-heading .journey-text-button{background:none;border:0;text-decoration:underline;color:var(--green);font:inherit;font-size:.87rem;cursor:pointer;padding:.25rem 0}
+.journey-stage-heading-with-action{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+.journey-stage-heading-with-action>div{flex:1;min-width:0}
+.journey-stage-heading .journey-edit-search-button{margin-left:auto;flex-shrink:0;border:1px solid var(--green);border-radius:999px;background:transparent;color:var(--green);font:inherit;font-size:.86rem;font-weight:650;line-height:1.2;cursor:pointer;padding:.65rem 1.15rem;transition:background .2s,color .2s}
+.journey-stage-heading .journey-edit-search-button:hover{background:var(--green);color:#fff}
+.journey-stage-heading .journey-edit-search-button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .journey-screen>.discover-results{margin:0 0 1.4rem}
 .journey-screen>.discover-availability{max-width:860px;margin:1.4rem 0}
 .journey-review{max-width:710px}
