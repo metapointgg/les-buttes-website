@@ -135,7 +135,7 @@ if(widget){
     reviewNext.setAttribute('aria-disabled',String(!masterConnected()));
     const note=widget.querySelector<HTMLElement>('[data-selection-feedback]');
     if(note)note.textContent=!masterConnected()?tr('masterOffline'):
-      !q?tr('datesNeeded'):!q.meetsDraftMinimum?tr('tooShort'):tr('minimumOkay');
+      !q?tr('datesNeeded'):!q.meetsDraftMinimum?tr('tooShort'):'';
     const searchSummary=widget.querySelector<HTMLElement>('[data-journey-selection]');
     if(searchSummary)searchSummary.textContent=filters.adults+' '+tr('adults')+' · '+filters.children+' '+tr('children')+
       (arrival.value&&departure.value?' · '+rangeLabel(arrival.value,departure.value):'');
@@ -364,7 +364,7 @@ if(widget){
       fill('[data-summary-airbnb]',money(quote.airbnbTotalGBP));
       fill('[data-summary-direct]',money(quote.indicativeDirectTotalGBP));
       fill('[data-summary-saving]',money(quote.guestSavingGBP)+' ('+quote.guestSavingPercent+'%)');
-      fill('[data-summary-minimum]',tr('minimum')+': '+quote.draftMinimumNights+' '+tr('nightWord')+'. '+(quote.meetsDraftMinimum?tr('minimumOkay'):tr('tooShort')));
+      fill('[data-summary-minimum]',quote.meetsDraftMinimum?'':tr('tooShort'));
       summarySection.hidden=false;
       if(!quote.meetsDraftMinimum)calendarMessage.textContent=tr('tooShort');
     }catch(error){
@@ -516,9 +516,7 @@ if(widget){
       summaryLines.append(cottages);
       fill('[data-summary-direct]',money(Number(authoritativeQuote.totalGBP)));
       const priceLabel=widget.querySelector<HTMLElement>('[data-summary-direct]')?.previousElementSibling;
-      if(priceLabel)priceLabel.textContent='Published direct price';
-      const priceNote=summarySection.querySelector<HTMLElement>('.discover-snapshot-note');
-      if(priceNote)priceNote.textContent='Price calculated from the published booking database. Availability and price are checked again when you submit.';
+      if(priceLabel)priceLabel.textContent=tr('direct');
       for(const selector of ['[data-summary-airbnb]','[data-summary-saving]']){
         const element=widget.querySelector<HTMLElement>(selector);
         if(element?.parentElement){element.parentElement.hidden=true;element.parentElement.style.display='none';}
@@ -580,27 +578,15 @@ if(widget){
     const notice=document.createElement('p');
     notice.textContent='Staging test booking. Uses synthetic guest details and sandbox payment only.';
     detailsForm.prepend(notice);
-    const previewNote=widget.querySelector<HTMLElement>('.discover-preview-note');
-    if(previewNote)previewNote.textContent=notice.textContent;
-    const requestNote=widget.querySelector<HTMLElement>('.discover-request-note');
-    if(requestNote)requestNote.textContent='Test requests reserve staging dates and require owner approval.';
     confirmButton.textContent='Submit synthetic booking request';
     confirmButton.type='submit';
     confirmButton.disabled=false;
     confirmButton.setAttribute('aria-disabled','false');
   }
   if(requestEnabled&&!syntheticRequestEnabled&&confirmButton){
-    const previewNote=widget.querySelector<HTMLElement>('.discover-preview-note');
-    if(previewNote)previewNote.textContent=controlledOwnerTest?
-      'OWNER PAYMENT EMAIL TEST: Geranium, 10–17 April 2027. Quote £735; owner approval is £1. Open the emailed SumUp link only to verify delivery; do not pay. Normal bookings remain closed.':
-      'Direct booking requests are open. Every request remains subject to owner approval; no payment is taken at this stage.';
-    const requestNote=widget.querySelector<HTMLElement>('.discover-request-note');
-    if(requestNote)requestNote.textContent=controlledOwnerTest?
-      'OWNER EMAIL TEST ONLY: use mike@un1ty.gg and Geranium 10–17 April 2027. A private AWS access code is required when submitting. Do not complete the subsequent SumUp payment.':
-      'Your request will temporarily hold the selected dates while the owner reviews it.';
     const detailsIntro=widget.querySelector<HTMLElement>('[data-booking-step="4"] .journey-stage-heading p:last-child');
     if(detailsIntro)detailsIntro.textContent='Enter the lead guest details for this reservation request.';
-    confirmButton.textContent=controlledOwnerTest?'Submit controlled owner test request':'Submit reservation request';
+    confirmButton.textContent='Submit reservation request';
     challengeSlot.setAttribute('data-turnstile-slot','');
     confirmButton.before(challengeSlot);
     confirmButton.type='submit';
