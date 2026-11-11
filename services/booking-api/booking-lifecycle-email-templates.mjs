@@ -90,8 +90,8 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
   case 'cancelled':
    if(booking.status!=='CANCELLED')throw Error('Cancelled booking state required');
    subject='Les Buttes – booking cancellation';
-   lines=['Your booking has been cancelled.',stay,reference,
-    'Any refund will be assessed and communicated separately; this email does not confirm a refund.'];
+   // Cancellation never implies a refund. Verified refunds are communicated by a separate email.
+   lines=['Your booking has been cancelled.',stay,reference];
    break;
   case 'refund_confirmed':
    if(booking.status!=='CANCELLED'||booking.refundStatus!=='REFUNDED'||
