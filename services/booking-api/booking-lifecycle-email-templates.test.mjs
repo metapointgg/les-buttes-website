@@ -77,3 +77,12 @@ test('branded HTML keeps verified stay, secure payment URL and readable plain te
  assert.doesNotMatch(cancelled.html,/refund/i);
  assert.match(cancelled.html,/Your booking has been cancelled/);
 });
+
+test('branded emails escape injected markup and never invent a payment button',()=>{
+ const cancelled=renderBookingLifecycleEmail({type:'cancelled',...fixture.cancelled,reason:'<script>alert(1)</script>'});
+ assert.doesNotMatch(cancelled.html,/<script>/);
+ assert.doesNotMatch(cancelled.html,/Pay securely with SumUp/);
+ const requested=renderBookingLifecycleEmail({type:'requested',booking:{...base,status:'REQUESTED'}});
+ assert.match(requested.html,/REQUEST RECEIVED/);
+ assert.doesNotMatch(requested.html,/checkout\.sumup\.com/);
+});
