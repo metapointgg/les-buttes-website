@@ -454,7 +454,7 @@ if(widget){
     }
     if(advance&&(!arrival.value||!departure.value)){
       feedback.textContent=tr('datesNeeded');
-      await openRangePicker();
+      if(rangePicker.hidden)await openRangePicker();
       return;
     }
     if(Boolean(arrival.value)!==Boolean(departure.value)){
