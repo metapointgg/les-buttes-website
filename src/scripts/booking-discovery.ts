@@ -1,4 +1,4 @@
-import {canPickCheckout,clearMasterAvailability,daysForMonth,indicativeSelection,masterCheckedAt,masterConnected,matchingOptions,nightsInRange,plusDays,possibleNight,setMasterAvailability,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
+import {canPickCheckout,clearMasterAvailability,daysForMonth,indicativeSelection,masterCheckedAt,masterConnected,matchingCottages,matchingOptions,nightsInRange,possibleNight,setMasterAvailability,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
 
 const widget=document.querySelector<HTMLElement>('[data-discovery]');
 if(widget){
@@ -7,6 +7,14 @@ if(widget){
   const form=widget.querySelector<HTMLFormElement>('[data-discovery-search]')!;
   const get=(name:string)=>form.elements.namedItem(name) as HTMLInputElement|HTMLSelectElement;
   const arrival=get('arrival') as HTMLInputElement,departure=get('departure') as HTMLInputElement;
+  const rangeTrigger=widget.querySelector<HTMLButtonElement>('[data-range-trigger]')!;
+  const rangeSummary=widget.querySelector<HTMLElement>('[data-range-summary]')!;
+  const rangePicker=widget.querySelector<HTMLElement>('[data-range-picker]')!;
+  const rangeMonths=widget.querySelector<HTMLElement>('[data-range-months]')!;
+  const rangeMessage=widget.querySelector<HTMLElement>('[data-range-message]')!;
+  const rangeLabelNode=widget.querySelector<HTMLElement>('[data-range-month-label]')!;
+  const rangePrev=widget.querySelector<HTMLButtonElement>('[data-range-prev]')!;
+  const rangeNext=widget.querySelector<HTMLButtonElement>('[data-range-next]')!;
   const feedback=widget.querySelector<HTMLElement>('[data-discovery-feedback]')!;
   const optionCards=Array.from(widget.querySelectorAll<HTMLElement>('[data-discovery-option]'));
   const calendarSection=widget.querySelector<HTMLElement>('[data-discovery-availability]')!;
@@ -35,6 +43,7 @@ if(widget){
   const rangeLabel=(start:string,end:string)=>new Intl.DateTimeFormat(lang,{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).formatRange(new Date(start+'T00:00:00Z'),new Date(end+'T00:00:00Z'));
   const formatDay=(date:string)=>readable(date,{weekday:'long',day:'numeric',month:'long'});
   let choice:CottageChoice|null=null,month='2027-03',pendingStart:string|null=null;
+  let rangeMonth='2027-03',rangePendingStart:string|null=null;
   let filters:SearchFilters={adults:2,children:0,bedrooms:0,choice:'any'};
   let activeStep=1;
   const screens=Array.from(widget.querySelectorAll<HTMLElement>('[data-booking-step]'));
@@ -136,6 +145,127 @@ if(widget){
     const [year,mo]=m.split('-').map(Number);
     return new Date(Date.UTC(year,mo-1+n,1)).toISOString().slice(0,7);
   };
+  // Search-stage range picker: the selected dates remain the same hidden form
+  // inputs used by the quote, cottage selection and booking request journey.
+  const eligibleSearchUnits=()=>matchingCottages({...newFilters(),choice:'any'});
+  const canStartSearchRange=(date:string)=>saturday(date)&&
+    eligibleSearchUnits().some(unit=>possibleNight(unit,date));
+  const canFinishSearchRange=(start:string,end:string)=>weekly(start,end)&&
+    eligibleSearchUnits().some(unit=>canPickCheckout(unit,start,end));
+  const rangeMonthLabel=(date:string)=>readable(date+'-01',{month:'long',year:'numeric'});
+  const renderRangeSummary=()=>{
+    rangeSummary.textContent=arrival.value&&departure.value?
+      rangeLabel(arrival.value,departure.value):arrival.value?
+      readable(arrival.value,{day:'numeric',month:'short',year:'numeric'})+' — '+tr('departure'):
+      tr('rangePlaceholder');
+  };
+  const closeRangePicker=(restoreFocus=false)=>{
+    rangePicker.hidden=true;
+    rangeTrigger.setAttribute('aria-expanded','false');
+    if(restoreFocus)rangeTrigger.focus();
+  };
+  function renderRangePicker(){
+    rangeMonths.replaceChildren();
+    const compact=window.matchMedia('(max-width: 44rem)').matches;
+    const shown=compact?[rangeMonth]:[rangeMonth,monthShift(rangeMonth,1)];
+    rangeLabelNode.textContent=shown.map(rangeMonthLabel).join(' – ');
+    rangePrev.disabled=rangeMonth<='2027-03';
+    rangeNext.disabled=rangeMonth>=(compact?'2027-10':'2027-09');
+    const weekdays=Array.from({length:7},(_,i)=>new Intl.DateTimeFormat(lang,{
+      weekday:'narrow',timeZone:'UTC'
+    }).format(new Date(Date.UTC(2027,2,22+i))));
+    for(const m of shown){
+      const panel=document.createElement('div');
+      panel.className='search-range-month';
+      const title=document.createElement('h4');
+      title.className='search-range-month-title';
+      title.textContent=rangeMonthLabel(m);
+      panel.appendChild(title);
+      const labels=document.createElement('div');
+      labels.className='search-range-weekdays';
+      for(const weekday of weekdays){
+        const cell=document.createElement('span');cell.textContent=weekday;labels.appendChild(cell);
+      }
+      panel.appendChild(labels);
+      const days=document.createElement('div');days.className='search-range-days';
+      const first=m+'-01',offset=(new Date(first+'T00:00:00Z').getUTCDay()+6)%7;
+      for(let i=0;i<offset;i++)days.appendChild(document.createElement('span'));
+      const [year,monthNumber]=m.split('-').map(Number);
+      const count=new Date(Date.UTC(year,monthNumber,0)).getUTCDate();
+      for(let day=1;day<=count;day++){
+        const date=m+'-'+String(day).padStart(2,'0');
+        const checkout=!!rangePendingStart&&date>rangePendingStart&&
+          canFinishSearchRange(rangePendingStart,date);
+        const selectable=checkout||canStartSearchRange(date);
+        const start=date===(rangePendingStart||arrival.value);
+        const end=!!departure.value&&date===departure.value;
+        const between=!!arrival.value&&!!departure.value&&
+          date>arrival.value&&date<departure.value;
+        const button=document.createElement('button');
+        button.type='button';
+        button.textContent=String(day);
+        button.disabled=!selectable;
+        button.className=[between?'is-between':'',start?'is-checkin':'',end?'is-checkout':''].filter(Boolean).join(' ');
+        button.setAttribute('aria-label',formatDay(date));
+        button.setAttribute('aria-pressed',String(start||end));
+        if(selectable)button.addEventListener('click',()=>{void selectSearchRangeDate(date);});
+        days.appendChild(button);
+      }
+      panel.appendChild(days);rangeMonths.appendChild(panel);
+    }
+  }
+  async function selectSearchRangeDate(date:string){
+    // Revalidate the snapshot at checkout selection; fail closed on stale data.
+    if(!await refreshMaster()){
+      rangeMessage.textContent=tr('masterOffline');renderRangePicker();return;
+    }
+    if(rangePendingStart&&date>rangePendingStart&&canFinishSearchRange(rangePendingStart,date)){
+      arrival.value=rangePendingStart;
+      departure.value=date;
+      rangePendingStart=null;
+      pendingStart=null;
+      month=arrival.value.slice(0,7);
+      closeRangePicker(true);
+      rangeMessage.textContent='';
+    }else if(canStartSearchRange(date)){
+      arrival.value=date;departure.value='';
+      rangePendingStart=date;
+      rangeMessage.textContent=tr('selectStart');
+    }else{
+      rangeMessage.textContent=tr('different');
+    }
+    renderRangeSummary();renderRangePicker();
+    filters=newFilters();updateResults();
+  }
+  async function openRangePicker(){
+    if(!rangePicker.hidden){closeRangePicker(true);return;}
+    rangeMonth=arrival.value?arrival.value.slice(0,7):'2027-03';
+    rangePendingStart=arrival.value&&!departure.value?arrival.value:null;
+    rangePicker.hidden=false;
+    rangeTrigger.setAttribute('aria-expanded','true');
+    rangeMessage.textContent=tr('rangeLoading');
+    renderRangePicker();
+    const connected=await refreshMaster();
+    if(rangePicker.hidden)return;
+    rangeMessage.textContent=!connected?tr('masterOffline'):
+      rangePendingStart?tr('selectStart'):tr('rangeHint');
+    renderRangePicker();
+    rangePicker.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+  }
+  rangeTrigger.addEventListener('click',()=>{void openRangePicker();});
+  widget.querySelector<HTMLButtonElement>('[data-range-close]')?.addEventListener('click',()=>closeRangePicker(true));
+  rangePrev.addEventListener('click',()=>{rangeMonth=monthShift(rangeMonth,-1);renderRangePicker();});
+  rangeNext.addEventListener('click',()=>{rangeMonth=monthShift(rangeMonth,1);renderRangePicker();});
+  document.addEventListener('pointerdown',event=>{
+    if(!rangePicker.hidden&&event.target instanceof Node&&
+      !rangePicker.contains(event.target)&&!rangeTrigger.contains(event.target))
+      closeRangePicker();
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&!rangePicker.hidden){event.preventDefault();closeRangePicker(true);}
+  });
+  window.addEventListener('resize',()=>{if(!rangePicker.hidden)renderRangePicker();});
+  renderRangeSummary();
   const fill=(selector:string,value:string)=>{
     const el=widget.querySelector<HTMLElement>(selector);
     if(el)el.textContent=value;
@@ -318,6 +448,11 @@ if(widget){
        !Number.isInteger(filters.children)||filters.children<0||
        filters.adults+filters.children>10){
       feedback.textContent=tr('guestsInvalid');return;
+    }
+    if(advance&&(!arrival.value||!departure.value)){
+      feedback.textContent=tr('datesNeeded');
+      await openRangePicker();
+      return;
     }
     if(Boolean(arrival.value)!==Boolean(departure.value)){
       // Date-only search is allowed through the calendar: use arrival as the first click.
@@ -548,6 +683,5 @@ if(widget){
   });
   if(!requestEnabled&&confirmButton)confirmButton.disabled=true;
 
-  arrival.addEventListener('change',()=>{if(arrival.value){departure.min=plusDays(arrival.value,7);}});
   void search();
 }

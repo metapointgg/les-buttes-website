@@ -38,8 +38,31 @@ const properties=[
         <div class="discover-content">    <form class="discover-search" data-discovery-search novalidate>
       <div class="discover-search-title"><h2>{t.filter}</h2></div>
       <div class="discover-fields">
-        <label>{t.arrival}<input type="date" name="arrival" min="2027-03-20" max="2027-10-01"/></label>
-        <label>{t.departure}<input type="date" name="departure" min="2027-03-21" max="2027-10-02"/></label>
+        <div class="search-range-field">
+          <span class="search-range-label" id="search-range-label">{t.rangeTitle}</span>
+          <button type="button" class="search-range-trigger" data-range-trigger
+            aria-labelledby="search-range-label" aria-describedby="search-range-summary"
+            aria-haspopup="dialog" aria-expanded="false" aria-controls="search-date-range">
+            <span id="search-range-summary" data-range-summary>{t.rangePlaceholder}</span>
+            <span class="search-range-icon" aria-hidden="true">▦</span>
+          </button>
+          <input type="hidden" name="arrival" />
+          <input type="hidden" name="departure" />
+          <div class="search-range-picker" id="search-date-range" data-range-picker
+            role="dialog" aria-modal="false" aria-label={t.rangeTitle} hidden>
+            <div class="search-range-picker-head">
+              <div><strong>{t.rangeTitle}</strong><p>{t.rangeHint}</p></div>
+              <button type="button" class="search-range-close" data-range-close aria-label={t.rangeDone}>×</button>
+            </div>
+            <div class="search-range-nav">
+              <button type="button" data-range-prev aria-label={t.previous}>‹</button>
+              <strong data-range-month-label></strong>
+              <button type="button" data-range-next aria-label={t.next}>›</button>
+            </div>
+            <div class="search-range-months" data-range-months></div>
+            <p class="search-range-feedback" data-range-message role="status" aria-live="polite">{t.rangeHint}</p>
+          </div>
+        </div>
         <label>{t.adults}<input name="adults" type="number" min="1" max="10" step="1" value="2" required/></label>
         <label>{t.children}<input name="children" type="number" min="0" max="9" step="1" value="0" required/></label>
         <label>{t.rooms}
@@ -193,6 +216,35 @@ const properties=[
 .discover-fields{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.8rem;align-items:end}
 .discover-fields label{display:flex;flex-direction:column;gap:.4rem;font-size:.85rem;font-weight:650;grid-column:span 2}
 .discover-fields input,.discover-fields select{width:100%;min-width:0;min-height:2.8rem;border-radius:.35rem;background:#fff;border:1px solid var(--line);padding:.5rem;color:var(--ink);font:inherit}
+.search-range-field{grid-column:span 4;position:relative;display:flex;flex-direction:column;gap:.4rem;min-width:0}
+.search-range-label{font-size:.85rem;font-weight:650}
+.search-range-trigger{display:flex;justify-content:space-between;align-items:center;gap:.8rem;min-height:2.8rem;width:100%;padding:.5rem .7rem;border:1px solid var(--line);border-radius:.35rem;background:#fff;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.search-range-trigger:hover,.search-range-trigger[aria-expanded="true"]{border-color:var(--green)}
+.search-range-trigger:focus-visible,.search-range-picker button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.search-range-icon{font-size:1.15rem;color:var(--green)}
+.search-range-picker{position:absolute;z-index:25;top:100%;left:0;width:min(740px,calc(100vw - 3rem));max-width:calc(100vw - 3rem);margin-top:.5rem;padding:clamp(.8rem,2vw,1.35rem);border:1px solid var(--line);border-radius:.8rem;background:#fff;box-shadow:0 18px 36px #19251d28}
+.search-range-picker[hidden]{display:none!important}
+.search-range-picker-head{display:flex;justify-content:space-between;align-items:start;gap:1rem}
+.search-range-picker-head strong{font-size:1.05rem}
+.search-range-picker-head p{font-size:.83rem;color:var(--soft);margin:.3rem 0}
+.search-range-close{border:0;background:none;color:var(--ink);font-size:1.65rem;cursor:pointer;padding:0 .25rem}
+.search-range-nav{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin:.7rem 0 1rem}
+.search-range-nav button{width:2.25rem;height:2.25rem;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--ink);cursor:pointer;font-size:1.4rem}
+.search-range-nav button:disabled{opacity:.3;cursor:not-allowed}
+.search-range-nav strong{font-size:.85rem;text-align:center}
+.search-range-months{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(.6rem,2vw,1.2rem)}
+.search-range-months :global(.search-range-month){min-width:0}
+.search-range-months :global(.search-range-month-title){font-size:.85rem;text-align:center;font-weight:650;margin:0 0 .7rem}
+.search-range-months :global(.search-range-weekdays),.search-range-months :global(.search-range-days){display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.15rem}
+.search-range-months :global(.search-range-weekdays){margin-bottom:.4rem}
+.search-range-months :global(.search-range-weekdays span){font-size:.67rem;text-align:center;color:var(--soft);font-weight:600}
+.search-range-months :global(.search-range-days button){aspect-ratio:1;min-width:0;min-height:2rem;padding:0;border:1px solid transparent;border-radius:50%;background:#fff;color:var(--ink);font:inherit;font-size:.79rem;cursor:pointer}
+.search-range-months :global(.search-range-days button:not(:disabled):hover){border-color:var(--green);background:var(--cream)}
+.search-range-months :global(.search-range-days button:disabled){cursor:not-allowed;opacity:.32}
+.search-range-months :global(.search-range-days button.is-between){background:#bed4c3;border-radius:.25rem}
+.search-range-months :global(.search-range-days button.is-checkin),.search-range-months :global(.search-range-days button.is-checkout){background:var(--green);color:#fff;border-radius:50%;font-weight:750;opacity:1}
+.search-range-feedback{font-size:.83rem;color:var(--soft);min-height:1.3rem;margin:.85rem 0 0}
+@media(max-width:44rem){.search-range-months{grid-template-columns:1fr}.search-range-picker{width:min(390px,calc(100vw - 2.5rem))}}
 .discover-search-button{grid-column:span 2;min-height:2.8rem}
 .discover-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(16rem,.34fr);gap:clamp(1.2rem,3vw,2.5rem);align-items:start}
 .discover-content{min-width:0}.discover-content section+section{margin-top:2rem}
@@ -267,8 +319,8 @@ const properties=[
 .discover-aside ol{padding-left:1.2rem}.discover-aside li{padding-left:.2rem;margin:.75rem 0;font-size:.9rem}
 .discover-help-links{display:flex;flex-direction:column;align-items:start;gap:.8rem;margin-top:1rem}
 @media(max-width:76rem){.discover-layout{grid-template-columns:minmax(0,1fr) 17rem}.discover-calendar-grids :global(.calendar-two-months){gap:.65rem}}
-@media(max-width:55rem){.discover-layout{grid-template-columns:1fr}.discover-aside{position:static}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 1}}
-@media(max-width:36rem){.discover-result-list{grid-template-columns:1fr}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 2}.discover-calendar-grids :global(.calendar-two-months){grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.discover-calendar-grids :global(.calendar-days button){min-height:1.3rem}.discover-calendar-grids :global(.calendar-days .calendar-day){font-size:.67rem}.discover-calendar-grids :global(.calendar-weekdays span){font-size:.58rem}.discover-calendar-grids :global(.calendar-month-label){font-size:.72rem}.discover-calendar-nav{width:100%;justify-content:space-between}}
+@media(max-width:55rem){.discover-layout{grid-template-columns:1fr}.discover-aside{position:static}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button{grid-column:span 1}.search-range-field{grid-column:span 2}}
+@media(max-width:36rem){.discover-result-list{grid-template-columns:1fr}.discover-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.discover-fields label,.discover-search-button,.search-range-field{grid-column:span 2}.discover-calendar-grids :global(.calendar-two-months){grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.discover-calendar-grids :global(.calendar-days button){min-height:1.3rem}.discover-calendar-grids :global(.calendar-days .calendar-day){font-size:.67rem}.discover-calendar-grids :global(.calendar-weekdays span){font-size:.58rem}.discover-calendar-grids :global(.calendar-month-label){font-size:.72rem}.discover-calendar-nav{width:100%;justify-content:space-between}}
 
 .discover-journey{max-width:1130px}
 .journey-screen[hidden],.discover-results[hidden],.discover-availability[hidden],.discover-summary[hidden]{display:none!important}
