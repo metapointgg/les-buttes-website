@@ -11,8 +11,10 @@ export function createStagingSesTransport({
  if(typeof clientFactory!=='function'||typeof commandFactory!=='function')
   throw Error('SES transport factories required');
  return {
-  async send({to,type,subject,body,templateId,bookingId}={}){
+  async send({to,type,subject,body,html,templateId,bookingId}={}){
    const decision=validateStagingSesMessage({env,to,type,subject,body,templateId,bookingId});
+  if(html!==undefined&&(typeof html!=='string'||html.length>50000||!html.startsWith('<!doctype html>')))
+   throw Error('Invalid HTML email content');
    if(!decision.allowed)throw Error('Staging SES delivery not authorised: '+decision.failures.join('; '));
    // SES region deliberately differs from AWS_REGION of our eu-west-2 booking Lambda.
    const command=commandFactory({
@@ -26,7 +28,7 @@ export function createStagingSesTransport({
     Destination:{ToAddresses:[decision.recipient]},
     Message:{
      Subject:{Data:subject,Charset:'UTF-8'},
-     Body:{Text:{Data:body,Charset:'UTF-8'}}
+     Body:{Text:{Data:body,Charset:'UTF-8'},...(html?{Html:{Data:html,Charset:'UTF-8'}}:{})}
     }
    });
    const client=clientFactory(decision.region);
