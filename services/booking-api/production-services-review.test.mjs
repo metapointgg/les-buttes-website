@@ -140,6 +140,8 @@ test('controlled unpaid second acceptance deactivates at SumUp before releasing 
  assert.match(admin,/deactivationEnabled:\(\)=>process\.env\.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'/);
  assert.match(admin,/deactivateAndReleaseControlledUnpaidBooking/);
  assert.match(gateway,/checkout\\\/deactivate/);
+ assert.match(source,/RouteKey: POST \/admin\/production\/bookings\/\{bookingId\}\/checkout\/deactivate/);
+ assert.match(source,/ProductionCheckoutDeactivateRoute:[\s\S]{0,320}AuthorizationType: JWT[\s\S]{0,120}AuthorizerId: !Ref CognitoAuthorizerId/);
  assert.match(core,/await sumup\.deactivateCheckout\(checkout\.checkoutId\)/);
  assert.match(core,/const final=await sumup\.retrieveCheckout\(checkout\.checkoutId\)/);
  assert.ok(core.indexOf('const final=await sumup.retrieveCheckout')<core.indexOf('const actions=['));
