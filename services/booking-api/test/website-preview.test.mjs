@@ -221,17 +221,17 @@ test('search stage uses a single two-click calendar instead of two native date p
  assert.match(page,/type="hidden" name="arrival"/);
  assert.match(page,/type="hidden" name="departure"/);
  assert.doesNotMatch(page,/type="date" name="(?:arrival|departure)"/);
- assert.match(script,/function renderRangePicker\\(\\)/);
- assert.match(script,/async function selectSearchRangeDate\\(date:string\\)/);
- assert.match(script,/eligibleSearchUnits\\(\\)\\.some\\(unit=>possibleNight\\(unit,date\\)\\)/);
- assert.match(script,/eligibleSearchUnits\\(\\)\\.some\\(unit=>canPickCheckout\\(unit,start,end\\)\\)/);
- assert.match(script,/if\\(rangePendingStart&&date>rangePendingStart&&canFinishSearchRange\\(rangePendingStart,date\\)\\)/);
- assert.match(script,/const connected=await refreshMaster\\(\\)/);
- assert.match(script,/if\\(advance&&\\(!arrival\\.value\\|\\|!departure\\.value\\)\\)/);
- assert.match(script,/new URLSearchParams\\(\\{unit:choice,start:arrival\\.value,end:departure\\.value/);
- assert.match(script,/if\\(event\\.key==='Escape'&&!rangePicker\\.hidden\\)/);
- assert.match(page,/\\.search-range-picker\\[hidden\\]\\{display:none!important\\}/);
- assert.match(page,/@media\\(max-width:44rem\\)\\{\\.search-range-months\\{grid-template-columns:1fr\\}/);
+ assert.ok(script.includes('function renderRangePicker()'));
+ assert.ok(script.includes('async function selectSearchRangeDate(date:string)'));
+ assert.ok(script.includes('eligibleSearchUnits().some(unit=>possibleNight(unit,date))'));
+ assert.ok(script.includes('eligibleSearchUnits().some(unit=>canPickCheckout(unit,start,end))'));
+ assert.ok(script.includes('if(rangePendingStart&&date>rangePendingStart&&canFinishSearchRange(rangePendingStart,date))'));
+ assert.ok(script.includes('const connected=await refreshMaster()'));
+ assert.ok(script.includes('if(advance&&(!arrival.value||!departure.value))'));
+ assert.ok(script.includes('new URLSearchParams({unit:choice,start:arrival.value,end:departure.value'));
+ assert.ok(script.includes("if(event.key==='Escape'&&!rangePicker.hidden)"));
+ assert.ok(page.includes('.search-range-picker[hidden]{display:none!important}'));
+ assert.ok(page.includes('@media(max-width:44rem){.search-range-months{grid-template-columns:1fr}'));
  for(const label of ['Select your dates','Kies uw data','Choisissez vos dates'])
    assert.ok(translations.includes(label));
 });
