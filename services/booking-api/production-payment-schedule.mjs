@@ -6,6 +6,7 @@ import {productionReconciliationEnabled,reconcileOwnerLivePayment} from './produ
 import {dispatchProductionBookingLifecycleEmail} from './booking-production-email-dispatch.mjs';
 import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
 import {productionEmailGate} from './production-integration-gates.mjs';
+import {controlledTestBooking} from './controlled-production-test.mjs';
 
 const RULE='arn:aws:events:eu-west-2:145608514666:rule/les-buttes-production-payment-reconciliation';
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
@@ -56,6 +57,9 @@ export async function reconcileScheduledProductionPayments(event,{
     const {Item:checkout}=await db.send(new GetCommand({TableName:env.BOOKINGS_TABLE,
      Key:{PK:'BOOKING#'+booking.id,SK:'PAYMENT#CHECKOUT'},ConsistentRead:true}));
     if(!checkout)continue;
+    if(env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'&&
+      (!controlledTestBooking(booking)||Number(booking.approvedAmountGBP)!==1))
+      continue;
     result.checked++;
     try{
      const confirmed=await reconcile({db,bookingId:booking.id,env,

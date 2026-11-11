@@ -9,6 +9,7 @@ import {productionReconciliationEnabled,reconcileOwnerLivePayment} from './produ
 import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
 import {dispatchProductionBookingLifecycleEmail} from './booking-production-email-dispatch.mjs';
 import {productionEmailGate} from './production-integration-gates.mjs';
+import {controlledTestBooking,TEST_APPROVAL_PENCE} from './controlled-production-test.mjs';
 import {reconcileScheduledProductionPayments} from './production-payment-schedule.mjs';
 
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
@@ -40,15 +41,36 @@ export async function handler(event){
    checkoutEnabled:()=>productionCheckoutEnabled(process.env),
    reconciliationEnabled:()=>productionReconciliationEnabled(process.env),
    registerCheckout:async args=>{
+    if(process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'){
+     const {Item:booking}=await db.send(new GetCommand({TableName:table,
+      Key:{PK:'BOOKING#'+args.bookingId,SK:'META'},ConsistentRead:true}));
+     if(!controlledTestBooking(booking)||Number(booking.approvedAmountGBP)!==1)
+      throw Error('Only the authorised £1 test checkout is permitted');
+    }
     const result=await registerCheckoutWithLiveSumUp({db,...args});
     return {...result,notificationStatus:await notify(args.bookingId,'approval_payment')};
    },
    reconcilePayment:async args=>{
+    if(process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'){
+     const {Item:booking}=await db.send(new GetCommand({TableName:table,
+      Key:{PK:'BOOKING#'+args.bookingId,SK:'META'},ConsistentRead:true}));
+     if(!controlledTestBooking(booking)||Number(booking.approvedAmountGBP)!==1)
+      throw Error('Only the authorised £1 test payment may be reconciled');
+    }
     const result=await reconcileOwnerLivePayment({db,...args});
     return {...result,notificationStatus:await notify(args.bookingId,'confirmed')};
    },
    readCheckout:({bookingId})=>readRegisteredCheckout({db,table,bookingId}),
    writeAction:async args=>{
+    if(process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'){
+     const {Item:booking}=await db.send(new GetCommand({TableName:table,
+      Key:{PK:'BOOKING#'+args.bookingId,SK:'META'},ConsistentRead:true}));
+     if(!controlledTestBooking(booking))throw Error('Controlled production test booking required');
+     if(args.action==='approve'&&
+       (args.approval?.amountPence!==TEST_APPROVAL_PENCE||
+        !String(args.approval?.priceChangeReason??'').includes('Owner-authorised £1 live payment acceptance test')))
+      throw Error('Audited £1 production test approval required');
+    }
     const result=await executeOwnerTransition({...args,db,table,
      readCancellationPolicy:async version=>(await db.send(new GetCommand({TableName:table,
       Key:{PK:'CONFIG#cancellation#all',SK:'VERSION#'+version},ConsistentRead:true}))).Item??null,
