@@ -28,6 +28,10 @@ test('production transport is pinned to us-east-1 and the approved domain sender
  assert.equal(region,'us-east-1');assert.equal(input.Source,'bookings@lesbuttes.com');
  assert.deepEqual(input.Destination.ToAddresses,['guest@example.com']);assert.equal(result.status,'ACCEPTED_BY_SES_NOT_DELIVERED');
  assert.equal(destroyed,1);
+ const htmlTransport=createProductionSesTransport({env,clientFactory:()=>({send:async command=>(input=command,{MessageId:'ses-html'}),destroy:()=>{}}),commandFactory:x=>x});
+ await htmlTransport.send({...base,html:'<!doctype html><html><body><p>Booking request</p></body></html>'});
+ assert.match(input.Message.Body.Html.Data,/Booking request/);
+ assert.equal(input.Message.Body.Text.Data,base.body);
 });
 
 test('production request dispatch reads the authoritative record and prepares guest and owner messages',async()=>{
