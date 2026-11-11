@@ -76,6 +76,23 @@ export async function handler(event){
       Key:{PK:'CONFIG#cancellation#all',SK:'VERSION#'+version},ConsistentRead:true}))).Item??null,
      readBooking:async bookingId=>(await db.send(new GetCommand({TableName:table,
       Key:{PK:'BOOKING#'+bookingId,SK:'META'},ConsistentRead:true}))).Item??null});
+    // Owner approval is durable before contacting SumUp. Register the approved
+    // amount once and send the authoritative checkout link via SES outbox.
+    // On provider failure, retain the approved booking for manual recovery.
+    if(args.action==='approve'){
+     let checkoutStatus='OWNER_ACTION_REQUIRED',notificationStatus='NOT_SENT';
+     try{
+      const checkout=await registerCheckoutWithLiveSumUp({db,bookingId:args.bookingId,
+       identity:args.identity});
+      if(checkout?.status!=='REGISTERED'||checkout.bookingId!==args.bookingId)
+       throw Error('Checkout registration not verified');
+      checkoutStatus='REGISTERED';
+      notificationStatus=await notify(args.bookingId,'approval_payment');
+     }catch(error){
+      console.error('PRODUCTION_APPROVAL_CHECKOUT_REVIEW',args.bookingId,error?.name??'Error');
+     }
+     return {...result,checkoutStatus,notificationStatus};
+    }
     const type=args.action==='decline'?'declined':args.action==='cancel'?'cancelled':null;
     return {...result,...(type?{notificationStatus:await notify(args.bookingId,type)}:{})};
    }

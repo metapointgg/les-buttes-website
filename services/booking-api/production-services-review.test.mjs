@@ -20,7 +20,8 @@ test('production services reuse the isolated table and keep every transactional 
  assert.match(source,/LIVE_EMAILS_APPROVED: !Ref LiveEmailsApproved/);
  assert.match(source,/Action: ses:SendEmail/);
  assert.doesNotMatch(source,/ses:\*/i);
- assert.match(source,/identity\/lesbuttes\.com/);
+ assert.match(source,/ses:FromAddress: bookings@lesbuttes\.com/);
+ assert.equal((source.match(/ses:FromAddress: bookings@lesbuttes\.com/g)??[]).length,2);
  assert.match(source,/BOOKING_SES_FROM: bookings@lesbuttes\.com/);
  assert.match(source,/BOOKING_OWNER_EMAIL: mike@lesbuttes\.com/);
  assert.match(source,/BookingRequestsEnabled:[\s\S]{0,120}Default: 'false'/);
@@ -117,4 +118,16 @@ test('one-time £1 live acceptance is server-bound and default-off without chang
  assert.match(index,/controlledTestBookingClaim\(table,id\)/);
  assert.match(admin,/args\.approval\?\.amountPence!==TEST_APPROVAL_PENCE/);
  assert.match(admin,/Number\(booking\.approvedAmountGBP\)!==1/);
+});
+
+
+test('owner approval automatically registers live checkout and dispatches the guest payment link',()=>{
+ const transaction=readFileSync(new URL('./production-admin-transaction-handler.mjs',import.meta.url),'utf8');
+ assert.match(transaction,/if\(args\.action==='approve'\)\{/);
+ assert.match(transaction,/await registerCheckoutWithLiveSumUp\(\{db,bookingId:args\.bookingId/);
+ assert.match(transaction,/checkout\?\.status!=='REGISTERED'/);
+ assert.match(transaction,/notificationStatus=await notify\(args\.bookingId,'approval_payment'\)/);
+ assert.match(transaction,/checkoutStatus='OWNER_ACTION_REQUIRED'/);
+ assert.match(transaction,/PRODUCTION_APPROVAL_CHECKOUT_REVIEW/);
+ assert.match(transaction,/BOOKING_CONTROLLED_TEST_ONLY_ENABLED/);
 });
