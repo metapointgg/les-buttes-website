@@ -125,7 +125,7 @@ Resources:
         ThrottlingBurstLimit: 20
         ThrottlingRateLimit: 10
       AccessLogSettings:
-        DestinationArn: !GetAtt ProductionApiAccessLogGroup.Arn
+        DestinationArn: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/apigateway/les-buttes-booking-production-read'
         Format: >-
           {"requestId":"$context.requestId","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","routeKey":"$context.routeKey","status":"$context.status","responseLength":"$context.responseLength","integrationError":"$context.integrationErrorMessage"}
 
