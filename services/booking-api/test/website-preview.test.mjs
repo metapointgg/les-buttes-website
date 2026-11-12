@@ -256,7 +256,7 @@ test('booking journey uses an Edit search pill, hides test copy and retains live
  assert.match(copy,/direct:'Price'/);
  assert.match(copy,/direct:'Prijs'/);
  assert.match(copy,/direct:'Prix'/);
- assert.match(script,/priceLabel\.textContent=tr\('direct'\)/);
+ assert.match(script,/fill\('\[data-summary-direct\]',money\(Number\(authoritativeQuote\.totalGBP\)\)\)/);
  assert.match(script,/quote\.meetsDraftMinimum\?'':tr\('tooShort'\)/);
  assert.match(script,/reviewNext\.disabled=!masterConnected\(\)\|\|!q\|\|!q\.meetsDraftMinimum/);
  assert.match(script,/checkAuthoritativeQuote\(\)\.then/);
