@@ -81,8 +81,8 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.ok(discoveryScript.includes("confirmButton.type='submit'"));
   assert.ok(discoveryScript.includes("confirmButton.setAttribute('aria-disabled','false')"));
   assert.ok(discoveryScript.includes("if(requestEnabled&&!syntheticRequestEnabled&&confirmButton)"));
-  assert.ok(discoveryScript.includes(":'Submit reservation request';"));
-  assert.ok(discoveryScript.includes("confirmButton.textContent=controlledOwnerTest?"));
+  assert.ok(discoveryScript.includes("confirmButton.textContent='Submit reservation request';"));
+  assert.ok(!discoveryScript.includes("confirmButton.textContent=controlledOwnerTest?"));
   assert.ok(discoveryScript.includes("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"));
 
   assert.doesNotMatch(discoveryScript,/x-lesbuttes-staging-token|STAGING_API_TOKEN/);
