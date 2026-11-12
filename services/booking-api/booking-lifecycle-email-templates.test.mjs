@@ -109,3 +109,29 @@ test('email body and stay summary remain white without cream text strips',()=>{
  assert.match(message.html,/border-left:3px solid #b47b3a/);
  assert.match(message.html,/background:#194c3d/);
 });
+
+test('production lifecycle emails contain no preview, illustrative or staging copy',()=>{
+ const requested={...base,status:'REQUESTED',guestName:'Example Guest',guestEmail:'guest@example.com',
+  guestTelephone:'+44 1481 000000',guests:2,quotedPriceGBP:'735.00'};
+ const scenarios=[
+  ...Object.entries(fixture).map(([type,data])=>({type,...data})),
+  {type:'requested',booking:requested},
+  {type:'owner_request',booking:requested}
+ ];
+ for(const input of scenarios){
+  const message=renderBookingLifecycleEmail(input);
+  for(const field of [message.subject,message.body,message.html]){
+   assert.doesNotMatch(field,/DESIGN TEST|TEST ONLY|PREVIEW|ILLUSTRATIVE|STAGING|SANDBOX|FAKE BOOKING|NO BOOKING|in a real (approval|message)|OWNER EMAIL TEST/i,input.type);
+  }
+  assert.match(message.html,/background:#ffffff/);
+ }
+ const approved=renderBookingLifecycleEmail({type:'approval_payment',...fixture.approval_payment});
+ assert.equal(approved.subject,'Les Buttes — Booking approved: payment required');
+ assert.match(approved.body,/Amount due: £1630\.00/);
+ assert.doesNotMatch(approved.body,/illustrative|test|preview/i);
+ assert.match(approved.html,/>Pay securely with SumUp<\/a>/);
+ assert.match(approved.html,/href="https:\/\/checkout\.sumup\.com\/pay\/c-123e4567-e89b-42d3-a456-426614174000"/);
+ const owner=renderBookingLifecycleEmail({type:'owner_request',booking:requested});
+ assert.equal(owner.subject,'Les Buttes — New booking request awaiting approval');
+ assert.match(owner.html,/Review booking request/);
+});
