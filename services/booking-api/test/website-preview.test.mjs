@@ -316,6 +316,9 @@ test('live guest pricing hides indicative rates, public timestamp and brand-spec
  const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
  const copy=readFileSync(new URL('../../../src/lib/booking-discovery-copy.ts',import.meta.url),'utf8');
  assert.match(script,/summaryLines.hidden=liveQuoteEnabled/);
+ const page=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
+ assert.match(page,/\.discover-summary-lines\[hidden\],\.discover-cost-breakdown>div\[hidden\]\{display:none!important\}/);
+ assert.match(page,/>booking terms<\/a>/);
  assert.doesNotMatch(script,/tr\('liveMaster'\)/);
  assert.match(copy,/airbnb:'Hosting site comparison'/);
  assert.match(copy,/direct:'Total stay price'/);
