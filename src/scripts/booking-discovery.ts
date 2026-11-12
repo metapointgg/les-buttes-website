@@ -48,9 +48,9 @@ if(widget){
   let activeStep=1;
   const screens=Array.from(widget.querySelectorAll<HTMLElement>('[data-booking-step]'));
   const indicators=Array.from(widget.querySelectorAll<HTMLElement>('[data-journey-indicator]'));
-  const reviewNext=widget.querySelector<HTMLButtonElement>('[data-continue-review]')!;
+  const reviewNext=widget.querySelector<HTMLButtonElement>('[data-continue-details]')!;
   const detailsForm=widget.querySelector<HTMLFormElement>('[data-preview-guest-details]')!;
-  // A server-authoritative quote is mandatory before advancing from review.
+  // A server-authoritative quote is mandatory before advancing from availability to guest details.
   // The existing staging read-only master never authorises a request or payment.
   const bookingApi=(import.meta.env.PUBLIC_BOOKING_REQUEST_API_URL??'').trim().replace(/\/$/,'');
   // A quote-only API is separate from the booking request API and can never submit.
@@ -117,7 +117,7 @@ if(widget){
       indicator.classList.toggle('is-complete',index<step);
     }
     const heading=screens.find(x=>Number(x.dataset.bookingStep)===step)?.querySelector<HTMLElement>('h2');
-    // Keep browser scrolling predictable when moving between the four screens.
+    // Keep browser scrolling predictable when moving between the three screens.
     widget.scrollIntoView({behavior:'smooth',block:'start'});
     heading?.setAttribute('tabindex','-1');
     heading?.focus({preventScroll:true});
@@ -131,7 +131,8 @@ if(widget){
   };
   const updateNext=()=>{
     const q=getQuote();
-    reviewNext.disabled=!masterConnected()||!q||!q.meetsDraftMinimum;
+    reviewNext.disabled=!masterConnected()||!q||!q.meetsDraftMinimum||
+      (liveQuoteEnabled&&authoritativeQuote?.key!==quoteKey());
     reviewNext.setAttribute('aria-disabled',String(!masterConnected()));
     const note=widget.querySelector<HTMLElement>('[data-selection-feedback]');
     if(note)note.textContent=!masterConnected()?tr('masterOffline'):
@@ -365,6 +366,25 @@ if(widget){
       fill('[data-summary-direct]',money(quote.indicativeDirectTotalGBP));
       fill('[data-summary-saving]',money(quote.guestSavingGBP)+' ('+quote.guestSavingPercent+'%)');
       fill('[data-summary-minimum]',quote.meetsDraftMinimum?'':tr('tooShort'));
+      // In the live booking interface, never present the illustrative discount
+      // as an authoritative price. Display the provider-independent database quote.
+      for(const selector of ['[data-summary-airbnb]','[data-summary-saving]']){
+        const element=widget.querySelector<HTMLElement>(selector);
+        if(element?.parentElement)element.parentElement.hidden=liveQuoteEnabled;
+      }
+      if(liveQuoteEnabled){
+        reviewNext.disabled=true;
+        fill('[data-summary-direct]','…');
+        const expected=quoteKey();
+        void checkAuthoritativeQuote().then(ok=>{
+          if(expected!==quoteKey()||summarySection.hidden)return;
+          if(ok&&authoritativeQuote?.key===expected)
+            fill('[data-summary-direct]',money(Number(authoritativeQuote.totalGBP)));
+          else fill('[data-summary-direct]','Unavailable');
+          updateNext();
+          if(!ok)reviewNext.disabled=true;
+        });
+      }
       summarySection.hidden=false;
       if(!quote.meetsDraftMinimum)calendarMessage.textContent=tr('tooShort');
     }catch(error){
@@ -491,8 +511,7 @@ if(widget){
   widget.querySelectorAll<HTMLButtonElement>('[data-back-to-filter]').forEach(button=>
     button.addEventListener('click',()=>setStep(1)));
   onClick('[data-back-to-cottages]',()=>setStep(2));
-  onClick('[data-back-to-review]',()=>setStep(3));
-  onClick('[data-continue-review]',async()=>{
+  onClick('[data-continue-details]',async()=>{
     if(!await refreshMaster()){
       updateResults();
       const note=widget.querySelector<HTMLElement>('[data-selection-feedback]');
@@ -506,38 +525,15 @@ if(widget){
       feedback.textContent='An authoritative quote is unavailable. Please try again later.';
       return;
     }
-    // The review screen must display the server-authoritative total, not the
-    // illustrative preview rate. Do not compare illustrative Airbnb savings
-    // against an authoritative direct quote.
-    if(liveQuoteEnabled&&authoritativeQuote?.key===quoteKey()){
-      summaryLines.replaceChildren();
-      const cottages=document.createElement('p');
-      cottages.textContent=quote.units.map(item=>item.unit==='geranium'?'Geranium':'Honeysuckle').join(' + ');
-      summaryLines.append(cottages);
+    // The calendar-side summary and guest details must use the same independently
+    // checked database quote; a preview total is not approval to submit.
+    if(liveQuoteEnabled&&authoritativeQuote?.key===quoteKey())
       fill('[data-summary-direct]',money(Number(authoritativeQuote.totalGBP)));
-      const priceLabel=widget.querySelector<HTMLElement>('[data-summary-direct]')?.previousElementSibling;
-      if(priceLabel)priceLabel.textContent=tr('direct');
-      for(const selector of ['[data-summary-airbnb]','[data-summary-saving]']){
-        const element=widget.querySelector<HTMLElement>(selector);
-        if(element?.parentElement){element.parentElement.hidden=true;element.parentElement.style.display='none';}
-      }
-    }
+    fill('[data-details-cottage]',quote.units.map(item=>item.unit==='geranium'?'Geranium':'Honeysuckle').join(' + '));
+    fill('[data-details-stay]',rangeLabel(quote.start,quote.end)+' · '+quote.nights+' '+tr('nightWord'));
+    fill('[data-details-guests]',String(quote.adults+quote.children));
+    fill('[data-details-price]',liveQuoteEnabled&&authoritativeQuote?.key===quoteKey()?money(Number(authoritativeQuote.totalGBP)):money(quote.indicativeDirectTotalGBP));
     setStep(3);
-  });
-  onClick('[data-continue-details]',async()=>{
-    if(!await refreshMaster()){updateResults();setStep(2);return;}
-    updateResults();
-    const q=getQuote();
-    if(!q||!q.meetsDraftMinimum){setStep(2);return;}
-    if(liveQuoteEnabled&&!await checkAuthoritativeQuote()){
-      feedback.textContent='An authoritative quote is unavailable. Please try again later.';
-      setStep(2);return;
-    }
-    fill('[data-details-cottage]',q.units.map(item=>item.unit==='geranium'?'Geranium':'Honeysuckle').join(' + '));
-    fill('[data-details-stay]',rangeLabel(q.start,q.end)+' · '+q.nights+' '+tr('nightWord'));
-    fill('[data-details-guests]',String(q.adults+q.children));
-    fill('[data-details-price]',liveQuoteEnabled&&authoritativeQuote?.key===quoteKey()?money(Number(authoritativeQuote.totalGBP)):money(q.indicativeDirectTotalGBP));
-    setStep(4);
   });
   // Submission requires an explicit build flag and an authoritative quote.
   const firstNameField=detailsForm.elements.namedItem('firstName') as HTMLInputElement;
