@@ -13,6 +13,14 @@ Parameters:
     Type: String
   ReviewedArtifactVersion:
     Type: String
+  EmailReleaseArtifactKey:
+    Type: String
+    Default: ''
+    Description: Optional reviewed email-only code key for request and owner-transaction Lambdas.
+  EmailReleaseArtifactVersion:
+    Type: String
+    Default: ''
+    Description: Immutable S3 version for the reviewed email-only release (both parameters required).
   CanonicalManagementApiId:
     Type: String
     AllowedValues: [i2irz87c82]
@@ -80,7 +88,19 @@ Parameters:
     Type: String
     AllowedValues: ['false', 'true']
     Default: 'false'
+Rules:
+  EmailReleaseArtifactMustBeComplete:
+    Assertions:
+      - Assert: !Or
+          - !And
+              - !Equals [!Ref EmailReleaseArtifactKey, '']
+              - !Equals [!Ref EmailReleaseArtifactVersion, '']
+          - !And
+              - !Not [!Equals [!Ref EmailReleaseArtifactKey, '']]
+              - !Not [!Equals [!Ref EmailReleaseArtifactVersion, '']]
+        AssertDescription: Both the email release S3 key and version must be supplied, or neither.
 Conditions:
+  UseEmailReleaseArtifact: !Not [!Equals [!Ref EmailReleaseArtifactKey, '']]
   CorrectAccountAndRegion: !And
     - !Equals [!Ref AWS::AccountId, '145608514666']
     - !Equals [!Ref AWS::Region, eu-west-2]
@@ -466,8 +486,8 @@ Resources:
         SystemLogLevel: WARN
       Code:
         S3Bucket: !Ref ReviewedArtifactBucket
-        S3Key: !Ref ReviewedArtifactKey
-        S3ObjectVersion: !Ref ReviewedArtifactVersion
+        S3Key: !If [UseEmailReleaseArtifact, !Ref EmailReleaseArtifactKey, !Ref ReviewedArtifactKey]
+        S3ObjectVersion: !If [UseEmailReleaseArtifact, !Ref EmailReleaseArtifactVersion, !Ref ReviewedArtifactVersion]
       Environment:
         Variables:
           BOOKING_ENVIRONMENT: production
@@ -669,8 +689,8 @@ Resources:
         SystemLogLevel: WARN
       Code:
         S3Bucket: !Ref ReviewedArtifactBucket
-        S3Key: !Ref ReviewedArtifactKey
-        S3ObjectVersion: !Ref ReviewedArtifactVersion
+        S3Key: !If [UseEmailReleaseArtifact, !Ref EmailReleaseArtifactKey, !Ref ReviewedArtifactKey]
+        S3ObjectVersion: !If [UseEmailReleaseArtifact, !Ref EmailReleaseArtifactVersion, !Ref ReviewedArtifactVersion]
       Environment:
         Variables:
           BOOKING_ENVIRONMENT: production
