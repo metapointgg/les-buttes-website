@@ -1,4 +1,5 @@
 name: Package reviewed production booking email release
+# Retry with corrected owner-email validation; upload private candidate only.
 
 on:
   push:
