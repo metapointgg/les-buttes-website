@@ -254,9 +254,9 @@ test('booking journey uses an Edit search pill, hides test copy and retains live
   'Availability from the booking master at the time displayed.']){
   assert.ok(!page.includes(forbidden)&&!script.includes(forbidden),forbidden);
  }
- assert.match(copy,/direct:'Price'/);
- assert.match(copy,/direct:'Prijs'/);
- assert.match(copy,/direct:'Prix'/);
+ assert.match(copy,/direct:'Total stay price'/);
+ assert.match(copy,/direct:'Totale verblijfsprijs'/);
+ assert.match(copy,/direct:'Prix total du séjour'/);
  assert.match(script,/fill\('\[data-summary-direct\]',money\(Number\(authoritativeQuote\.totalGBP\)\)\)/);
  assert.match(script,/quote\.meetsDraftMinimum\?'':tr\('tooShort'\)/);
  assert.match(script,/reviewNext\.disabled=!masterConnected\(\)\|\|!q\|\|!q\.meetsDraftMinimum/);
