@@ -69,6 +69,7 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
       throw Error('Verified guest contact details required for owner email');
     lines=['A new direct booking request is ready for your review.',
       stay,reference,'Guest: '+guest,'Guests: '+guests,'Email: '+email,'Telephone: '+telephone,
+      ...(/^\d+\.\d{2}$/.test(booking.quotedPriceGBP??'')?['Quoted price: £'+booking.quotedPriceGBP]:[]),
       'Review the request in the owner management application before approving or declining.',
       'Owner management: https://lesbuttes.ozanne-family.com',
       'No payment has been taken. The guest has been told that the request is provisional.'];
