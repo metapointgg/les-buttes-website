@@ -9,7 +9,9 @@ export function prepareRequestedBookingEmails(booking,{ownerEmail}={}){
  const valid=email=>typeof email==='string'&&email.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
  if(!valid(booking.guestEmail)||!valid(ownerEmail))throw Error('Guest and configured owner recipients required');
  const state={bookingId:booking.id,cottage:booking.units.length===2?'Geranium and Honeysuckle':cottages[booking.units[0]],
-  checkIn:booking.start,checkOut:booking.end,status:booking.status};
+  checkIn:booking.start,checkOut:booking.end,status:booking.status,
+  guestName:booking.guestName,guestEmail:booking.guestEmail,guestTelephone:booking.guestTelephone,
+  guests:booking.guests};
  return ['requested','owner_request'].map(type=>({...renderBookingLifecycleEmail({type,booking:state}),
   to:type==='requested'?booking.guestEmail:ownerEmail}));
 }
