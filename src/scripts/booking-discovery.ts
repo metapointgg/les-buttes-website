@@ -675,12 +675,35 @@ if(widget){
       }
       const result=await response.json() as {received?:boolean;reference?:string};
       if(result.received!==true||!result.reference)throw Error('A booking reference was not returned.');
+      // Replace the form with a dedicated confirmation, not a stale "Your details" screen.
+      const heading=widget.querySelector<HTMLElement>('#journey-three-heading');
+      if(heading)heading.textContent='Request received';
+      const intro=widget.querySelector<HTMLElement>('[data-booking-step="3"] .journey-stage-heading>p:not(.eyebrow)');
+      if(intro)intro.textContent='Thank you for choosing Les Buttes. We have received your request.';
+      const progress=widget.querySelector<HTMLElement>('[data-journey-indicator="3"] span:last-child');
+      if(progress)progress.textContent='Request received';
       detailsForm.replaceChildren();
+      detailsForm.classList.add('journey-request-success');
+      detailsForm.setAttribute('role','status');
+      detailsForm.setAttribute('aria-live','polite');
+      const mark=document.createElement('div');
+      mark.className='journey-request-success-mark';
+      mark.setAttribute('aria-hidden','true');
+      mark.textContent='✓';
+      const title=document.createElement('h3');
+      title.textContent='Thank you — your request is with us';
       const message=document.createElement('p');
-      message.setAttribute('role','status');
-      message.textContent='Your booking request has been received (reference '+result.reference+
-        '). It is awaiting owner approval and is not yet confirmed. No payment has been taken.';
-      detailsForm.append(message);
+      message.textContent='We have emailed you a copy of your request. We will review your dates and contact you once the owner has made a decision.';
+      const referenceLabel=document.createElement('p');
+      referenceLabel.className='journey-request-reference-label';
+      referenceLabel.textContent='YOUR BOOKING REFERENCE';
+      const reference=document.createElement('p');
+      reference.className='journey-request-reference';
+      reference.textContent=result.reference;
+      const next=document.createElement('p');
+      next.className='journey-request-next';
+      next.textContent='Your reservation is provisional until approved. No payment has been taken.';
+      detailsForm.append(mark,title,message,referenceLabel,reference,next);
     }catch(error){
       if(status)status.textContent=error instanceof Error?error.message:'Unable to submit the request.';
       const turnstile=(window as typeof window & {turnstile?:{reset:()=>void}}).turnstile;
