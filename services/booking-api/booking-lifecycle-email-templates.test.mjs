@@ -50,6 +50,10 @@ test('LB-09 cannot confirm before verification or promise refund on cancellation
  const msg=renderBookingLifecycleEmail({type:'cancelled',...fixture.cancelled});
  assert.doesNotMatch(msg.body,/refund/i);
  assert.match(msg.body,/Your booking has been cancelled/);
+ assert.doesNotMatch(msg.body,/dates have been released/i);
+ assert.match(msg.body,/did not request this cancellation/);
+ assert.match(msg.body,/contact us immediately/);
+ assert.match(msg.html,/contact us immediately/);
  const refund=renderBookingLifecycleEmail({type:'refund_confirmed',...fixture.refund_confirmed});
  assert.match(refund.body,/£367\.50/);
 });
