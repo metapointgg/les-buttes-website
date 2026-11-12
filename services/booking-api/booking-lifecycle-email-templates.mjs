@@ -57,9 +57,26 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
   case 'requested':
   case 'owner_request':
    if(booking.status!=='REQUESTED')throw Error('Requested booking state required');
-   subject=type==='owner_request'?'Les Buttes – booking request awaiting review':'Les Buttes – booking request received';
-   lines=[type==='owner_request'?'A booking request is awaiting your review in the management application.':'Thank you for choosing Les Buttes. We have received your request and will review the dates shortly.',
-    stay,reference,'This is a provisional request, not a confirmed reservation. We will email you once the owner has reviewed it. No payment has been taken.'];
+   subject=type==='owner_request'?'Les Buttes – new booking request to review':'Les Buttes – booking request received';
+   if(type==='owner_request'){
+    const guest=clean(booking.guestName,{max:120});
+    const email=clean(booking.guestEmail,{max:254});
+    const telephone=clean(booking.guestTelephone,{max:40});
+    const guests=booking.guests;
+    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||
+       !/^[+0-9() .-]{7,40}$/.test(telephone)||
+       !Number.isSafeInteger(guests)||guests<1||guests>10)
+      throw Error('Verified guest contact details required for owner email');
+    lines=['A new direct booking request is ready for your review.',
+      stay,reference,'Guest: '+guest,'Guests: '+guests,'Email: '+email,'Telephone: '+telephone,
+      'Review the request in the owner management application before approving or declining.',
+      'No payment has been taken. The guest has been told that the request is provisional.'];
+   }else{
+    lines=['Thank you for choosing Les Buttes. We have received your booking request.',
+      stay,reference,
+      'What happens next: we will check your request and email you once the owner has reviewed it.',
+      'Your booking is not yet confirmed. No payment has been taken.'];
+   }
    break;
   case 'approval_payment':{
    // An untrusted booking event cannot manufacture approval or payment amount.
