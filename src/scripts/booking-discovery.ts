@@ -686,10 +686,6 @@ if(widget){
       detailsForm.classList.add('journey-request-success');
       detailsForm.setAttribute('role','status');
       detailsForm.setAttribute('aria-live','polite');
-      const mark=document.createElement('div');
-      mark.className='journey-request-success-mark';
-      mark.setAttribute('aria-hidden','true');
-      mark.textContent='✓';
       const title=document.createElement('h3');
       title.textContent='Thank you — your request is with us';
       const message=document.createElement('p');
@@ -703,7 +699,7 @@ if(widget){
       const next=document.createElement('p');
       next.className='journey-request-next';
       next.textContent='Your reservation is provisional until approved. No payment has been taken.';
-      detailsForm.append(mark,title,message,referenceLabel,reference,next);
+      detailsForm.append(title,message,referenceLabel,reference,next);
       const backActions=widget.querySelector<HTMLElement>('[data-booking-step="3"] .journey-actions');
       if(backActions)backActions.style.display='none';
     }catch(error){
