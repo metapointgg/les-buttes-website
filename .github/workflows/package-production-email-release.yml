@@ -1,0 +1,63 @@
+name: Package reviewed production booking email release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/package-production-email-release.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install production runtime dependencies
+        run: npm ci --prefix services/booking-api --omit=dev --ignore-scripts --no-audit --no-fund
+      - name: Verify email and SES delivery contracts
+        run: |
+          set -euo pipefail
+          node --test services/booking-api/booking-lifecycle-email-templates.test.mjs services/booking-api/booking-production-email.test.mjs
+      - name: Package immutable production integration code
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          (cd services/booking-api && zip -q -r ../../dist/les-buttes-production-integrations.zip . -x '*.test.mjs' 'test/*' 'node_modules/.cache/*')
+          unzip -tq dist/les-buttes-production-integrations.zip
+          for file in booking-lifecycle-email-templates.mjs booking-branded-email-html.mjs booking-request-email-preparation.mjs booking-production-ses-transport.mjs production-request-handler.mjs production-admin-transaction-handler.mjs; do
+            unzip -Z1 dist/les-buttes-production-integrations.zip | grep -Fx "$file"
+          done
+          unzip -Z1 dist/les-buttes-production-integrations.zip | grep -Fx 'node_modules/@aws-sdk/lib-dynamodb/package.json'
+          sha256sum dist/les-buttes-production-integrations.zip
+      - name: Assume existing website deployment role for restricted artefact upload only
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-github-deploy
+          aws-region: eu-west-2
+          role-session-name: temporary-reviewed-email-package
+      - name: Upload versioned private release candidate without deploying Lambdas
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = '145608514666'
+          bucket='les-buttes-payment-staging-145608514666-eu-west-2'
+          test "$(aws s3api get-bucket-versioning --bucket "$bucket" --query Status --output text)" = 'Enabled'
+          key="production-transactional/email-only-${GITHUB_SHA}/les-buttes-production-integrations.zip"
+          version="$(aws s3api put-object --bucket "$bucket" --key "$key" --body dist/les-buttes-production-integrations.zip --server-side-encryption AES256 --metadata source-commit="$GITHUB_SHA",release-scope="booking-email-templates" --query VersionId --output text)"
+          test -n "$version" && test "$version" != None
+          aws s3api head-object --bucket "$bucket" --key "$key" --version-id "$version" --query '{VersionId:VersionId,Size:ContentLength,Metadata:Metadata}' --output json
+          {
+            echo "## Private reviewed email package"
+            echo "Source commit: $GITHUB_SHA"
+            echo "S3 key: $key"
+            echo "S3 object version: $version"
+            echo 'No Lambda configuration, live booking, payment, refund, or CloudFormation stack changed.'
+          } >> "$GITHUB_STEP_SUMMARY"
