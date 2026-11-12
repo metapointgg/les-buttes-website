@@ -1,6 +1,7 @@
-// LB-09: staging-only SQS event-source adapter for SES delivery feedback.
-// Deploy (if approved) in us-east-1 alongside the SQS queue; DynamoDB is eu-west-2.
-// No guest email sends, booking state writes, or payment actions.
+// LB-09: Signed SES delivery feedback from the existing SQS event source.
+// Staging mode remains the default. Explicit opt-in permits matching the same
+// authenticated event against exactly one staging or production outbox.
+// No email sends, booking state writes, payment, or availability actions.
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient,GetCommand} from '@aws-sdk/lib-dynamodb';
 import {createSnsNotificationVerifier} from './booking-sns-signature.mjs';
