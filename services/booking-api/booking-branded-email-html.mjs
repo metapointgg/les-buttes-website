@@ -33,8 +33,10 @@ export function renderBrandedBookingHtml({type,body}={}){
  }
  const footers=new Set(['Les Buttes Holiday Cottages',
   'Please reply to the email you received if you need assistance.']);
- const ownerFields=type==='owner_request'?lines.filter(x=>/^(?:Guest|Guests|Email|Telephone): /.test(x)):[];
- const detail=new Set([stay,reference,amount,candidate,...ownerFields,...footers]);
+ const ownerFields=type==='owner_request'?lines.filter(x=>/^(?:Guest|Guests|Email|Telephone|Quoted price): /.test(x)):[];
+ const detail=new Set([stay,reference,amount,candidate,...ownerFields,...footers,
+  ...(type==='approval_payment'?['Pay securely using the SumUp hosted checkout:']:[]),
+  ...(type==='owner_request'?['Owner management: https://lesbuttes.ozanne-family.com']:[])]);
  const content=lines.filter(x=>!detail.has(x)).map(textRow).join('');
  const [cottage,isoDates]=stay.split(' | ');
  const [arrival,departure]=isoDates.split(' to ');
