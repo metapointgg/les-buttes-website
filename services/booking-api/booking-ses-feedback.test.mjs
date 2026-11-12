@@ -84,3 +84,21 @@ test('signed provider feedback recovers an uncertain send without resending',asy
  payload.mail.source='wrong@example.invalid';
  await assert.rejects(reconcile(makeStore(uncertain),'Delivery',{notification:{Type:'Notification',Message:JSON.stringify(payload)}}),/cannot be correlated/);
 });
+
+test('signed SES feedback can reconcile exact production outbox without booking mutations',async()=>{
+ const store=makeStore();
+ const productionTable='les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2';
+ const outcome=await reconcileAuthenticatedSesFeedback({
+  db:store.db,table:productionTable,notification:notification('Delivery'),
+  verifyEnvelope:async()=>true,now:()=>new Date('2026-11-12T20:30:00Z').toISOString()
+ });
+ assert.equal(outcome.state,'DELIVERED');
+ assert.equal(store.writes,1);
+ for(const badTable of ['les-buttes-booking-production-BookingTable-X',
+  'les-buttes-booking-prod-BookingTable-XYZ','arbitrary-table']){
+  await assert.rejects(reconcileAuthenticatedSesFeedback({
+   db:store.db,table:badTable,notification:notification('Delivery'),
+   verifyEnvelope:async()=>true
+  }),/unavailable/);
+ }
+});
