@@ -103,7 +103,8 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discovery,/type="email" name="email"[^>]*required/);
   assert.match(discovery,/type="tel" name="telephone"[^>]*pattern=[^>]*required/);
   assert.equal((discovery.match(/data-booking-step=/g)??[]).length,3);
-  assert.match(discovery,/LB-DIRECT-2027-01/);
+  assert.match(discovery,/>booking terms<\/a>/);
+  assert.doesNotMatch(discovery,/booking terms \(LB-DIRECT-2027-01\)/);
   assert.ok(discoveryScript.includes("termsVersion:'LB-DIRECT-2027-01'"));
   assert.ok(discoveryScript.includes("privacyVersion:'LB-PRIVACY-2027-01'"));
   assert.doesNotMatch(page,/data-mode="live"|booking-form/);
@@ -309,4 +310,15 @@ test('booking discovery does not show internal calendar verification narrative',
  assert.doesNotMatch(script,/tr\('liveDisclaimer'\)/);
  assert.doesNotMatch(copy,/Dates were checked against the booking master/);
  assert.doesNotMatch(copy,/We also verify Airbnb before accepting any request/);
+});
+
+test('live guest pricing hides indicative rates, public timestamp and brand-specific comparisons',()=>{
+ const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+ const copy=readFileSync(new URL('../../../src/lib/booking-discovery-copy.ts',import.meta.url),'utf8');
+ assert.match(script,/summaryLines.hidden=liveQuoteEnabled/);
+ assert.doesNotMatch(script,/tr\('liveMaster'\)/);
+ assert.match(copy,/airbnb:'Hosting site comparison'/);
+ assert.match(copy,/direct:'Total stay price'/);
+ assert.doesNotMatch(copy,/Airbnb calendar equivalent|Booking master checked at/);
+ assert.match(script,/termsVersion:'LB-DIRECT-2027-01'/);
 });
