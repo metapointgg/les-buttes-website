@@ -338,7 +338,7 @@ if(widget){
     }
     filters.choice=choice==='both'?'both':'any';
     feedback.textContent=!masterConnected()?tr('masterOffline'):
-      arrival.value&&departure.value&&candidates.every(c=>c.listedAs==='occupied')?tr('blocked'):tr('liveDisclaimer');
+      arrival.value&&departure.value&&candidates.every(c=>c.listedAs==='occupied')?tr('blocked'):'';
     calendarSection.hidden=false;
     renderCalendars();
     renderSummary();
