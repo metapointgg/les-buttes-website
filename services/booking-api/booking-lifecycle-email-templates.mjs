@@ -70,6 +70,7 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
     lines=['A new direct booking request is ready for your review.',
       stay,reference,'Guest: '+guest,'Guests: '+guests,'Email: '+email,'Telephone: '+telephone,
       'Review the request in the owner management application before approving or declining.',
+      'Owner management: https://lesbuttes.ozanne-family.com',
       'No payment has been taken. The guest has been told that the request is provisional.'];
    }else{
     lines=['Thank you for choosing Les Buttes. We have received your booking request.',
@@ -86,7 +87,7 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
     throw Error('Authoritative approved checkout required');
    const url=safeUrl(checkout.hostedCheckoutUrl);
    subject='Les Buttes – complete your booking payment';
-   lines=['Good news — your requested dates have been approved. To secure your stay, please complete payment using the link below.',
+   lines=['Your booking request has been approved. The next step is to pay securely to confirm your reservation.',
     stay,reference,'Amount due: '+money(checkout.amountPence),
     'Pay securely using the SumUp hosted checkout:',url,
     'Your booking will be confirmed once your payment has been verified. We will email you to confirm this.'];
