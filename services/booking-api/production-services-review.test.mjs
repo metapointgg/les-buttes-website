@@ -59,7 +59,7 @@ test('production writes are confined to the calendar importer and default-off tr
 
 test('production API and functions have bounded structured operational logging',()=>{
  assert.match(source,/ProductionApiAccessLogGroup:[\s\S]*RetentionInDays: 90/);
- assert.match(source,/AccessLogSettings:[\s\S]*DestinationArn: !GetAtt ProductionApiAccessLogGroup\.Arn/);
+ assert.match(source,/DestinationArn: !Sub 'arn:\$\{AWS::Partition\}:logs:\$\{AWS::Region\}:\$\{AWS::AccountId\}:log-group:\/aws\/apigateway\/les-buttes-booking-production-read'/);
  assert.match(source,/ThrottlingBurstLimit: 20/);
  assert.match(source,/ThrottlingRateLimit: 10/);
  assert.equal((source.match(/RetentionInDays: 90/g)??[]).length,9);
@@ -147,4 +147,20 @@ test('controlled unpaid second acceptance deactivates at SumUp before releasing 
  assert.ok(core.indexOf('const final=await sumup.retrieveCheckout')<core.indexOf('const actions=['));
  assert.match(core,/attribute_not_exists\(paidAt\) AND attribute_not_exists\(paymentTransactionId\)/);
  assert.match(core,/refundInitiated:false/);
+});
+
+test('production email-only Lambda releases use immutable scoped artefact override without changing other six Lambdas',()=>{
+ const parameters=source.slice(source.indexOf('Parameters:'),source.indexOf('Rules:'));
+ assert.match(parameters,/EmailReleaseArtifactKey:[\s\S]{0,110}Default: ''/);
+ assert.match(parameters,/EmailReleaseArtifactVersion:[\s\S]{0,110}Default: ''/);
+ assert.match(source,/EmailReleaseArtifactMustBeComplete:/);
+ assert.match(source,/UseEmailReleaseArtifact: !Not \[!Equals \[!Ref EmailReleaseArtifactKey, ''\]\]/);
+ const req=source.slice(source.indexOf('  DisabledRequestFunction:'),source.indexOf('  DisabledRequestIntegration:'));
+ const owner=source.slice(source.indexOf('  ProductionAdminTransactionFunction:'),source.indexOf('  ProductionAdminTransactionIntegration:'));
+ for(const body of [req,owner]){
+  assert.match(body,/S3Key: !If \[UseEmailReleaseArtifact, !Ref EmailReleaseArtifactKey, !Ref ReviewedArtifactKey\]/);
+  assert.match(body,/S3ObjectVersion: !If \[UseEmailReleaseArtifact, !Ref EmailReleaseArtifactVersion, !Ref ReviewedArtifactVersion\]/);
+ }
+ assert.equal((source.match(/S3Key: !If \[UseEmailReleaseArtifact/g)??[]).length,2);
+ assert.equal((source.match(/S3ObjectVersion: !If \[UseEmailReleaseArtifact/g)??[]).length,2);
 });
