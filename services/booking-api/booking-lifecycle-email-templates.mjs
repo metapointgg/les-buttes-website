@@ -111,7 +111,9 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
    if(booking.status!=='CANCELLED')throw Error('Cancelled booking state required');
    subject='Les Buttes – booking cancellation';
    // Cancellation never implies a refund. Verified refunds are communicated by a separate email.
-   lines=['Your booking has been cancelled and the dates have been released. If you would like to arrange another stay, please get in touch.',stay,reference];
+   lines=['Your booking has been cancelled.',stay,reference,
+    'If you did not request this cancellation, or are unsure why your booking was cancelled, please contact us immediately by replying to this email.',
+    'If you would like to arrange another stay, please get in touch.'];
    break;
   case 'refund_confirmed':
    if(booking.status!=='CANCELLED'||booking.refundStatus!=='REFUNDED'||
