@@ -11,7 +11,7 @@ export function prepareRequestedBookingEmails(booking,{ownerEmail}={}){
  const state={bookingId:booking.id,cottage:booking.units.length===2?'Geranium and Honeysuckle':cottages[booking.units[0]],
   checkIn:booking.start,checkOut:booking.end,status:booking.status,
   guestName:booking.guestName,guestEmail:booking.guestEmail,guestTelephone:booking.guestTelephone,
-  guests:booking.guests};
+  guests:booking.guests,quotedPriceGBP:booking.quote?.totalGBP};
  return ['requested','owner_request'].map(type=>({...renderBookingLifecycleEmail({type,booking:state}),
   to:type==='requested'?booking.guestEmail:ownerEmail}));
 }
