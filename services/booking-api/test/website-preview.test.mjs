@@ -302,3 +302,11 @@ test('successful request replaces guest form with clear branded confirmation and
  assert.match(page,/journey-request-success h3/);
  assert.match(page,/journey-request-reference-label/);
 });
+
+test('booking discovery does not show internal calendar verification narrative',()=>{
+ const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+ const copy=readFileSync(new URL('../../../src/lib/booking-discovery-copy.ts',import.meta.url),'utf8');
+ assert.doesNotMatch(script,/tr\('liveDisclaimer'\)/);
+ assert.doesNotMatch(copy,/Dates were checked against the booking master/);
+ assert.doesNotMatch(copy,/We also verify Airbnb before accepting any request/);
+});
