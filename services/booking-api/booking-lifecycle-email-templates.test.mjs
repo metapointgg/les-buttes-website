@@ -65,6 +65,21 @@ test('LB-09 rejects malformed dates, invented cottages, control characters and u
  assert.throws(()=>renderBookingLifecycleEmail({type:'payment_received',booking:base}));
 });
 
+test('owner review email includes actionable guest details without leaking them to guest emails',()=>{
+ const requested={...base,status:'REQUESTED',guestName:'A & B Guest',guestEmail:'guest@example.com',
+   guestTelephone:'+44 1481 000000',guests:2};
+ const owner=renderBookingLifecycleEmail({type:'owner_request',booking:requested});
+ const guest=renderBookingLifecycleEmail({type:'requested',booking:requested});
+ assert.match(owner.body,/Guest: A & B Guest/);
+ assert.match(owner.body,/Owner management: https:\/\/lesbuttes\.ozanne-family\.com/);
+ assert.match(owner.html,/Review booking request/);
+ assert.match(owner.html,/A &amp; B Guest/);
+ assert.match(owner.html,/GUEST DETAILS/);
+ assert.doesNotMatch(guest.body,/Guest: A & B Guest|Owner management:/);
+ assert.doesNotMatch(guest.html,/Review booking request|GUEST DETAILS/);
+ assert.throws(()=>renderBookingLifecycleEmail({type:'owner_request',booking:{...requested,guestTelephone:'invalid'}}));
+});
+
 test('branded HTML keeps verified stay, secure payment URL and readable plain text',()=>{
  const {body,html}=renderBookingLifecycleEmail({type:'approval_payment',...fixture.approval_payment});
  assert.match(html,/Les Buttes/);
