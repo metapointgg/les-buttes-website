@@ -36,12 +36,19 @@ test('production transport is pinned to us-east-1 and the approved domain sender
 
 test('production request dispatch reads the authoritative record and prepares guest and owner messages',async()=>{
  const booking={id,source:'direct',status:'REQUESTED',reservationStatus:'PENDING_REVIEW',units:['geranium'],
-  start:'2027-04-03',end:'2027-04-10',guestEmail:'guest@example.com'};
+  start:'2027-04-03',end:'2027-04-10',guestEmail:'guest@example.com',
+  guestName:'Example Guest',guestTelephone:'+44 1481 000000',guests:2};
  const messages=[];
  const results=await dispatchRequestedProductionBookingEmails({db:{send:async()=>({Item:booking})},table,bookingId:id,env,
   transport:{send:async()=>{}},send:async({message})=>(messages.push(message),{status:'ACCEPTED_BY_SES_NOT_DELIVERED'})});
  assert.deepEqual(messages.map(x=>[x.type,x.to]),[['requested','guest@example.com'],['owner_request','mike@lesbuttes.com']]);
  assert.equal(results.length,2);
+ assert.match(messages[1].body,/Guest: Example Guest/);
+ assert.match(messages[1].body,/Guests: 2/);
+ assert.match(messages[1].body,/Owner management: https:\/\/lesbuttes\.ozanne-family\.com/);
+ assert.match(messages[1].html,/Review booking request/);
+ assert.match(messages[1].html,/GUEST DETAILS/);
+ assert.doesNotMatch(messages[0].html,/GUEST DETAILS|Review booking request/);
 });
 
 test('production approval email uses only the registered hosted checkout',async()=>{
