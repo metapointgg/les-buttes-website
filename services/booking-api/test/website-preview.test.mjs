@@ -289,3 +289,16 @@ test('Turnstile starts on guest details and restricted owner failures are explai
  assert.match(src,/BOOKING_REQUESTS_APPROVED==='true'/);
  assert.match(src,/const token=syntheticRequestEnabled/);
 });
+
+test('successful request replaces guest form with clear branded confirmation and reference',()=>{
+ const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+ const page=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
+ assert.match(script,/heading\.textContent='Request received'/);
+ assert.match(script,/progress\.textContent='Request received'/);
+ assert.match(script,/detailsForm\.replaceChildren\(\)/);
+ assert.match(script,/journey-request-reference/);
+ assert.match(script,/No payment has been taken/);
+ assert.match(page,/journey-request-success-mark/);
+ assert.match(page,/journey-request-success h3/);
+ assert.match(page,/journey-request-reference-label/);
+});
