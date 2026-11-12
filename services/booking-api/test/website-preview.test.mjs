@@ -278,3 +278,14 @@ test('calendar and price appear alongside one another with direct progression to
  assert.match(script,/setStep\(3\)/);
  assert.match(script,/await checkAuthoritativeQuote\(\)/);
 });
+
+test('Turnstile starts on guest details and restricted owner failures are explained',()=>{
+ const src=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+ assert.match(src,/if\(step===3\)activateChallenge\(\)/);
+ assert.match(src,/activateChallenge=\(\)=>\{/);
+ assert.match(src,/'expired-callback'/);
+ assert.match(src,/Verification was rejected or your restricted test access is no longer valid/);
+ assert.match(src,/This one-time owner booking test has already been used/);
+ assert.match(src,/BOOKING_REQUESTS_APPROVED==='true'/);
+ assert.match(src,/const token=syntheticRequestEnabled/);
+});
