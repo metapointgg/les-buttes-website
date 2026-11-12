@@ -57,7 +57,7 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
   case 'requested':
   case 'owner_request':
    if(booking.status!=='REQUESTED')throw Error('Requested booking state required');
-   subject=type==='owner_request'?'Les Buttes – new booking request to review':'Les Buttes – booking request received';
+   subject=type==='owner_request'?'Les Buttes — New booking request awaiting approval':'Les Buttes — Booking request received';
    if(type==='owner_request'){
     const guest=clean(booking.guestName,{max:120});
     const email=clean(booking.guestEmail,{max:254});
@@ -87,7 +87,7 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
     checkout.bookingId!==id||checkout.amountPence!==booking.approvedAmountPence)
     throw Error('Authoritative approved checkout required');
    const url=safeUrl(checkout.hostedCheckoutUrl);
-   subject='Les Buttes – your booking is approved, complete payment';
+   subject='Les Buttes — Booking approved: payment required';
    lines=['Your booking request has been approved. The next step is to pay securely to confirm your reservation.',
     stay,reference,'Amount due: '+money(checkout.amountPence),
     'Pay securely using the SumUp hosted checkout:',url,
