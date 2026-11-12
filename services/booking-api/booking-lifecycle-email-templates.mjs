@@ -86,7 +86,7 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
     checkout.bookingId!==id||checkout.amountPence!==booking.approvedAmountPence)
     throw Error('Authoritative approved checkout required');
    const url=safeUrl(checkout.hostedCheckoutUrl);
-   subject='Les Buttes – complete your booking payment';
+   subject='Les Buttes – your booking is approved, complete payment';
    lines=['Your booking request has been approved. The next step is to pay securely to confirm your reservation.',
     stay,reference,'Amount due: '+money(checkout.amountPence),
     'Pay securely using the SumUp hosted checkout:',url,
