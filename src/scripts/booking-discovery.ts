@@ -704,6 +704,8 @@ if(widget){
       next.className='journey-request-next';
       next.textContent='Your reservation is provisional until approved. No payment has been taken.';
       detailsForm.append(mark,title,message,referenceLabel,reference,next);
+      const backActions=widget.querySelector<HTMLElement>('[data-booking-step="3"] .journey-actions');
+      if(backActions)backActions.style.display='none';
     }catch(error){
       if(status)status.textContent=error instanceof Error?error.message:'Unable to submit the request.';
       const turnstile=(window as typeof window & {turnstile?:{reset:()=>void}}).turnstile;
