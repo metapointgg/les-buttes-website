@@ -56,4 +56,20 @@ jobs:
           test -n "$version" && test "$version" != None
           echo "Private worker package: $key" >> "$GITHUB_STEP_SUMMARY"
           echo "Version: $version" >> "$GITHUB_STEP_SUMMARY"
-          echo "No Lambda, booking, payment or refund changed in packaging." >> "$GITHUB_STEP_SUMMARY"
+          echo "The existing Lambda code is updated in the following reviewed step; no bookings, payments or refunds are initiated." >> "$GITHUB_STEP_SUMMARY"
+      - name: Deploy reviewed code to existing SES feedback Lambda only
+        shell: bash
+        run: |
+          set -euo pipefail
+          fn='les-buttes-ses-feedback-worker-s-SesFeedbackWorker-GkP0cYxyfkDu'
+          config="$(aws lambda get-function --region us-east-1 --function-name "$fn" --query 'Configuration.[CodeSha256,RevisionId,Handler,Runtime,State,LastUpdateStatus]' --output text)"
+          read -r code_sha revision handler runtime state update_status <<< "$config"
+          test "$code_sha" = '/XX3SWLufG66/LdZWCiVYeH/gzYeOxqJAVTDHpFsnS8='
+          test "$handler" = 'index.handler'
+          test "$runtime" = 'nodejs22.x'
+          test "$state" = 'Active'
+          test "$update_status" = 'Successful'
+          aws lambda update-function-code --region us-east-1 --function-name "$fn" --revision-id "$revision" --zip-file fileb://dist/les-buttes-ses-feedback-worker.zip --no-publish > /dev/null
+          aws lambda wait function-updated --region us-east-1 --function-name "$fn"
+          aws lambda get-function --region us-east-1 --function-name "$fn" --query 'Configuration.[CodeSha256,LastUpdateStatus]' --output text
+          echo "Updated only the existing SES feedback Lambda code. Production feedback routing remains disabled in Lambda configuration pending independent approval checks." >> "$GITHUB_STEP_SUMMARY"
