@@ -50,23 +50,23 @@ export function renderBrandedBookingHtml({type,body}={}){
  const ownerButton=type==='owner_request'?
   '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 24px;"><tr><td bgcolor="#194c3d" style="border-radius:4px;"><a href="https://lesbuttes.ozanne-family.com" style="display:inline-block;padding:15px 26px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">Review booking request</a></td></tr></table>':'';
  const ownerDetails=ownerFields.length?
-  '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border:1px solid #e6e3d8;background:#fffdf8;"><tr><td style="padding:17px 21px;">'+
+  '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border:1px solid #e6e3d8;background:#ffffff;"><tr><td style="padding:17px 21px;">'+
   '<p style="margin:0 0 12px;color:#194c3d;font-size:11px;letter-spacing:1.1px;font-weight:700;">GUEST DETAILS</p>'+
   ownerFields.map(x=>'<p style="margin:0 0 7px;color:#33483f;font-size:14px;line-height:1.5;">'+escapeHtml(x)+'</p>').join('')+
   '</td></tr></table>':'';
  const button=paymentUrl?'<table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 24px;"><tr><td bgcolor="#194c3d" style="border-radius:4px;"><a href="'+escapeHtml(paymentUrl)+'" style="display:inline-block;padding:15px 26px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">Pay securely with SumUp</a></td></tr></table><p style="margin:0 0 18px;color:#52685b;font-size:12px;line-height:1.6;">If the button does not work, copy this secure payment link into your browser:<br><a style="color:#194c3d;word-break:break-all;" href="'+escapeHtml(paymentUrl)+'">'+escapeHtml(paymentUrl)+'</a></p>':'';
  const amountHtml=amount?'<p style="margin:15px 0 0;color:#17332a;font-size:19px;font-weight:700;">'+escapeHtml(amount)+'</p>':'';
  return '<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escapeHtml(titles[type])+'</title></head>'+
- '<body style="margin:0;padding:0;background:#f7f3e9;color:#17332a;font-family:Arial,Helvetica,sans-serif;">'+
- '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f3e9;"><tr><td align="center" style="padding:28px 12px 36px;">'+
- '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fffdf8;border:1px solid #e6e3d8;">'+
+ '<body style="margin:0;padding:0;background:#ffffff;color:#17332a;font-family:Arial,Helvetica,sans-serif;">'+
+ '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;"><tr><td align="center" style="padding:28px 12px 36px;">'+
+ '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e6e3d8;">'+
  '<tr><td style="padding:27px 34px;background:#194c3d;border-top:4px solid #b47b3a;">'+
  '<p style="margin:0 0 7px;color:#e7c58f;font-size:10px;letter-spacing:2.2px;font-weight:700;">GUERNSEY HOLIDAY COTTAGES</p>'+
  '<p style="margin:0;color:#fffdf8;font-size:35px;line-height:1.15;font-family:Georgia,Times New Roman,serif;">Les Buttes</p></td></tr>'+
  '<tr><td style="padding:32px 34px 12px;"><p style="margin:0 0 9px;color:#8d6635;font-size:11px;letter-spacing:1.5px;font-weight:700;">'+escapeHtml(status)+'</p>'+
  '<h1 style="margin:0 0 19px;font-family:Georgia,Times New Roman,serif;font-size:28px;line-height:1.2;font-weight:400;color:#17332a;">'+escapeHtml(titles[type])+'</h1>'+
  content+'</td></tr>'+
- '<tr><td style="padding:8px 34px 24px;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f7f3e9;border-left:3px solid #b47b3a;"><tr><td style="padding:18px 21px;">'+
+ '<tr><td style="padding:8px 34px 24px;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#ffffff;border-left:3px solid #b47b3a;"><tr><td style="padding:18px 21px;">'+
  '<p style="margin:0 0 7px;color:#194c3d;font-size:11px;letter-spacing:1.1px;font-weight:700;">YOUR STAY</p>'+
  '<p style="margin:0 0 6px;font-size:20px;font-family:Georgia,Times New Roman,serif;">'+escapeHtml(cottage)+'</p>'+
  '<p style="margin:0 0 12px;font-size:14px;color:#33483f;">'+escapeHtml(dates)+'</p>'+
