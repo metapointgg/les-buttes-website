@@ -1,0 +1,59 @@
+name: Package verified production SES feedback worker
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/package-production-ses-feedback-release.yml'
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install production dependencies
+        run: npm ci --prefix services/booking-api --omit=dev --ignore-scripts --no-audit --no-fund
+      - name: Verify signed staging and production SES feedback contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test services/booking-api/booking-ses-feedback.test.mjs services/booking-api/booking-ses-feedback-sqs-handler.test.mjs services/booking-api/booking-sns-signature.test.mjs
+      - name: Assemble compatible Lambda index.handler package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/ses-feedback
+          cp services/booking-api/{booking-ses-feedback-worker.mjs,booking-ses-feedback-sqs-handler.mjs,booking-ses-feedback.mjs,booking-sns-signature.mjs,booking-email-outbox.mjs,package.json} dist/ses-feedback/
+          cp -a services/booking-api/node_modules dist/ses-feedback/
+          printf "export {handler} from './booking-ses-feedback-worker.mjs';\n" > dist/ses-feedback/index.mjs
+          node --check dist/ses-feedback/index.mjs
+          (cd dist/ses-feedback && zip -q -r ../les-buttes-ses-feedback-worker.zip .)
+          unzip -tq dist/les-buttes-ses-feedback-worker.zip
+          for file in index.mjs booking-ses-feedback-worker.mjs booking-ses-feedback-sqs-handler.mjs booking-ses-feedback.mjs booking-sns-signature.mjs booking-email-outbox.mjs node_modules/@aws-sdk/lib-dynamodb/package.json; do
+            unzip -Z1 dist/les-buttes-ses-feedback-worker.zip | grep -Fx "$file"
+          done
+          sha256sum dist/les-buttes-ses-feedback-worker.zip
+      - name: Assume existing temporary upload role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-github-deploy
+          aws-region: eu-west-2
+          role-session-name: verified-ses-feedback-release
+      - name: Upload versioned private artefact only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = 145608514666
+          bucket=les-buttes-payment-staging-145608514666-eu-west-2
+          test "$(aws s3api get-bucket-versioning --bucket "$bucket" --query Status --output text)" = Enabled
+          key="production-transactional/email-feedback-${GITHUB_SHA}/les-buttes-ses-feedback-worker.zip"
+          version="$(aws s3api put-object --bucket "$bucket" --key "$key" --body dist/les-buttes-ses-feedback-worker.zip --server-side-encryption AES256 --metadata source-commit="$GITHUB_SHA",release-scope="ses-feedback-routing" --query VersionId --output text)"
+          test -n "$version" && test "$version" != None
+          echo "Private worker package: $key" >> "$GITHUB_STEP_SUMMARY"
+          echo "Version: $version" >> "$GITHUB_STEP_SUMMARY"
+          echo "No Lambda, booking, payment or refund changed in packaging." >> "$GITHUB_STEP_SUMMARY"
