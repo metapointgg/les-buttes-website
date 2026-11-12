@@ -101,3 +101,11 @@ test('branded emails escape injected markup and never invent a payment button',(
  assert.match(requested.html,/REQUEST RECEIVED/);
  assert.doesNotMatch(requested.html,/checkout\.sumup\.com/);
 });
+
+test('email body and stay summary remain white without cream text strips',()=>{
+ const message=renderBookingLifecycleEmail({type:'approval_payment',...fixture.approval_payment});
+ assert.match(message.html,/background:#ffffff/);
+ assert.doesNotMatch(message.html,/background:#f7f3e9/);
+ assert.match(message.html,/border-left:3px solid #b47b3a/);
+ assert.match(message.html,/background:#194c3d/);
+});
