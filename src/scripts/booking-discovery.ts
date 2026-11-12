@@ -1,4 +1,4 @@
-import {canPickCheckout,clearMasterAvailability,daysForMonth,indicativeSelection,masterCheckedAt,masterConnected,matchingCottages,matchingOptions,nightsInRange,possibleNight,setMasterAvailability,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
+import {canPickCheckout,clearMasterAvailability,daysForMonth,indicativeSelection,masterConnected,matchingCottages,matchingOptions,nightsInRange,possibleNight,setMasterAvailability,type CottageChoice,type SearchFilters} from '../lib/booking-discovery';
 
 const widget=document.querySelector<HTMLElement>('[data-discovery]');
 if(widget){
@@ -288,9 +288,8 @@ if(widget){
       const data:unknown=await response.json();
       if(request!==fetchSequence)return false;
       setMasterAvailability(data);
-      fill('[data-master-status]',tr('liveMaster')+' '+new Intl.DateTimeFormat(lang,{
-        hour:'2-digit',minute:'2-digit',timeZone:'Europe/Guernsey'
-      }).format(new Date(masterCheckedAt()!)));
+      // The master timestamp is an internal diagnostic, not guest-facing copy.
+      fill('[data-master-status]','');
       return true;
     }catch{
       if(request===fetchSequence){
@@ -356,6 +355,7 @@ if(widget){
     try{
       const quote=indicativeSelection(choice,arrival.value,departure.value,filters);
       summaryLines.replaceChildren();
+      summaryLines.hidden=liveQuoteEnabled;
       for(const item of quote.units){
         const row=document.createElement('div');row.className='summary-line';
         const name=document.createElement('span'),price=document.createElement('strong');
