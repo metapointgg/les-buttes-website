@@ -63,7 +63,7 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
     const email=clean(booking.guestEmail,{max:254});
     const telephone=clean(booking.guestTelephone,{max:40});
     const guests=booking.guests;
-    if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||
        !/^[+0-9() .-]{7,40}$/.test(telephone)||
        !Number.isSafeInteger(guests)||guests<1||guests>10)
       throw Error('Verified guest contact details required for owner email');
