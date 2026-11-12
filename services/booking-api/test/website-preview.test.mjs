@@ -298,7 +298,7 @@ test('successful request replaces guest form with clear branded confirmation and
  assert.match(script,/detailsForm\.replaceChildren\(\)/);
  assert.match(script,/journey-request-reference/);
  assert.match(script,/No payment has been taken/);
- assert.match(page,/journey-request-success-mark/);
+ assert.doesNotMatch(script,/mark.textContent='✓'/);
  assert.match(page,/journey-request-success h3/);
  assert.match(page,/journey-request-reference-label/);
 });
