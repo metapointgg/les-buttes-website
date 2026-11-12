@@ -28,13 +28,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist/ses-feedback
-          cp services/booking-api/{booking-ses-feedback-worker.mjs,booking-ses-feedback-sqs-handler.mjs,booking-ses-feedback.mjs,booking-sns-signature.mjs,booking-email-outbox.mjs,package.json} dist/ses-feedback/
+          cp services/booking-api/{booking-ses-feedback-worker.mjs,booking-ses-feedback-sqs-handler.mjs,booking-ses-feedback.mjs,booking-sns-signature.mjs,booking-email-outbox.mjs,booking-staging-ses-policy.mjs,package.json} dist/ses-feedback/
           cp -a services/booking-api/node_modules dist/ses-feedback/
           printf "export {handler} from './booking-ses-feedback-worker.mjs';\n" > dist/ses-feedback/index.mjs
           node --check dist/ses-feedback/index.mjs
+          (cd dist/ses-feedback && node -e "import('./index.mjs').then(x=>{if(typeof x.handler!=='function')process.exit(1)})")
           (cd dist/ses-feedback && zip -q -r ../les-buttes-ses-feedback-worker.zip .)
           unzip -tq dist/les-buttes-ses-feedback-worker.zip
-          for file in index.mjs booking-ses-feedback-worker.mjs booking-ses-feedback-sqs-handler.mjs booking-ses-feedback.mjs booking-sns-signature.mjs booking-email-outbox.mjs node_modules/@aws-sdk/lib-dynamodb/package.json; do
+          for file in index.mjs booking-ses-feedback-worker.mjs booking-ses-feedback-sqs-handler.mjs booking-ses-feedback.mjs booking-sns-signature.mjs booking-email-outbox.mjs booking-staging-ses-policy.mjs node_modules/@aws-sdk/lib-dynamodb/package.json; do
             unzip -Z1 dist/les-buttes-ses-feedback-worker.zip | grep -Fx "$file"
           done
           sha256sum dist/les-buttes-ses-feedback-worker.zip
@@ -64,7 +65,7 @@ jobs:
           fn='les-buttes-ses-feedback-worker-s-SesFeedbackWorker-GkP0cYxyfkDu'
           config="$(aws lambda get-function --region us-east-1 --function-name "$fn" --query 'Configuration.[CodeSha256,RevisionId,Handler,Runtime,State,LastUpdateStatus]' --output text)"
           read -r code_sha revision handler runtime state update_status <<< "$config"
-          test "$code_sha" = '/XX3SWLufG66/LdZWCiVYeH/gzYeOxqJAVTDHpFsnS8='
+          test "$code_sha" = 'jam8Sk9rF8j/8p3/uFqGBKb+YXCtVgSAXHFDMQ9bM64='
           test "$handler" = 'index.handler'
           test "$runtime" = 'nodejs22.x'
           test "$state" = 'Active'
