@@ -102,7 +102,7 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
 
   assert.match(discovery,/type="email" name="email"[^>]*required/);
   assert.match(discovery,/type="tel" name="telephone"[^>]*pattern=[^>]*required/);
-  assert.equal((discovery.match(/data-booking-step=/g)??[]).length,4);
+  assert.equal((discovery.match(/data-booking-step=/g)??[]).length,3);
   assert.match(discovery,/LB-DIRECT-2027-01/);
   assert.ok(discoveryScript.includes("termsVersion:'LB-DIRECT-2027-01'"));
   assert.ok(discoveryScript.includes("privacyVersion:'LB-PRIVACY-2027-01'"));
@@ -168,24 +168,26 @@ test('local master bridge binds only loopback, enforces staging table, and has n
   assert.doesNotMatch(script,/TransactWriteCommand|UpdateCommand|PutCommand|DeleteCommand|SendEmailCommand/);
 });
 
-test('hidden booking journey has four separate navigable steps and cannot confirm a booking',()=>{
+test('hidden booking journey has three steps with inline pricing and cannot confirm a booking',()=>{
   const page=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
   const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
-  for(const n of [1,2,3,4])assert.match(page,new RegExp('data-booking-step="'+n+'"'));
+  for(const n of [1,2,3])assert.match(page,new RegExp('data-booking-step="'+n+'"'));
+  assert.doesNotMatch(page,/data-booking-step="4"/);
   assert.match(page,/data-journey-indicator/);
   assert.match(page,/data-discovery-search/);
   assert.match(page,/data-discovery-options/);
   assert.match(page,/data-discovery-summary/);
   assert.match(page,/data-preview-guest-details/);
-  assert.match(page,/data-continue-review disabled/);
+  assert.match(page,/discover-calendar-price-layout/);
+  assert.match(page,/data-continue-details disabled/);
   assert.match(page,/data-continue-details/);
   assert.match(page,/data-back-to-filter/);
   assert.match(page,/data-back-to-cottages/);
-  assert.match(page,/data-back-to-review/);
+  assert.doesNotMatch(page,/data-back-to-review/);
   assert.match(page,/data-journey-selection/);
   assert.match(script,/setStep\(2\)/);
   assert.match(script,/setStep\(3\)/);
-  assert.match(script,/setStep\(4\)/);
+  assert.doesNotMatch(script,/setStep\(4\)/);
   assert.match(script,/getQuote\(\)/);
   assert.match(script,/await refreshMaster\(\)/);
   assert.doesNotMatch(script,/sessionStorage|localStorage|navigator\\.sendBeacon/);
@@ -257,5 +259,22 @@ test('booking journey uses an Edit search pill, hides test copy and retains live
  assert.match(script,/priceLabel\.textContent=tr\('direct'\)/);
  assert.match(script,/quote\.meetsDraftMinimum\?'':tr\('tooShort'\)/);
  assert.match(script,/reviewNext\.disabled=!masterConnected\(\)\|\|!q\|\|!q\.meetsDraftMinimum/);
+ assert.match(script,/checkAuthoritativeQuote\(\)\.then/);
  assert.match(script,/controlledOwnerTest/);
+});
+
+test('calendar and price appear alongside one another with direct progression to guest details',()=>{
+ const page=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
+ const script=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
+ const layout=page.indexOf('class="discover-calendar-price-layout"');
+ const calendar=page.indexOf('data-discovery-availability',layout);
+ const price=page.indexOf('data-discovery-summary',layout);
+ const details=page.indexOf('data-booking-step="3"',layout);
+ assert.ok(layout>=0&&calendar>layout&&price>calendar&&details>price);
+ assert.match(page,/grid-template-columns:minmax\(0,1\.8fr\) minmax\(17rem,\.82fr\)/);
+ assert.match(page,/@media\(max-width:62rem\)/);
+ assert.doesNotMatch(page,/data-continue-review|data-back-to-review/);
+ assert.ok(script.includes("onClick('[data-continue-details]',async()=>{"));
+ assert.match(script,/setStep\(3\)/);
+ assert.match(script,/await checkAuthoritativeQuote\(\)/);
 });
