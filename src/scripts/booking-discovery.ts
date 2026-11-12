@@ -369,7 +369,7 @@ if(widget){
       // In the live booking interface, never present the illustrative discount
       // as an authoritative price. Display the provider-independent database quote.
       for(const selector of ['[data-summary-airbnb]','[data-summary-saving]']){
-        const element=widget.querySelector<HTMLElement>(selector);
+        const element=summarySection.querySelector<HTMLElement>(selector);
         if(element?.parentElement)element.parentElement.hidden=liveQuoteEnabled;
       }
       if(liveQuoteEnabled){
