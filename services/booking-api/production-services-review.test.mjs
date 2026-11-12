@@ -149,18 +149,18 @@ test('controlled unpaid second acceptance deactivates at SumUp before releasing 
  assert.match(core,/refundInitiated:false/);
 });
 
-test('production email-only Lambda releases use immutable scoped artefact override without changing other six Lambdas',()=>{
- const parameters=source.slice(source.indexOf('Parameters:'),source.indexOf('Rules:'));
- assert.match(parameters,/EmailReleaseArtifactKey:[\s\S]{0,110}Default: ''/);
- assert.match(parameters,/EmailReleaseArtifactVersion:[\s\S]{0,110}Default: ''/);
- assert.match(source,/EmailReleaseArtifactMustBeComplete:/);
- assert.match(source,/UseEmailReleaseArtifact: !Not \[!Equals \[!Ref EmailReleaseArtifactKey, ''\]\]/);
+test('production booking deployment requires an explicit immutable email artefact for the two email Lambdas',()=>{
+ const parameters=source.slice(source.indexOf('Parameters:'),source.indexOf('Conditions:'));
+ assert.match(parameters,/EmailReleaseArtifactKey:[\s\S]{0,80}MinLength: 1/);
+ assert.match(parameters,/EmailReleaseArtifactVersion:[\s\S]{0,80}MinLength: 1/);
+ assert.doesNotMatch(parameters,/EmailReleaseArtifactKey:[\s\S]{0,80}Default:/);
  const req=source.slice(source.indexOf('  DisabledRequestFunction:'),source.indexOf('  DisabledRequestIntegration:'));
  const owner=source.slice(source.indexOf('  ProductionAdminTransactionFunction:'),source.indexOf('  ProductionAdminTransactionIntegration:'));
  for(const body of [req,owner]){
-  assert.match(body,/S3Key: !If \[UseEmailReleaseArtifact, !Ref EmailReleaseArtifactKey, !Ref ReviewedArtifactKey\]/);
-  assert.match(body,/S3ObjectVersion: !If \[UseEmailReleaseArtifact, !Ref EmailReleaseArtifactVersion, !Ref ReviewedArtifactVersion\]/);
+  assert.match(body,/S3Key: !Ref EmailReleaseArtifactKey/);
+  assert.match(body,/S3ObjectVersion: !Ref EmailReleaseArtifactVersion/);
  }
- assert.equal((source.match(/S3Key: !If \[UseEmailReleaseArtifact/g)??[]).length,2);
- assert.equal((source.match(/S3ObjectVersion: !If \[UseEmailReleaseArtifact/g)??[]).length,2);
+ assert.equal((source.match(/S3Key: !Ref EmailReleaseArtifactKey/g)??[]).length,2);
+ assert.equal((source.match(/S3ObjectVersion: !Ref EmailReleaseArtifactVersion/g)??[]).length,2);
+ assert.equal((source.match(/S3Key: !Ref ReviewedArtifactKey/g)??[]).length,6);
 });
