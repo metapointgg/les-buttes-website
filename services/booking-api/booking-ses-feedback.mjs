@@ -4,7 +4,7 @@
 import {GetCommand,UpdateCommand} from '@aws-sdk/lib-dynamodb';
 import {emailOutboxKey} from './booking-email-outbox.mjs';
 
-const TABLE=/^les-buttes-booking-staging-BookingTable-[A-Za-z0-9]+$/;
+const TABLE=/^les-buttes-booking-(?:staging|production-data)-BookingTable-[A-Za-z0-9]+$/;
 const EVENT_TYPES={Delivery:'DELIVERED',Bounce:'BOUNCED',Complaint:'COMPLAINED'};
 const terminal=new Set(['BOUNCED','COMPLAINED']);
 function tagged(mail,name){
@@ -33,7 +33,7 @@ export async function reconcileAuthenticatedSesFeedback({
  db,table,notification,verifyEnvelope,now=()=>new Date().toISOString()
 }={}){
  if(!db?.send||!TABLE.test(table??'')||typeof verifyEnvelope!=='function')
-  throw Error('Staging SES feedback unavailable');
+  throw Error('SES feedback reconciliation unavailable');
  // A caller-supplied 'verified' flag is NOT sufficient. A trusted SNS signature
  // validator is required before parsing Notification.Message.
  if(!notification||typeof notification!=='object'||
