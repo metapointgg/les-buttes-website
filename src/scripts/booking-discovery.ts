@@ -49,6 +49,7 @@ if(widget){
   const screens=Array.from(widget.querySelectorAll<HTMLElement>('[data-booking-step]'));
   const indicators=Array.from(widget.querySelectorAll<HTMLElement>('[data-journey-indicator]'));
   const reviewNext=widget.querySelector<HTMLButtonElement>('[data-continue-details]')!;
+  let activateChallenge=()=>{};
   const detailsForm=widget.querySelector<HTMLFormElement>('[data-preview-guest-details]')!;
   // A server-authoritative quote is mandatory before advancing from availability to guest details.
   // The existing staging read-only master never authorises a request or payment.
@@ -121,6 +122,7 @@ if(widget){
     widget.scrollIntoView({behavior:'smooth',block:'start'});
     heading?.setAttribute('tabindex','-1');
     heading?.focus({preventScroll:true});
+    if(step===3)activateChallenge();
   };
   const saturday=(d:string)=>new Date(d+'T00:00:00Z').getUTCDay()===6;
   const weekly=(start:string,end:string)=>{try{const n=nightsInRange(start,end).length;return saturday(start)&&saturday(end)&&n%7===0;}catch{return false;}};
@@ -580,21 +582,35 @@ if(widget){
     confirmButton.setAttribute('aria-disabled','false');
   }
   if(requestEnabled&&!syntheticRequestEnabled&&confirmButton){
-    const detailsIntro=widget.querySelector<HTMLElement>('[data-booking-step="4"] .journey-stage-heading p:last-child');
+    const detailsIntro=widget.querySelector<HTMLElement>('[data-booking-step="3"] .journey-stage-heading p:last-child');
     if(detailsIntro)detailsIntro.textContent='Enter the lead guest details for this reservation request.';
     confirmButton.textContent='Submit reservation request';
     challengeSlot.setAttribute('data-turnstile-slot','');
     confirmButton.before(challengeSlot);
     confirmButton.type='submit';
     confirmButton.setAttribute('aria-disabled','false');
+    // A token may expire while the guest searches or fills in details.
+    // Initialise the challenge only on the final step and reset on re-entry.
+    let rendered=false,loading=false;
     const renderChallenge=()=>{
-      const turnstile=(window as typeof window & {turnstile?:{render:(element:HTMLElement,options:{sitekey:string})=>string}}).turnstile;
+      const turnstile=(window as typeof window & {turnstile?:{
+        render:(element:HTMLElement,options:{sitekey:string;'expired-callback':()=>void;'error-callback':()=>void})=>string;
+        reset:()=>void
+      }}).turnstile;
       if(!turnstile)return false;
-      turnstile.render(challengeSlot,{sitekey:siteKey});
+      if(rendered){turnstile.reset();return true;}
+      turnstile.render(challengeSlot,{sitekey:siteKey,
+        'expired-callback':()=>{if(status)status.textContent='Verification expired. Please complete the challenge again.';},
+        'error-callback':()=>{if(status)status.textContent='Verification is temporarily unavailable. Please retry the challenge.';}
+      });
+      rendered=true;
       return true;
     };
-    if(!renderChallenge()){
-      // Load Turnstile only for an explicitly approved request-enabled build.
+    activateChallenge=()=>{
+      if(renderChallenge())return;
+      if(loading)return;
+      loading=true;
+      // Only load the public challenge on the explicitly authorised guest-details step.
       const challengeScript=document.createElement('script');
       challengeScript.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
       challengeScript.async=true;
@@ -604,7 +620,7 @@ if(widget){
       const timer=window.setInterval(()=>{
         if(renderChallenge()||++attempts>=60)window.clearInterval(timer);
       },150);
-    }
+    };
     confirmButton.disabled=false;
   }
   detailsForm.addEventListener('submit',async event=>{
@@ -648,9 +664,15 @@ if(widget){
           ...(controlledOwnerTest?{testAccessCode:oneTimeAccess}:{})
         })
       });
-      if(response.status!==(syntheticRequestEnabled?201:202))throw Error(response.status===409?
-        'These dates have just become unavailable. Please select another stay.':
-        'Your booking request could not be submitted. Please try again.');
+      if(response.status!==(syntheticRequestEnabled?201:202)){
+        if(response.status===403)throw Error('Verification was rejected or your restricted test access is no longer valid. Please refresh and try again.');
+        if(response.status===409)throw Error(controlledOwnerTest?
+          'This one-time owner booking test has already been used. A new test authorisation is required.':
+          'These dates have just become unavailable. Please select another stay.');
+        throw Error(response.status===503?
+          'Booking requests are temporarily unavailable. Please try again later.':
+          'Your booking request could not be submitted. Please try again.');
+      }
       const result=await response.json() as {received?:boolean;reference?:string};
       if(result.received!==true||!result.reference)throw Error('A booking reference was not returned.');
       detailsForm.replaceChildren();
