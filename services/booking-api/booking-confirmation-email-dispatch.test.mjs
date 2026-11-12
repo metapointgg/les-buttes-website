@@ -6,7 +6,8 @@ const id='11111111-1111-4111-8111-111111111111';
 const table='les-buttes-booking-staging-BookingTable-RXRKLOG7NOXK';
 const booking={id,source:'direct',status:'CONFIRMED',reservationStatus:'CONFIRMED',
  paidAt:'2026-11-05T08:00:00.000Z',paymentTransactionId:'sumup-transaction-123',
- guestEmail:'verified@example.com',units:['geranium'],start:'2027-08-28',end:'2027-09-04'};
+ guestEmail:'verified@example.com',guestName:'Verified Guest',guestTelephone:'+44 1481 000000',guests:2,
+ units:['geranium'],start:'2027-08-28',end:'2027-09-04'};
 const env={BOOKING_ENVIRONMENT:'staging',BOOKING_CONFIRMATION_DISPATCH_ENABLED:'true'};
 test('dispatch reads authoritative confirmed record and delegates to durable outbox',async()=>{
  let reads=0,sends=0;
