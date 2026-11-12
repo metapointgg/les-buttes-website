@@ -74,3 +74,66 @@ test('LB-09 missing verifier is fatal rather than treating raw SNS data as authe
   verifierFactory:()=>null,dbFactory:()=>{throw Error('must not instantiate');}});
  await assert.rejects(handler({Records:[record()]}),/SNS verifier required/);
 });
+
+const prodTable='les-buttes-booking-production-data-BookingTable-1FSJ2IAR789E2';
+const dualEnv={...env,BOOKING_PRODUCTION_SES_FEEDBACK_ENABLED:'true',
+ BOOKING_PRODUCTION_FEEDBACK_TABLE:prodTable};
+const productionEvent=()=>JSON.stringify({
+ Type:'Notification',Message:JSON.stringify({
+  eventType:'Delivery',mail:{messageId:'ses-provider-id',
+   destination:['verified@example.com'],
+   tags:{bookingId:['12345678-1234-1234-1234-123456789abc'],
+    emailType:['confirmed'],templateId:['confirmed_v1']}}})
+});
+test('production SES feedback routing requires explicit exact production table',()=>{
+ assert.equal(validateSesFeedbackWorkerEnvironment(dualEnv).productionTable,prodTable);
+ for(const invalid of ['',env.BOOKINGS_TABLE,'other-table','les-buttes-booking-production-BookingTable-XYZ']){
+  assert.throws(()=>validateSesFeedbackWorkerEnvironment({
+   ...dualEnv,BOOKING_PRODUCTION_FEEDBACK_TABLE:invalid
+  }),/production feedback table/);
+ }
+ assert.equal(validateSesFeedbackWorkerEnvironment(env).productionTable,null);
+});
+test('signed production delivery uses only matching outbox without affecting staging',async()=>{
+ const tables=[],writes=[],checks=[];
+ const handler=createSesFeedbackSqsHandler({
+  env:dualEnv,
+  dbFactory:()=>({send:async command=>{
+   tables.push(command.input.TableName);
+   return {Item:command.input.TableName===prodTable?{state:'ACCEPTED_BY_SES_NOT_DELIVERED'}:undefined};
+  },destroy:()=>{}}),
+  verifierFactory:()=>async()=>{checks.push('verified');return true;},
+  reconcile:async args=>{writes.push(args.table);return {status:'UPDATED'};}
+ });
+ const result=await handler({Records:[record('prod-123',productionEvent())]});
+ assert.deepEqual(result,{batchItemFailures:[]});
+ assert.deepEqual(tables,[env.BOOKINGS_TABLE,prodTable]);
+ assert.deepEqual(writes,[prodTable]);
+ assert.ok(checks.length>=1);
+});
+test('dual-environment feedback fails closed if absent from both tables or present in both',async()=>{
+ for(const present of [false,true]){
+  let updates=0;
+  const handler=createSesFeedbackSqsHandler({
+   env:dualEnv,
+   dbFactory:()=>({send:async()=>({Item:present?{}:undefined}),destroy:()=>{}}),
+   verifierFactory:()=>async()=>true,
+   reconcile:async()=>{updates++;}
+  });
+  assert.deepEqual(await handler({Records:[record('ambiguous-123',productionEvent())]}),
+   {batchItemFailures:[{itemIdentifier:'ambiguous-123'}]});
+  assert.equal(updates,0);
+ }
+});
+test('unsigned dual-environment notification is rejected before reading either table',async()=>{
+ let reads=0;
+ const handler=createSesFeedbackSqsHandler({
+  env:dualEnv,
+  dbFactory:()=>({send:async()=>{reads++;return {Item:{}};},destroy:()=>{}}),
+  verifierFactory:()=>async()=>false,
+  reconcile:async()=>{throw Error('must not write');}
+ });
+ assert.deepEqual(await handler({Records:[record('unsigned-123',productionEvent())]}),
+  {batchItemFailures:[{itemIdentifier:'unsigned-123'}]});
+ assert.equal(reads,0);
+});
