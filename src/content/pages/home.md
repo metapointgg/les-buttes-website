@@ -7,7 +7,7 @@ heroImage: /src/assets/images/cottages/geranium/exterior.jpg
 heroAlt: Geranium Cottage and its garden at Les Buttes Holiday Cottages
 heroPan: false
 heroPrimaryLabel: Check availability
-heroPrimaryUrl: /cottages/
+heroPrimaryUrl: /book/
 heroSecondaryLabel: Explore our cottages
 heroSecondaryUrl: /cottages/
 titleNl: "Een rustiger ritme van het eilandleven"
@@ -139,8 +139,7 @@ seo:
   descriptionFr: "Gîtes de vacances familiaux dans le paisible St Pierre du Bois, à Guernesey. Découvrez Geranium et Honeysuckle et réservez en toute sécurité via Airbnb."
   title: Les Buttes | Guernsey Holiday Cottages & Self Catering
   description: Family-run self-catering holiday cottages in peaceful St Pierre du
-    Bois, Guernsey. Discover Geranium and Honeysuckle and book securely through
-    Airbnb.
+    Bois, Guernsey. Discover Geranium and Honeysuckle and book directly with us.
   socialTitle: Les Buttes | Guernsey Holiday Cottages & Self Catering
   socialDescription: Characterful self-catering holiday cottages set in beautiful gardens in the west of Guernsey.
   imageAlt: Les Buttes Holiday Cottages in Guernsey
