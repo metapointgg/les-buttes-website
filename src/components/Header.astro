@@ -15,6 +15,7 @@ const fixedNav=[
   {href:'/cottages/',label:translations.cottages,order:20},
   {href:'/about/',label:translations.story,order:35},
   {href:'/explore-guernsey/',label:translations.explore,order:40},
+  {href:'/book/',label:translations.book,order:60},
   {href:'/contact/',label:translations.contact,order:70}
 ];
 const subNav=(await getCollection('subpages'))
@@ -31,7 +32,7 @@ const current=(href:string)=>href==='/'?basePath==='/':basePath.startsWith(href)
     <nav class="desktop-nav" aria-label="Primary navigation">
       {nav.map(item=><a href={localPath(item.href,language)} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
     </nav>
-    <a class="button header-book" href={localPath("/cottages/",language)}>{translations.book}</a>
+    <a class="button header-book" href={localPath("/book/",language)}>{translations.book}</a>
     <details class="language-switcher">
       <summary aria-label="Change language" title="Change language"><LocaleFlag language={language}/></summary>
       <div class="language-options" role="group" aria-label="Choose language">
