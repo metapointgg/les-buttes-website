@@ -91,6 +91,7 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
  approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout,
  deactivateCheckout, deactivationEnabled=()=>false,
  reconciliationEnabled=()=>false,reconcilePayment,
+ refundReconciliationEnabled=()=>false,reconcileRefund,
  deploymentAllowed=()=>process.env.BOOKING_ENVIRONMENT==='staging',
  writeDeploymentAllowed=()=>process.env.BOOKING_ENVIRONMENT==='staging'&&process.env.BOOKINGS_TABLE?.toLowerCase().includes('staging')}){
  return async event=>{
@@ -140,6 +141,21 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
          catch(e){
            if(/not verified|missing|mismatch|not eligible|disabled|reconciliation|TransactionCanceled/.test(e?.message??''))
              return reply(409,{error:'Payment not confirmed; reconcile with provider before retrying'});
+           throw e;
+         }
+       }
+       const refundMatch=path.match(/^\/admin\/bookings\/([0-9a-f-]{36})\/refund\/reconcile$/i);
+       if(refundMatch){
+         if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+         if(!writeDeploymentAllowed()||!writeEnabled()||
+           !refundReconciliationEnabled()||typeof reconcileRefund!=='function')
+           return reply(503,{error:'Refund reconciliation disabled'});
+         if(event.isBase64Encoded||event.body!=='{}')
+           return reply(400,{error:'Refund reconciliation accepts no provider assertions'});
+         try{return reply(200,await reconcileRefund({bookingId:refundMatch[1],identity:id}));}
+         catch(e){
+           if(/not verified|mismatch|not found|not been assessed|unavailable|refund events|refund amount/i.test(e?.message??''))
+             return reply(409,{error:'Refund not confirmed; verify SumUp transaction before reconciliation'});
            throw e;
          }
        }
