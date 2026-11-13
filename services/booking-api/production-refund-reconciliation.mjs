@@ -23,18 +23,27 @@ export function verifyProductionRefundEvidence({booking,transaction,merchantCode
   merchantCode!=='M9BE4KMN'||transaction.merchant_code!==merchantCode||
   transaction.currency!=='GBP'||pence(transaction.amount)!==booking.paidAmountPence)
   throw Error('Refund identity or booking mismatch');
- if(transaction.simple_status!=='REFUNDED'||transaction.status!=='REFUNDED'||
-  pence(transaction.refunded_amount)!==booking.refundDuePence)
+ if(transaction.simple_status!=='REFUNDED'||transaction.status!=='REFUNDED')
   throw Error('SumUp refund not verified');
- const events=transaction.transaction_events??transaction.events;
- if(!Array.isArray(events))throw Error('Authoritative refund events missing');
- const refunds=events.filter(event=>(event?.event_type??event?.type)==='REFUND');
- if(!refunds.length||refunds.some(x=>!['REFUNDED','SUCCESSFUL'].includes(x.status))||
-  refunds.reduce((total,x)=>total+pence(x.amount),0)!==booking.refundDuePence)
-  throw Error('Verified refund events do not match amount');
- // SumUp payout deductions and retained fees are separate from customer refund.
- return {amountPence:booking.refundDuePence,currency:'GBP',transactionId:booking.paymentTransactionId,
-  refundEvents:refunds.length};
+ // REFUNDED includes partial refunds. A merchant processing fee is not a
+ // refund, and must not be deducted from or added to the payer's entitlement.
+ const refundedPence=pence(transaction.refunded_amount);
+ if(refundedPence<1||refundedPence>booking.refundDuePence)
+  throw Error('SumUp refund amount outside assessed entitlement');
+ const sources=[transaction.transaction_events,transaction.events].filter(Array.isArray);
+ if(!sources.length)throw Error('Authoritative refund events missing');
+ let refundCount=0;
+ for(const events of sources){
+  const refunds=events.filter(event=>(event?.event_type??event?.type)==='REFUND');
+  if(!refunds.length)continue;
+  if(refunds.some(x=>!['REFUNDED','SUCCESSFUL'].includes(x.status))||
+     refunds.reduce((total,x)=>total+pence(x.amount),0)!==refundedPence)
+   throw Error('Verified refund events do not match amount');
+  refundCount=Math.max(refundCount,refunds.length);
+ }
+ if(!refundCount)throw Error('Verified refund events do not match amount');
+ return {amountPence:refundedPence,outstandingPence:booking.refundDuePence-refundedPence,
+  currency:'GBP',transactionId:booking.paymentTransactionId,refundEvents:refundCount};
 }
 
 export async function reconcileVerifiedProductionRefund({db,table,bookingId,identity,
@@ -45,38 +54,51 @@ export async function reconcileVerifiedProductionRefund({db,table,bookingId,iden
  const key={PK:'BOOKING#'+bookingId,SK:'META'};
  const booking=(await db.send(new GetCommand({TableName:table,Key:key,ConsistentRead:true}))).Item;
  if(!booking||booking.id!==bookingId)throw Error('Booking not found');
- if(booking.refundStatus==='REFUNDED'){
-  // Idempotent reads still need provider evidence, never trust local status alone.
-  const provider=await fetchTransaction(booking.paymentTransactionId);
-  const verified=verifyProductionRefundEvidence({
-   booking:{...booking,refundStatus:'ASSESSED'},transaction:provider,merchantCode});
-  if(booking.refundedAmountPence!==verified.amountPence)
-   throw Error('Recorded refund amount mismatch');
-  return {status:'ALREADY_REFUNDED',bookingId,amountPence:verified.amountPence};
- }
- if(booking.refundStatus!=='ASSESSED')throw Error('Refund has not been assessed');
+ if(!['ASSESSED','PARTIALLY_REFUNDED','REFUNDED'].includes(booking.refundStatus))
+  throw Error('Refund has not been assessed');
  const provider=await fetchTransaction(booking.paymentTransactionId);
- const verified=verifyProductionRefundEvidence({booking,transaction:provider,merchantCode});
+ const verified=verifyProductionRefundEvidence({
+  booking:{...booking,refundStatus:'ASSESSED'},transaction:provider,merchantCode});
+ const full=verified.outstandingPence===0;
+ const previous=booking.refundedAmountPence??0;
+ if(booking.refundStatus==='REFUNDED'){
+  if(!full||previous!==verified.amountPence)throw Error('Recorded refund amount mismatch');
+  return {status:'ALREADY_REFUNDED',bookingId,amountPence:verified.amountPence,outstandingPence:0};
+ }
+ if(booking.refundStatus==='PARTIALLY_REFUNDED'){
+  if(!Number.isSafeInteger(previous)||previous<1||verified.amountPence<previous)
+   throw Error('Recorded refund amount mismatch');
+  if(previous===verified.amountPence)
+   return {status:'ALREADY_PARTIALLY_REFUNDED',bookingId,
+    amountPence:previous,outstandingPence:verified.outstandingPence};
+ }
+ const nextStatus=full?'REFUNDED':'PARTIALLY_REFUNDED';
  const at=now(),auditId=randomUUID();
- if(!/^\d{4}-\d{2}-\d{2}T/.test(at))throw Error('Invalid reconciliation time');
- const claim={PK:'BOOKING#'+bookingId,SK:'REFUND#PROVIDER_VERIFIED',
+ if(!/^\\d{4}-\\d{2}-\\d{2}T/.test(at))throw Error('Invalid reconciliation time');
+ const claim={PK:'BOOKING#'+bookingId,SK:full?'REFUND#PROVIDER_VERIFIED':'REFUND#PARTIAL_PROVIDER_VERIFIED#'+verified.amountPence,
   bookingId,transactionId:verified.transactionId,amountPence:verified.amountPence,
-  currency:'GBP',state:'REFUNDED',verifiedAt:at,refundEvents:verified.refundEvents};
+  outstandingPence:verified.outstandingPence,currency:'GBP',state:nextStatus,
+  verifiedAt:at,refundEvents:verified.refundEvents};
  const audit={PK:'BOOKING#'+bookingId,SK:'AUDIT#'+at+'#'+auditId,
-  id:auditId,bookingId,action:'refund_verified',actor:identity.subject,
-  provider:'sumup',amountPence:verified.amountPence,transactionId:verified.transactionId,recordedAt:at};
+  id:auditId,bookingId,action:full?'refund_verified':'partial_refund_verified',actor:identity.subject,
+  provider:'sumup',amountPence:verified.amountPence,outstandingPence:verified.outstandingPence,
+  transactionId:verified.transactionId,recordedAt:at};
  await db.send(new TransactWriteCommand({TransactItems:[
   {ConditionCheck:{TableName:table,Key:{PK:'PAYMENT_TRANSACTION#'+verified.transactionId,SK:'CONFIRMATION'},
-   ConditionExpression:'bookingId = :booking AND amountPence = :amount AND currency = :currency',
-   ExpressionAttributeValues:{':booking':bookingId,':amount':booking.paidAmountPence,':currency':'GBP'}}},
+   ConditionExpression:'bookingId = :booking AND amountPence = :paid AND currency = :currency',
+   ExpressionAttributeValues:{':booking':bookingId,':paid':booking.paidAmountPence,':currency':'GBP'}}},
   {Update:{TableName:table,Key:key,
-   UpdateExpression:'SET refundStatus = :refunded,refundedAmountPence = :amount,refundedAt = :at',
-   ConditionExpression:'#status = :cancelled AND reservationStatus = :cancelled AND refundStatus = :assessed AND refundDuePence = :amount AND paymentTransactionId = :tx AND paidAmountPence = :paid',
+   UpdateExpression:'SET refundStatus = :next,refundedAmountPence = :amount,refundOutstandingPence = :outstanding,refundedAt = :at',
+   ConditionExpression:'#status = :cancelled AND reservationStatus = :cancelled AND refundStatus = :previous AND refundDuePence >= :amount AND paymentTransactionId = :tx AND paidAmountPence = :paid'+
+    (booking.refundStatus==='PARTIALLY_REFUNDED'?' AND refundedAmountPence = :oldAmount':''),
    ExpressionAttributeNames:{'#status':'status'},
-   ExpressionAttributeValues:{':refunded':'REFUNDED',':cancelled':'CANCELLED',':assessed':'ASSESSED',
-    ':amount':verified.amountPence,':at':at,':tx':verified.transactionId,':paid':booking.paidAmountPence}}},
+   ExpressionAttributeValues:{':next':nextStatus,':previous':booking.refundStatus,
+    ':cancelled':'CANCELLED',':amount':verified.amountPence,':outstanding':verified.outstandingPence,
+    ':at':at,':tx':verified.transactionId,':paid':booking.paidAmountPence,
+    ...(booking.refundStatus==='PARTIALLY_REFUNDED'?{':oldAmount':previous}:{})}}},
   {Put:{TableName:table,Item:claim,ConditionExpression:'attribute_not_exists(PK)'}},
   {Put:{TableName:table,Item:audit,ConditionExpression:'attribute_not_exists(PK)'}}
  ]}));
- return {status:'REFUNDED',bookingId,amountPence:verified.amountPence,auditId};
+ return {status:nextStatus,bookingId,amountPence:verified.amountPence,
+  outstandingPence:verified.outstandingPence,auditId};
 }
