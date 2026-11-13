@@ -44,7 +44,7 @@ test('owner can cancel an unpaid £805 production reservation and release its se
   ['DATE#2027-05-08','DATE#2027-05-09','DATE#2027-05-10','DATE#2027-05-11',
    'DATE#2027-05-12','DATE#2027-05-13','DATE#2027-05-14']);
  assert.match(tx[0].Update.ConditionExpression,/attribute_not_exists\(paymentTransactionId\)/);
- assert.match(tx[1].Update.ConditionExpression,/checkoutId = :checkout/);
+ assert.match(tx[1].Update.ConditionExpression,/checkoutId=:checkout/);
  assert.equal(tx[9].Put.Item.refundInitiated,false);
 });
 test('both cottages and 21 nights use actual booking inventory rather than fixed test dates',async()=>{
