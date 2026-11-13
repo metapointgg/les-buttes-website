@@ -74,7 +74,7 @@ export async function reconcileVerifiedProductionRefund({db,table,bookingId,iden
  }
  const nextStatus=full?'REFUNDED':'PARTIALLY_REFUNDED';
  const at=now(),auditId=randomUUID();
- if(!/^\\d{4}-\\d{2}-\\d{2}T/.test(at))throw Error('Invalid reconciliation time');
+ if(!/^\d{4}-\d{2}-\d{2}T/.test(at))throw Error('Invalid reconciliation time');
  const claim={PK:'BOOKING#'+bookingId,SK:full?'REFUND#PROVIDER_VERIFIED':'REFUND#PARTIAL_PROVIDER_VERIFIED#'+verified.amountPence,
   bookingId,transactionId:verified.transactionId,amountPence:verified.amountPence,
   outstandingPence:verified.outstandingPence,currency:'GBP',state:nextStatus,
