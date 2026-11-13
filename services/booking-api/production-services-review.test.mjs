@@ -133,18 +133,18 @@ test('owner approval automatically registers live checkout and dispatches the gu
 });
 
 
-test('controlled unpaid second acceptance deactivates at SumUp before releasing inventory',()=>{
+test('production unpaid booking cancellation verifies SumUp expiry before releasing any inventory',()=>{
  const admin=readFileSync(new URL('./production-admin-transaction-handler.mjs',import.meta.url),'utf8');
- const core=readFileSync(new URL('./production-unpaid-test-deactivation.mjs',import.meta.url),'utf8');
+ const core=readFileSync(new URL('./production-unpaid-booking-cancellation.mjs',import.meta.url),'utf8');
  const gateway=readFileSync(new URL('./booking-admin-http.mjs',import.meta.url),'utf8');
- assert.match(admin,/deactivationEnabled:\(\)=>process\.env\.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'/);
- assert.match(admin,/deactivateAndReleaseControlledUnpaidBooking/);
+ assert.match(admin,/deactivationEnabled:\(\)=>process\.env\.BOOKING_CONTROLLED_TEST_ONLY_ENABLED!=='true'/);
+ assert.match(admin,/cancelUnpaidProductionBooking/);
  assert.match(gateway,/checkout\\\/deactivate/);
  assert.match(source,/RouteKey: POST \/admin\/production\/bookings\/\{bookingId\}\/checkout\/deactivate/);
  assert.match(source,/ProductionCheckoutDeactivateRoute:[\s\S]{0,320}AuthorizationType: JWT[\s\S]{0,120}AuthorizerId: !Ref CognitoAuthorizerId/);
  assert.match(core,/await sumup\.deactivateCheckout\(checkout\.checkoutId\)/);
- assert.match(core,/const final=await sumup\.retrieveCheckout\(checkout\.checkoutId\)/);
- assert.ok(core.indexOf('const final=await sumup.retrieveCheckout')<core.indexOf('const actions=['));
+ assert.match(core,/const after=await sumup\.retrieveCheckout\(checkout\.checkoutId\)/);
+ assert.ok(core.indexOf('const after=await sumup.retrieveCheckout')<core.indexOf('const actions=['));
  assert.match(core,/attribute_not_exists\(paidAt\) AND attribute_not_exists\(paymentTransactionId\)/);
  assert.match(core,/refundInitiated:false/);
 });
