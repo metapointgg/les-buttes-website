@@ -1,0 +1,60 @@
+name: Package reviewed production refund verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/package-refund-verification-release.yml'
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies and run focused production reconciliation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix services/booking-api --ignore-scripts --no-audit --no-fund
+          node --test services/booking-api/production-refund-reconciliation.test.mjs services/booking-api/production-refund-http.test.mjs services/booking-api/sumup-checkout-client.test.mjs services/booking-api/production-payment-schedule.test.mjs
+          node --check services/booking-api/production-admin-transaction-handler.mjs
+          node --check services/booking-api/booking-admin-http.mjs
+      - name: Assume existing narrowly scoped deployment role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-github-deploy
+          aws-region: eu-west-2
+          role-session-name: refund-verification-review-package
+      - name: Overlay only four reviewed source files onto deployed Lambda artefact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(aws sts get-caller-identity --query Account --output text)" = 145608514666
+          bucket=les-buttes-payment-staging-145608514666-eu-west-2
+          source_key=production-transactional/email-cancellation-ab1b77ed301be311ead13e25012d1bbee5713cd1/les-buttes-production-integrations.zip
+          source_version=3GjWyTSQG0RnNJ4SREajpoJzt._5Zxuv
+          mkdir -p dist/baseline dist/release
+          aws s3api get-object --bucket "$bucket" --key "$source_key" --version-id "$source_version" dist/baseline/release.zip >/dev/null
+          unzip -tq dist/baseline/release.zip
+          (cd dist/release && unzip -q ../baseline/release.zip)
+          for file in sumup-checkout-client.mjs booking-admin-http.mjs production-admin-transaction-handler.mjs production-refund-reconciliation.mjs; do
+            cp "services/booking-api/$file" "dist/release/$file"
+          done
+          (cd dist/release && node -e "import('./production-admin-transaction-handler.mjs').then(x=>{if(typeof x.handler!=='function')process.exit(1)})")
+          (cd dist/release && zip -q -r ../les-buttes-production-integrations.zip . -x '*.test.mjs' 'test/*')
+          unzip -tq dist/les-buttes-production-integrations.zip
+          for file in sumup-checkout-client.mjs booking-admin-http.mjs production-admin-transaction-handler.mjs production-refund-reconciliation.mjs; do
+            diff -q "services/booking-api/$file" <(unzip -p dist/les-buttes-production-integrations.zip "$file")
+          done
+          sha256sum dist/les-buttes-production-integrations.zip
+          key="production-transactional/refund-reconciliation-${GITHUB_SHA}/les-buttes-production-integrations.zip"
+          version="$(aws s3api put-object --bucket "$bucket" --key "$key" --body dist/les-buttes-production-integrations.zip --server-side-encryption AES256 --metadata source-commit="$GITHUB_SHA",release-scope="owner-refund-reconciliation-four-file-overlay" --query VersionId --output text)"
+          test -n "$version" && test "$version" != None
+          echo "Reviewed package: $key" >> "$GITHUB_STEP_SUMMARY"
+          echo "Version: $version" >> "$GITHUB_STEP_SUMMARY"
+          echo "No Lambda was deployed and no refund or payment was initiated by this packaging workflow." >> "$GITHUB_STEP_SUMMARY"
