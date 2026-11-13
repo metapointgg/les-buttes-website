@@ -12,6 +12,9 @@ import {productionEmailGate} from './production-integration-gates.mjs';
 import {controlledTestBooking,TEST_APPROVAL_PENCE} from './controlled-production-test.mjs';
 import {deactivateAndReleaseControlledUnpaidBooking} from './production-unpaid-test-deactivation.mjs';
 import {reconcileScheduledProductionPayments} from './production-payment-schedule.mjs';
+import {SSMClient} from '@aws-sdk/client-ssm';
+import {createVerifiedProductionSumUpClient} from './sumup-production-runtime.mjs';
+import {reconcileVerifiedProductionRefund} from './production-refund-reconciliation.mjs';
 
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
 const reply=(statusCode,error)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({error})});
@@ -41,6 +44,23 @@ export async function handler(event){
    approvalEnabled:()=>writesEnabled()&&process.env.MANAGEMENT_APPROVAL_ENABLED==='true',
    checkoutEnabled:()=>productionCheckoutEnabled(process.env),
    reconciliationEnabled:()=>productionReconciliationEnabled(process.env),
+   refundReconciliationEnabled:()=>productionReconciliationEnabled(process.env),
+   reconcileRefund:async args=>{
+    const {Item:booking}=await db.send(new GetCommand({TableName:table,
+     Key:{PK:'BOOKING#'+args.bookingId,SK:'META'},ConsistentRead:true}));
+    if(process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'&&
+       (!controlledTestBooking(booking)||booking?.paidAmountPence!==100))
+     throw Error('Only the authorised £1 test refund may be reconciled');
+    const ssm=new SSMClient({region:'eu-west-2'});
+    try{
+     const sumup=await createVerifiedProductionSumUpClient({ssm,env:process.env});
+     const result=await reconcileVerifiedProductionRefund({
+      db,table,bookingId:args.bookingId,identity:args.identity,
+      merchantCode:sumup.merchantCode,
+      fetchTransaction:id=>sumup.retrieveTransaction(id)});
+     return {...result,notificationStatus:await notify(args.bookingId,'refund_confirmed')};
+    }finally{ssm.destroy?.();}
+   },
    deactivationEnabled:()=>process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'&&
      productionCheckoutEnabled(process.env),
    deactivateCheckout:async args=>{
