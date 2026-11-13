@@ -1,12 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import {languageFromPath} from '../lib/i18n';
-import {bookingPreviewCopy} from '../lib/booking-preview-copy';
+import {discoveryCopy} from '../lib/booking-discovery-copy';
 import BookingDiscoveryPreview from './BookingDiscoveryPreview.astro';
 
 const lang=languageFromPath(Astro.url.pathname);
-const p=bookingPreviewCopy(lang);
+const p=discoveryCopy(lang);
 ---
-<BaseLayout title={p.headline+' | Les Buttes'} description={p.intro}>
+<BaseLayout title={p.title+' | Les Buttes'} description={p.intro}>
   <BookingDiscoveryPreview/>
 </BaseLayout>
