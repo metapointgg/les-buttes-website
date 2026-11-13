@@ -128,6 +128,16 @@ export function createSumUpClient({apiKey,merchantCode,fetchImpl=globalThis.fetc
    const response=await call(CHECKOUT,{method:'POST',body:JSON.stringify(request)});
    return validateCheckoutResponse(response,request);
   },
+  async retrieveTransaction(transactionId){
+   if(typeof transactionId!=='string'||!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(transactionId))
+    throw Error('Invalid transaction ID');
+   // Authoritative read-only transaction view. Never initiate a refund here.
+   const item=await call('/v2.1/merchants/'+encodeURIComponent(merchantCode)+
+    '/transactions?id='+encodeURIComponent(transactionId));
+   if(item?.id!==transactionId||item.merchant_code!==merchantCode)
+    throw Error('Transaction identity mismatch');
+   return item;
+  },
   async retrieveCheckout(checkoutId){
    if(typeof checkoutId!=='string'||!/^[A-Za-z0-9-]{8,100}$/.test(checkoutId))
     throw Error('Invalid checkout ID');
