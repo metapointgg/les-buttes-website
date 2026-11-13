@@ -34,8 +34,8 @@ function matchesCheckout(item,checkout,merchant){
   item?.merchant_code===merchant &&item?.currency==='GBP' &&
   Number.isSafeInteger(Math.round(Number(item.amount)*100)) &&
   Math.round(Number(item.amount)*100)===checkout.amountPence &&
-  Array.isArray(item.transactions) &&
-  !item.transactions.some(t=>t.status==='SUCCESSFUL'||t.status==='PAID');
+  (!Array.isArray(item.transactions)||
+   !item.transactions.some(t=>t.status==='SUCCESSFUL'||t.status==='PAID'));
 }
 export async function cancelUnpaidProductionBooking({
  db,table,bookingId,identity,reason,env=process.env,
