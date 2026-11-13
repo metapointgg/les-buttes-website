@@ -15,7 +15,6 @@ const fixedNav=[
   {href:'/cottages/',label:translations.cottages,order:20},
   {href:'/about/',label:translations.story,order:35},
   {href:'/explore-guernsey/',label:translations.explore,order:40},
-  {href:'/book/',label:translations.book,order:60},
   {href:'/contact/',label:translations.contact,order:70}
 ];
 const subNav=(await getCollection('subpages'))
@@ -45,7 +44,7 @@ const current=(href:string)=>href==='/'?basePath==='/':basePath.startsWith(href)
       <summary><Icon name="menu" size={22}/>{translations.menu}</summary>
       <nav>
         {nav.map(item=><a href={localPath(item.href,language)} aria-current={current(item.href)?'page':undefined}>{item.label}</a>)}
-        <a class="button" href={localPath("/cottages/",language)}>{translations.book}</a>
+        <a class="button" href={localPath("/book/",language)}>{translations.book}</a>
       </nav>
     </details>
   </div>
