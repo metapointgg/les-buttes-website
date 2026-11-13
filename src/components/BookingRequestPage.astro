@@ -7,6 +7,6 @@ import BookingDiscoveryPreview from './BookingDiscoveryPreview.astro';
 const lang=languageFromPath(Astro.url.pathname);
 const p=bookingPreviewCopy(lang);
 ---
-<BaseLayout title={p.headline+' | Les Buttes'} description={p.intro} noindex>
+<BaseLayout title={p.headline+' | Les Buttes'} description={p.intro}>
   <BookingDiscoveryPreview/>
 </BaseLayout>
