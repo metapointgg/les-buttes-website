@@ -45,12 +45,12 @@ test('preview per-cottage seven-night rounding reproduces the existing direct ag
   assert.equal(actualTotal,3475);
   assert.equal(directTotal,3100);
 });
-test('hidden page never enables submissions from API URL alone; EN/NL/FR use same page and noindex',()=>{
+test('released booking page uses approved production request and authoritative quote services',()=>{
   const page=readFileSync(new URL('../../../src/components/BookingRequestPage.astro',import.meta.url),'utf8');
   const sitemap=readFileSync(new URL('../../../src/pages/sitemap.xml.ts',import.meta.url),'utf8');
   const header=readFileSync(new URL('../../../src/components/Header.astro',import.meta.url),'utf8');
   const deployment=readFileSync(new URL('../../../.github/workflows/deploy.yml',import.meta.url),'utf8');
-  assert.match(page,/noindex>/);
+  assert.doesNotMatch(page,/noindex>/);
   const discovery=readFileSync(new URL('../../../src/components/BookingDiscoveryPreview.astro',import.meta.url),'utf8');
   const discoveryScript=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
   assert.match(page,/<BookingDiscoveryPreview\/>/);
@@ -109,8 +109,8 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.ok(discoveryScript.includes("privacyVersion:'LB-PRIVACY-2027-01'"));
   assert.doesNotMatch(page,/data-mode="live"|booking-form/);
   assert.match(deployment,/PUBLIC_BOOKING_TURNSTILE_SITE_KEY: '0x4AAAAAAF7u2N5Mlj1-UsnQ'/);
-  assert.match(deployment,/PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'/);
-  assert.match(deployment,/PUBLIC_BOOKING_REQUESTS_APPROVED: 'false'/);
+  assert.match(deployment,/PUBLIC_BOOKING_REQUESTS_ENABLED: 'true'/);
+  assert.match(deployment,/PUBLIC_BOOKING_REQUESTS_APPROVED: 'true'/);
   // Client-inserted rows do not have Astro's scope attribute; keep selectors global.
   assert.match(discovery,/\.discover-summary-lines :global\(\.summary-line\)/);
   assert.match(discovery,/\.discover-calendar-grids :global\(\.calendar-days button\)/);
@@ -118,8 +118,8 @@ test('hidden page never enables submissions from API URL alone; EN/NL/FR use sam
   assert.match(discoveryScript,/\.formatRange\(/);
   assert.match(discoveryScript,/timeZone:'UTC'/);
 
-  assert.ok(!sitemap.includes("'/book/'"));
-  assert.ok(!header.includes('href:"/book/"'));
+  assert.ok(sitemap.includes("'/book/'"));
+  assert.ok(header.includes("href:'/book/'"));
   const languages=readFileSync(new URL('../../../src/pages/[lang]/book/index.astro',import.meta.url),'utf8');
   assert.match(languages,/\['nl','fr'\]/);
   assert.ok(!JSON.stringify(publicData).includes('ics?t='));
@@ -199,7 +199,7 @@ test('hidden booking journey has three steps with inline pricing and cannot conf
 });
 
 
-test('owner-only £1 acceptance requires explicit URL and private code; normal site flags remain disabled',()=>{
+test('owner-only acceptance code is inactive in the released public website',()=>{
  const discovery=readFileSync(new URL('../../../src/scripts/booking-discovery.ts',import.meta.url),'utf8');
  const workflow=readFileSync(new URL('../../../.github/workflows/deploy.yml',import.meta.url),'utf8');
  assert.match(discovery,/PUBLIC_BOOKING_CONTROLLED_TEST_ENABLED==='true'/);
@@ -207,9 +207,9 @@ test('owner-only £1 acceptance requires explicit URL and private code; normal s
  assert.match(discovery,/testAccessCode:oneTimeAccess/);
  assert.match(discovery,/choice!=='geranium'/);
  assert.match(discovery,/mike@un1ty\.gg/);
- assert.match(workflow,/PUBLIC_BOOKING_REQUESTS_ENABLED: 'false'/);
- assert.match(workflow,/PUBLIC_BOOKING_REQUESTS_APPROVED: 'false'/);
- assert.match(workflow,/PUBLIC_BOOKING_CONTROLLED_TEST_ENABLED: 'true'/);
+ assert.match(workflow,/PUBLIC_BOOKING_REQUESTS_ENABLED: 'true'/);
+ assert.match(workflow,/PUBLIC_BOOKING_REQUESTS_APPROVED: 'true'/);
+ assert.match(workflow,/PUBLIC_BOOKING_CONTROLLED_TEST_ENABLED: 'false'/);
 });
 
 
