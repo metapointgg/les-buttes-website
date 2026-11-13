@@ -19,7 +19,7 @@ const date=(s)=>{
 };
 function occupiedSlots(booking){
  const start=date(booking.start),end=date(booking.end),n=(end-start)/DAY;
- if(!Number.isSafeInteger(n)||n<1||n>27||!Array.isArray(booking.units)||
+ if(!Number.isSafeInteger(n)||n<7||n>27||n%7!==0||new Date(start).getUTCDay()!==6||!Array.isArray(booking.units)||
     booking.units.length<1||booking.units.length>2||
     new Set(booking.units).size!==booking.units.length||
     booking.units.some(u=>!allowedUnits.has(u)))
