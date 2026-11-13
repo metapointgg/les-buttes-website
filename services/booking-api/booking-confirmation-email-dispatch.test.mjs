@@ -54,7 +54,7 @@ test('request dispatch reads authoritative state and sends distinct guest and ow
 test('lifecycle payment request requires authoritative matching checkout and synthetic simulator identity',async()=>{
  const {dispatchBookingLifecycleEmail}=await import('./booking-confirmation-email-dispatch.mjs');
  const approved={...booking,synthetic:true,guestEmail:'test@example.invalid',status:'APPROVED_AWAITING_PAYMENT',approvedAmountGBP:735,holdExpiresAt:Math.floor(Date.now()/1000)+3600};
- const checkout={bookingId:id,status:'PENDING',currency:'GBP',amountPence:73500,hostedCheckoutUrl:'https://checkout.sumup.com/pay/test'};
+ const checkout={bookingId:id,status:'PENDING',currency:'GBP',amountPence:73500,hostedCheckoutUrl:'https://checkout.sumup.com/pay/c-11111111-1111-4111-8111-111111111111'};
  const messages=[];
  const args={db:{send:async command=>({Item:command.input.Key.SK==='META'?approved:checkout})},table,bookingId:id,type:'approval_payment',
   env:{BOOKING_ENVIRONMENT:'staging',BOOKING_LIFECYCLE_DISPATCH_ENABLED:'true',BOOKING_SES_SIMULATOR_ENABLED:'true'},
