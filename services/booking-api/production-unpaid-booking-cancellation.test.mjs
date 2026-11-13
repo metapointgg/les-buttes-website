@@ -61,13 +61,18 @@ test('paid, pending-after-delete or contradictory SumUp evidence never releases 
   {states:['PAID']},{states:['PENDING','PENDING']},
   {overrideRemote:{transactions:[{status:'SUCCESSFUL'}]}},
   {overrideRemote:{merchant_code:'MGV5J9QV'}},
-  {overrideRemote:{transactions:undefined}},
   {overrideRemote:{amount:800}}
  ]){
   const f=fixture(config);
   await assert.rejects(cancelUnpaidProductionBooking({...inputs,db:f.db,clientFactory:async()=>f.sumup}));
   assert.equal(f.calls.some(x=>x.input?.TransactItems),false);
  }
+});
+test('SumUp can omit the optional transactions array while a twice-verified EXPIRED checkout remains safe to release',async()=>{
+ const f=fixture({overrideRemote:{transactions:undefined}});
+ const result=await cancelUnpaidProductionBooking({...inputs,db:f.db,clientFactory:async()=>f.sumup});
+ assert.equal(result.status,'CANCELLED');
+ assert.equal(f.calls.some(x=>x.input?.TransactItems),true);
 });
 test('wrong role, booking state or test-only gate fails without contacting provider',async()=>{
  for(const override of [
