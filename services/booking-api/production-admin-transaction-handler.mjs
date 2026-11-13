@@ -58,7 +58,7 @@ export async function handler(event){
       db,table,bookingId:args.bookingId,identity:args.identity,
       merchantCode:sumup.merchantCode,
       fetchTransaction:id=>sumup.retrieveTransaction(id)});
-     return {...result,notificationStatus:await notify(args.bookingId,'refund_confirmed')};
+     return {...result,notificationStatus:result.status==='REFUNDED'?await notify(args.bookingId,'refund_confirmed'):'NOT_SENT_PARTIAL_REFUND'};
     }finally{ssm.destroy?.();}
    },
    deactivationEnabled:()=>process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'&&
