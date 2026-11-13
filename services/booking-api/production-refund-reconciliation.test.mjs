@@ -21,13 +21,13 @@ test('full guest refund excludes merchant payout deductions',()=>{
 });
 test('partial refund, wrong merchant, wrong transaction, pending refund and missing events fail closed',()=>{
  const variants=[
-  [{...provider,refunded_amount:1.01},'outside assessed entitlement'],
+  [{...provider,refunded_amount:1.01},'aggregate conflicts with events'],
   [{...provider,merchant_code:'MGV5J9QV'},'mismatch'],
   [{...provider,id:'66666666-7777-4888-8999-000000000000'},'mismatch'],
-  [{...provider,transaction_events:[{event_type:'REFUND',status:'PENDING',amount:1}]},'refund events'],
+  [{...provider,transaction_events:[{event_type:'REFUND',status:'PENDING',amount:1}]},'Refund event not complete'],
   [{...provider,transaction_events:[]},'refund events'],
-  [{...provider,status:'SUCCESSFUL'},'SumUp refund not verified'],
-  [{...provider,transaction_events:[{event_type:'REFUND',status:'REFUNDED',amount:.97}]},'refund events']
+  [{...provider,status:'FAILED'},'not eligible'],
+  [{...provider,transaction_events:[{event_type:'REFUND',status:'REFUNDED',amount:.97}]},'aggregate conflicts with events']
  ];
  for(const [transaction,pattern] of variants)
   assert.throws(()=>verifyProductionRefundEvidence({
@@ -82,7 +82,7 @@ test('not paid, unauthorised or provider mismatch causes no ledger write',async(
    fetchTransaction:async()=>provider}),/unavailable/);
  await assert.rejects(reconcileVerifiedProductionRefund({
   db,table,bookingId:id,identity:owner,merchantCode:'M9BE4KMN',
-  fetchTransaction:async()=>({...provider,refunded_amount:0})}),/outside assessed entitlement/);
+  fetchTransaction:async()=>({...provider,refunded_amount:0})}),/aggregate conflicts with events/);
  assert.equal(writes,0);
 });
 
@@ -126,4 +126,26 @@ test('repeated partial verification is idempotent; subsequent full refund upgrad
  assert.equal(next.status,'REFUNDED');
  assert.equal(next.outstandingPence,0);
  assert.equal(writes,1);
+});
+
+test('actual SumUp 13 November response reconciles a 97p refund despite SUCCESSFUL transaction status',()=>{
+ const actual={id:tx,merchant_code:'M9BE4KMN',currency:'GBP',amount:1,
+  status:'SUCCESSFUL',simple_status:'SUCCESSFUL',
+  transaction_events:[
+   {event_type:'PAYOUT',status:'PENDING',amount:.97},
+   {event_type:'REFUND',status:'REFUNDED',amount:.97}
+  ],
+  events:[
+   {type:'PAYOUT',status:'SCHEDULED',amount:.97},
+   {type:'REFUND',status:'REFUNDED',amount:.97}
+  ]};
+ assert.deepEqual(verifyProductionRefundEvidence({
+  booking,transaction:actual,merchantCode:'M9BE4KMN'
+ }),{amountPence:97,outstandingPence:3,currency:'GBP',transactionId:tx,refundEvents:1});
+ assert.throws(()=>verifyProductionRefundEvidence({
+  booking,transaction:{...actual,events:[{type:'REFUND',status:'REFUNDED',amount:1}]},
+  merchantCode:'M9BE4KMN'}),/sources disagree/);
+ assert.throws(()=>verifyProductionRefundEvidence({
+  booking,transaction:{...actual,transaction_events:[{event_type:'REFUND',status:'PENDING',amount:.97}]},
+  merchantCode:'M9BE4KMN'}),/not complete/);
 });
