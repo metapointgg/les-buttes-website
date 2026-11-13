@@ -23,25 +23,35 @@ export function verifyProductionRefundEvidence({booking,transaction,merchantCode
   merchantCode!=='M9BE4KMN'||transaction.merchant_code!==merchantCode||
   transaction.currency!=='GBP'||pence(transaction.amount)!==booking.paidAmountPence)
   throw Error('Refund identity or booking mismatch');
- if(transaction.simple_status!=='REFUNDED'||transaction.status!=='REFUNDED')
-  throw Error('SumUp refund not verified');
- // REFUNDED includes partial refunds. A merchant processing fee is not a
- // refund, and must not be deducted from or added to the payer's entitlement.
- const refundedPence=pence(transaction.refunded_amount);
- if(refundedPence<1||refundedPence>booking.refundDuePence)
-  throw Error('SumUp refund amount outside assessed entitlement');
+ // SumUp can leave the overall transaction SUCCESSFUL after a refund.
+ // The completed REFUND events, rather than the overall payment status,
+ // provide the authoritative amount returned to the payer.
+ if(!['SUCCESSFUL','REFUNDED'].includes(transaction.status)||
+    !['SUCCESSFUL','REFUNDED','PAID_OUT'].includes(transaction.simple_status))
+  throw Error('SumUp payment status is not eligible for verified refund');
  const sources=[transaction.transaction_events,transaction.events].filter(Array.isArray);
  if(!sources.length)throw Error('Authoritative refund events missing');
- let refundCount=0;
+ let refundedPence=null,refundCount=0;
  for(const events of sources){
   const refunds=events.filter(event=>(event?.event_type??event?.type)==='REFUND');
   if(!refunds.length)continue;
-  if(refunds.some(x=>!['REFUNDED','SUCCESSFUL'].includes(x.status))||
-     refunds.reduce((total,x)=>total+pence(x.amount),0)!==refundedPence)
-   throw Error('Verified refund events do not match amount');
+  if(refunds.some(x=>!['REFUNDED','SUCCESSFUL'].includes(x.status)))
+   throw Error('Refund event not complete');
+  const amount=refunds.reduce((total,x)=>total+pence(x.amount),0);
+  if(refundedPence!==null&&amount!==refundedPence)
+   throw Error('Refund event sources disagree');
+  refundedPence=amount;
   refundCount=Math.max(refundCount,refunds.length);
  }
- if(!refundCount)throw Error('Verified refund events do not match amount');
+ if(!refundCount||refundedPence===null||
+    refundedPence<1||refundedPence>booking.refundDuePence)
+  throw Error('Verified refund events do not match assessed amount');
+ // SumUp may omit refunded_amount even when it includes REFUNDED events.
+ // When present, however, it must agree exactly with the event total.
+ if(transaction.refunded_amount!==undefined&&transaction.refunded_amount!==null&&
+    pence(transaction.refunded_amount)!==refundedPence)
+  throw Error('SumUp refund aggregate conflicts with events');
+ // Merchant payout deductions are never interpreted as guest refunds.
  return {amountPence:refundedPence,outstandingPence:booking.refundDuePence-refundedPence,
   currency:'GBP',transactionId:booking.paymentTransactionId,refundEvents:refundCount};
 }
