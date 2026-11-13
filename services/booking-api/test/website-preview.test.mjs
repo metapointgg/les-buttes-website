@@ -119,7 +119,9 @@ test('released booking page uses approved production request and authoritative q
   assert.match(discoveryScript,/timeZone:'UTC'/);
 
   assert.ok(sitemap.includes("'/book/'"));
-  assert.ok(header.includes("href:'/book/'"));
+  assert.ok(header.includes('class="button header-book"'));
+ assert.ok(header.includes('href={localPath("/book/",language)}'));
+ assert.ok(!header.includes("{href:'/book/',label:translations.book,order:60}"));
   const languages=readFileSync(new URL('../../../src/pages/[lang]/book/index.astro',import.meta.url),'utf8');
   assert.match(languages,/\['nl','fr'\]/);
   assert.ok(!JSON.stringify(publicData).includes('ics?t='));
