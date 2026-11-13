@@ -46,7 +46,7 @@ const copy={
 
  masterOffline:'Les disponibilités en direct sont temporairement indisponibles ; les dates ne peuvent pas être choisies.',availableWhite:'Non bloqué dans le calendrier principal',
  eyebrow:'Réservation directe',title:'Trouvez votre gîte',intro:'Choisissez les dates, les voyageurs et le nombre de chambres pour découvrir les gîtes adaptés.',
- preview:'Réservez directement auprès des Buttes. Le paiement n'est demandé qu'après validation.',
+ preview:'Réservez directement auprès des Buttes. Le paiement intervient après validation.',
  filter:'Rechercher un hébergement',rangeTitle:'Arrivée — départ',rangePlaceholder:'Choisissez vos dates',rangeHint:'Choisissez un samedi pour l’arrivée, puis un samedi pour le départ (7, 14 ou 21 nuits).',rangeDone:'Fermer le calendrier',rangeLoading:'Vérification des disponibilités…',arrival:'Arrivée',departure:'Départ',adults:'Adultes',children:'Enfants',rooms:'Chambres souhaitées',anyRooms:'Sans préférence',cottages:'Hébergement',anyCottage:'Meilleure option',both:'Les deux gîtes ensemble',find:'Rechercher les gîtes',
  results:'Gîtes adaptés à votre recherche',pick:'Voir le calendrier',choice:'Sélectionné',possible:'Aucune réservation connue à ces dates',occupied:'Réservé à ces dates',unchecked:'Choisissez des dates pour consulter le calendrier principal',
  months:'Explorer les dates et les prix par nuit',calendarHelp:'Vérifiez les disponibilités ou modifiez les dates : choisissez un samedi d’arrivée, puis un samedi de départ. Les deux gîtes doivent être libres si réservés ensemble.',
