@@ -10,7 +10,7 @@ import {createProductionSesTransport} from './booking-production-ses-transport.m
 import {dispatchProductionBookingLifecycleEmail} from './booking-production-email-dispatch.mjs';
 import {productionEmailGate} from './production-integration-gates.mjs';
 import {controlledTestBooking,TEST_APPROVAL_PENCE} from './controlled-production-test.mjs';
-import {deactivateAndReleaseControlledUnpaidBooking} from './production-unpaid-test-deactivation.mjs';
+import {cancelUnpaidProductionBooking} from './production-unpaid-booking-cancellation.mjs';
 import {reconcileScheduledProductionPayments} from './production-payment-schedule.mjs';
 import {SSMClient} from '@aws-sdk/client-ssm';
 import {createVerifiedProductionSumUpClient} from './sumup-production-runtime.mjs';
@@ -61,10 +61,10 @@ export async function handler(event){
      return {...result,notificationStatus:result.status==='REFUNDED'?await notify(args.bookingId,'refund_confirmed'):'NOT_SENT_PARTIAL_REFUND'};
     }finally{ssm.destroy?.();}
    },
-   deactivationEnabled:()=>process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true'&&
+   deactivationEnabled:()=>process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED!=='true'&&
      productionCheckoutEnabled(process.env),
    deactivateCheckout:async args=>{
-    const result=await deactivateAndReleaseControlledUnpaidBooking({db,table,...args,env:process.env});
+    const result=await cancelUnpaidProductionBooking({db,table,...args,env:process.env});
     return {...result,notificationStatus:await notify(args.bookingId,'cancelled')};
    },
    registerCheckout:async args=>{
