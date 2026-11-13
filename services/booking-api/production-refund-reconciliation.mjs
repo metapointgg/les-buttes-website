@@ -89,11 +89,11 @@ export async function reconcileVerifiedProductionRefund({db,table,bookingId,iden
    ExpressionAttributeValues:{':booking':bookingId,':paid':booking.paidAmountPence,':currency':'GBP'}}},
   {Update:{TableName:table,Key:key,
    UpdateExpression:'SET refundStatus = :next,refundedAmountPence = :amount,refundOutstandingPence = :outstanding,refundedAt = :at',
-   ConditionExpression:'#status = :cancelled AND reservationStatus = :cancelled AND refundStatus = :previous AND refundDuePence >= :amount AND paymentTransactionId = :tx AND paidAmountPence = :paid'+
+   ConditionExpression:'#status = :cancelled AND reservationStatus = :cancelled AND refundStatus = :previous AND refundDuePence = :due AND paymentTransactionId = :tx AND paidAmountPence = :paid'+
     (booking.refundStatus==='PARTIALLY_REFUNDED'?' AND refundedAmountPence = :oldAmount':''),
    ExpressionAttributeNames:{'#status':'status'},
    ExpressionAttributeValues:{':next':nextStatus,':previous':booking.refundStatus,
-    ':cancelled':'CANCELLED',':amount':verified.amountPence,':outstanding':verified.outstandingPence,
+    ':cancelled':'CANCELLED',':due':booking.refundDuePence,':amount':verified.amountPence,':outstanding':verified.outstandingPence,
     ':at':at,':tx':verified.transactionId,':paid':booking.paidAmountPence,
     ...(booking.refundStatus==='PARTIALLY_REFUNDED'?{':oldAmount':previous}:{})}}},
   {Put:{TableName:table,Item:claim,ConditionExpression:'attribute_not_exists(PK)'}},
