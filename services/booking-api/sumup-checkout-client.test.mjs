@@ -165,3 +165,23 @@ test('approved live GBP merchant with an absent sandbox flag can create checkout
   assert.deepEqual(requests,['GET'],'No payment-capable POST may occur without verified merchant identity');
  }
 });
+
+test('SumUp transaction refund lookup is authenticated, read-only and merchant-bound',async()=>{
+ const id='11111111-2222-4333-8444-555555555555',calls=[];
+ const profile={id,merchant_code:'M9BE4KMN',currency:'GBP',amount:1,
+  status:'REFUNDED',simple_status:'REFUNDED',refunded_amount:1,
+  transaction_events:[{event_type:'REFUND',status:'REFUNDED',amount:1}]};
+ const client=createSumUpClient({enabled:true,providerEnvironment:'live',
+  merchantCode:'M9BE4KMN',apiKey:'sup_sk_mock',
+  fetchImpl:async(url,options)=>{
+   calls.push({url,method:options?.method??'GET',authorization:options?.headers?.Authorization});
+   return {ok:true,json:async()=>profile};
+  }});
+ assert.equal((await client.retrieveTransaction(id)).refunded_amount,1);
+ assert.deepEqual(calls,[{url:'https://api.sumup.com/v2.1/merchants/M9BE4KMN/transactions?id='+id,
+  method:'GET',authorization:'Bearer sup_sk_mock'}]);
+ await assert.rejects(client.retrieveTransaction('unsafe-id'),/Invalid transaction ID/);
+ const mismatched=createSumUpClient({enabled:true,merchantCode:'M9BE4KMN',
+  apiKey:'sup_sk_mock',fetchImpl:async()=>({ok:true,json:async()=>({...profile,merchant_code:'OTHER'})})});
+ await assert.rejects(mismatched.retrieveTransaction(id),/identity mismatch/);
+});
