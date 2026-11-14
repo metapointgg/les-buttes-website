@@ -1,4 +1,4 @@
-import {QueryCommand} from '@aws-sdk/lib-dynamodb';
+import {GetCommand,QueryCommand} from '@aws-sdk/lib-dynamodb';
 // Read-only owner report from authoritative booking records. No scans, no
 // invented payment amounts, and no provider assertions from the browser.
 export async function loadProductionBalanceReport({db,table,now=new Date().toISOString().slice(0,10)}={}){
@@ -9,7 +9,11 @@ export async function loadProductionBalanceReport({db,table,now=new Date().toISO
   const response=await db.send(new QueryCommand({TableName:table,
    IndexName:'BookingRequestsIndex',KeyConditionExpression:'GSI1PK = :pk',
    ExpressionAttributeValues:{':pk':'BOOKING_REQUESTS'},Limit:100,ExclusiveStartKey:cursor}));
-  for(const item of response.Items??[]){
+  for(const indexed of response.Items??[]){
+   if(!/^[0-9a-f-]{36}$/i.test(indexed.id??''))continue;
+   const {Item:item}=await db.send(new GetCommand({TableName:table,
+    Key:{PK:'BOOKING#'+indexed.id,SK:'META'},ConsistentRead:true}));
+   if(!item||item.id!==indexed.id)continue;
    if(item.source!=='direct'||item.synthetic===true||item.archivedForProductionLaunch===true||
       !['CONFIRMED','APPROVED_AWAITING_PAYMENT'].includes(item.status))continue;
    const totalPence=Math.round(Number(item.approvedAmountGBP??item.quote?.totalGBP)*100);
