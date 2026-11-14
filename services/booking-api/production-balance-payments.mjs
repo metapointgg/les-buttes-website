@@ -105,6 +105,8 @@ export async function reconcileBalancePayment({db,table,bookingId,identity,sumup
   throw Error('Registered unpaid balance checkout required');
  validateRegistered(registered,booking,amount);
  const provider=await sumup.retrieveCheckout(registered.checkoutId);
+ if(!['PAID','PENDING'].includes(provider?.status))
+  throw Error('Balance checkout is no longer payable; owner review required');
  const evidence=verifySumUpPayment({provider,registered:{...registered,merchantCode:sumup.merchantCode},
   booking:{...booking,reservationStatus:'AWAITING_PAYMENT',approvedAmountGBP:amount/100,paymentSchedule:undefined}});
  if(!evidence.verified)throw Error('Balance payment not verified: '+evidence.reason);
