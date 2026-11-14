@@ -60,3 +60,14 @@ test('LB-08 accepts sandbox-observed successful transaction ID format and GBP ev
  assert.equal(evidence.verified,true);
  assert.equal(evidence.transactionId,'ecebc6e9-5f74-4d39-be1f-caf2b26a7cd3');
 });
+
+test('verified 50% instalment is accepted only against immutable full booking payment schedule',()=>{
+ const partialBooking={...booking,approvedAmountGBP:805,paymentSchedule:{
+  totalPence:80500,dueNowPence:40250,balancePence:40250}};
+ const initial={...registered,amountPence:40250};
+ const payment={...provider,amount:402.50,transactions:[{
+  ...provider.transactions[0],amount:402.50}]};
+ assert.equal(verifySumUpPayment({registered:initial,booking:partialBooking,provider:payment}).verified,true);
+ assert.equal(verifySumUpPayment({registered:initial,booking:{...partialBooking,paymentSchedule:{...partialBooking.paymentSchedule,balancePence:40249}},provider:payment}).verified,false);
+ assert.equal(verifySumUpPayment({registered:initial,booking:{...partialBooking,approvedAmountGBP:804.99},provider:payment}).verified,false);
+});
