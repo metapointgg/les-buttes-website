@@ -22,9 +22,15 @@ export function verifySumUpPayment({registered,provider,booking,now=new Date()}=
  if(booking.id!==registered.bookingId||booking.source!=='direct'||
    booking.reservationStatus!=='AWAITING_PAYMENT')
   return fail('Booking state mismatch');
- if(!Number.isFinite(Number(booking.approvedAmountGBP))||
-   Math.round(Number(booking.approvedAmountGBP)*100)!==expected)
+ const total=Math.round(Number(booking.approvedAmountGBP)*100);
+ if(!Number.isSafeInteger(total)||total<expected)
   return fail('Approved amount mismatch');
+ if(booking.paymentSchedule){
+  const schedule=booking.paymentSchedule;
+  if(schedule.totalPence!==total||schedule.dueNowPence!==expected||
+     schedule.balancePence!==total-expected)
+   return fail('Snapshotted initial payment mismatch');
+ }else if(total!==expected)return fail('Approved amount mismatch');
  if(provider.status!=='PAID')return fail('Provider has not confirmed payment');
  // Provider transaction must be independently returned by the checkout read.
  // A webhook event or redirect alone is not payment evidence.
