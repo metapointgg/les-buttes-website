@@ -1,5 +1,6 @@
 import {renderBrandedBookingHtml} from './booking-branded-email-html.mjs';
 import {firstName} from './booking-payment-policy.mjs';
+import {balancePaymentPageUrl} from './booking-balance-link.mjs';
 // LB-09: pure lifecycle email templates; never sends, charges, confirms payment or edits bookings.
 // Only verified/authoritative inputs supplied by the calling orchestration may be rendered.
 // The owner must approve customer-facing wording before any staging/production enablement.
@@ -114,12 +115,10 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason,remind
     'Check-in is from 4.00 pm and check-out is by 10.00 am. We will send you arrival information before your stay. We look forward to welcoming you to Guernsey.'];
    break;
   case 'balance_reminder':{
-   if(booking.status!=='CONFIRMED'||!checkout||checkout.status!=='PENDING'||
-      checkout.currency!=='GBP'||checkout.bookingId!==id||
+   if(booking.status!=='CONFIRMED'||
       !Number.isSafeInteger(booking.balancePence)||booking.balancePence<1||
-      checkout.amountPence!==booking.balancePence||
       ![3,2,1,0].includes(reminderStage))throw Error('Verified outstanding balance required');
-   const url=safeUrl(checkout.hostedCheckoutUrl);
+   const url=balancePaymentPageUrl({bookingId:id,token:booking.balanceAccessToken});
    const name=firstName(booking.guestName);
    const timing={3:'three months',2:'two months',1:'one month'};
    subject=reminderStage===0?'Les Buttes — Your holiday balance is now due':
@@ -133,7 +132,7 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason,remind
        'Otherwise, no action is needed just yet. We will send a further reminder as your holiday approaches.']),
     stay,reference,'Amount due: '+money(booking.balancePence),
     'Balance due date: '+date(booking.balanceDueDate),
-    'Pay securely using the SumUp hosted checkout:',url,
+    'Pay securely using your Les Buttes payment page:',url,
     'We will confirm receipt when your payment has been verified.'];
    break;
   }
