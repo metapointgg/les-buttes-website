@@ -18,7 +18,7 @@ const fixture=({existing=checkout,creationClaim=claim,statuses=['PENDING','EXPIR
  return {db,sumup,calls};
 };
 test('unregistered balance with no creation claim is safe only with atomic writer claim guard',async()=>{
- const f=fixture({existing:undefined,creationClaim:undefined});
+ const f=fixture({existing:null,creationClaim:null});
  const result=await verifyBalanceCheckoutDeactivated({db:f.db,table,booking,sumup:f.sumup});
  assert.deepEqual(result,{state:'NO_LINK',verified:true});
 });
@@ -36,6 +36,6 @@ test('paid or still active link prevents cancellation and date release',async()=
  }
 });
 test('unregistered checkout with outstanding creation claim requires manual review',async()=>{
- const f=fixture({existing:undefined});
+ const f=fixture({existing:null});
  await assert.rejects(verifyBalanceCheckoutDeactivated({db:f.db,table,booking,sumup:f.sumup}),/reviewed/);
 });
