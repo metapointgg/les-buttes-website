@@ -108,6 +108,11 @@ if(widget){
     row.append(name,price);summaryLines.append(row);
    }
    summaryLines.hidden=false;
+   const detailsSplit=widget.querySelector<HTMLElement>('[data-details-payment-split]');
+   if(detailsSplit){
+    detailsSplit.replaceChildren(...Array.from(summaryLines.children).map(child=>child.cloneNode(true)));
+    detailsSplit.hidden=false;
+   }
   }
   const quoteKey=()=>JSON.stringify([choice,arrival.value,departure.value,filters.adults+filters.children]);
   async function checkAuthoritativeQuote(){
@@ -568,6 +573,7 @@ if(widget){
     fill('[data-details-stay]',rangeLabel(quote.start,quote.end)+' · '+quote.nights+' '+tr('nightWord'));
     fill('[data-details-guests]',String(quote.adults+quote.children));
     fill('[data-details-price]',liveQuoteEnabled&&authoritativeQuote?.key===quoteKey()?money(Number(authoritativeQuote.totalGBP)):money(quote.indicativeDirectTotalGBP));
+    if(liveQuoteEnabled)showPaymentSplit();
     setStep(3);
   });
   // Submission requires an explicit build flag and an authoritative quote.
