@@ -145,3 +145,29 @@ jobs:
           echo "Anonymous response: $code"
           test "$code" = "401" || test "$code" = "403"
           echo "Staging API endpoint: $endpoint" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stage versioned production backend artefact (no production deployment)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm --prefix services/booking-api ci --omit=dev --no-audit --no-fund
+          mkdir -p .release
+          (
+            cd services/booking-api
+            zip -q -r ../../.release/les-buttes-production-integrations.zip . \
+              -x '*.test.mjs' 'node_modules/.cache/*'
+          )
+          unzip -t .release/les-buttes-production-integrations.zip | tail -1
+          for file in production-admin-transaction-handler.mjs production-payment-schedule.mjs production-balance-reminder-runner.mjs production-guest-balance-handler.mjs booking-payment-policy.mjs node_modules/@aws-sdk/client-ssm/package.json; do
+            unzip -Z -1 .release/les-buttes-production-integrations.zip | grep -Fx "$file"
+          done
+          sha256sum .release/les-buttes-production-integrations.zip
+          key="payment-review/production-instalments/${GITHUB_SHA}/les-buttes-production-integrations.zip"
+          aws s3 cp .release/les-buttes-production-integrations.zip \
+            "s3://les-buttes-payment-staging-145608514666-eu-west-2/$key" \
+            --metadata "source-commit=${GITHUB_SHA}" --only-show-errors
+          version="$(aws s3api head-object \
+            --bucket les-buttes-payment-staging-145608514666-eu-west-2 --key "$key" \
+            --query VersionId --output text)"
+          test -n "$version" && test "$version" != "None" && test "$version" != "null"
+          echo "Reviewed backend artefact: $key (version $version)" >> "$GITHUB_STEP_SUMMARY"
