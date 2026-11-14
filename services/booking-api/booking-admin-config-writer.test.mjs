@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {publishOwnerConfiguration,rollbackOwnerConfiguration} from './booking-admin-config-writer.mjs';
 const owner={role:'owner',subject:'owner-test'};
-const value={depositPercent:25,balanceDueDays:56};
+const value={depositPercent:50,balanceDueDays:14,fullPaymentWithinDays:30,reminderMonths:[3,2,1]};
 test('LB-06 owner publication uses immutable version and compare-and-swap',async()=>{
  let tx;
  const db={send:async cmd=>{tx=cmd.input;return {};}};
