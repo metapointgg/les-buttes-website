@@ -53,7 +53,7 @@ test('scheduled production confirmation uses provider verification and a separat
    return {status:'ACCEPTED_BY_SES_NOT_DELIVERED'};},
   transportFactory:()=>({send:async()=>{throw Error('No real SES call in unit test');}})
  });
- assert.deepEqual(count,{confirmed:1,pending:0,review:0,notificationReview:0,checked:1});
+ assert.deepEqual(count,{confirmed:1,pending:0,review:0,notificationReview:0,checked:1,balanceChecked:0,balancePaid:0,balancePending:0,balanceReminderSent:0});
  assert.deepEqual(calls.map(x=>x.type),['reconcile','dispatch']);
  assert.equal(calls[0].args.identity.subject,'system:production-scheduled-payment-reconciliation');
  assert.equal(calls[1].args.type,'confirmed');
