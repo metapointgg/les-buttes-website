@@ -61,7 +61,7 @@ export function calculateCancellationRefund({policy,booking,cancelledAt}={}){
  if(!Number.isSafeInteger(totalPricePence)||totalPricePence<booking.amountPaidPence||
     totalPricePence>100000000)
   throw Error('Invalid total booking price for cancellation assessment');
- const retainedPence=Math.round(totalPricePence*(100-refundPercent)/100);
+ const retainedPence=totalPricePence-Math.round(totalPricePence*refundPercent/100);
  const refundAmountPence=Math.max(0,booking.amountPaidPence-retainedPence);
  return {policyId:policy.policyId,refundPercent,refundAmountPence,feePence:0,reason,
   cancellationReceivedAt:cancelledAt,checkInAt:booking.checkInAt};
