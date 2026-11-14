@@ -7,6 +7,7 @@ import {dispatchProductionBookingLifecycleEmail} from './booking-production-emai
 import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
 import {productionEmailGate} from './production-integration-gates.mjs';
 import {controlledTestBooking} from './controlled-production-test.mjs';
+import {processProductionBalance} from './production-balance-reminder-runner.mjs';
 
 const RULE='arn:aws:events:eu-west-2:145608514666:rule/les-buttes-production-payment-reconciliation';
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
@@ -26,6 +27,7 @@ export function authorisedProductionPaymentSchedule(event,env=process.env){
 export async function reconcileScheduledProductionPayments(event,{
  env=process.env,db,reconcile=reconcileOwnerLivePayment,
  dispatch=dispatchProductionBookingLifecycleEmail,
+ processBalance=processProductionBalance,
  transportFactory=createProductionSesTransport,
  now=()=>Math.floor(Date.now()/1000)
 }={}){
@@ -33,7 +35,8 @@ export async function reconcileScheduledProductionPayments(event,{
  const owned=!db;
  db??=DynamoDBDocumentClient.from(new DynamoDBClient({region:'eu-west-2'}),{
   marshallOptions:{removeUndefinedValues:true}});
- const result={confirmed:0,pending:0,review:0,notificationReview:0,checked:0};
+ const result={confirmed:0,pending:0,review:0,notificationReview:0,checked:0,
+  balanceChecked:0,balancePaid:0,balancePending:0,balanceReminderSent:0};
  try{
   let cursor,pages=0;
   do{
@@ -41,7 +44,29 @@ export async function reconcileScheduledProductionPayments(event,{
     IndexName:'BookingRequestsIndex',KeyConditionExpression:'GSI1PK = :pk',
     ExpressionAttributeValues:{':pk':'BOOKING_REQUESTS'},Limit:100,ExclusiveStartKey:cursor}));
    for(const indexed of page.Items??[]){
-    if(indexed.status!=='APPROVED_AWAITING_PAYMENT'||!ID.test(indexed.id??''))continue;
+    if(!ID.test(indexed.id??''))continue;
+    if(indexed.status==='CONFIRMED'){
+     const {Item:confirmedBooking}=await db.send(new GetCommand({TableName:env.BOOKINGS_TABLE,
+      Key:{PK:'BOOKING#'+indexed.id,SK:'META'},ConsistentRead:true}));
+     if(confirmedBooking?.status==='CONFIRMED'&&confirmedBooking.reservationStatus==='CONFIRMED'&&
+        confirmedBooking.paymentStatus==='PARTIALLY_PAID'&&confirmedBooking.balanceDuePence>0){
+      result.balanceChecked++;
+      try{
+       const outcome=await processBalance({db,table:env.BOOKINGS_TABLE,
+        booking:confirmedBooking,env,today:new Date(now()*1000).toISOString().slice(0,10)});
+       if(outcome.status==='PAID_IN_FULL')result.balancePaid++;
+       else if(outcome.status==='PENDING'){
+        result.balancePending++;
+        if(outcome.notificationStatus==='ACCEPTED_BY_SES_NOT_DELIVERED')result.balanceReminderSent++;
+       }
+      }catch(error){
+       result.review++;
+       console.error('PRODUCTION_BALANCE_PROVIDER_OR_EMAIL_REVIEW',confirmedBooking.id,error?.name??'Error');
+      }
+     }
+     continue;
+    }
+    if(indexed.status!=='APPROVED_AWAITING_PAYMENT')continue;
     const {Item:booking}=await db.send(new GetCommand({TableName:env.BOOKINGS_TABLE,
      Key:{PK:'BOOKING#'+indexed.id,SK:'META'},ConsistentRead:true}));
     if(!booking||booking.id!==indexed.id||booking.status!=='APPROVED_AWAITING_PAYMENT'||
