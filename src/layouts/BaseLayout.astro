@@ -204,8 +204,8 @@ gtag('config', '${googleAnalyticsId}');`}></script>
     <title>{title}</title>
     <meta name="description" content={description}/>
     <link rel="canonical" href={canonical}/>
-    {languages.map(lang=><link rel="alternate" hreflang={lang==="en"?"en-GB":lang} href={new URL(localPath(canonicalPagePath,lang),site.url).toString()}/>)}
-    <link rel="alternate" hreflang="x-default" href={new URL(canonicalPagePath,site.url).toString()}/>
+    {!sensitive && languages.map(lang=><link rel="alternate" hreflang={lang==="en"?"en-GB":lang} href={new URL(localPath(canonicalPagePath,lang),site.url).toString()}/>)}
+    {!sensitive && <link rel="alternate" hreflang="x-default" href={new URL(canonicalPagePath,site.url).toString()}/>}
     <meta name="robots" content={sensitive?'noindex,nofollow,noarchive':noindex?'noindex,follow,max-image-preview:large':'max-image-preview:large'}/>
 
     <meta property="og:type" content="website"/>
