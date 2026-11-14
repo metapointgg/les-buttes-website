@@ -152,7 +152,14 @@ async function createRequest(input,event){
   }
   const controlled=process.env.BOOKING_ENVIRONMENT==='production'&&
     process.env.BOOKING_CONTROLLED_TEST_ONLY_ENABLED==='true';
+  const paymentPolicyChecks=policyVersion?[{ConditionCheck:{
+   TableName:table,Key:{PK:'CONFIG#payments#all',SK:'CURRENT'},
+   ConditionExpression:'#version=:version',
+   ExpressionAttributeNames:{'#version':'version'},ExpressionAttributeValues:{':version':policyVersion}
+  }}]:[{ConditionCheck:{TableName:table,Key:{PK:'CONFIG#payments#all',SK:'CURRENT'},
+   ConditionExpression:'attribute_not_exists(PK)'}}];
   const transact=[...calendarChecks,
+    ...(process.env.BOOKING_ENVIRONMENT==='production'?paymentPolicyChecks:[]),
     ...(controlled?[controlledTestBookingClaim(table,id)]:[]),
     {Put:{TableName:table,Item:item,ConditionExpression:'attribute_not_exists(PK)'}}];
   for(const key of slotsFor(result.units,result.nights))transact.push({Put:{TableName:table,Item:{...key,id,expiresAt},ConditionExpression:'attribute_not_exists(PK) OR expiresAt < :now',ExpressionAttributeValues:{':now':nowEpoch()}}});
