@@ -3,6 +3,7 @@ const titles={
  requested:'Thank you for your booking request',
  owner_request:'A booking needs your review',
  approval_payment:'Your booking has been approved',
+ balance_reminder:'A little note about your upcoming stay',
  declined:'An update on your booking request',
  confirmed:'Your stay is confirmed',
  cancelled:'Your booking has been cancelled',
@@ -24,7 +25,7 @@ export function renderBrandedBookingHtml({type,body}={}){
  const amount=lines.find(x=>/^(?:Amount due|Refund amount): £\d+\.\d{2}$/.test(x));
  const candidate=lines.find(x=>x.startsWith('https://'));
  let paymentUrl;
- if(type==='approval_payment'){
+ if(type==='approval_payment'||type==='balance_reminder'){
   if(!candidate)throw Error('Verified SumUp link required');
   const url=new URL(candidate);
   if(url.protocol!=='https:'||url.hostname!=='checkout.sumup.com'||url.username||url.password||url.hash||url.search||
@@ -35,7 +36,7 @@ export function renderBrandedBookingHtml({type,body}={}){
   'Please reply to the email you received if you need assistance.']);
  const ownerFields=type==='owner_request'?lines.filter(x=>/^(?:Guest|Guests|Email|Telephone|Quoted price): /.test(x)):[];
  const detail=new Set([stay,reference,amount,candidate,...ownerFields,...footers,
-  ...(type==='approval_payment'?['Pay securely using the SumUp hosted checkout:']:[]),
+  ...(['approval_payment','balance_reminder'].includes(type)?['Pay securely using the SumUp hosted checkout:']:[]),
   ...(type==='owner_request'?['Owner management: https://lesbuttes.ozanne-family.com']:[])]);
  const content=lines.filter(x=>!detail.has(x)).map(textRow).join('');
  const [cottage,isoDates]=stay.split(' | ');
@@ -44,6 +45,7 @@ export function renderBrandedBookingHtml({type,body}={}){
  const dates=formatDate(arrival)+' – '+formatDate(departure);
  const status=type==='requested'?'REQUEST RECEIVED':
   type==='approval_payment'?'PAYMENT REQUIRED':
+  type==='balance_reminder'?'PAYMENT REMINDER':
   type==='confirmed'?'BOOKING CONFIRMED':
   type==='cancelled'?'BOOKING CANCELLED':
   type==='owner_request'?'OWNER ACTION REQUIRED':'BOOKING UPDATE';
