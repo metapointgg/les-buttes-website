@@ -17,7 +17,11 @@ export function preparePaymentConfirmation({booking,registered,evidence,cancella
  if(booking.source!=='direct'||booking.GSI1PK!=='BOOKING_REQUESTS'||
    booking.status!=='APPROVED_AWAITING_PAYMENT'||booking.reservationStatus!=='AWAITING_PAYMENT'||
    !Number.isSafeInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=nowEpoch||
-   Math.round(Number(booking.approvedAmountGBP)*100)!==registered.amountPence)
+   (booking.paymentSchedule?
+     booking.paymentSchedule.totalPence!==Math.round(Number(booking.approvedAmountGBP)*100)||
+     booking.paymentSchedule.dueNowPence!==registered.amountPence||
+     booking.paymentSchedule.balancePence!==booking.paymentSchedule.totalPence-registered.amountPence:
+     Math.round(Number(booking.approvedAmountGBP)*100)!==registered.amountPence))
   throw Error('Booking not eligible for payment confirmation');
  if(typeof evidence.transactionId!=='string'||!/^[A-Za-z0-9_-]{6,128}$/.test(evidence.transactionId))
   throw Error('Verified provider transaction ID required');
@@ -40,9 +44,11 @@ export function preparePaymentConfirmation({booking,registered,evidence,cancella
  if(!Number.isInteger(nights)||nights<1||nights>27)throw Error('Invalid booking dates');
  const checkInAt=guernseyLocalInstant(booking.start,arrivalDepartureRecord.value.checkInLocalTime);
  const key={PK:'BOOKING#'+booking.id,SK:'META'};
- const amount=registered.amountPence/100;
+ const amount=Number(booking.approvedAmountGBP);
+ const balancePence=booking.paymentSchedule?.balancePence??0;
+ const paymentStatus=balancePence?'PARTIALLY_PAID':'PAID_IN_FULL';
  const items=[
-  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, confirmedAt = :stamp, paidAmountPence = :pence, paymentTransactionId = :tx, updatedAt = :stamp, cancellationPolicyVersion = :policyVersion, cancellationPolicyId = :policyId, arrivalDepartureVersion = :arrivalVersion, checkInAt = :checkInAt, nights = :nights REMOVE expiresAt, holdExpiresAt',
+  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, confirmedAt = :stamp, paidAmountPence = :pence, balanceDuePence = :balancePence, paymentStatus = :paymentStatus, paymentTransactionId = :tx, updatedAt = :stamp, cancellationPolicyVersion = :policyVersion, cancellationPolicyId = :policyId, arrivalDepartureVersion = :arrivalVersion, checkInAt = :checkInAt, nights = :nights REMOVE expiresAt, holdExpiresAt',
    ConditionExpression:'#status = :approved AND reservationStatus = :awaiting AND id = :id AND #source = :direct AND approvedAmountGBP = :amount AND holdExpiresAt = :expiry AND holdExpiresAt > :now AND #units = :units AND #start = :start AND #end = :end',
    ExpressionAttributeNames:{'#status':'status','#source':'source','#units':'units','#start':'start','#end':'end'},
    ExpressionAttributeValues:{':confirmed':'CONFIRMED',':approved':'APPROVED_AWAITING_PAYMENT',':awaiting':'AWAITING_PAYMENT',
@@ -50,7 +56,7 @@ export function preparePaymentConfirmation({booking,registered,evidence,cancella
     ':units':booking.units,':start':booking.start,':end':booking.end,':stamp':stamp,':tx':evidence.transactionId,
     ':policyVersion':cancellationPolicyRecord.version,':policyId':cancellationPolicyRecord.value.policyId,
     ':arrivalVersion':arrivalDepartureRecord.version,':checkInAt':checkInAt,':nights':nights,
-    ':pence':registered.amountPence}}},
+    ':pence':registered.amountPence,':balancePence':balancePence,':paymentStatus':paymentStatus}}},
   {ConditionCheck:{Key:{PK:'BOOKING#'+booking.id,SK:'PAYMENT#CHECKOUT'},
    ConditionExpression:'checkoutId = :checkout AND #reference = :ref AND amountPence = :pence AND currency = :gbp',
    ExpressionAttributeNames:{'#reference':'reference'},
