@@ -17,9 +17,15 @@ export function assessBookingCancellation({booking,policyRecord,cancelledAt}={})
   throw Error('Cancellation policy identity mismatch');
  const nights=(Date.parse(booking.end+'T00:00:00Z')-Date.parse(booking.start+'T00:00:00Z'))/86400000;
  if(!Number.isInteger(nights)||nights<1)throw Error('Invalid booking dates');
+ const approvedTotalPence=Math.round(Number(booking.approvedAmountGBP)*100);
+ const hasDepositSchedule=booking.paymentSchedule?.balancePence>0;
+ if(hasDepositSchedule&&(booking.paymentSchedule.totalPence!==approvedTotalPence||
+    !Number.isSafeInteger(approvedTotalPence)||approvedTotalPence<booking.paidAmountPence))
+  throw Error('Confirmed deposit booking total is not authoritative');
  const result=calculateCancellationRefund({policy:policyRecord.value,booking:{
-  amountPaidPence:booking.paidAmountPence,nights,confirmedAt:booking.confirmedAt,
-  checkInAt:booking.checkInAt
+  amountPaidPence:booking.paidAmountPence,
+  ...(hasDepositSchedule?{totalPricePence:approvedTotalPence}:{}),
+  nights,confirmedAt:booking.confirmedAt,checkInAt:booking.checkInAt
  },cancelledAt});
  return {...result,policyVersion:policyRecord.version,paymentTransactionId:booking.paymentTransactionId};
 }
