@@ -173,3 +173,17 @@ test('production global payment policy has an explicit authenticated owner-only 
  assert.match(transaction,/publishProductionPaymentSettings/);
  assert.match(transaction,/args\.kind!=='payments'\|\|args\.unit!=='all'/);
 });
+
+test('durable guest payment session uses existing protected production Lambda, without a new unauthenticated owner route',()=>{
+ assert.match(source,/ProductionGuestBalanceRoute:/);
+ assert.match(source,/RouteKey: POST \/balance\/checkout/);
+ assert.match(source,/ProductionGuestBalanceIntegration:[\s\S]{0,350}IntegrationUri: !GetAtt ProductionAdminTransactionFunction\.Arn/);
+ assert.match(source,/ProductionGuestBalancePermission:[\s\S]{0,500}POST\/balance\/checkout/);
+ const handler=readFileSync(new URL('./production-admin-transaction-handler.mjs',import.meta.url),'utf8');
+ assert.match(handler,/guestBalanceHandler\(event\)/);
+ const guest=readFileSync(new URL('./production-guest-balance-handler.mjs',import.meta.url),'utf8');
+ assert.match(guest,/verifyBalancePaymentAccess/);
+ assert.match(guest,/BOOKING_CONTROLLED_TEST_ONLY_ENABLED/);
+ assert.match(guest,/!ALLOWED\.has\(origin\)/);
+ assert.match(guest,/ensureBalanceCheckout/);
+});
