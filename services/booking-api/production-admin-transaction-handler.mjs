@@ -17,6 +17,7 @@ import {createVerifiedProductionSumUpClient} from './sumup-production-runtime.mj
 import {reconcileVerifiedProductionRefund} from './production-refund-reconciliation.mjs';
 import {publishProductionPaymentSettings} from './production-payment-settings.mjs';
 import {loadProductionBalanceReport} from './production-balance-report.mjs';
+import {verifyBalanceCheckoutDeactivated} from './production-balance-cancellation.mjs';
 
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
 const reply=(statusCode,error)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({error})});
@@ -106,7 +107,19 @@ export async function handler(event){
         !String(args.approval?.priceChangeReason??'').includes('Owner-authorised £1 live payment acceptance test')))
       throw Error('Audited £1 production test approval required');
     }
-    const result=await executeOwnerTransition({...args,db,table,
+    let balanceCancellation;
+    if(args.action==='cancel'){
+     const {Item:booking}=await db.send(new GetCommand({TableName:table,
+      Key:{PK:'BOOKING#'+args.bookingId,SK:'META'},ConsistentRead:true}));
+     if(booking?.paymentStatus==='PARTIALLY_PAID'&&booking.balanceDuePence>0){
+      const ssm=new SSMClient({region:'eu-west-2'});
+      try{
+       const sumup=await createVerifiedProductionSumUpClient({ssm,env:process.env});
+       balanceCancellation=await verifyBalanceCheckoutDeactivated({db,table,booking,sumup});
+      }finally{ssm.destroy?.();}
+     }
+    }
+    const result=await executeOwnerTransition({...args,db,table,balanceCancellation,
      readCancellationPolicy:async version=>(await db.send(new GetCommand({TableName:table,
       Key:{PK:'CONFIG#cancellation#all',SK:'VERSION#'+version},ConsistentRead:true}))).Item??null,
      readBooking:async bookingId=>(await db.send(new GetCommand({TableName:table,
