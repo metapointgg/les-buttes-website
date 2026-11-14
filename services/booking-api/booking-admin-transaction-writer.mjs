@@ -130,6 +130,19 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    Key:{PK:'BOOKING#'+bookingId,SK:'PAYMENT#BALANCE_CREATION_CLAIM'},
    ConditionExpression:'attribute_not_exists(PK)'}});
  }
+ if(action==='cancel'&&balanceCancellation?.state==='ALREADY_EXPIRED'){
+  items.push({ConditionCheck:{TableName:table,
+   Key:{PK:'BOOKING#'+bookingId,SK:'PAYMENT#BALANCE_CHECKOUT'},
+   ConditionExpression:'#status=:expired AND checkoutId=:checkout AND amountPence=:amount',
+   ExpressionAttributeNames:{'#status':'status'},
+   ExpressionAttributeValues:{':expired':'EXPIRED',':checkout':balanceCancellation.checkoutId,
+    ':amount':balanceCancellation.amountPence}}});
+  // A replacement checkout claim is permanent and created before the SumUp
+  // call; if someone has started renewal, cancellation cannot assume safety.
+  items.push({ConditionCheck:{TableName:table,
+   Key:{PK:'BOOKING#'+bookingId,SK:'PAYMENT#BALANCE_CREATION_CLAIM#'+(balanceCancellation.attempt+1)},
+   ConditionExpression:'attribute_not_exists(PK)'}});
+ }
  if(action==='cancel'&&balanceCancellation?.state==='EXPIRED'){
   items.push({Update:{TableName:table,
    Key:{PK:'BOOKING#'+bookingId,SK:'PAYMENT#BALANCE_CHECKOUT'},
