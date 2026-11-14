@@ -92,3 +92,15 @@ test('wrong role, booking state or test-only gate fails without contacting provi
   assert.equal(f.calls.some(x=>x.input?.TransactItems),false);
  }
 });
+
+test('owner can deactivate a half-deposit payment link before card payment',async()=>{
+ const half={totalPence:80500,dueNowPence:40250,balancePence:40250,dueDate:'2027-04-24'};
+ const f=fixture({overrideBooking:{paymentSchedule:half},
+  overrideCheckout:{amountPence:40250},
+  overrideRemote:{amount:402.5}});
+ const result=await cancelUnpaidProductionBooking({...inputs,db:f.db,clientFactory:async()=>f.sumup});
+ assert.equal(result.status,'CANCELLED');
+ const actions=f.calls[1].input.TransactItems;
+ assert.equal(actions[0].Update.ExpressionAttributeValues[':amount'],805);
+ assert.equal(actions[1].Update.ExpressionAttributeValues[':amount'],40250);
+});
