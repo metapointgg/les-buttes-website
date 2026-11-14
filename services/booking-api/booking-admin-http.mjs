@@ -281,7 +281,7 @@ export function createAdminHandler({reader,readCalendar,readBalanceReport,writeA
           Number.isSafeInteger(record.holdExpiresAt)&&record.holdExpiresAt>Math.floor(Date.now()/1000)&&
           checkout?.bookingId===record.id&&checkout.status==='PENDING'&&checkout.currency==='GBP'&&
           Number.isSafeInteger(checkout.amountPence)&&checkout.amountPence>0&&
-          checkout.amountPence===Math.round(Number(record.approvedAmountGBP)*100)){
+          checkout.amountPence===(record.paymentSchedule?.dueNowPence??Math.round(Number(record.approvedAmountGBP)*100))){
          try{
            const url=new URL(checkout.hostedCheckoutUrl);
            if(url.protocol==='https:'&&url.hostname==='checkout.sumup.com'&&!url.port&&
