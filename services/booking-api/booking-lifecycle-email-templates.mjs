@@ -111,7 +111,9 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason,remind
    lines=['Thank you for booking directly with Les Buttes. Your payment has been verified and your cottage is reserved for your stay.',stay,reference,
     ...(booking.balancePence>0?['Deposit received: '+money(booking.paidAmountPence),
        'Outstanding balance: '+money(booking.balancePence)+' due '+date(booking.balanceDueDate),
-       'We will email you a secure link to pay the balance before it is due. You may also pay early.']:[]),
+       'You can pay the balance early using your secure payment page:',
+     balancePaymentPageUrl({bookingId:id,token:booking.balanceAccessToken}),
+     'Otherwise, we will send reminders as your holiday approaches.']:[]),
     'Check-in is from 4.00 pm and check-out is by 10.00 am. We will send you arrival information before your stay. We look forward to welcoming you to Guernsey.'];
    break;
   case 'balance_reminder':{
