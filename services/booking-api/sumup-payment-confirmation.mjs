@@ -1,6 +1,6 @@
 // LB-08: prepare one conditional DynamoDB transaction; not exposed by HTTP.
 // Caller MUST supply independently verified provider evidence and a strongly consistent booking.
-import {randomUUID} from 'node:crypto';
+import {randomUUID,randomBytes} from 'node:crypto';
 import {prepareOwnerTransition} from './booking-admin-transaction-policy.mjs';
 import {validateCancellationPolicy} from './cancellation-policy.mjs';
 import {guernseyLocalInstant,validateArrivalDeparturePolicy} from './arrival-departure-policy.mjs';
@@ -47,8 +47,9 @@ export function preparePaymentConfirmation({booking,registered,evidence,cancella
  const amount=Number(booking.approvedAmountGBP);
  const balancePence=booking.paymentSchedule?.balancePence??0;
  const paymentStatus=balancePence?'PARTIALLY_PAID':'PAID_IN_FULL';
+ const balanceAccessToken=balancePence>0?randomBytes(32).toString('base64url'):null;
  const items=[
-  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, confirmedAt = :stamp, paidAmountPence = :pence, balanceDuePence = :balancePence, paymentStatus = :paymentStatus, paymentTransactionId = :tx, updatedAt = :stamp, cancellationPolicyVersion = :policyVersion, cancellationPolicyId = :policyId, arrivalDepartureVersion = :arrivalVersion, checkInAt = :checkInAt, nights = :nights REMOVE expiresAt, holdExpiresAt',
+  {Update:{Key:key,UpdateExpression:'SET #status = :confirmed, reservationStatus = :confirmed, paidAt = :stamp, confirmedAt = :stamp, paidAmountPence = :pence, balanceDuePence = :balancePence, paymentStatus = :paymentStatus'+(balancePence?', balanceAccessToken = :balanceAccessToken':'')+', paymentTransactionId = :tx, updatedAt = :stamp, cancellationPolicyVersion = :policyVersion, cancellationPolicyId = :policyId, arrivalDepartureVersion = :arrivalVersion, checkInAt = :checkInAt, nights = :nights REMOVE expiresAt, holdExpiresAt',
    ConditionExpression:'#status = :approved AND reservationStatus = :awaiting AND id = :id AND #source = :direct AND approvedAmountGBP = :amount AND holdExpiresAt = :expiry AND holdExpiresAt > :now AND #units = :units AND #start = :start AND #end = :end',
    ExpressionAttributeNames:{'#status':'status','#source':'source','#units':'units','#start':'start','#end':'end'},
    ExpressionAttributeValues:{':confirmed':'CONFIRMED',':approved':'APPROVED_AWAITING_PAYMENT',':awaiting':'AWAITING_PAYMENT',
@@ -56,7 +57,8 @@ export function preparePaymentConfirmation({booking,registered,evidence,cancella
     ':units':booking.units,':start':booking.start,':end':booking.end,':stamp':stamp,':tx':evidence.transactionId,
     ':policyVersion':cancellationPolicyRecord.version,':policyId':cancellationPolicyRecord.value.policyId,
     ':arrivalVersion':arrivalDepartureRecord.version,':checkInAt':checkInAt,':nights':nights,
-    ':pence':registered.amountPence,':balancePence':balancePence,':paymentStatus':paymentStatus}}},
+    ':pence':registered.amountPence,':balancePence':balancePence,':paymentStatus':paymentStatus,
+    ...(balancePence?{':balanceAccessToken':balanceAccessToken}:{})}}},
   {ConditionCheck:{Key:{PK:'BOOKING#'+booking.id,SK:'PAYMENT#CHECKOUT'},
    ConditionExpression:'checkoutId = :checkout AND #reference = :ref AND amountPence = :pence AND currency = :gbp',
    ExpressionAttributeNames:{'#reference':'reference'},
