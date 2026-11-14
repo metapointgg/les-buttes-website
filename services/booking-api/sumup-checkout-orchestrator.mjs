@@ -9,7 +9,7 @@ export const checkoutReference=bookingId=>{
  return 'lb-'+createHash('sha256').update(bookingId.toLowerCase()).digest('hex').slice(0,32);
 };
 export async function createAndRegisterCheckout({db,table,bookingId,amountPence,sumup,
-  lookupProviderByReference,actor,nowEpoch=Math.floor(Date.now()/1000)}={}){
+  lookupProviderByReference,actor,paymentSchedule,nowEpoch=Math.floor(Date.now()/1000)}={}){
  const allowedTable=table?.toLowerCase().includes('staging')||
   productionPaymentsEnabled({...process.env,BOOKINGS_TABLE:table});
  if(!db?.send||!allowedTable||!sumup?.createCheckout||
@@ -60,7 +60,7 @@ export async function createAndRegisterCheckout({db,table,bookingId,amountPence,
   throw Error('Checkout creation requires manual reconciliation',{cause:e});
  }
  try{
-  const record=await registerCheckout({db,table,bookingId,checkout,reference,nowEpoch});
+  const record=await registerCheckout({db,table,bookingId,checkout,reference,nowEpoch,paymentSchedule});
   return {status:'REGISTERED',record};
  }catch(e){
   const result=await reconcileCheckoutRegistration({db,table,bookingId,checkout,reference});
