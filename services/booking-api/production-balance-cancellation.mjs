@@ -20,7 +20,7 @@ export async function verifyBalanceCheckoutDeactivated({db,table,booking,sumup}=
   return {state:'NO_LINK',verified:true};
  }
  if(!claim||claim.reference!==checkout.reference||claim.amountPence!==checkout.amountPence||
-    checkout.bookingId!==booking.id||checkout.status!=='PENDING'||
+    checkout.bookingId!==booking.id||!['PENDING','EXPIRED'].includes(checkout.status)||
     checkout.amountPence!==booking.balanceDuePence||checkout.currency!=='GBP')
   throw Error('Balance checkout and claim identity mismatch');
  if(!sumup?.retrieveCheckout||!sumup?.deactivateCheckout||
@@ -37,6 +37,7 @@ export async function verifyBalanceCheckoutDeactivated({db,table,booking,sumup}=
  const after=await sumup.retrieveCheckout(checkout.checkoutId);
  if(!matches(after)||after.status!=='EXPIRED')
   throw Error('Independent provider expiry confirmation required');
- return {state:'EXPIRED',verified:true,checkoutId:checkout.checkoutId,
-  reference:checkout.reference,amountPence:checkout.amountPence};
+ return {state:checkout.status==='EXPIRED'?'ALREADY_EXPIRED':'EXPIRED',verified:true,
+  checkoutId:checkout.checkoutId,reference:checkout.reference,
+  amountPence:checkout.amountPence,attempt};
 }
