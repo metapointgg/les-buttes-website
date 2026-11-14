@@ -82,7 +82,33 @@ if(widget){
     import.meta.env.PUBLIC_BOOKING_REQUESTS_APPROVED==='true'&&hostedReadOnlyEnabled&&
     quoteOnlyEnabled&&liveQuoteEnabled&&productionRequestApi&&Boolean(import.meta.env.PUBLIC_BOOKING_TURNSTILE_SITE_KEY);
 
-  let authoritativeQuote:{key:string;totalGBP:string}|null=null;
+  type PaymentSplit={totalPence:number;dueNowPence:number;balancePence:number;
+    dueDate:string|null;depositPercent:number;policyVersion:string|null};
+  let authoritativeQuote:{key:string;totalGBP:string;payment?:PaymentSplit}|null=null;
+  const splitLabels=({
+   en:{dueNow:'Pay after owner approval',balance:'Remaining balance due',full:'Full payment due after approval'},
+   fr:{dueNow:'À payer après validation',balance:'Solde à régler le',full:'Paiement intégral après validation'},
+   nl:{dueNow:'Te betalen na goedkeuring',balance:'Restbedrag te betalen op',full:'Volledige betaling na goedkeuring'}
+  } as const)[lang==='fr'?'fr':lang==='nl'?'nl':'en'];
+  function showPaymentSplit(){
+   if(!authoritativeQuote?.payment)return;
+   const p=authoritativeQuote.payment;
+   if(!Number.isSafeInteger(p.totalPence)||!Number.isSafeInteger(p.dueNowPence)||
+      !Number.isSafeInteger(p.balancePence)||p.totalPence!==p.dueNowPence+p.balancePence)return;
+   const lines:[[string,string],...[string,string][]]=[
+    [p.balancePence?splitLabels.dueNow:splitLabels.full,'£'+(p.dueNowPence/100).toFixed(2)],
+    ...(p.balancePence&&p.dueDate?
+       [[splitLabels.balance+' '+p.dueDate,'£'+(p.balancePence/100).toFixed(2)] as [string,string]]:[])
+   ];
+   summaryLines.replaceChildren();
+   for(const [label,amount] of lines){
+    const row=document.createElement('div');row.className='summary-line';
+    const name=document.createElement('span');name.textContent=label;
+    const price=document.createElement('strong');price.textContent=amount;
+    row.append(name,price);summaryLines.append(row);
+   }
+   summaryLines.hidden=false;
+  }
   const quoteKey=()=>JSON.stringify([choice,arrival.value,departure.value,filters.adults+filters.children]);
   async function checkAuthoritativeQuote(){
     authoritativeQuote=null;
@@ -96,14 +122,19 @@ if(widget){
       if(!response.ok)return false;
       const result=await response.json() as {
         available?:boolean;quote?:{currency?:string;totalGBP?:string};
-        currency?:string;totalGBP?:string;bookingConfirmed?:boolean
+        currency?:string;totalGBP?:string;bookingConfirmed?:boolean;payment?:PaymentSplit
       };
       const totalGBP=quoteOnlyEnabled?
         (result.currency==='GBP'&&result.bookingConfirmed===false?result.totalGBP:undefined):
         (result.available===true&&result.quote?.currency==='GBP'?result.quote.totalGBP:undefined);
       if(!/^\d+(?:\.\d{1,2})?$/.test(totalGBP??''))return false;
       if(key!==quoteKey())return false;
-      authoritativeQuote={key,totalGBP:totalGBP!};
+      const payment=result.payment;
+      const totalPence=Math.round(Number(totalGBP)*100);
+      if(payment&&(!Number.isSafeInteger(payment.dueNowPence)||payment.dueNowPence<1||
+         !Number.isSafeInteger(payment.balancePence)||payment.balancePence<0||
+         payment.dueNowPence+payment.balancePence!==totalPence))return false;
+      authoritativeQuote={key,totalGBP:totalGBP!,payment};
       return true;
     }catch{return false;}
   }
@@ -380,8 +411,10 @@ if(widget){
         const expected=quoteKey();
         void checkAuthoritativeQuote().then(ok=>{
           if(expected!==quoteKey()||summarySection.hidden)return;
-          if(ok&&authoritativeQuote?.key===expected)
+          if(ok&&authoritativeQuote?.key===expected){
             fill('[data-summary-direct]',money(Number(authoritativeQuote.totalGBP)));
+            showPaymentSplit();
+          }
           else fill('[data-summary-direct]','Unavailable');
           updateNext();
           if(!ok)reviewNext.disabled=true;
