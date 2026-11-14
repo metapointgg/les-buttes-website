@@ -22,6 +22,12 @@ const subNav=(await getCollection('subpages'))
   .map(page=>({href:`/${page.data.slug}/`,label:localizedText(page.data,language).navigationLabel||localizedText(page.data,language).title,order:page.data.navigationOrder??45}));
 const nav=[...fixedNav,...subNav].sort((a,b)=>a.order-b.order);
 const current=(href:string)=>href==='/'?basePath==='/':basePath.startsWith(href);
+const showDirectBanner=!['/book/','/pay/','/terms/','/privacy/'].some(route=>basePath.startsWith(route));
+const directBannerCopy={
+ en:{heading:'Book direct & save',description:'Plan your stay with us and enjoy our direct-booking rates.',action:'Check dates & prices'},
+ fr:{heading:'Réservez en direct et économisez',description:'Organisez votre séjour avec nos tarifs de réservation directe.',action:'Voir les dates et les tarifs'},
+ nl:{heading:'Boek direct en bespaar',description:'Plan uw verblijf bij ons met onze directe boekingstarieven.',action:'Bekijk data en prijzen'}
+}[language];
 ---
 <header class="site-header">
   <div class="header-inner wrap">
@@ -49,7 +55,25 @@ const current=(href:string)=>href==='/'?basePath==='/':basePath.startsWith(href)
     </details>
   </div>
 </header>
+{showDirectBanner && (
+ <aside class="direct-booking-banner" aria-label={directBannerCopy.heading}>
+  <div class="wrap direct-booking-banner-inner">
+   <p><strong>{directBannerCopy.heading}</strong><span>{directBannerCopy.description}</span></p>
+   <a href={localPath('/book/',language)}>{directBannerCopy.action}<span aria-hidden="true"> →</span></a>
+  </div>
+ </aside>
+)}
 <style>
+.direct-booking-banner{background:#194c3d;color:#fff;border-top:1px solid #ffffff26}
+.direct-booking-banner-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.72rem 0}
+.direct-booking-banner p{display:flex;flex-wrap:wrap;align-items:baseline;gap:.35rem .8rem;margin:0;font-size:.92rem;line-height:1.5;color:#fff}
+.direct-booking-banner strong{color:#fff;font-weight:700}
+.direct-booking-banner p span{color:#e2eae4}
+.direct-booking-banner a{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;color:#fff;font-weight:700;font-size:.87rem;text-decoration:underline;text-underline-offset:3px}
+.direct-booking-banner a:hover{color:#f2d6a2}
+.direct-booking-banner a:focus-visible{outline:2px solid #fff;outline-offset:3px}
+@media(max-width:47.99rem){.direct-booking-banner-inner{align-items:flex-start;flex-direction:column;gap:.32rem;padding:.65rem 0}.direct-booking-banner p{gap:0 .5rem;font-size:.84rem}.direct-booking-banner a{font-size:.84rem}}
+
 .language-switcher{position:relative;flex:none;margin-left:auto;z-index:40}
 .language-switcher>summary{display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box;width:2.8rem;height:2.8rem;margin:0;padding:0;list-style:none;cursor:pointer;border:1px solid transparent;border-radius:50%;background:transparent;line-height:1}
 .language-switcher>summary::marker{content:""}
