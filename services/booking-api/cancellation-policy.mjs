@@ -54,7 +54,15 @@ export function calculateCancellationRefund({policy,booking,cancelledAt}={}){
  }else{
   refundPercent=policy.afterCheckInRefundPercent;reason=cancelled>=checkIn?'AT_OR_AFTER_CHECK_IN':'LESS_THAN_7_DAYS_BEFORE_CHECK_IN';
  }
- const refundAmountPence=Math.round(booking.amountPaidPence*refundPercent/100);
+ // A deposit does not reduce the total contractual cancellation amount.
+ // For full-payment bookings this is identical to the existing percentage
+ // refund calculation. No refund can exceed money actually received.
+ const totalPricePence=booking.totalPricePence??booking.amountPaidPence;
+ if(!Number.isSafeInteger(totalPricePence)||totalPricePence<booking.amountPaidPence||
+    totalPricePence>100000000)
+  throw Error('Invalid total booking price for cancellation assessment');
+ const retainedPence=Math.round(totalPricePence*(100-refundPercent)/100);
+ const refundAmountPence=Math.max(0,booking.amountPaidPence-retainedPence);
  return {policyId:policy.policyId,refundPercent,refundAmountPence,feePence:0,reason,
   cancellationReceivedAt:cancelledAt,checkInAt:booking.checkInAt};
 }
