@@ -1,7 +1,7 @@
 import {productionEmailGate} from './production-integration-gates.mjs';
 
 const EMAIL=/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-const TYPES=new Set(['requested','owner_request','approval_payment','balance_reminder','declined','confirmed','cancelled','refund_confirmed','hold_expired','delivery_failure']);
+const TYPES=new Set(['requested','owner_request','approval_payment','balance_reminder','balance_paid','declined','confirmed','cancelled','refund_confirmed','hold_expired','delivery_failure']);
 const TEMPLATE=/^[a-z0-9][a-z0-9_-]{1,80}$/;
 const normalise=value=>typeof value==='string'&&EMAIL.test(value.trim())?value.trim().toLowerCase():null;
 
