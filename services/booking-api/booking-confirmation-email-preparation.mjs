@@ -19,7 +19,8 @@ export function prepareConfirmedGuestEmail(booking){
  const rendered=renderBookingLifecycleEmail({type:'confirmed',booking:{
   bookingId:booking.id,cottage,checkIn:booking.start,checkOut:booking.end,
   status:'CONFIRMED',paymentVerified:true,paidAmountPence:booking.paidAmountPence,
-  balancePence:booking.balanceDuePence??0,balanceDueDate:booking.paymentSchedule?.dueDate
+  balancePence:booking.balanceDuePence??0,balanceDueDate:booking.paymentSchedule?.dueDate,
+  balanceAccessToken:booking.balanceAccessToken
  }});
  return {...rendered,to:booking.guestEmail};
 }
