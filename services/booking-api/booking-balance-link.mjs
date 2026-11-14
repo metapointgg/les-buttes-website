@@ -6,7 +6,7 @@ const TOKEN=/^[A-Za-z0-9_-]{43}$/;
 export function balancePaymentPageUrl({bookingId,token}={}){
  if(!UUID.test(bookingId??'')||!TOKEN.test(token??''))
   throw Error('Invalid balance payment capability');
- return 'https://lesbuttes.com/pay/?booking='+encodeURIComponent(bookingId)+
+ return 'https://lesbuttes.com/pay/#booking='+encodeURIComponent(bookingId)+
    '&access='+encodeURIComponent(token);
 }
 export function verifyBalancePaymentAccess({booking,bookingId,token}={}){
