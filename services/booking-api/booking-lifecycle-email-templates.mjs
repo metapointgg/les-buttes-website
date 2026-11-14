@@ -123,19 +123,35 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason,remind
    const url=balancePaymentPageUrl({bookingId:id,token:booking.balanceAccessToken});
    const name=firstName(booking.guestName);
    const timing={3:'three months',2:'two months',1:'one month'};
-   subject=reminderStage===0?'Les Buttes — Your holiday balance is now due':
-     'Les Buttes — '+timing[reminderStage]+' until your holiday';
-   lines=['Dear '+name+',',
-    ...(reminderStage===0?
-      ['Your holiday is just two weeks away, and we are looking forward to welcoming you to Les Buttes.',
-       'The remaining balance for your stay is now due. Please use the secure payment link below.']:
-      ['Your holiday is just '+timing[reminderStage]+' away and we are looking forward to welcoming you to Guernsey.',
-       'If you would like to pay the remaining balance now, please use the secure SumUp link below.',
-       'Otherwise, no action is needed just yet. We will send a further reminder as your holiday approaches.']),
-    stay,reference,'Amount due: '+money(booking.balancePence),
-    'Balance due date: '+date(booking.balanceDueDate),
-    'Pay securely using your Les Buttes payment page:',url,
-    'We will confirm receipt when your payment has been verified.'];
+   const accelerated=booking.acceleratedReminderTest===true&&
+     booking.approvedAmountPence===200&&booking.balancePence===100;
+   if(accelerated){
+    const phase={3:'first (3-month equivalent)',2:'second (2-month equivalent)',
+      1:'third (1-month equivalent)',0:'final (two-week equivalent)'};
+    subject='Les Buttes — £2 payment test: '+phase[reminderStage]+' reminder';
+    lines=['Dear '+name+',',
+      'This is an accelerated test reminder for your £2 owner-only booking.',
+      'This message tests the normal reminder sequence on a minute-based schedule; it does not mean your holiday is approaching or change the agreed balance due date.',
+      'Reminder stage: '+phase[reminderStage]+'.',
+      stay,reference,'Test outstanding balance: '+money(booking.balancePence),
+      'Contractual balance due date: '+date(booking.balanceDueDate),
+      'You may pay the £1 test balance securely using your Les Buttes payment page:',url,
+      'Once payment is verified, all further reminders stop automatically.'];
+   }else{
+    subject=reminderStage===0?'Les Buttes — Your holiday balance is now due':
+      'Les Buttes — '+timing[reminderStage]+' until your holiday';
+    lines=['Dear '+name+',',
+     ...(reminderStage===0?
+       ['Your holiday is just two weeks away, and we are looking forward to welcoming you to Les Buttes.',
+        'The remaining balance for your stay is now due. Please use the secure payment link below.']:
+       ['Your holiday is just '+timing[reminderStage]+' away and we are looking forward to welcoming you to Guernsey.',
+        'If you would like to pay the remaining balance now, please use the secure SumUp link below.',
+        'Otherwise, no action is needed just yet. We will send a further reminder as your holiday approaches.']),
+     stay,reference,'Amount due: '+money(booking.balancePence),
+     'Balance due date: '+date(booking.balanceDueDate),
+     'Pay securely using your Les Buttes payment page:',url,
+     'We will confirm receipt when your payment has been verified.'];
+   }
    break;
   }
   case 'balance_paid':{
