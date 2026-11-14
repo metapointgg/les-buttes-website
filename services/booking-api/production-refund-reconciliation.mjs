@@ -56,6 +56,60 @@ export function verifyProductionRefundEvidence({booking,transaction,merchantCode
   currency:'GBP',transactionId:booking.paymentTransactionId,refundEvents:refundCount};
 }
 
+function verifiedRefundEventAmount(transaction,{id,amountPence,merchantCode}){
+ if(transaction?.id!==id||transaction.merchant_code!==merchantCode||
+    merchantCode!=='M9BE4KMN'||transaction.currency!=='GBP'||
+    pence(transaction.amount)!==amountPence||
+    !['SUCCESSFUL','REFUNDED'].includes(transaction.status)||
+    !['SUCCESSFUL','REFUNDED','PAID_OUT'].includes(transaction.simple_status))
+  throw Error('SumUp instalment identity mismatch');
+ const sources=[transaction.transaction_events,transaction.events].filter(Array.isArray);
+ if(!sources.length)throw Error('Authoritative instalment event records missing');
+ let amount=null,count=0;
+ for(const events of sources){
+  const refunds=events.filter(x=>(x.event_type??x.type)==='REFUND');
+  if(refunds.some(x=>!['REFUNDED','SUCCESSFUL'].includes(x.status)))
+   throw Error('Incomplete instalment refund event');
+  const total=refunds.reduce((sum,x)=>sum+pence(x.amount),0);
+  if(amount!==null&&total!==amount)throw Error('Instalment refund event sources disagree');
+  amount=total;count=Math.max(count,refunds.length);
+ }
+ const refunded=amount??0;
+ if(refunded>amountPence||
+    transaction.refunded_amount!=null&&pence(transaction.refunded_amount)!==refunded)
+  throw Error('Instalment refunded amount conflicts with provider evidence');
+ return {refundedPence:refunded,eventCount:count};
+}
+export async function verifyMultiInstalmentRefundEvidence({booking,fetchTransaction,merchantCode}={}){
+ if(!booking||booking.source!=='direct'||booking.status!=='CANCELLED'||
+    booking.reservationStatus!=='CANCELLED'||!ID.test(booking.id??'')||
+    !ID.test(booking.paymentTransactionId??'')||
+    !ID.test(booking.balanceTransactionId??'')||
+    booking.balanceTransactionId===booking.paymentTransactionId||
+    !Number.isSafeInteger(booking.refundDuePence)||booking.refundDuePence<1||
+    !Number.isSafeInteger(booking.paidAmountPence)||
+    booking.refundDuePence>booking.paidAmountPence||
+    booking.paymentSchedule?.totalPence!==booking.paidAmountPence||
+    !Number.isSafeInteger(booking.paymentSchedule.dueNowPence)||
+    !Number.isSafeInteger(booking.paymentSchedule.balancePence)||
+    booking.paymentSchedule.dueNowPence+booking.paymentSchedule.balancePence!==booking.paidAmountPence||
+    typeof fetchTransaction!=='function')
+  throw Error('Two-instalment refund booking mismatch');
+ const amounts=[booking.paymentSchedule.dueNowPence,booking.paymentSchedule.balancePence];
+ const ids=[booking.paymentTransactionId,booking.balanceTransactionId];
+ const transactions=await Promise.all(ids.map(id=>fetchTransaction(id)));
+ const verified=transactions.map((tx,i)=>verifiedRefundEventAmount(tx,{
+  id:ids[i],amountPence:amounts[i],merchantCode}));
+ const refunded=verified.reduce((sum,v)=>sum+v.refundedPence,0);
+ if(refunded<1||refunded>booking.refundDuePence)
+  throw Error('Two-instalment verified refund outside assessed entitlement');
+ return {amountPence:refunded,outstandingPence:booking.refundDuePence-refunded,
+  currency:'GBP',transactionId:ids[0],transactionIds:ids,
+  transactionAmountsPence:amounts,
+  refundAmountsPence:verified.map(x=>x.refundedPence),
+  refundEvents:verified.reduce((sum,v)=>sum+v.eventCount,0)};
+}
+
 export async function reconcileVerifiedProductionRefund({db,table,bookingId,identity,
  fetchTransaction,merchantCode,now=()=>new Date().toISOString()}={}){
  if(!db?.send||!TABLE.test(table??'')||!ID.test(bookingId??'')||
@@ -66,9 +120,10 @@ export async function reconcileVerifiedProductionRefund({db,table,bookingId,iden
  if(!booking||booking.id!==bookingId)throw Error('Booking not found');
  if(!['ASSESSED','PARTIALLY_REFUNDED','REFUNDED'].includes(booking.refundStatus))
   throw Error('Refund has not been assessed');
- const provider=await fetchTransaction(booking.paymentTransactionId);
- const verified=verifyProductionRefundEvidence({
-  booking:{...booking,refundStatus:'ASSESSED'},transaction:provider,merchantCode});
+ const verified=booking.balanceTransactionId?
+  await verifyMultiInstalmentRefundEvidence({booking,fetchTransaction,merchantCode}):
+  verifyProductionRefundEvidence({booking:{...booking,refundStatus:'ASSESSED'},
+   transaction:await fetchTransaction(booking.paymentTransactionId),merchantCode});
  const full=verified.outstandingPence===0;
  const previous=booking.refundedAmountPence??0;
  if(booking.refundStatus==='REFUNDED'){
@@ -86,25 +141,35 @@ export async function reconcileVerifiedProductionRefund({db,table,bookingId,iden
  const at=now(),auditId=randomUUID();
  if(!/^\d{4}-\d{2}-\d{2}T/.test(at))throw Error('Invalid reconciliation time');
  const claim={PK:'BOOKING#'+bookingId,SK:full?'REFUND#PROVIDER_VERIFIED':'REFUND#PARTIAL_PROVIDER_VERIFIED#'+verified.amountPence,
-  bookingId,transactionId:verified.transactionId,amountPence:verified.amountPence,
+  bookingId,transactionId:verified.transactionId,
+  ...(verified.transactionIds?{transactionIds:verified.transactionIds,
+   refundAmountsPence:verified.refundAmountsPence}:{}),
+  amountPence:verified.amountPence,
   outstandingPence:verified.outstandingPence,currency:'GBP',state:nextStatus,
   verifiedAt:at,refundEvents:verified.refundEvents};
  const audit={PK:'BOOKING#'+bookingId,SK:'AUDIT#'+at+'#'+auditId,
   id:auditId,bookingId,action:full?'refund_verified':'partial_refund_verified',actor:identity.subject,
   provider:'sumup',amountPence:verified.amountPence,outstandingPence:verified.outstandingPence,
   transactionId:verified.transactionId,recordedAt:at};
+ const paymentChecks=(verified.transactionIds??[verified.transactionId]).map((tx,index)=>({
+  ConditionCheck:{TableName:table,Key:{PK:'PAYMENT_TRANSACTION#'+tx,SK:'CONFIRMATION'},
+   ConditionExpression:'bookingId = :booking AND amountPence = :paid AND currency = :currency'+
+     (index===1?' AND paymentStage = :stage':''),
+   ExpressionAttributeValues:{':booking':bookingId,
+    ':paid':verified.transactionAmountsPence?.[index]??booking.paidAmountPence,
+    ':currency':'GBP',...(index===1?{':stage':'BALANCE'}:{})}}}));
  await db.send(new TransactWriteCommand({TransactItems:[
-  {ConditionCheck:{TableName:table,Key:{PK:'PAYMENT_TRANSACTION#'+verified.transactionId,SK:'CONFIRMATION'},
-   ConditionExpression:'bookingId = :booking AND amountPence = :paid AND currency = :currency',
-   ExpressionAttributeValues:{':booking':bookingId,':paid':booking.paidAmountPence,':currency':'GBP'}}},
+  ...paymentChecks,
   {Update:{TableName:table,Key:key,
    UpdateExpression:'SET refundStatus = :next,refundedAmountPence = :amount,refundOutstandingPence = :outstanding,refundedAt = :at',
    ConditionExpression:'#status = :cancelled AND reservationStatus = :cancelled AND refundStatus = :previous AND refundDuePence = :due AND paymentTransactionId = :tx AND paidAmountPence = :paid'+
+    (verified.transactionIds?' AND balanceTransactionId = :balanceTx':'')+
     (booking.refundStatus==='PARTIALLY_REFUNDED'?' AND refundedAmountPence = :oldAmount':''),
    ExpressionAttributeNames:{'#status':'status'},
    ExpressionAttributeValues:{':next':nextStatus,':previous':booking.refundStatus,
     ':cancelled':'CANCELLED',':due':booking.refundDuePence,':amount':verified.amountPence,':outstanding':verified.outstandingPence,
     ':at':at,':tx':verified.transactionId,':paid':booking.paidAmountPence,
+    ...(verified.transactionIds?{':balanceTx':verified.transactionIds[1]}:{}),
     ...(booking.refundStatus==='PARTIALLY_REFUNDED'?{':oldAmount':previous}:{})}}},
   {Put:{TableName:table,Item:claim,ConditionExpression:'attribute_not_exists(PK)'}},
   {Put:{TableName:table,Item:audit,ConditionExpression:'attribute_not_exists(PK)'}}
