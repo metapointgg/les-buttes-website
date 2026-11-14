@@ -32,3 +32,18 @@ test('policy rejects any fee, non-refundable option or stay beyond 27 nights',()
  assert.throws(()=>validateCancellationPolicy({...policy,nonRefundableOption:true}));
  assert.throws(()=>calculateCancellationRefund({policy,booking:{...booking,nights:28},cancelledAt:'2027-03-20T12:00:00Z'}));
 });
+
+test('strict cancellation applies to total holiday price rather than just the 50% deposit',()=>{
+ const half={...booking,amountPaidPence:40250,totalPricePence:80500};
+ const within24=calculateCancellationRefund({policy,booking:half,cancelledAt:'2027-03-02T12:00:00Z'});
+ assert.equal(within24.refundAmountPence,40250);
+ const moreThanWeek=calculateCancellationRefund({policy,booking:half,cancelledAt:'2027-03-20T12:00:00Z'});
+ assert.equal(moreThanWeek.refundPercent,50);
+ assert.equal(moreThanWeek.refundAmountPence,0,'retained booking cancellation amount equals deposit');
+ const fullyPaid=calculateCancellationRefund({policy,booking:{...half,amountPaidPence:80500},
+  cancelledAt:'2027-03-20T12:00:00Z'});
+ assert.equal(fullyPaid.refundAmountPence,40250);
+ assert.equal(calculateCancellationRefund({policy,booking:half,cancelledAt:'2027-03-28T12:00:00Z'}).refundAmountPence,0);
+ assert.throws(()=>calculateCancellationRefund({policy,
+  booking:{...half,totalPricePence:40249},cancelledAt:'2027-03-20T12:00:00Z'}),/total booking price/);
+});
