@@ -18,10 +18,12 @@ import {reconcileVerifiedProductionRefund} from './production-refund-reconciliat
 import {publishProductionPaymentSettings} from './production-payment-settings.mjs';
 import {loadProductionBalanceReport} from './production-balance-report.mjs';
 import {verifyBalanceCheckoutDeactivated} from './production-balance-cancellation.mjs';
+import {createProductionGuestBalanceHandler} from './production-guest-balance-handler.mjs';
 
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
 const reply=(statusCode,error)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({error})});
 let deployed;
+const guestBalanceHandler=createProductionGuestBalanceHandler();
 const deploymentAllowed=()=>process.env.BOOKING_ENVIRONMENT==='production'&&TABLE.test(process.env.BOOKINGS_TABLE??'');
 const writesEnabled=()=>deploymentAllowed()&&process.env.MANAGEMENT_WRITES_ENABLED==='true'&&process.env.LIVE_BOOKINGS_APPROVED==='true';
 
@@ -29,6 +31,7 @@ export async function handler(event){
  if(!deploymentAllowed())return reply(503,'Production booking management unavailable');
  if(event?.source==='aws.events'||event?.['detail-type']==='Scheduled Event')
   return reconcileScheduledProductionPayments(event);
+ if(event?.rawPath==='/balance/checkout')return guestBalanceHandler(event);
  const path=event?.rawPath??'';
  if(!path.startsWith('/admin/production/'))return reply(404,'Not found');
  if(!event?.requestContext?.authorizer?.jwt?.claims)return reply(403,'Forbidden');
