@@ -18,9 +18,10 @@ const booking={id,source:'direct',synthetic:false,status:'CONFIRMED',reservation
 const checkout={PK:'BOOKING#'+id,SK:'PAYMENT#BALANCE_CHECKOUT',bookingId:id,
  checkoutId:'11111111-2222-4333-8444-555555555555',
  reference:balanceReference(id),amountPence:40250,currency:'GBP',
- status:'PENDING',hostedCheckoutUrl:'https://checkout.sumup.com/pay/c-11111111-2222-4333-8444-555555555555'};
+ status:'PENDING',createdAt:'2026-11-14T11:55:00.000Z',attempt:1,hostedCheckoutUrl:'https://checkout.sumup.com/pay/c-11111111-2222-4333-8444-555555555555'};
 const sumup={merchantCode:'M9BE4KMN',
  listCheckoutsByReference:async()=>[],
+ deactivateCheckout:async()=>({status:'EXPIRED'}),
  createCheckout:async()=>({...checkout}),
  retrieveCheckout:async()=>({id:checkout.checkoutId,checkout_reference:checkout.reference,
   merchant_code:'M9BE4KMN',currency:'GBP',amount:402.5,status:'PAID',
@@ -32,7 +33,7 @@ const store=({existing=checkout,record=booking}={})=>{
   const key=command.input.Key;
   if(key?.SK==='META')return {Item:record};
   if(key?.SK==='PAYMENT#BALANCE_CHECKOUT')return {Item:existing};
-  if(key?.SK==='PAYMENT#BALANCE_CREATION_CLAIM')return {};
+  if(key?.SK?.startsWith('PAYMENT#BALANCE_CREATION_CLAIM'))return {};
   calls.push(command.input);return {};
  }};
  return {db,calls};
@@ -46,7 +47,7 @@ test('balance creation uses independent reference and one permanent claim before
  assert.equal(fixture.calls.length,2);
  assert.equal(fixture.calls[0].Item.SK,'PAYMENT#BALANCE_CREATION_CLAIM');
  assert.equal(fixture.calls[1].TransactItems[1].Put.Item.amountPence,40250);
- const again=await ensureBalanceCheckout({db:store().db,table,bookingId:id,identity,sumup:api,env});
+ const again=await ensureBalanceCheckout({db:store().db,table,bookingId:id,identity,sumup:api,env,now:()=> '2026-11-14T12:00:00.000Z'});
  assert.equal(again.status,'ALREADY_REGISTERED');
  assert.equal(calls,1);
 });
@@ -79,14 +80,51 @@ test('reminder stages use latest due milestone, stop when fully paid and never s
   assert.equal(currentBalanceReminderStage({booking,today}),expected);
  assert.equal(currentBalanceReminderStage({booking:{...booking,paymentStatus:'PAID_IN_FULL'},today:'2027-04-24'}),null);
 });
-test('3-month reminder personally addresses guest and contains verified SumUp pay-now link',()=>{
+test('3-month reminder personally addresses guest and contains durable private balance link',()=>{
  const render=renderBookingLifecycleEmail({type:'balance_reminder',reminderStage:3,
   booking:{bookingId:id,cottage:'Geranium',checkIn:'2027-05-08',checkOut:'2027-05-15',
-   status:'CONFIRMED',guestName:'Dave Guest',balancePence:40250,balanceDueDate:'2027-04-24'},
-  checkout});
+   status:'CONFIRMED',guestName:'Dave Guest',balancePence:40250,balanceDueDate:'2027-04-24',
+   balanceAccessToken:'A'.repeat(43)}});
  assert.match(render.body,/Dear Dave,/);
  assert.match(render.body,/three months/);
  assert.match(render.body,/Otherwise, no action is needed/);
- assert.match(render.html,/Pay securely with SumUp/);
+ assert.match(render.html,/Pay your balance/);
+ assert.match(render.body,/https:\/\/lesbuttes.com\/pay\/#booking=/);
+ assert.doesNotMatch(render.body,/checkout\.sumup\.com/);
  assert.equal(render.templateId,'balance_reminder_3_v1');
+});
+
+test('old pending SumUp session is independently expired before a new attempt is created',async()=>{
+ const f=store(),calls=[];
+ const next={...checkout,checkoutId:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',reference:balanceReference(id,2),
+  hostedCheckoutUrl:'https://checkout.sumup.com/pay/c-aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'};
+ const api={...sumup,
+  retrieveCheckout:async()=>({id:checkout.checkoutId,checkout_reference:checkout.reference,
+    merchant_code:'M9BE4KMN',currency:'GBP',amount:402.5,status:calls.includes('delete')?'EXPIRED':'PENDING'}),
+  deactivateCheckout:async()=>{calls.push('delete');return {status:'EXPIRED'};},
+  createCheckout:async({reference})=>{calls.push('create');assert.equal(reference,next.reference);return next;}
+ };
+ const result=await ensureBalanceCheckout({db:f.db,table,bookingId:id,identity,sumup:api,env,
+  now:()=> '2026-11-14T12:30:00.000Z'});
+ assert.equal(result.status,'REGISTERED');
+ assert.equal(result.checkout.attempt,2);
+ assert.equal(result.checkout.reference,balanceReference(id,2));
+ assert.deepEqual(calls,['delete','create']);
+ assert.equal(f.calls[0].Update.UpdateExpression.includes('deactivatedAt'),true);
+ assert.equal(f.calls[1].Item.SK,'PAYMENT#BALANCE_CREATION_CLAIM#2');
+ assert.equal(f.calls[2].TransactItems[1].Put.ConditionExpression,
+  '#status = :expired AND checkoutId = :oldId');
+});
+test('paid or unverifiably expired SumUp sessions are never silently replaced',async()=>{
+ for(const status of ['PAID','FAILED']){
+  const f=store();let created=0;
+  const api={...sumup,
+   retrieveCheckout:async()=>({id:checkout.checkoutId,checkout_reference:checkout.reference,
+    merchant_code:'M9BE4KMN',currency:'GBP',amount:402.5,status}),
+   createCheckout:async()=>{created++;return checkout;}};
+  await assert.rejects(ensureBalanceCheckout({db:f.db,table,bookingId:id,identity,sumup:api,env,
+   now:()=> '2026-11-14T12:30:00.000Z'}));
+  assert.equal(created,0);
+  assert.equal(f.calls.length,0);
+ }
 });
