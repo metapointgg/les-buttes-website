@@ -50,6 +50,8 @@ export async function dispatchProductionBookingLifecycleEmail({db,table,bookingI
    checkOut:booking.end,status:booking.status,approvedAmountPence:Math.round(Number(booking.approvedAmountGBP)*100),
    guestName:booking.guestName,balanceAccessToken:booking.balanceAccessToken,
    paymentStatus:booking.paymentStatus,
+   acceleratedReminderTest:booking.acceleratedReminderTest===true&&booking.approvedAmountGBP===2&&
+     String(booking.guestEmail??'').trim().toLowerCase()==='mike@un1ty.gg',
    totalPaidPence:booking.paidAmountPence,paymentVerified:type==='balance_paid',
    balancePence:type==='balance_reminder'?booking.balanceDuePence:booking.paymentSchedule?.balancePence,
    balanceDueDate:booking.paymentSchedule?.dueDate,
