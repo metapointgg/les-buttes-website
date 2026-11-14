@@ -58,10 +58,16 @@ export async function cancelUnpaidProductionBooking({
     booking.paidAt!==undefined||booking.paymentTransactionId!==undefined)
   throw Error('Only an unpaid approved direct booking can be cancelled');
  const slots=occupiedSlots(booking);
- const amountPence=Math.round(Number(booking.approvedAmountGBP)*100);
- if(!Number.isSafeInteger(amountPence)||amountPence<1||
-    Math.abs(Number(booking.approvedAmountGBP)*100-amountPence)>0.000001)
+ const totalPence=Math.round(Number(booking.approvedAmountGBP)*100);
+ if(!Number.isSafeInteger(totalPence)||totalPence<1||
+    Math.abs(Number(booking.approvedAmountGBP)*100-totalPence)>0.000001)
   throw Error('Invalid approved booking amount');
+ const schedule=booking.paymentSchedule;
+ if(schedule&&(schedule.totalPence!==totalPence||
+    !Number.isSafeInteger(schedule.dueNowPence)||schedule.dueNowPence<1||
+    schedule.balancePence!==totalPence-schedule.dueNowPence))
+  throw Error('Booking payment schedule mismatch');
+ const amountPence=schedule?.dueNowPence??totalPence;
  const checkout=await readRegisteredCheckout({db,table,bookingId});
  if(checkout?.status!=='PENDING'||checkout.bookingId!==bookingId||
     checkout.amountPence!==amountPence||checkout.currency!=='GBP'||
