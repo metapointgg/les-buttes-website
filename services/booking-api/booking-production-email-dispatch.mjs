@@ -23,10 +23,10 @@ export async function dispatchRequestedProductionBookingEmails({db,table,booking
 }
 
 export async function dispatchProductionBookingLifecycleEmail({db,table,bookingId,type,transport,
- env=process.env,send=sendProductionBookingEmailOnce}={}){
+ env=process.env,send=sendProductionBookingEmailOnce,reminderStage}={}){
  if(!db?.send||!transport?.send||!ID.test(bookingId??'')||
   !allowed(env,table,'BOOKING_LIFECYCLE_DISPATCH_ENABLED')||
-  !['approval_payment','declined','cancelled','confirmed','refund_confirmed','hold_expired'].includes(type))
+  !['approval_payment','balance_reminder','declined','cancelled','confirmed','refund_confirmed','hold_expired'].includes(type))
   throw Error('Production lifecycle dispatch disabled');
  const {Item:booking}=await db.send(new GetCommand({TableName:table,
   Key:{PK:'BOOKING#'+bookingId,SK:'META'},ConsistentRead:true}));
@@ -40,15 +40,18 @@ export async function dispatchProductionBookingLifecycleEmail({db,table,bookingI
    throw Error('Invalid booking cottages');
   const cottage=booking.units.length===2?'Geranium and Honeysuckle':booking.units[0]==='geranium'?'Geranium':'Honeysuckle';
   let checkout;
-  if(type==='approval_payment'){
+  if(type==='approval_payment'||type==='balance_reminder'){
    checkout=(await db.send(new GetCommand({TableName:table,
-    Key:{PK:'BOOKING#'+bookingId,SK:'PAYMENT#CHECKOUT'},ConsistentRead:true}))).Item;
-   if(!Number.isSafeInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000))
+    Key:{PK:'BOOKING#'+bookingId,SK:type==='balance_reminder'?'PAYMENT#BALANCE_CHECKOUT':'PAYMENT#CHECKOUT'},ConsistentRead:true}))).Item;
+   if(type==='approval_payment'&&(!Number.isSafeInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000)))
     throw Error('Expired payment request');
   }
   message=renderBookingLifecycleEmail({type,booking:{bookingId,cottage,checkIn:booking.start,
    checkOut:booking.end,status:booking.status,approvedAmountPence:Math.round(Number(booking.approvedAmountGBP)*100),
-   refundStatus:booking.refundStatus,refundedAmountPence:booking.refundedAmountPence},checkout});
+   guestName:booking.guestName,
+   balancePence:type==='balance_reminder'?booking.balanceDuePence:booking.paymentSchedule?.balancePence,
+   balanceDueDate:booking.paymentSchedule?.dueDate,
+   refundStatus:booking.refundStatus,refundedAmountPence:booking.refundedAmountPence},checkout,reminderStage});
  }
  return send({db,table,transport,env,message:{...message,to:booking.guestEmail}});
 }
