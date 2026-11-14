@@ -76,7 +76,7 @@ jobs:
           (
             cd services/booking-api
             zip -q -r ../../.release/les-buttes-production-integrations.zip . \
-              -x '*.test.mjs' '*.md' '*.yaml' '*.yml' '*.json' 'node_modules/.cache/*'
+              -x '*.test.mjs' 'node_modules/.cache/*'
           )
           unzip -t .release/les-buttes-production-integrations.zip | tail -1
           for file in production-admin-transaction-handler.mjs production-payment-schedule.mjs production-balance-reminder-runner.mjs production-guest-balance-handler.mjs booking-payment-policy.mjs; do
