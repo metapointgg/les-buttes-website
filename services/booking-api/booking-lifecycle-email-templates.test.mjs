@@ -150,3 +150,20 @@ test('deposit approval email states total, first payment and final balance witho
  assert.match(result.body,/Remaining balance: £402\.50 due 2027-04-24/);
  assert.match(result.html,/Pay securely with SumUp/);
 });
+
+test('personalised monthly balance reminders use durable private payment page, not expiring SumUp links',()=>{
+ const token='A'.repeat(43);
+ const message=renderBookingLifecycleEmail({type:'balance_reminder',reminderStage:3,
+  booking:{...base,status:'CONFIRMED',guestName:'Dave Smith',
+   balancePence:40250,balanceDueDate:'2027-08-14',balanceAccessToken:token}});
+ assert.match(message.body,/Dear Dave,/);
+ assert.match(message.body,/three months/);
+ assert.match(message.body,/https:\/\/lesbuttes.com\/pay\/#booking=/);
+ assert.match(message.html,/Pay your balance/);
+ assert.doesNotMatch(message.html,/checkout\.sumup\.com/);
+ for(const invalid of ['invalid','https://attacker.invalid']){
+  assert.throws(()=>renderBookingLifecycleEmail({type:'balance_reminder',reminderStage:3,
+   booking:{...base,status:'CONFIRMED',guestName:'Dave Smith',
+    balancePence:40250,balanceDueDate:'2027-08-14',balanceAccessToken:invalid}}));
+ }
+});
