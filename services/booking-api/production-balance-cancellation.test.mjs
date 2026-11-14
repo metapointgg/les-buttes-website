@@ -11,7 +11,7 @@ const provider={id:checkout.checkoutId,checkout_reference:checkout.reference,mer
  currency:'GBP',amount:402.5,status:'PENDING',transactions:[]};
 const fixture=({existing=checkout,creationClaim=claim,statuses=['PENDING','EXPIRED']}={})=>{
  const calls=[];let count=0;
- const db={send:async c=>({Item:c.input.Key.SK.endsWith('CREATION_CLAIM')?creationClaim:existing})};
+ const db={send:async c=>({Item:c.input.Key.SK.startsWith('PAYMENT#BALANCE_CREATION_CLAIM')?creationClaim:existing})};
  const sumup={merchantCode:'M9BE4KMN',
   retrieveCheckout:async()=>({...provider,status:statuses[Math.min(count++,statuses.length-1)]}),
   deactivateCheckout:async()=>{calls.push('deactivate');return {...provider,status:'EXPIRED'};}};
@@ -38,4 +38,12 @@ test('paid or still active link prevents cancellation and date release',async()=
 test('unregistered checkout with outstanding creation claim requires manual review',async()=>{
  const f=fixture({existing:null});
  await assert.rejects(verifyBalanceCheckoutDeactivated({db:f.db,table,booking,sumup:f.sumup}),/reviewed/);
+});
+
+test('expired balance checkout from a renewed session permits controlled cancellation only after provider verification',async()=>{
+ const f=fixture({existing:{...checkout,status:'EXPIRED',attempt:2},statuses:['EXPIRED']});
+ const state=await verifyBalanceCheckoutDeactivated({db:f.db,table,booking,sumup:f.sumup});
+ assert.equal(state.state,'ALREADY_EXPIRED');
+ assert.equal(state.attempt,2);
+ assert.deepEqual(f.calls,[]);
 });
