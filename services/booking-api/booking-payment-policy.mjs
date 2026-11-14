@@ -1,6 +1,13 @@
 // Pure, currency-safe payment terms. Terms are snapshotted at booking approval;
 // changing the global setting never retrospectively changes an existing booking.
 const DAY=86400000;
+const GUERNSEY='Europe/Guernsey';
+export function guernseyBookingToday(instant=new Date()){
+ const parts=new Intl.DateTimeFormat('en-GB',{timeZone:GUERNSEY,
+  year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(instant);
+ const values=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+ return values.year+'-'+values.month+'-'+values.day;
+}
 const formatDate=ms=>new Date(ms).toISOString().slice(0,10);
 const parseDate=s=>{
  if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))throw Error('Invalid arrival date');
@@ -29,7 +36,7 @@ export function monthBefore(iso,months){
  const daysInMonth=new Date(Date.UTC(firstDate.getUTCFullYear(),firstDate.getUTCMonth()+1,0)).getUTCDate();
  return formatDate(Date.UTC(firstDate.getUTCFullYear(),firstDate.getUTCMonth(),Math.min(d.getUTCDate(),daysInMonth)));
 }
-export function calculatePaymentSchedule({totalPence,arrival,asOf=new Date().toISOString().slice(0,10),
+export function calculatePaymentSchedule({totalPence,arrival,asOf=guernseyBookingToday(),
  policy=DEFAULT_PAYMENT_POLICY}={}){
  validatePaymentPolicy(policy);
  if(!Number.isSafeInteger(totalPence)||totalPence<1||totalPence>100000000)throw Error('Invalid booking total in pence');
