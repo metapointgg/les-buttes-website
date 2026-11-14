@@ -49,3 +49,19 @@ test('confirmation fails closed without an approved arrival policy and rejects t
  assert.throws(()=>prepare({arrivalDepartureRecord:{...arrivalDepartureRecord,
   value:{...arrivalDepartureRecord.value,testOnly:true}},booking:{...booking,synthetic:false}}),/requires synthetic booking/);
 });
+
+test('£805 deposit confirms dates while retaining £402.50 balance due two weeks before arrival',()=>{
+ const paymentSchedule={totalPence:80500,dueNowPence:40250,balancePence:40250,
+  dueDate:'2027-08-14',depositPercent:50};
+ const partial=prepare({
+  booking:{...booking,approvedAmountGBP:805,paymentSchedule},
+  registered:{...registered,amountPence:40250},
+  evidence:{...evidence,amountPence:40250}
+ });
+ assert.equal(partial.items[0].Update.ExpressionAttributeValues[':amount'],805);
+ assert.equal(partial.items[0].Update.ExpressionAttributeValues[':pence'],40250);
+ assert.equal(partial.items[0].Update.ExpressionAttributeValues[':balancePence'],40250);
+ assert.equal(partial.items[0].Update.ExpressionAttributeValues[':paymentStatus'],'PARTIALLY_PAID');
+ assert.equal(partial.items[0].Update.ExpressionAttributeValues[':confirmed'],'CONFIRMED');
+ assert.equal(partial.items[11].Put.Item.amountPence,40250);
+});
