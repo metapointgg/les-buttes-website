@@ -25,7 +25,7 @@ export function validateCheckoutRecord({bookingId,checkout,reference}={}){
    throw Error('Invalid checkout URL');
  return true;
 }
-export async function registerCheckout({db,table,bookingId,checkout,reference,nowEpoch=Math.floor(Date.now()/1000)}={}){
+export async function registerCheckout({db,table,bookingId,checkout,reference,paymentSchedule,nowEpoch=Math.floor(Date.now()/1000)}={}){
  if(!db?.send||!checkoutWriteTableAllowed(table))throw Error('Checkout registration unavailable');
  validateCheckoutRecord({bookingId,checkout,reference});
  const key=checkoutKey(bookingId);
@@ -34,11 +34,19 @@ export async function registerCheckout({db,table,bookingId,checkout,reference,no
    hostedCheckoutUrl:checkout.hostedCheckoutUrl,createdAt:new Date(nowEpoch*1000).toISOString()};
  // A checkout can be registered only against the exact approved amount and booking state.
  // The payment record is immutable. A duplicate attempt must read/reconcile the first.
+ if(paymentSchedule && (paymentSchedule.dueNowPence!==checkout.amountPence||
+    !Number.isSafeInteger(paymentSchedule.totalPence)||
+    paymentSchedule.totalPence<checkout.amountPence||
+    paymentSchedule.totalPence!==paymentSchedule.dueNowPence+paymentSchedule.balancePence))
+  throw Error('Initial checkout does not match snapshotted payment schedule');
  const items=[
   {ConditionCheck:{TableName:table,Key:{PK:'BOOKING#'+bookingId,SK:'META'},
-   ConditionExpression:'#status = :approved AND reservationStatus = :awaiting AND approvedAmountGBP = :amount AND attribute_exists(PK)',
+   ConditionExpression:'#status = :approved AND reservationStatus = :awaiting AND approvedAmountGBP = :amount AND attribute_exists(PK)'+
+    (paymentSchedule?' AND paymentSchedule = :schedule':''),
    ExpressionAttributeNames:{'#status':'status'},
-   ExpressionAttributeValues:{':approved':'APPROVED_AWAITING_PAYMENT',':awaiting':'AWAITING_PAYMENT',':amount':checkout.amountPence/100}}},
+   ExpressionAttributeValues:{':approved':'APPROVED_AWAITING_PAYMENT',':awaiting':'AWAITING_PAYMENT',
+    ':amount':paymentSchedule?paymentSchedule.totalPence/100:checkout.amountPence/100,
+    ...(paymentSchedule?{':schedule':paymentSchedule}:{})}}},
   {Put:{TableName:table,Item:record,ConditionExpression:'attribute_not_exists(PK)'}}
  ];
  await db.send(new TransactWriteCommand({TransactItems:items}));
