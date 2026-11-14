@@ -3,6 +3,8 @@
 import {DynamoDBClient} from '@aws-sdk/client-dynamodb';
 import {DynamoDBDocumentClient} from '@aws-sdk/lib-dynamodb';
 import {stagingQuote} from './staging-quote-handler.mjs';
+import {readProductionPaymentSettings} from './production-payment-settings.mjs';
+import {calculatePaymentSchedule} from './booking-payment-policy.mjs';
 
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
 const ORIGINS=new Set(['https://lesbuttes.com','https://www.lesbuttes.com']);
@@ -21,8 +23,12 @@ export function createProductionQuoteHandler({
      (event?.rawPath??event?.path)!=='/quote')return respond(404,{error:'Not found'});
   if(origin&&!ORIGINS.has(origin))return respond(403,{error:'Forbidden'});
   try{
-   return respond(200,await stagingQuote(event.queryStringParameters,{db,
-    table:env.BOOKINGS_TABLE,airbnbRequired:true}));
+   const quoted=await stagingQuote(event.queryStringParameters,{db,
+    table:env.BOOKINGS_TABLE,airbnbRequired:true});
+   const config=await readProductionPaymentSettings({db,table:env.BOOKINGS_TABLE});
+   const payment=calculatePaymentSchedule({totalPence:Math.round(Number(quoted.totalGBP)*100),
+    arrival:quoted.start,policy:config.value});
+   return respond(200,{...quoted,payment:{...payment,policyVersion:config.version}});
   }catch(error){
    if(/^(Airbnb dates unavailable|Invalid quote selection|Invalid cottage|Invalid guest count|Invalid stay length|Invalid published|Saturday arrival|Stay exceeds|Quote outside|Below published|Missing or ambiguous published nightly rate|Requested dates unavailable)/.test(error.message))
     return respond(422,{error:'Dates or selection cannot be quoted'});
