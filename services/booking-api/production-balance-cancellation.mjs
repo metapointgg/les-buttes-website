@@ -7,10 +7,14 @@ export async function verifyBalanceCheckoutDeactivated({db,table,booking,sumup}=
  if(!db?.send||!table||booking?.paymentStatus!=='PARTIALLY_PAID'||
    !Number.isSafeInteger(booking.balanceDuePence)||booking.balanceDuePence<1)
   throw Error('Partial-payment cancellation requires verified balance state');
- const {Item:claim}=await db.send(new GetCommand({TableName:table,
-  Key:key(booking.id,'PAYMENT#BALANCE_CREATION_CLAIM'),ConsistentRead:true}));
  const {Item:checkout}=await db.send(new GetCommand({TableName:table,
   Key:key(booking.id,'PAYMENT#BALANCE_CHECKOUT'),ConsistentRead:true}));
+ const attempt=checkout?.attempt??1;
+ if(!Number.isSafeInteger(attempt)||attempt<1||attempt>100)
+  throw Error('Invalid balance checkout attempt');
+ const {Item:claim}=await db.send(new GetCommand({TableName:table,
+  Key:key(booking.id,'PAYMENT#BALANCE_CREATION_CLAIM'+(attempt===1?'':'#'+attempt)),
+  ConsistentRead:true}));
  if(!checkout){
   if(claim)throw Error('Uncertain balance checkout creation must be reviewed before cancellation');
   return {state:'NO_LINK',verified:true};
