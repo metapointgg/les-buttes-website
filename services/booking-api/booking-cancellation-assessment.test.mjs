@@ -21,3 +21,16 @@ test('assessment rejects current, changed or missing policy snapshots',()=>{
  assert.throws(()=>assessBookingCancellation({booking:{...booking,cancellationPolicyVersion:'other'},policyRecord,cancelledAt:'2027-03-20T12:00:00Z'}));
  assert.throws(()=>assessBookingCancellation({booking:{...booking,checkInAt:undefined},policyRecord,cancelledAt:'2027-03-20T12:00:00Z'}));
 });
+
+test('deposit cancellation assesses refunded money using full frozen holiday price',()=>{
+ const partial={...booking,approvedAmountGBP:805,paidAmountPence:40250,
+  paymentSchedule:{totalPence:80500,dueNowPence:40250,balancePence:40250,dueDate:'2027-03-20'}};
+ const assessment=assessBookingCancellation({booking:partial,policyRecord,
+  cancelledAt:'2027-03-20T12:00:00Z'});
+ assert.equal(assessment.refundPercent,50);
+ assert.equal(assessment.refundAmountPence,0);
+ assert.equal(assessBookingCancellation({booking:partial,policyRecord,
+  cancelledAt:'2027-03-02T12:00:00Z'}).refundAmountPence,40250);
+ assert.throws(()=>assessBookingCancellation({booking:{...partial,approvedAmountGBP:804},
+  policyRecord,cancelledAt:'2027-03-20T12:00:00Z'}),/authoritative/);
+});
