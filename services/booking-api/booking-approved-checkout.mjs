@@ -26,14 +26,21 @@ export async function registerApprovedBookingCheckout({db,table,bookingId,identi
     !Number.isSafeInteger(booking.holdExpiresAt)||
     booking.holdExpiresAt<=nowEpoch)
   throw Error('Booking not eligible for checkout registration');
- const amountPence=Math.round(Number(booking.approvedAmountGBP)*100);
- if(!Number.isSafeInteger(amountPence)||amountPence<1||
-    Math.abs(Number(booking.approvedAmountGBP)*100-amountPence)>0.000001)
+ const totalPence=Math.round(Number(booking.approvedAmountGBP)*100);
+ if(!Number.isSafeInteger(totalPence)||totalPence<1||
+    Math.abs(Number(booking.approvedAmountGBP)*100-totalPence)>0.000001)
   throw Error('Approved GBP amount missing or invalid');
+ const schedule=booking.paymentSchedule;
+ if(schedule && (schedule.totalPence!==totalPence||
+    !Number.isSafeInteger(schedule.dueNowPence)||schedule.dueNowPence<1||
+    !Number.isSafeInteger(schedule.balancePence)||schedule.balancePence<0||
+    schedule.dueNowPence+schedule.balancePence!==totalPence))
+  throw Error('Approved payment schedule disagrees with booking total');
+ const amountPence=schedule?.dueNowPence??totalPence;
  // The orchestrator owns durable creation claims, provider-first lookup,
  // registration conditions and duplicate prevention.
  const result=await orchestrate({db,table,bookingId,amountPence,sumup,
-  actor:identity.subject,nowEpoch});
+  actor:identity.subject,nowEpoch,paymentSchedule:schedule});
  if(result?.status!=='REGISTERED'||result.record?.bookingId!==bookingId||
     result.record.amountPence!==amountPence||
     result.record.currency!=='GBP'||result.record.status!=='PENDING')
