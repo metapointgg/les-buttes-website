@@ -731,6 +731,15 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri: !GetAtt ProductionAdminTransactionFunction.Arn
       PayloadFormatVersion: '2.0'
+  ProductionPaymentPolicyPublishRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref CanonicalManagementApiId
+      RouteKey: POST /admin/production/config/payments/all/publish
+      AuthorizationType: JWT
+      AuthorizerId: !Ref CognitoAuthorizerId
+      Target: !Sub integrations/${ProductionAdminTransactionIntegration}
   ProductionOwnerActionRoute:
     Condition: CorrectAccountAndRegion
     Type: AWS::ApiGatewayV2::Route
