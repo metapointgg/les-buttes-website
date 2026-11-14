@@ -86,7 +86,7 @@ export async function reconcileVerifiedPayment({db,table,bookingId,fetchCheckout
      observedBooking.paymentTransactionId===evidence.transactionId&&
      claim?.bookingId===bookingId&&claim?.checkoutId===registered.checkoutId&&
      claim?.amountPence===registered.amountPence&&claim?.currency==='GBP'&&
-     Math.round(Number(observedBooking.approvedAmountGBP)*100)===registered.amountPence&&
+     (observedBooking.paymentSchedule?observedBooking.paymentSchedule.dueNowPence===registered.amountPence:Math.round(Number(observedBooking.approvedAmountGBP)*100)===registered.amountPence)&&
      typeof observedBooking.paidAt==='string'&&observedBooking.paidAt.length>0) {
    return {status:'ALREADY_CONFIRMED',bookingId,transactionId:evidence.transactionId,
     affectedNights:prepared.affectedNights};
