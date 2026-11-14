@@ -40,7 +40,7 @@ export async function dispatchProductionBookingLifecycleEmail({db,table,bookingI
    throw Error('Invalid booking cottages');
   const cottage=booking.units.length===2?'Geranium and Honeysuckle':booking.units[0]==='geranium'?'Geranium':'Honeysuckle';
   let checkout;
-  if(type==='approval_payment'||type==='balance_reminder'){
+  if(type==='approval_payment'){
    checkout=(await db.send(new GetCommand({TableName:table,
     Key:{PK:'BOOKING#'+bookingId,SK:type==='balance_reminder'?'PAYMENT#BALANCE_CHECKOUT':'PAYMENT#CHECKOUT'},ConsistentRead:true}))).Item;
    if(type==='approval_payment'&&(!Number.isSafeInteger(booking.holdExpiresAt)||booking.holdExpiresAt<=Math.floor(Date.now()/1000)))
@@ -48,7 +48,8 @@ export async function dispatchProductionBookingLifecycleEmail({db,table,bookingI
   }
   message=renderBookingLifecycleEmail({type,booking:{bookingId,cottage,checkIn:booking.start,
    checkOut:booking.end,status:booking.status,approvedAmountPence:Math.round(Number(booking.approvedAmountGBP)*100),
-   guestName:booking.guestName,paymentStatus:booking.paymentStatus,
+   guestName:booking.guestName,balanceAccessToken:booking.balanceAccessToken,
+   paymentStatus:booking.paymentStatus,
    totalPaidPence:booking.paidAmountPence,paymentVerified:type==='balance_paid',
    balancePence:type==='balance_reminder'?booking.balanceDuePence:booking.paymentSchedule?.balancePence,
    balanceDueDate:booking.paymentSchedule?.dueDate,
