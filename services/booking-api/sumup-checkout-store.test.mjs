@@ -24,3 +24,16 @@ test('LB-07 duplicate registration compares immutable checkout identity',async()
  assert.equal((await reconcileCheckoutRegistration({db,table:'booking-staging',bookingId,checkout:{...checkout,checkoutId:'checkout-99999999'},reference:checkout.reference})).status,'CONFLICT');
  assert.equal((await reconcileCheckoutRegistration({db:{send:async()=>({})},table:'booking-staging',bookingId,checkout,reference:checkout.reference})).status,'UNREGISTERED');
 });
+
+test('deposit checkout is conditionally bound to total booking value and exact 50% schedule',async()=>{
+ let tx;
+ const db={send:async command=>{tx=command.input;return {};}};
+ const paymentSchedule={totalPence:80500,dueNowPence:40250,balancePence:40250};
+ await registerCheckout({db,table:'booking-staging',bookingId,
+  checkout:{...checkout,amountPence:40250},reference:checkout.reference,paymentSchedule});
+ assert.equal(tx.TransactItems[0].ConditionCheck.ExpressionAttributeValues[':amount'],805);
+ assert.equal(tx.TransactItems[0].ConditionCheck.ExpressionAttributeValues[':schedule'],paymentSchedule);
+ assert.match(tx.TransactItems[0].ConditionCheck.ConditionExpression,/paymentSchedule = :schedule/);
+ await assert.rejects(registerCheckout({db,table:'booking-staging',bookingId,
+  checkout:{...checkout,amountPence:40249},reference:checkout.reference,paymentSchedule}),/schedule/);
+});
