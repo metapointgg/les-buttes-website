@@ -164,3 +164,12 @@ test('production booking deployment requires an explicit immutable email artefac
  assert.equal((source.match(/S3ObjectVersion: !Ref EmailReleaseArtifactVersion/g)??[]).length,2);
  assert.equal((source.match(/S3Key: !Ref ReviewedArtifactKey/g)??[]).length,6);
 });
+
+test('production global payment policy has an explicit authenticated owner-only publish route',()=>{
+ assert.match(source,/RouteKey: POST \/admin\/production\/config\/payments\/all\/publish/);
+ assert.match(source,/ProductionPaymentPolicyPublishRoute:[\s\S]{0,450}AuthorizationType: JWT[\s\S]{0,80}AuthorizerId: !Ref CognitoAuthorizerId/);
+ assert.match(source,/ProductionPaymentPolicyPublishRoute:[\s\S]{0,550}ProductionAdminTransactionIntegration/);
+ const transaction=readFileSync(new URL('./production-admin-transaction-handler.mjs',import.meta.url),'utf8');
+ assert.match(transaction,/publishProductionPaymentSettings/);
+ assert.match(transaction,/args\.kind!=='payments'\|\|args\.unit!=='all'/);
+});
