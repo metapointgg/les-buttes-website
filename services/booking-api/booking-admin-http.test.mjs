@@ -397,3 +397,37 @@ test('owner reconciliation returns explicit notification status without claiming
   else process.env.BOOKINGS_TABLE=oldTable;
  }
 });
+
+test('production global payment policy endpoint accepts only owner-approved 50% publication',async()=>{
+ const previous={issuer:process.env.MANAGEMENT_COGNITO_ISSUER,client:process.env.MANAGEMENT_COGNITO_CLIENT_ID};
+ process.env.MANAGEMENT_COGNITO_ISSUER=issuer;
+ process.env.MANAGEMENT_COGNITO_CLIENT_ID=clientId;
+ const calls=[];
+ const handler=createAdminHandler({
+  reader:{},writeDeploymentAllowed:()=>true,writeEnabled:()=>true,
+  writeConfig:async value=>{calls.push(value);return {version:'new-policy-version'};}
+ });
+ const request={...verified,rawPath:'/admin/config/payments/all/publish',
+  requestContext:{...verified.requestContext,http:{method:'POST'}},
+  body:JSON.stringify({value:{depositPercent:50,balanceDueDays:14,
+   fullPaymentWithinDays:30,reminderMonths:[3,2,1]},expectedVersion:null,approved:true})};
+ try{
+  assert.equal((await handler(request)).statusCode,200);
+  assert.equal(calls[0].identity.role,'owner');
+  assert.equal(calls[0].kind,'payments');
+  assert.equal(calls[0].operation,'publish');
+  assert.equal(calls[0].value.depositPercent,50);
+  const viewer={...request,requestContext:{...request.requestContext,authorizer:{jwt:{claims:{
+   ...verified.requestContext.authorizer.jwt.claims,'cognito:groups':['lesbuttes-viewer']
+  }}}}};
+  assert.equal((await handler(viewer)).statusCode,403);
+  assert.equal((await handler({...request,body:JSON.stringify({value:{},expectedVersion:null,approved:false})})).statusCode,400);
+  assert.equal((await handler({...request,body:JSON.stringify({value:{},approved:true})})).statusCode,400);
+  assert.equal((await handler({...request,body:JSON.stringify({value:{},expectedVersion:null,approved:true,extra:1})})).statusCode,400);
+  assert.equal(calls.length,1);
+ }finally{
+  for(const [key,name] of [['issuer','MANAGEMENT_COGNITO_ISSUER'],['client','MANAGEMENT_COGNITO_CLIENT_ID']]){
+   if(previous[key]===undefined)delete process.env[name];else process.env[name]=previous[key];
+  }
+ }
+});
