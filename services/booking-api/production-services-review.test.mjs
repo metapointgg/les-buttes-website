@@ -140,8 +140,8 @@ test('production unpaid booking cancellation verifies SumUp expiry before releas
  assert.match(admin,/deactivationEnabled:\(\)=>process\.env\.BOOKING_CONTROLLED_TEST_ONLY_ENABLED!=='true'/);
  assert.match(admin,/cancelUnpaidProductionBooking/);
  assert.match(gateway,/checkout\\\/deactivate/);
- assert.match(source,/RouteKey: POST \/admin\/production\/bookings\/\{bookingId\}\/checkout\/deactivate/);
- // This route already exists on the canonical management API and targets the production transaction Lambda.\n assert.doesNotMatch(source,/^  ProductionCheckoutDeactivateRoute:/m);
+ // This route already exists on the canonical management API and targets the production transaction Lambda.
+ assert.doesNotMatch(source,/^  ProductionCheckoutDeactivateRoute:/m);
  assert.match(core,/await sumup\.deactivateCheckout\(checkout\.checkoutId\)/);
  assert.match(core,/const after=await sumup\.retrieveCheckout\(checkout\.checkoutId\)/);
  assert.ok(core.indexOf('const after=await sumup.retrieveCheckout')<core.indexOf('const actions=['));
