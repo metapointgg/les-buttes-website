@@ -16,6 +16,7 @@ import {SSMClient} from '@aws-sdk/client-ssm';
 import {createVerifiedProductionSumUpClient} from './sumup-production-runtime.mjs';
 import {reconcileVerifiedProductionRefund} from './production-refund-reconciliation.mjs';
 import {publishProductionPaymentSettings} from './production-payment-settings.mjs';
+import {loadProductionBalanceReport} from './production-balance-report.mjs';
 
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
 const reply=(statusCode,error)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({error})});
@@ -42,6 +43,7 @@ export async function handler(event){
   const reader=createReadOnlyAdminReader({bookingIndex:'BookingRequestsIndex',authorise:async request=>identityFromGateway(request)});
   deployed=createAdminHandler({
    reader,deploymentAllowed,writeDeploymentAllowed:deploymentAllowed,writeEnabled:writesEnabled,
+   readBalanceReport:()=>loadProductionBalanceReport({db,table}),
    writeConfig:async args=>{
     if(args.kind!=='payments'||args.unit!=='all'||args.operation!=='publish')
      throw Error('Only global production payment policy may be changed');
