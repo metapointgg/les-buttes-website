@@ -67,6 +67,32 @@ jobs:
           test -s .aws-sam/isolated-quote/StagingQuoteFunction/staging-quote-handler.mjs
           test -s .aws-sam/isolated-quote/StagingQuoteFunction/published-band-quote.mjs
           test -s .aws-sam/isolated-quote/StagingQuoteFunction/occupancy.mjs
+      - name: Package production backend artefact (no deployment)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm --prefix services/booking-api ci --omit=dev --no-audit --no-fund
+          mkdir -p .release
+          (
+            cd services/booking-api
+            zip -q -r ../../.release/les-buttes-production-integrations.zip . \
+              -x '*.test.mjs' '*.md' '*.yaml' '*.yml' '*.json' 'node_modules/.cache/*'
+          )
+          unzip -t .release/les-buttes-production-integrations.zip | tail -1
+          for file in production-admin-transaction-handler.mjs production-payment-schedule.mjs production-balance-reminder-runner.mjs production-guest-balance-handler.mjs booking-payment-policy.mjs; do
+            unzip -Z -1 .release/les-buttes-production-integrations.zip | grep -Fx "$file"
+          done
+          test -s infra/booking-api/production-services-review.template.yaml
+          sha256sum .release/les-buttes-production-integrations.zip
+      - name: Upload reviewed production backend package (no deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-booking-backend-${{ github.sha }}
+          path: |
+            .release/les-buttes-production-integrations.zip
+            infra/booking-api/production-services-review.template.yaml
+          retention-days: 7
+          if-no-files-found: error
       - name: Upload validated static website
         uses: actions/upload-artifact@v4
         with:
