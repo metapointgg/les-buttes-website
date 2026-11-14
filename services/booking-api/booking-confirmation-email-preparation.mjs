@@ -18,7 +18,8 @@ export function prepareConfirmedGuestEmail(booking){
  const cottage=booking.units.length===2?'Geranium and Honeysuckle':cottages[booking.units[0]];
  const rendered=renderBookingLifecycleEmail({type:'confirmed',booking:{
   bookingId:booking.id,cottage,checkIn:booking.start,checkOut:booking.end,
-  status:'CONFIRMED',paymentVerified:true
+  status:'CONFIRMED',paymentVerified:true,paidAmountPence:booking.paidAmountPence,
+  balancePence:booking.balanceDuePence??0,balanceDueDate:booking.paymentSchedule?.dueDate
  }});
  return {...rendered,to:booking.guestEmail};
 }
