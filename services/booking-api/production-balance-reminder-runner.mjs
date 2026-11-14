@@ -5,13 +5,14 @@ import {createVerifiedProductionSumUpClient} from './sumup-production-runtime.mj
 import {reconcileBalancePayment} from './production-balance-payments.mjs';
 import {GetCommand} from '@aws-sdk/lib-dynamodb';
 import {currentBalanceReminderStage} from './production-balance-reminders.mjs';
+import {guernseyBookingToday} from './booking-payment-policy.mjs';
 import {dispatchProductionBookingLifecycleEmail} from './booking-production-email-dispatch.mjs';
 import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
 
 export async function processProductionBalance({db,table,booking,env=process.env,
  clientFactory=createVerifiedProductionSumUpClient,ssmFactory=()=>new SSMClient({region:'eu-west-2'}),
  dispatch=dispatchProductionBookingLifecycleEmail,
- transportFactory=createProductionSesTransport,today=new Date().toISOString().slice(0,10)}={}){
+ transportFactory=createProductionSesTransport,today=guernseyBookingToday()}={}){
  if(booking?.status!=='CONFIRMED'||booking?.paymentStatus!=='PARTIALLY_PAID'||
     booking.balanceDuePence<1||booking.synthetic===true) return {status:'SKIPPED'};
  const identity={role:'system',subject:'system:production-balance-reconciliation'};
