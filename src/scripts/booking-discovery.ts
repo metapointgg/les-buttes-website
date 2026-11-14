@@ -700,6 +700,14 @@ if(widget){
           email:emailField.value.trim(),telephone:phoneField.value.trim(),
           consent:true,notes:'',website:'',turnstileToken:token,
           termsAcceptance:{accepted:true,termsVersion:'LB-DIRECT-2027-01',privacyVersion:'LB-PRIVACY-2027-01'},
+          ...(authoritativeQuote?.key===quoteKey()&&authoritativeQuote.payment?
+           {paymentAcceptance:{
+            policyVersion:authoritativeQuote.payment.policyVersion,
+            totalPence:authoritativeQuote.payment.totalPence,
+            dueNowPence:authoritativeQuote.payment.dueNowPence,
+            balancePence:authoritativeQuote.payment.balancePence,
+            dueDate:authoritativeQuote.payment.dueDate
+           }}:{}),
           ...(controlledOwnerTest?{testAccessCode:oneTimeAccess}:{})
         })
       });
