@@ -27,8 +27,8 @@ test('owner financial report strongly reads booking META because existing GSI ex
  assert.equal(report.items.length,2);
  assert.equal(report.totalOwedPence,124250);
  assert.equal(report.overduePence,40250);
- assert.equal(report.items[0].guestName,'Dave Guest');
- assert.equal(report.items[0].receivedPence,40250);
+ assert.equal(report.items.find(x=>x.bookingId===ids[0])?.guestName,'Dave Guest');
+ assert.equal(report.items.find(x=>x.bookingId===ids[0])?.receivedPence,40250);
 });
 test('archived test booking never appears in financial obligations',async()=>{
  const db={send:async cmd=>cmd.input.IndexName?
