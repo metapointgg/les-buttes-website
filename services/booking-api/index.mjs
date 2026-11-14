@@ -15,6 +15,7 @@ import {productionEmailGate} from './production-integration-gates.mjs';
 import {controlledTestRequest,controlledTestBookingClaim} from './controlled-production-test.mjs';
 import {readProductionPaymentSettings} from './production-payment-settings.mjs';
 import {calculatePaymentSchedule} from './booking-payment-policy.mjs';
+import {validatePaymentAcceptance} from './booking-payment-acceptance.mjs';
 
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const ssm=new SSMClient({});
@@ -128,6 +129,12 @@ async function createRequest(input,event){
    }catch(error){
     console.error('PRODUCTION_PAYMENT_TERMS_UNAVAILABLE',error?.name??'Error');
     return response(503,{error:'Current payment terms unavailable'});
+   }
+   try{
+    validatePaymentAcceptance({acceptance:input.paymentAcceptance,
+     schedule:paymentSchedule,policyVersion});
+   }catch{
+    return response(409,{error:'Payment terms have changed. Please refresh the quote and review before booking.'});
    }
   }
   const id=randomUUID();
