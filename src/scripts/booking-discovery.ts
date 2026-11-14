@@ -713,9 +713,14 @@ if(widget){
       });
       if(response.status!==(syntheticRequestEnabled?201:202)){
         if(response.status===403)throw Error('Verification was rejected or your restricted test access is no longer valid. Please refresh and try again.');
-        if(response.status===409)throw Error(controlledOwnerTest?
-          'This one-time owner booking test has already been used. A new test authorisation is required.':
-          'These dates have just become unavailable. Please select another stay.');
+        if(response.status===409){
+          const conflict=await response.json().catch(()=>({})) as {error?:string};
+          if(conflict.error==='Payment terms have changed. Please refresh the quote and review before booking.')
+           throw Error('The payment terms have changed since your quote. Please refresh and review the updated payment breakdown before submitting.');
+          throw Error(controlledOwnerTest?
+           'This one-time owner booking test has already been used. A new test authorisation is required.':
+           'These dates have just become unavailable. Please select another stay.');
+        }
         throw Error(response.status===503?
           'Booking requests are temporarily unavailable. Please try again later.':
           'Your booking request could not be submitted. Please try again.');
