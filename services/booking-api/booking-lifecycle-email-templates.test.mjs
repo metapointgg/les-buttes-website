@@ -139,3 +139,14 @@ test('production lifecycle emails contain no preview, illustrative or staging co
  assert.equal(owner.subject,'Les Buttes — New booking request awaiting approval');
  assert.match(owner.html,/Review booking request/);
 });
+
+test('deposit approval email states total, first payment and final balance without claiming full payment',()=>{
+ const booking={...base,status:'APPROVED_AWAITING_PAYMENT',approvedAmountPence:80500,
+  balancePence:40250,balanceDueDate:'2027-04-24'};
+ const checkout={...fixture.approval_payment.checkout,amountPence:40250};
+ const result=renderBookingLifecycleEmail({type:'approval_payment',booking,checkout});
+ assert.match(result.body,/Amount due: £402\.50/);
+ assert.match(result.body,/Total holiday price: £805\.00/);
+ assert.match(result.body,/Remaining balance: £402\.50 due 2027-04-24/);
+ assert.match(result.html,/Pay securely with SumUp/);
+});
