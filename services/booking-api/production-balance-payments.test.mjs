@@ -32,7 +32,7 @@ const store=({existing=checkout,record=booking}={})=>{
  const db={send:async command=>{
   const key=command.input.Key;
   if(key?.SK==='META')return {Item:record};
-  if(key?.SK==='PAYMENT#BALANCE_CHECKOUT')return {Item:existing};
+  if(key?.SK==='PAYMENT#BALANCE_CHECKOUT'&&!command.input.UpdateExpression)return {Item:existing};
   if(key?.SK?.startsWith('PAYMENT#BALANCE_CREATION_CLAIM'))return {};
   calls.push(command.input);return {};
  }};
