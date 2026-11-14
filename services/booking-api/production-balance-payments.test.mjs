@@ -110,7 +110,7 @@ test('old pending SumUp session is independently expired before a new attempt is
  assert.equal(result.checkout.attempt,2);
  assert.equal(result.checkout.reference,balanceReference(id,2));
  assert.deepEqual(calls,['delete','create']);
- assert.equal(f.calls[0].Update.UpdateExpression.includes('deactivatedAt'),true);
+ assert.equal(f.calls[0].UpdateExpression.includes('deactivatedAt'),true);
  assert.equal(f.calls[1].Item.SK,'PAYMENT#BALANCE_CREATION_CLAIM#2');
  assert.equal(f.calls[2].TransactItems[1].Put.ConditionExpression,
   '#status = :expired AND checkoutId = :oldId');
