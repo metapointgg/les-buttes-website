@@ -25,6 +25,7 @@ interface Props {
   canonical?:string;
   jsonLd?:Record<string,unknown>|Record<string,unknown>[];
   noindex?:boolean;
+  sensitive?:boolean;
 }
 
 const {
@@ -32,13 +33,14 @@ const {
   description,
   canonical=new URL(Astro.url.pathname,site.url).toString(),
   jsonLd,
-  noindex=false
+  noindex=false,
+  sensitive=false
 }=Astro.props;
 
 const pathKey=canonicalPagePath==='/'?'home':canonicalPagePath.replace(/^\/+|\/+$/g,'').replace(/\//g,'-')||'home';
 const pageClass=`page-${pathKey}`;
 
-const googleAnalyticsId=site.analytics?.googleAnalyticsId?.trim();
+const googleAnalyticsId=sensitive?null:site.analytics?.googleAnalyticsId?.trim();
 
 const [pages,subpages,cottages]=await Promise.all([
   getCollection('pages'),
@@ -188,6 +190,7 @@ const structuredData=[localBusiness,webPage,...pageJsonLd];
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width"/>
     <meta name="theme-color" content="#194c3d"/>
+    {sensitive && <meta name="referrer" content="no-referrer"/>}
     {googleAnalyticsId && (
       <>
         <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}></script>
@@ -203,7 +206,7 @@ gtag('config', '${googleAnalyticsId}');`}></script>
     <link rel="canonical" href={canonical}/>
     {languages.map(lang=><link rel="alternate" hreflang={lang==="en"?"en-GB":lang} href={new URL(localPath(canonicalPagePath,lang),site.url).toString()}/>)}
     <link rel="alternate" hreflang="x-default" href={new URL(canonicalPagePath,site.url).toString()}/>
-    <meta name="robots" content={noindex?'noindex,follow,max-image-preview:large':'max-image-preview:large'}/>
+    <meta name="robots" content={sensitive?'noindex,nofollow,noarchive':noindex?'noindex,follow,max-image-preview:large':'max-image-preview:large'}/>
 
     <meta property="og:type" content="website"/>
     <meta property="og:site_name" content={site.name}/>
