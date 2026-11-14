@@ -108,7 +108,7 @@ if(widget){
     row.append(name,price);summaryLines.append(row);
    }
    summaryLines.hidden=false;
-   const detailsSplit=widget.querySelector<HTMLElement>('[data-details-payment-split]');
+   const detailsSplit=widget?.querySelector<HTMLElement>('[data-details-payment-split]');
    if(detailsSplit){
     detailsSplit.replaceChildren(...Array.from(summaryLines.children).map(child=>child.cloneNode(true)));
     detailsSplit.hidden=false;
