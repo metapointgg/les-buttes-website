@@ -776,6 +776,31 @@ Resources:
       AuthorizationType: JWT
       AuthorizerId: !Ref CognitoAuthorizerId
       Target: !Sub integrations/${ProductionAdminTransactionIntegration}
+  ProductionGuestBalanceIntegration:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ProductionApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ProductionAdminTransactionFunction.Arn
+      PayloadFormatVersion: '2.0'
+  ProductionGuestBalanceRoute:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ProductionApi
+      RouteKey: POST /balance/checkout
+      AuthorizationType: NONE
+      Target: !Sub integrations/${ProductionGuestBalanceIntegration}
+  ProductionGuestBalancePermission:
+    Condition: CorrectAccountAndRegion
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProductionAdminTransactionFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${ProductionApi}/*/POST/balance/checkout
+
   ProductionAdminTransactionPermission:
     Condition: CorrectAccountAndRegion
     Type: AWS::Lambda::Permission
