@@ -8,6 +8,7 @@ import {createProductionSesTransport} from './booking-production-ses-transport.m
 import {productionEmailGate} from './production-integration-gates.mjs';
 import {controlledTestBooking} from './controlled-production-test.mjs';
 import {processProductionBalance} from './production-balance-reminder-runner.mjs';
+import {guernseyBookingToday} from './booking-payment-policy.mjs';
 
 const RULE='arn:aws:events:eu-west-2:145608514666:rule/les-buttes-production-payment-reconciliation';
 const TABLE=/^les-buttes-booking-production-data-BookingTable-[A-Za-z0-9]+$/;
@@ -53,7 +54,7 @@ export async function reconcileScheduledProductionPayments(event,{
       result.balanceChecked++;
       try{
        const outcome=await processBalance({db,table:env.BOOKINGS_TABLE,
-        booking:confirmedBooking,env,today:new Date(now()*1000).toISOString().slice(0,10)});
+        booking:confirmedBooking,env,today:guernseyBookingToday(new Date(now()*1000))});
        if(outcome.status==='PAID_IN_FULL')result.balancePaid++;
        else if(outcome.status==='PENDING'){
         result.balancePending++;
