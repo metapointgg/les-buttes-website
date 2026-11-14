@@ -30,11 +30,12 @@ export function renderBrandedBookingHtml({type,body}={}){
   if(!candidate)throw Error('Verified payment link required');
   const url=new URL(candidate);
   if(type==='balance_reminder'){
+   const access=new URLSearchParams(url.hash.replace(/^#/,'')); 
    if(url.protocol!=='https:'||url.hostname!=='lesbuttes.com'||
-      url.pathname!=='/pay/'||url.username||url.password||url.hash||
-      [...url.searchParams.keys()].sort().join(',')!=='access,booking'||
-      !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(url.searchParams.get('booking')??'')||
-      !/^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get('access')??''))
+      url.pathname!=='/pay/'||url.username||url.password||url.search||
+      [...access.keys()].sort().join(',')!=='access,booking'||
+      !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(access.get('booking')??'')||
+      !/^[A-Za-z0-9_-]{43}$/.test(access.get('access')??''))
     throw Error('Invalid secure Les Buttes payment link');
   }else if(url.protocol!=='https:'||url.hostname!=='checkout.sumup.com'||
     url.username||url.password||url.hash||url.search||
