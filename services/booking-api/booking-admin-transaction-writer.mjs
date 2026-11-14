@@ -37,6 +37,7 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    refundAssessment=assessBookingCancellation({booking,policyRecord,
     cancelledAt:new Date(nowEpoch*1000).toISOString()});
  }
+ let paymentScheduleOverride=null;
  if(action==='approve'){
    if(!approval)throw Error('Approval requires explicit pricing consent');
    const quotedPence=Math.round(Number(booking.quote?.totalGBP)*100);
@@ -57,6 +58,24 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    if(quotedPence!==approval.amountPence&&
       (typeof approval.priceChangeReason!=='string'||approval.priceChangeReason.trim().length<5))
      throw Error('Changed approval price requires an audit reason');
+   // The £2 owner acceptance is an explicitly audited exception, never a
+   // published cottage rate. The request must already carry a 50% schedule.
+   if(approval.amountPence===200&&
+      approval.priceChangeReason==='Owner-authorised £2 instalment acceptance test'){
+     const s=booking.paymentSchedule;
+     const daysUntil=Math.floor((Date.parse(booking.start+'T00:00:00Z')-
+       Date.parse(new Date(nowEpoch*1000).toISOString().slice(0,10)+'T00:00:00Z'))/86400000);
+     if(String(booking.guestEmail??'').trim().toLowerCase()!=='mike@un1ty.gg'||
+        !s||s.policyMode!=='DEPOSIT_50'||s.depositPercent!==50||
+        s.totalPence!==quotedPence||s.dueNowPence+s.balancePence!==quotedPence||
+        s.balancePence<1||typeof s.dueDate!=='string'||daysUntil<=30)
+       throw Error('The £2 instalment test requires the authorised guest and a 50% booking more than 30 days away');
+     paymentScheduleOverride={...s,totalPence:200,dueNowPence:100,balancePence:100};
+   }else if(approval.amountPence!==quotedPence&&booking.paymentSchedule){
+     // A price override must never silently retain the old quoted instalments.
+     throw Error('A different approved price requires a separate reviewed payment schedule');
+   }
+
  }
  const names={'#status':'status'};
  const values={':expected':decision.from,':next':decision.to,
@@ -70,6 +89,10 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    update+=', holdExpiresAt = :nextExpiry, approvedAmountGBP = :amount';
    values[':nextExpiry']=nowEpoch+48*3600;
    values[':amount']=approval.amountPence/100;
+   if(paymentScheduleOverride){
+     update+=', paymentSchedule = :paymentSchedule';
+     values[':paymentSchedule']=paymentScheduleOverride;
+   }
    if(approval.priceChangeReason?.trim()){
      update+=', priceChangeReason = :priceReason';
      values[':priceReason']=approval.priceChangeReason.trim();
@@ -102,6 +125,10 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  if(action==='approve'){
    condition+=' AND quote = :observedQuote';
    values[':observedQuote']=booking.quote;
+   if(paymentScheduleOverride){
+     condition+=' AND paymentSchedule = :observedSchedule';
+     values[':observedSchedule']=booking.paymentSchedule;
+   }
  }
  names['#source']='source';
  values[':direct']='direct';
@@ -120,7 +147,8 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
     refundPolicyId:refundAssessment.policyId,refundPercent:refundAssessment.refundPercent,
     refundDuePence:refundAssessment.refundAmountPence,refundFeePence:0,
     refundReason:refundAssessment.reason}:{}),
-   ...(action==='approve'?{approvedAmountGBP:approval.amountPence/100}: {})};
+   ...(action==='approve'?{approvedAmountGBP:approval.amountPence/100,
+      ...(paymentScheduleOverride?{instalmentAcceptanceTest:true}: {})}: {})};
  const items=[{Update:{TableName:table,Key:decision.metadataKey,
    UpdateExpression:update,ConditionExpression:condition,
    ExpressionAttributeNames:names,ExpressionAttributeValues:values}}];
