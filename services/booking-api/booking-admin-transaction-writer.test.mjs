@@ -165,3 +165,62 @@ test('published-quote approval derives exact pence and rejects price overrides',
   else process.env.BOOKING_ENVIRONMENT=previous;
  }
 });
+
+test('owner-only £2 live acceptance retains the quoted cottage price but atomically splits payment £1 + £1',async()=>{
+ const previous=process.env.BOOKING_AIRBNB_REQUIRED;
+ process.env.BOOKING_AIRBNB_REQUIRED='false';
+ try{
+  const schedule={policyMode:'DEPOSIT_50',depositPercent:50,totalPence:73500,
+   dueNowPence:36750,balancePence:36750,dueDate:'2027-08-14',asOf:'2026-11-14'};
+  const booking={...base,guestEmail:'mike@un1ty.gg',quote:{totalGBP:735},
+   paymentSchedule:schedule,start:'2027-08-28',end:'2027-08-30'};
+  const {params,sent}=make(booking);
+  const nowEpoch=Math.floor(Date.parse('2026-11-14T12:00:00Z')/1000);
+  params.nowEpoch=nowEpoch;
+  params.readBooking=async()=>({...booking,holdExpiresAt:nowEpoch+3600});
+  await executeOwnerTransition({...params,action:'approve',approval:{amountPence:200,
+   priceChangeReason:'Owner-authorised £2 instalment acceptance test'}});
+  const tx=sent[0].TransactItems;
+  assert.equal(tx[0].Update.ExpressionAttributeValues[':amount'],2);
+  assert.deepEqual(tx[0].Update.ExpressionAttributeValues[':paymentSchedule'],{
+   ...schedule,totalPence:200,dueNowPence:100,balancePence:100});
+  assert.equal(tx[0].Update.ExpressionAttributeValues[':observedSchedule'],schedule);
+  assert.match(tx[0].Update.ConditionExpression,/paymentSchedule = :observedSchedule/);
+  assert.equal(tx.at(-1).Put.Item.instalmentAcceptanceTest,true);
+  assert.deepEqual(booking.paymentSchedule,schedule);
+ }finally{
+  if(previous===undefined)delete process.env.BOOKING_AIRBNB_REQUIRED;
+  else process.env.BOOKING_AIRBNB_REQUIRED=previous;
+ }
+});
+test('£2 instalment override fails closed for normal guests and non-test price changes',async()=>{
+ const previous=process.env.BOOKING_AIRBNB_REQUIRED;
+ process.env.BOOKING_AIRBNB_REQUIRED='false';
+ try{
+  const schedule={policyMode:'DEPOSIT_50',depositPercent:50,totalPence:73500,
+   dueNowPence:36750,balancePence:36750,dueDate:'2027-08-14'};
+  const approval={amountPence:200,
+   priceChangeReason:'Owner-authorised £2 instalment acceptance test'};
+  for(const booking of [
+   {...base,guestEmail:'guest@example.com',quote:{totalGBP:735},paymentSchedule:schedule},
+   {...base,guestEmail:'mike@un1ty.gg',quote:{totalGBP:735}},
+   {...base,guestEmail:'mike@un1ty.gg',quote:{totalGBP:735},paymentSchedule:{...schedule,depositPercent:100}},
+   {...base,guestEmail:'mike@un1ty.gg',quote:{totalGBP:735},paymentSchedule:schedule,start:'2026-11-21',end:'2026-11-23'}
+  ]){
+   const {params,sent}=make(booking);
+   const nowEpoch=Math.floor(Date.parse('2026-11-14T12:00:00Z')/1000);
+   params.nowEpoch=nowEpoch;
+   params.readBooking=async()=>({...booking,holdExpiresAt:nowEpoch+3600});
+   await assert.rejects(executeOwnerTransition({...params,action:'approve',approval}),/£2 instalment test requires/);
+   assert.equal(sent.length,0);
+  }
+  const booking={...base,guestEmail:'mike@un1ty.gg',quote:{totalGBP:735},paymentSchedule:schedule};
+  const {params,sent}=make(booking);
+  await assert.rejects(executeOwnerTransition({...params,action:'approve',approval:{
+   amountPence:300,priceChangeReason:'Discounted booking'}}),/different approved price requires/);
+  assert.equal(sent.length,0);
+ }finally{
+  if(previous===undefined)delete process.env.BOOKING_AIRBNB_REQUIRED;
+  else process.env.BOOKING_AIRBNB_REQUIRED=previous;
+ }
+});
