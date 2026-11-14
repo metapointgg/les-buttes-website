@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {calculatePaymentSchedule,validatePaymentPolicy,monthBefore,firstName} from './booking-payment-policy.mjs';
+import {calculatePaymentSchedule,validatePaymentPolicy,monthBefore,firstName,guernseyBookingToday} from './booking-payment-policy.mjs';
 const half={depositPercent:50,balanceDueDays:14,fullPaymentWithinDays:30,reminderMonths:[3,2,1]};
 test('global full payment remains current default',()=>{
  assert.deepEqual(calculatePaymentSchedule({totalPence:80500,arrival:'2027-05-08',asOf:'2026-11-14'}).dueNowPence,80500);
@@ -29,4 +29,9 @@ test('payment policy rejects unsupported values',()=>{
 test('first name uses name provided at booking and rejects injected line breaks',()=>{
  assert.equal(firstName('  Dave Example  '),'Dave');
  assert.throws(()=>firstName('Dave\nBCC: example@example.com'));
+});
+
+test('30-day payment policy respects Guernsey civil date during summer time',()=>{
+ assert.equal(guernseyBookingToday(new Date('2027-06-01T23:30:00Z')),'2027-06-02');
+ assert.equal(guernseyBookingToday(new Date('2027-01-01T23:30:00Z')),'2027-01-01');
 });
