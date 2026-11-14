@@ -4,6 +4,7 @@ const titles={
  owner_request:'A booking needs your review',
  approval_payment:'Your booking has been approved',
  balance_reminder:'A little note about your upcoming stay',
+ balance_paid:'Your holiday is paid in full',
  declined:'An update on your booking request',
  confirmed:'Your stay is confirmed',
  cancelled:'Your booking has been cancelled',
@@ -46,6 +47,7 @@ export function renderBrandedBookingHtml({type,body}={}){
  const status=type==='requested'?'REQUEST RECEIVED':
   type==='approval_payment'?'PAYMENT REQUIRED':
   type==='balance_reminder'?'PAYMENT REMINDER':
+  type==='balance_paid'?'PAYMENT RECEIVED':
   type==='confirmed'?'BOOKING CONFIRMED':
   type==='cancelled'?'BOOKING CANCELLED':
   type==='owner_request'?'OWNER ACTION REQUIRED':'BOOKING UPDATE';
