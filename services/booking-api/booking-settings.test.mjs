@@ -20,7 +20,7 @@ test('reads strongly consistently from BOOKING_TABLE',async()=>{
 test('publication requires approval and writes immutable history plus CAS current atomically',async()=>{
  let seen;
  const db={send:async command=>{seen=command.input;return {};}};
- const base={kind:'payments',value:{depositPercent:25,balanceDueDays:56},version:'2026-10-24T22:00:00.000Z#policy01',actor:'owner',approved:true};
+ const base={kind:'payments',value:{depositPercent:50,balanceDueDays:14,fullPaymentWithinDays:30,reminderMonths:[3,2,1]},version:'2026-10-24T22:00:00.000Z#policy01',actor:'owner',approved:true};
  await assert.rejects(publishSetting(db,'master',{...base,approved:false}),/approval/);
  await publishSetting(db,'master',base);
  assert.equal(seen.TransactItems.length,2);
