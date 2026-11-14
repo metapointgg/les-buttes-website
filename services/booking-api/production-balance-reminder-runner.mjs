@@ -25,7 +25,8 @@ export async function processProductionBalance({db,table,booking,env=process.env
    if(result.status==='PAID_IN_FULL'){
     const notification=await dispatch({db,table,bookingId:booking.id,type:'balance_paid',
      transport:transportFactory(),env});
-    if(!['ACCEPTED_BY_SES_NOT_DELIVERED','ALREADY_CLAIMED'].includes(notification?.status))
+    if(!(notification?.status==='ACCEPTED_BY_SES_NOT_DELIVERED'||
+      (notification?.status==='ALREADY_CLAIMED'&&notification.state==='ACCEPTED_BY_SES_NOT_DELIVERED')))
      throw Error('Final payment receipt requires review');
     return {status:'PAID_IN_FULL',notificationStatus:notification.status};
    }
@@ -36,7 +37,8 @@ export async function processProductionBalance({db,table,booking,env=process.env
   if(stage===null)return {status:'PENDING',reminderStage:null};
   const notification=await dispatch({db,table,bookingId:booking.id,type:'balance_reminder',
    reminderStage:stage,transport:transportFactory(),env});
-  if(!['ACCEPTED_BY_SES_NOT_DELIVERED','ALREADY_CLAIMED'].includes(notification?.status))
+  if(!(notification?.status==='ACCEPTED_BY_SES_NOT_DELIVERED'||
+      (notification?.status==='ALREADY_CLAIMED'&&notification.state==='ACCEPTED_BY_SES_NOT_DELIVERED')))
    throw Error('Balance reminder requires delivery review');
   return {status:'PENDING',reminderStage:stage,notificationStatus:notification.status};
  }finally{ssm.destroy?.();}
