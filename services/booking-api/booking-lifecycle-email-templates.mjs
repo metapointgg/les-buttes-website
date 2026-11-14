@@ -11,6 +11,7 @@ const TYPES=Object.freeze({
  owner_request:'owner_request_v1',
  approval_payment:'approval_payment_v1',
  balance_reminder:'balance_reminder_v1',
+ balance_paid:'balance_paid_v1',
  declined:'declined_v1',
  confirmed:'confirmed_v1',
  cancelled:'cancelled_v1',
@@ -131,6 +132,17 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason,remind
     'Balance due date: '+date(booking.balanceDueDate),
     'Pay securely using the SumUp hosted checkout:',url,
     'We will confirm receipt when your payment has been verified.'];
+   break;
+  }
+  case 'balance_paid':{
+   if(booking.status!=='CONFIRMED'||booking.paymentStatus!=='PAID_IN_FULL'||
+      booking.paymentVerified!==true||!Number.isSafeInteger(booking.totalPaidPence)||
+      booking.totalPaidPence<1)throw Error('Verified full payment required');
+   subject='Les Buttes — Your holiday is fully paid';
+   lines=['Dear '+firstName(booking.guestName)+',',
+    'Thank you. We have received your final payment and your holiday is now paid in full.',
+    stay,reference,'Total paid: '+money(booking.totalPaidPence),
+    'We look forward to welcoming you to Guernsey. We will be in touch with arrival information nearer your stay.'];
    break;
   }
   case 'declined':
