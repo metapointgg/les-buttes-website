@@ -758,15 +758,9 @@ Resources:
       AuthorizationType: JWT
       AuthorizerId: !Ref CognitoAuthorizerId
       Target: !Sub integrations/${ProductionAdminTransactionIntegration}
-  ProductionCheckoutDeactivateRoute:
-    Condition: CorrectAccountAndRegion
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref CanonicalManagementApiId
-      RouteKey: POST /admin/production/bookings/{bookingId}/checkout/deactivate
-      AuthorizationType: JWT
-      AuthorizerId: !Ref CognitoAuthorizerId
-      Target: !Sub integrations/${ProductionAdminTransactionIntegration}
+  # The authenticated checkout/deactivate route already exists in the canonical
+  # management API and targets ProductionAdminTransactionFunction. Do not create
+  # a duplicate route in this stack (API Gateway rejects duplicate RouteKey).
   ProductionPaymentReconcileRoute:
     Condition: CorrectAccountAndRegion
     Type: AWS::ApiGatewayV2::Route
