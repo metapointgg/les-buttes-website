@@ -13,6 +13,8 @@ import {dispatchRequestedProductionBookingEmails} from './booking-production-ema
 import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
 import {productionEmailGate} from './production-integration-gates.mjs';
 import {controlledTestRequest,controlledTestBookingClaim} from './controlled-production-test.mjs';
+import {readProductionPaymentSettings} from './production-payment-settings.mjs';
+import {calculatePaymentSchedule} from './booking-payment-policy.mjs';
 
 const db=DynamoDBDocumentClient.from(new DynamoDBClient({}),{marshallOptions:{removeUndefinedValues:true}});
 const ssm=new SSMClient({});
@@ -115,10 +117,23 @@ async function createRequest(input,event){
       termsEvidence=validateTermsAcceptance({acceptance:input.termsAcceptance,termsRecord:terms});
     }catch{return response(409,{error:'Current booking terms must be accepted'});}
   }
+  let paymentSchedule,policyVersion=null;
+  if(process.env.BOOKING_ENVIRONMENT==='production'){
+   try{
+    const settings=await readProductionPaymentSettings({db,table});
+    policyVersion=settings.version;
+    paymentSchedule=calculatePaymentSchedule({
+     totalPence:Math.round(Number(quote.totalGBP)*100),
+     arrival:input.start,policy:settings.value});
+   }catch(error){
+    console.error('PRODUCTION_PAYMENT_TERMS_UNAVAILABLE',error?.name??'Error');
+    return response(503,{error:'Current payment terms unavailable'});
+   }
+  }
   const id=randomUUID();
   const requestedAt=new Date().toISOString();
   const expiresAt=nowEpoch()+24*60*60;
-  const item={PK:'BOOKING#'+id,SK:'META',GSI1PK:'BOOKING_REQUESTS',GSI1SK:requestedAt+'#'+id,id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,guestTelephone,notes,quote,source:'direct',...termsEvidence,
+  const item={PK:'BOOKING#'+id,SK:'META',GSI1PK:'BOOKING_REQUESTS',GSI1SK:requestedAt+'#'+id,id,unit:input.unit,units:result.units,start:input.start,end:input.end,guests:input.guests,guestName,guestEmail,guestTelephone,notes,quote,source:'direct',...termsEvidence,...(paymentSchedule?{paymentSchedule,policyVersion}:{}),
     ...(process.env.BOOKING_ENVIRONMENT==='staging'?{synthetic:true}:{}),
     reservationStatus:'PENDING_REVIEW',status:'REQUESTED',requestedAt,holdExpiresAt:expiresAt,expiresAt:nowEpoch()+90*86400};
   // A production request must check the latest verified inbound Airbnb snapshot
