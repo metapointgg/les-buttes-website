@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Pay your holiday balance | Les Buttes" description="Make a secure payment towards your Les Buttes holiday." noindex sensitive>
+  <section class="payment-page" aria-labelledby="payment-heading">
+    <p class="eyebrow">LES BUTTES HOLIDAY COTTAGES</p>
+    <h1 id="payment-heading">Pay your holiday balance</h1>
+    <p>Your holiday is getting closer. Use the secure payment button below to pay your remaining balance through SumUp.</p>
+    <p>You will only be asked to pay the verified outstanding amount for your confirmed reservation. We do not store your card details.</p>
+    <button id="balance-pay-button" class="button" type="button" disabled>Continue to secure payment</button>
+    <p id="balance-pay-status" class="payment-status" role="status" aria-live="polite">Checking your payment link…</p>
+    <p class="payment-help">If your link has already been used or you need help, please contact <a href="mailto:bookings@lesbuttes.com">bookings@lesbuttes.com</a>.</p>
+    <noscript>Please enable JavaScript to open your secure payment session.</noscript>
+  </section>
+  <script>
+    const button=document.querySelector<HTMLButtonElement>('#balance-pay-button');
+    const status=document.querySelector<HTMLElement>('#balance-pay-status');
+    const values=new URLSearchParams(window.location.hash.slice(1));
+    const bookingId=values.get('booking')??'';
+    const access=values.get('access')??'';
+    // Remove bearer capability from browser history as soon as it is captured.
+    window.history.replaceState(null,'',window.location.pathname);
+    const valid=/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(bookingId)&&
+      /^[A-Za-z0-9_-]{43}$/.test(access)&&
+      [...values.keys()].sort().join(',')==='access,booking';
+    if(!valid){
+      if(status)status.textContent='This payment link is invalid. Please use the link in your latest Les Buttes email.';
+    }else if(button){
+      button.disabled=false;
+      if(status)status.textContent='Ready to open your secure payment page.';
+      button.addEventListener('click',async()=>{
+        if(button.disabled)return;
+        button.disabled=true;
+        if(status)status.textContent='Creating a fresh secure payment session…';
+        try{
+          const response=await fetch('https://c7x0ongl4d.execute-api.eu-west-2.amazonaws.com/balance/checkout',{
+            method:'POST',mode:'cors',credentials:'omit',cache:'no-store',
+            headers:{'Content-Type':'application/json',Accept:'application/json'},
+            body:JSON.stringify({bookingId,access})
+          });
+          if(!response.ok)throw Error('Payment session unavailable');
+          const data=await response.json() as {paymentUrl?:string};
+          const url=new URL(data.paymentUrl??'');
+          if(url.protocol!=='https:'||url.hostname!=='checkout.sumup.com'||
+             !/^\/pay\/c-[0-9a-f-]{36}$/i.test(url.pathname)||
+             url.username||url.password||url.search||url.hash)
+            throw Error('Unverified payment destination');
+          window.location.assign(url.href);
+        }catch{
+          if(status)status.textContent='We could not open your payment session. Please try again, or email us for assistance.';
+          button.disabled=false;
+        }
+      });
+    }
+  </script>
+  <style>
+    .payment-page{max-width:690px;margin:4rem auto 5rem;padding:2.5rem clamp(1.2rem,4vw,3.5rem);background:#fff;border:1px solid #e6e3d8;border-top:4px solid #b47b3a;border-radius:4px}
+    .payment-page .eyebrow{color:#8d6635;font-size:.75rem;letter-spacing:.13em}
+    .payment-page h1{font-family:Georgia,Times New Roman,serif;font-size:clamp(2rem,5vw,3.25rem);color:#194c3d;line-height:1.12}
+    .payment-page p{max-width:57ch;line-height:1.7}
+    .payment-page button{margin-top:1rem}
+    .payment-page button:disabled{opacity:.58;cursor:not-allowed}
+    .payment-status{min-height:2.4rem;color:#33483f}
+    .payment-help{font-size:.91rem;margin-top:2rem;color:#52685b}
+  </style>
+</BaseLayout>
