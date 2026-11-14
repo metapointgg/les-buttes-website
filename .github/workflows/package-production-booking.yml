@@ -1,0 +1,66 @@
+name: Validate and package production booking backend
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/booking-api/**'
+      - '.github/workflows/package-production-booking.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: booking-backend-package
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: services/booking-api/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci --prefix services/booking-api
+      - name: Run booking backend acceptance and unit tests
+        run: npm test --prefix services/booking-api
+      - name: Build verified production Lambda package
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+          root = Path('services/booking-api')
+          out = Path('/tmp/les-buttes-production-integrations.zip')
+          required = ('index.mjs', 'production-request-handler.mjs',
+              'production-quote-handler.mjs', 'production-admin-transaction-handler.mjs',
+              'booking-admin-transaction-writer.mjs', 'production-payment-schedule.mjs',
+              'production-guest-balance-handler.mjs', 'production-payment-settings.mjs',
+              'production-balance-payments.mjs', 'node_modules/@aws-sdk/client-dynamodb/package.json')
+          with ZipFile(out, 'w', ZIP_DEFLATED, compresslevel=6) as z:
+              for file in sorted(root.rglob('*')):
+                  if not file.is_file(): continue
+                  rel = file.relative_to(root).as_posix()
+                  if any(part.startswith('.') for part in file.relative_to(root).parts): continue
+                  if file.name.endswith('.test.mjs') or file.name.endswith('.test.js'): continue
+                  z.write(file, rel)
+          with ZipFile(out) as z:
+              assert z.testzip() is None
+              for path in required: assert path in z.namelist(), f'Missing {path}'
+          print('Validated ZIP bytes:', out.stat().st_size)
+          PY
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::145608514666:role/les-buttes-github-deploy
+          aws-region: eu-west-2
+      - name: Publish immutable versioned package; do not deploy Lambda
+        run: |
+          set -euo pipefail
+          BUCKET=les-buttes-payment-staging-145608514666-eu-west-2
+          KEY="production-transactional/releases/${GITHUB_SHA}/les-buttes-production-integrations.zip"
+          aws s3api put-object --bucket "$BUCKET" --key "$KEY" \
+            --body /tmp/les-buttes-production-integrations.zip \
+            --metadata "source-commit=${GITHUB_SHA},release-type=booking-backend"
+          aws s3api head-object --bucket "$BUCKET" --key "$KEY" \
+            --query '{VersionId:VersionId,ContentLength:ContentLength,Metadata:Metadata}' --output json
