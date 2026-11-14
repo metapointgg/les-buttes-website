@@ -87,7 +87,7 @@ export function stagingAuthDiagnostic(event,{issuer=process.env.MANAGEMENT_COGNI
  };
 }
 const reply=(statusCode,data)=>({statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(data)});
-export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,writeEnabled=()=>false,
+export function createAdminHandler({reader,readCalendar,readBalanceReport,writeAction,writeConfig,writeEnabled=()=>false,
  approvalEnabled=()=>false,checkoutEnabled=()=>false,registerCheckout,readCheckout,
  deactivateCheckout, deactivationEnabled=()=>false,
  reconciliationEnabled=()=>false,reconcilePayment,
@@ -234,6 +234,12 @@ export function createAdminHandler({reader,readCalendar,writeAction,writeConfig,
            return reply(409,{error:'Booking is no longer eligible for this action'});
          throw e;
        }
+     }
+     if(path==='/admin/bookings/report/balances'){
+      if(id.role!=='owner')return reply(403,{error:'Forbidden'});
+      if(!deploymentAllowed()||typeof readBalanceReport!=='function')
+       return reply(503,{error:'Balance report unavailable'});
+      return reply(200,await readBalanceReport({identity:id}));
      }
      const calendarMatch=path.match(/^\/admin\/bookings\/calendar-preview\/(geranium|honeysuckle)$/);
      if(calendarMatch){
