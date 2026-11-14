@@ -27,10 +27,18 @@ export function renderBrandedBookingHtml({type,body}={}){
  const candidate=lines.find(x=>x.startsWith('https://'));
  let paymentUrl;
  if(type==='approval_payment'||type==='balance_reminder'){
-  if(!candidate)throw Error('Verified SumUp link required');
+  if(!candidate)throw Error('Verified payment link required');
   const url=new URL(candidate);
-  if(url.protocol!=='https:'||url.hostname!=='checkout.sumup.com'||url.username||url.password||url.hash||url.search||
-     !/^\/pay\/c-[0-9a-f-]{36}$/i.test(url.pathname))throw Error('Invalid SumUp link');
+  if(type==='balance_reminder'){
+   if(url.protocol!=='https:'||url.hostname!=='lesbuttes.com'||
+      url.pathname!=='/pay/'||url.username||url.password||url.hash||
+      [...url.searchParams.keys()].sort().join(',')!=='access,booking'||
+      !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(url.searchParams.get('booking')??'')||
+      !/^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get('access')??''))
+    throw Error('Invalid secure Les Buttes payment link');
+  }else if(url.protocol!=='https:'||url.hostname!=='checkout.sumup.com'||
+    url.username||url.password||url.hash||url.search||
+    !/^\/pay\/c-[0-9a-f-]{36}$/i.test(url.pathname))throw Error('Invalid SumUp link');
   paymentUrl=url.href;
  }
  const footers=new Set(['Les Buttes Holiday Cottages',
@@ -58,7 +66,7 @@ export function renderBrandedBookingHtml({type,body}={}){
   '<p style="margin:0 0 12px;color:#194c3d;font-size:11px;letter-spacing:1.1px;font-weight:700;">GUEST DETAILS</p>'+
   ownerFields.map(x=>'<p style="margin:0 0 7px;color:#33483f;font-size:14px;line-height:1.5;">'+escapeHtml(x)+'</p>').join('')+
   '</td></tr></table>':'';
- const button=paymentUrl?'<table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 24px;"><tr><td bgcolor="#194c3d" style="border-radius:4px;"><a href="'+escapeHtml(paymentUrl)+'" style="display:inline-block;padding:15px 26px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">Pay securely with SumUp</a></td></tr></table><p style="margin:0 0 18px;color:#52685b;font-size:12px;line-height:1.6;">If the button does not work, copy this secure payment link into your browser:<br><a style="color:#194c3d;word-break:break-all;" href="'+escapeHtml(paymentUrl)+'">'+escapeHtml(paymentUrl)+'</a></p>':'';
+ const button=paymentUrl?'<table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0 24px;"><tr><td bgcolor="#194c3d" style="border-radius:4px;"><a href="'+escapeHtml(paymentUrl)+'" style="display:inline-block;padding:15px 26px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">'+(type==='balance_reminder'?'Pay your balance':'Pay securely with SumUp')+'</a></td></tr></table><p style="margin:0 0 18px;color:#52685b;font-size:12px;line-height:1.6;">If the button does not work, copy this secure payment link into your browser:<br><a style="color:#194c3d;word-break:break-all;" href="'+escapeHtml(paymentUrl)+'">'+escapeHtml(paymentUrl)+'</a></p>':'';
  const amountHtml=amount?'<p style="margin:15px 0 0;color:#17332a;font-size:19px;font-weight:700;">'+escapeHtml(amount)+'</p>':'';
  return '<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escapeHtml(titles[type])+'</title></head>'+
  '<body style="margin:0;padding:0;background:#ffffff;color:#17332a;font-family:Arial,Helvetica,sans-serif;">'+
