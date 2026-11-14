@@ -4,6 +4,7 @@
 import {GetCommand,QueryCommand,TransactWriteCommand} from '@aws-sdk/lib-dynamodb';
 import {validateCancellationPolicy} from './cancellation-policy.mjs';
 import {validateArrivalDeparturePolicy} from './arrival-departure-policy.mjs';
+import {validatePaymentPolicy} from './booking-payment-policy.mjs';
 const KIND=['pricing','stay-rules','cancellation','payments','business','arrival-departure','terms'];
 const UNIT=['geranium','honeysuckle','all'];
 const ISO=/^\d{4}-\d{2}-\d{2}$/;
@@ -65,7 +66,8 @@ export function validateConfig({kind,unit='all',value}){
       value.approvedAt!=='2026-11-10')throw Error('Invalid approved guest terms');
   }
   if(kind==='payments'){
-    if(!Number.isInteger(value.depositPercent)||value.depositPercent<0||value.depositPercent>100||!Number.isInteger(value.balanceDueDays)||value.balanceDueDays<0)throw Error('Invalid payment policy');
+    if(unit!=='all')throw Error('Payment policy must be global');
+    validatePaymentPolicy(value);
   }
   return true;
 }
