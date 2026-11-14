@@ -87,7 +87,10 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason,remind
    // An untrusted booking event cannot manufacture approval or payment amount.
    if(booking.status!=='APPROVED_AWAITING_PAYMENT'||
     !checkout||checkout.status!=='PENDING'||checkout.currency!=='GBP'||
-    checkout.bookingId!==id||checkout.amountPence!==booking.approvedAmountPence)
+    checkout.bookingId!==id||
+    (booking.balancePence>0?
+      checkout.amountPence!==booking.approvedAmountPence-booking.balancePence:
+      checkout.amountPence!==booking.approvedAmountPence))
     throw Error('Authoritative approved checkout required');
    const url=safeUrl(checkout.hostedCheckoutUrl);
    subject='Les Buttes — Booking approved: payment required';
