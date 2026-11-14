@@ -89,7 +89,7 @@ if(widget){
    en:{dueNow:'Pay after owner approval',balance:'Remaining balance due',full:'Full payment due after approval'},
    fr:{dueNow:'À payer après validation',balance:'Solde à régler le',full:'Paiement intégral après validation'},
    nl:{dueNow:'Te betalen na goedkeuring',balance:'Restbedrag te betalen op',full:'Volledige betaling na goedkeuring'}
-  } as const)[lang==='fr'?'fr':lang==='nl'?'nl':'en'];
+  } as const)[lang==='fr-FR'?'fr':lang==='nl-NL'?'nl':'en'];
   function showPaymentSplit(){
    if(!authoritativeQuote?.payment)return;
    const p=authoritativeQuote.payment;
