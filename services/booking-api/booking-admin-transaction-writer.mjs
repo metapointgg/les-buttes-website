@@ -90,8 +90,9 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
    values[':nextExpiry']=nowEpoch+48*3600;
    values[':amount']=approval.amountPence/100;
    if(paymentScheduleOverride){
-     update+=', paymentSchedule = :paymentSchedule';
+     update+=', paymentSchedule = :paymentSchedule, acceleratedReminderTest = :acceleratedTest';
      values[':paymentSchedule']=paymentScheduleOverride;
+     values[':acceleratedTest']=true;
    }
    if(approval.priceChangeReason?.trim()){
      update+=', priceChangeReason = :priceReason';
