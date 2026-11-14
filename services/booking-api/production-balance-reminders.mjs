@@ -23,3 +23,38 @@ export function currentBalanceReminderStage({booking,today=guernseyBookingToday(
  for(const candidate of candidates)if(candidate.date<=today)current=candidate.stage;
  return current;
 }
+
+/**
+ * Short owner-only acceptance schedule. These do not replace the contractual
+ * 3/2/1-month and 14-day payment dates; no real guest receives accelerated mail.
+ * The existing two-minute EventBridge rule runs this sequence. Missing runs are
+ * recovered one stage per invocation by checking durable SES outbox claims.
+ */
+const ACCELERATED_TEST_STAGES=Object.freeze([
+ {stage:3,minutes:2},{stage:2,minutes:4},
+ {stage:1,minutes:6},{stage:0,minutes:8}
+]);
+export function isAcceleratedReminderTest(booking){
+ return booking?.acceleratedReminderTest===true &&
+   booking?.source==='direct' && booking?.synthetic!==true &&
+   String(booking?.guestEmail??'').trim().toLowerCase()==='mike@un1ty.gg' &&
+   booking?.approvedAmountGBP===2 &&
+   booking?.paymentSchedule?.policyMode==='DEPOSIT_50' &&
+   booking?.paymentSchedule?.depositPercent===50 &&
+   booking?.paymentSchedule?.totalPence===200 &&
+   booking?.paymentSchedule?.dueNowPence===100 &&
+   booking?.paymentSchedule?.balancePence===100;
+}
+export function acceleratedTestStagesDue({booking,now=new Date()}={}){
+ if(!isAcceleratedReminderTest(booking) ||
+    booking.status!=='CONFIRMED' ||
+    booking.reservationStatus!=='CONFIRMED' ||
+    booking.paymentStatus!=='PARTIALLY_PAID' ||
+    booking.balanceDuePence!==100 ||
+    typeof booking.confirmedAt!=='string')return [];
+ const confirmedAt=Date.parse(booking.confirmedAt);
+ const instant=now instanceof Date?now.getTime():NaN;
+ if(!Number.isFinite(confirmedAt)||!Number.isFinite(instant)||instant<confirmedAt)return [];
+ return ACCELERATED_TEST_STAGES
+   .filter(x=>instant-confirmedAt>=x.minutes*60000).map(x=>x.stage);
+}
