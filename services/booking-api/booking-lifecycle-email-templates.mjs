@@ -1,4 +1,5 @@
 import {renderBrandedBookingHtml} from './booking-branded-email-html.mjs';
+import {firstName} from './booking-payment-policy.mjs';
 // LB-09: pure lifecycle email templates; never sends, charges, confirms payment or edits bookings.
 // Only verified/authoritative inputs supplied by the calling orchestration may be rendered.
 // The owner must approve customer-facing wording before any staging/production enablement.
@@ -9,6 +10,7 @@ const TYPES=Object.freeze({
  requested:'requested_v1',
  owner_request:'owner_request_v1',
  approval_payment:'approval_payment_v1',
+ balance_reminder:'balance_reminder_v1',
  declined:'declined_v1',
  confirmed:'confirmed_v1',
  cancelled:'cancelled_v1',
@@ -41,7 +43,7 @@ const safeUrl=value=>{
   parsed.username||parsed.password||parsed.hash)throw Error('Untrusted checkout URL');
  return parsed.toString();
 };
-export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
+export function renderBookingLifecycleEmail({type,booking,checkout,reason,reminderStage}={}){
  if(!Object.hasOwn(TYPES,type))throw Error('Unsupported lifecycle email type');
  if(!booking||!ID.test(booking.bookingId??''))throw Error('Invalid booking reference');
  const id=booking.bookingId;
@@ -88,8 +90,11 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
     throw Error('Authoritative approved checkout required');
    const url=safeUrl(checkout.hostedCheckoutUrl);
    subject='Les Buttes — Booking approved: payment required';
+   const balance=booking.balancePence??0;
    lines=['Your booking request has been approved. The next step is to pay securely to confirm your reservation.',
     stay,reference,'Amount due: '+money(checkout.amountPence),
+    ...(balance>0?['Total holiday price: '+money(booking.approvedAmountPence),
+      'Remaining balance: '+money(balance)+' due '+date(booking.balanceDueDate)]:[]),
     'Pay securely using the SumUp hosted checkout:',url,
     'Your booking will be confirmed once your payment has been verified. We will email you to confirm this.'];
    break;
@@ -99,8 +104,35 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
     throw Error('Verified booking confirmation required');
    subject='Les Buttes – booking confirmed';
    lines=['Thank you for booking directly with Les Buttes. Your payment has been verified and your cottage is reserved for your stay.',stay,reference,
+    ...(booking.balancePence>0?['Deposit received: '+money(booking.paidAmountPence),
+       'Outstanding balance: '+money(booking.balancePence)+' due '+date(booking.balanceDueDate),
+       'We will email you a secure link to pay the balance before it is due. You may also pay early.']:[]),
     'Check-in is from 4.00 pm and check-out is by 10.00 am. We will send you arrival information before your stay. We look forward to welcoming you to Guernsey.'];
    break;
+  case 'balance_reminder':{
+   if(booking.status!=='CONFIRMED'||!checkout||checkout.status!=='PENDING'||
+      checkout.currency!=='GBP'||checkout.bookingId!==id||
+      !Number.isSafeInteger(booking.balancePence)||booking.balancePence<1||
+      checkout.amountPence!==booking.balancePence||
+      ![3,2,1,0].includes(reminderStage))throw Error('Verified outstanding balance required');
+   const url=safeUrl(checkout.hostedCheckoutUrl);
+   const name=firstName(booking.guestName);
+   const timing={3:'three months',2:'two months',1:'one month'};
+   subject=reminderStage===0?'Les Buttes — Your holiday balance is now due':
+     'Les Buttes — '+timing[reminderStage]+' until your holiday';
+   lines=['Dear '+name+',',
+    ...(reminderStage===0?
+      ['Your holiday is just two weeks away, and we are looking forward to welcoming you to Les Buttes.',
+       'The remaining balance for your stay is now due. Please use the secure payment link below.']:
+      ['Your holiday is just '+timing[reminderStage]+' away and we are looking forward to welcoming you to Guernsey.',
+       'If you would like to pay the remaining balance now, please use the secure SumUp link below.',
+       'Otherwise, no action is needed just yet. We will send a further reminder as your holiday approaches.']),
+    stay,reference,'Amount due: '+money(booking.balancePence),
+    'Balance due date: '+date(booking.balanceDueDate),
+    'Pay securely using the SumUp hosted checkout:',url,
+    'We will confirm receipt when your payment has been verified.'];
+   break;
+  }
   case 'declined':
    if(booking.status!=='DECLINED')throw Error('Declined booking state required');
    subject='Les Buttes – booking request update';
@@ -140,6 +172,6 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason}={}){
  if(reason!==undefined)clean(reason,{max:300}); // Never echo unreviewed operational notes.
  const body=[...lines,'',footer].join('\n');
  if(body.length>15000||subject.length>160)throw Error('Rendered email too long');
- return {type,templateId:TYPES[type],bookingId:id,subject,body,
+ return {type,templateId:type==='balance_reminder'?`balance_reminder_${reminderStage}_v1`:TYPES[type],bookingId:id,subject,body,
   html:renderBrandedBookingHtml({type,body})};
 }
