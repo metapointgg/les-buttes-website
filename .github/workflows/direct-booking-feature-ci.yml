@@ -163,11 +163,10 @@ jobs:
           done
           sha256sum .release/les-buttes-production-integrations.zip
           key="payment-review/production-instalments/${GITHUB_SHA}/les-buttes-production-integrations.zip"
-          aws s3 cp .release/les-buttes-production-integrations.zip \
-            "s3://les-buttes-payment-staging-145608514666-eu-west-2/$key" \
-            --metadata "source-commit=${GITHUB_SHA}" --only-show-errors
-          version="$(aws s3api head-object \
-            --bucket les-buttes-payment-staging-145608514666-eu-west-2 --key "$key" \
+          version="$(aws s3api put-object \
+            --bucket les-buttes-payment-staging-145608514666-eu-west-2 \
+            --key "$key" --body .release/les-buttes-production-integrations.zip \
+            --metadata "source-commit=${GITHUB_SHA}" \
             --query VersionId --output text)"
           test -n "$version" && test "$version" != "None" && test "$version" != "null"
           echo "Reviewed backend artefact: $key (version $version)" >> "$GITHUB_STEP_SUMMARY"
