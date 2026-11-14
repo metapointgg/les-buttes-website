@@ -141,7 +141,7 @@ test('production unpaid booking cancellation verifies SumUp expiry before releas
  assert.match(admin,/cancelUnpaidProductionBooking/);
  assert.match(gateway,/checkout\\\/deactivate/);
  assert.match(source,/RouteKey: POST \/admin\/production\/bookings\/\{bookingId\}\/checkout\/deactivate/);
- assert.match(source,/ProductionCheckoutDeactivateRoute:[\s\S]{0,320}AuthorizationType: JWT[\s\S]{0,120}AuthorizerId: !Ref CognitoAuthorizerId/);
+ // This route already exists on the canonical management API and targets the production transaction Lambda.\n assert.doesNotMatch(source,/^  ProductionCheckoutDeactivateRoute:/m);
  assert.match(core,/await sumup\.deactivateCheckout\(checkout\.checkoutId\)/);
  assert.match(core,/const after=await sumup\.retrieveCheckout\(checkout\.checkoutId\)/);
  assert.ok(core.indexOf('const after=await sumup.retrieveCheckout')<core.indexOf('const actions=['));
