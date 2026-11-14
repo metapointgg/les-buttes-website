@@ -7,7 +7,7 @@ import {prepareOwnerTransition} from './booking-admin-transaction-policy.mjs';
 import {assessBookingCancellation} from './booking-cancellation-assessment.mjs';
 
 export async function executeOwnerTransition({db,table,readBooking,identity,bookingId,action,reason,
-  nowEpoch=Math.floor(Date.now()/1000),approval,readCancellationPolicy}={}){
+  nowEpoch=Math.floor(Date.now()/1000),approval,readCancellationPolicy,balanceCancellation}={}){
  if(!db?.send||typeof readBooking!=='function'||typeof table!=='string'||!table)
    throw Error('Writer is not configured');
  if(!identity||identity.role!=='owner')throw Error('Forbidden');
@@ -27,6 +27,9 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  }
  if(action==='cancel'&&booking.reservationStatus!=='CONFIRMED')
    throw Error('Confirmed direct reservation status required');
+ if(action==='cancel'&&booking.paymentStatus==='PARTIALLY_PAID'&&
+    booking.balanceDuePence>0&&!balanceCancellation?.verified)
+  throw Error('Balance checkout must be deactivated and verified before cancellation');
  let refundAssessment=null;
  if(action==='cancel'&&booking.cancellationPolicyVersion){
    if(typeof readCancellationPolicy!=='function')throw Error('Cancellation policy reader required');
@@ -121,6 +124,22 @@ export async function executeOwnerTransition({db,table,readBooking,identity,book
  const items=[{Update:{TableName:table,Key:decision.metadataKey,
    UpdateExpression:update,ConditionExpression:condition,
    ExpressionAttributeNames:names,ExpressionAttributeValues:values}}];
+ if(action==='cancel'&&balanceCancellation?.state==='NO_LINK'){
+  // A concurrent SumUp checkout claim makes the entire cancellation fail.
+  items.push({ConditionCheck:{TableName:table,
+   Key:{PK:'BOOKING#'+bookingId,SK:'PAYMENT#BALANCE_CREATION_CLAIM'},
+   ConditionExpression:'attribute_not_exists(PK)'}});
+ }
+ if(action==='cancel'&&balanceCancellation?.state==='EXPIRED'){
+  items.push({Update:{TableName:table,
+   Key:{PK:'BOOKING#'+bookingId,SK:'PAYMENT#BALANCE_CHECKOUT'},
+   UpdateExpression:'SET #status=:expired,deactivatedAt=:at',
+   ConditionExpression:'#status=:pending AND checkoutId=:checkout AND amountPence=:amount',
+   ExpressionAttributeNames:{'#status':'status'},
+   ExpressionAttributeValues:{':expired':'EXPIRED',':pending':'PENDING',
+    ':checkout':balanceCancellation.checkoutId,':amount':balanceCancellation.amountPence,
+    ':at':new Date(nowEpoch*1000).toISOString()}}});
+ }
  for(const key of decision.slots){
    if(action==='approve'){
      items.push({Update:{TableName:table,Key:key,
