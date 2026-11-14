@@ -149,3 +149,42 @@ test('actual SumUp 13 November response reconciles a 97p refund despite SUCCESSF
   booking,transaction:{...actual,transaction_events:[{event_type:'REFUND',status:'PENDING',amount:.97}]},
   merchantCode:'M9BE4KMN'}),/not complete/);
 });
+
+test('full £805 deposit+balance cancellation checks both SumUp refund streams and never confuses fees',async()=>{
+ const second='22222222-2222-4222-8222-222222222222';
+ const multi={...booking,paymentTransactionId:tx,balanceTransactionId:second,
+  paidAmountPence:80500,refundDuePence:80500,
+  paymentSchedule:{totalPence:80500,dueNowPence:40250,balancePence:40250}};
+ const providerFor=(id,amount,refund)=>({
+  id,merchant_code:'M9BE4KMN',currency:'GBP',amount,status:'SUCCESSFUL',simple_status:'SUCCESSFUL',
+  transaction_events:[{event_type:'REFUND',status:'REFUNDED',amount:refund}],
+  events:[{type:'REFUND',status:'REFUNDED',amount:refund}]});
+ const first=providerFor(tx,402.5,402.5),last=providerFor(second,402.5,402.47);
+ const verify=async txid=>txid===tx?first:last;
+ const evidence=await verifyMultiInstalmentRefundEvidence({
+  booking:multi,merchantCode:'M9BE4KMN',fetchTransaction:verify});
+ assert.equal(evidence.amountPence,80497);
+ assert.equal(evidence.outstandingPence,3);
+ assert.deepEqual(evidence.refundAmountsPence,[40250,40247]);
+ const db={send:async command=>{
+  if(command.input.Key?.SK==='META')return {Item:multi};
+  assert.equal(command.input.TransactItems.filter(x=>x.ConditionCheck).length,2);
+  assert.equal(command.input.TransactItems[1].ConditionCheck.ExpressionAttributeValues[':stage'],'BALANCE');
+  return {};
+ }};
+ const saved=await reconcileVerifiedProductionRefund({
+  db,table,bookingId:id,identity:owner,merchantCode:'M9BE4KMN',fetchTransaction:verify});
+ assert.equal(saved.status,'PARTIALLY_REFUNDED');
+ assert.equal(saved.outstandingPence,3);
+});
+test('multi-payment refund does not reconcile if either provider transaction is invalid',async()=>{
+ const second='22222222-2222-4222-8222-222222222222';
+ const multi={...booking,paymentTransactionId:tx,balanceTransactionId:second,
+  paidAmountPence:80500,refundDuePence:80500,
+  paymentSchedule:{totalPence:80500,dueNowPence:40250,balancePence:40250}};
+ await assert.rejects(verifyMultiInstalmentRefundEvidence({booking:multi,
+  merchantCode:'M9BE4KMN',fetchTransaction:async identity=>({
+   id:identity,merchant_code:identity===tx?'M9BE4KMN':'OTHER',currency:'GBP',
+   amount:402.5,status:'SUCCESSFUL',simple_status:'SUCCESSFUL',
+   transaction_events:[{event_type:'REFUND',status:'REFUNDED',amount:402.5}]})}),/mismatch/);
+});
