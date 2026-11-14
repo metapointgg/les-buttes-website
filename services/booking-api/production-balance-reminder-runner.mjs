@@ -4,7 +4,7 @@ import {SSMClient} from '@aws-sdk/client-ssm';
 import {createVerifiedProductionSumUpClient} from './sumup-production-runtime.mjs';
 import {reconcileBalancePayment} from './production-balance-payments.mjs';
 import {GetCommand} from '@aws-sdk/lib-dynamodb';
-import {currentBalanceReminderStage} from './production-balance-reminders.mjs';
+import {currentBalanceReminderStage,isAcceleratedReminderTest,acceleratedTestStagesDue} from './production-balance-reminders.mjs';
 import {guernseyBookingToday} from './booking-payment-policy.mjs';
 import {dispatchProductionBookingLifecycleEmail} from './booking-production-email-dispatch.mjs';
 import {createProductionSesTransport} from './booking-production-ses-transport.mjs';
@@ -12,7 +12,7 @@ import {createProductionSesTransport} from './booking-production-ses-transport.m
 export async function processProductionBalance({db,table,booking,env=process.env,
  clientFactory=createVerifiedProductionSumUpClient,ssmFactory=()=>new SSMClient({region:'eu-west-2'}),
  dispatch=dispatchProductionBookingLifecycleEmail,
- transportFactory=createProductionSesTransport,today=guernseyBookingToday()}={}){
+ transportFactory=createProductionSesTransport,today=guernseyBookingToday(),now=new Date()}={}){
  if(booking?.status!=='CONFIRMED'||booking?.paymentStatus!=='PARTIALLY_PAID'||
     booking.balanceDuePence<1||booking.synthetic===true) return {status:'SKIPPED'};
  const identity={role:'system',subject:'system:production-balance-reconciliation'};
@@ -45,7 +45,22 @@ export async function processProductionBalance({db,table,booking,env=process.env
    }
   }finally{ssm.destroy?.();}
  }
-  const stage=currentBalanceReminderStage({booking,today});
+  let stage;
+  if(isAcceleratedReminderTest(booking)){
+    // Select the first due, unclaimed milestone. The outbox key is permanently
+    // claimed by SES dispatch, so missed scheduler runs cannot skip stages.
+    stage=null;
+    for(const candidate of acceleratedTestStagesDue({booking,now})){
+      const {Item:outbox}=await db.send(new GetCommand({TableName:table,
+       Key:{PK:'BOOKING#'+booking.id,SK:'EMAIL#balance_reminder#balance_reminder_'+candidate+'_v1'},
+       ConsistentRead:true}));
+      if(!outbox){stage=candidate;break;}
+      if(!['DELIVERED','ACCEPTED_BY_SES_NOT_DELIVERED'].includes(outbox.state))
+        throw Error('Accelerated test reminder outbox requires review');
+    }
+  }else{
+    stage=currentBalanceReminderStage({booking,today});
+  }
   if(stage===null)return {status:'PENDING',reminderStage:null};
   const notification=await dispatch({db,table,bookingId:booking.id,type:'balance_reminder',
    reminderStage:stage,transport:transportFactory(),env});
