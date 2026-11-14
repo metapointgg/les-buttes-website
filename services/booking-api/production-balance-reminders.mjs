@@ -1,8 +1,8 @@
 // Date-only reminder selection. Only the latest milestone can be due on a
 // scheduler run; a permanent per-stage SES outbox claim prevents duplicate mail.
-import {monthBefore} from './booking-payment-policy.mjs';
+import {monthBefore,guernseyBookingToday} from './booking-payment-policy.mjs';
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
-export function currentBalanceReminderStage({booking,today=new Date().toISOString().slice(0,10)}={}){
+export function currentBalanceReminderStage({booking,today=guernseyBookingToday()}={}){
  if(!DATE.test(today??'')||!booking||booking.status!=='CONFIRMED'||
    booking.reservationStatus!=='CONFIRMED'||booking.paymentStatus!=='PARTIALLY_PAID'||
    !Number.isSafeInteger(booking.balanceDuePence)||booking.balanceDuePence<1||
