@@ -78,9 +78,22 @@ export function renderBookingLifecycleEmail({type,booking,checkout,reason,remind
       'Owner management: https://lesbuttes.ozanne-family.com',
       'No payment has been taken. The guest has been told that the request is provisional.'];
    }else{
+    const schedule=booking.paymentSchedule;
+    const validDeposit=schedule?.policyMode==='DEPOSIT_50'&&
+      schedule?.depositPercent===50&&
+      Number.isSafeInteger(schedule.totalPence)&&schedule.totalPence>1&&
+      Number.isSafeInteger(schedule.dueNowPence)&&schedule.dueNowPence>0&&
+      Number.isSafeInteger(schedule.balancePence)&&schedule.balancePence>0&&
+      schedule.dueNowPence+schedule.balancePence===schedule.totalPence;
+    const dueDate=validDeposit?date(schedule.dueDate):null;
     lines=['Thank you for choosing Les Buttes. We have received your booking request.',
       stay,reference,
-      'What happens next: we will check your request and email you once the owner has reviewed it.',
+      'What happens next: we will review your request and, once approved, you will receive a secure payment link.',
+      ...(validDeposit?
+       ['The first payment will be 50% of the total price ('+money(schedule.dueNowPence)+').',
+        'On '+new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(dueDate+'T00:00:00Z'))+
+         ', we will send you another payment link for the remaining '+money(schedule.balancePence)+'.']:
+       ['The payment link will be for the full booking amount.']),
       'Your booking is not yet confirmed. No payment has been taken.'];
    }
    break;
