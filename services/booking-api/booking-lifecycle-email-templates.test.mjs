@@ -167,3 +167,23 @@ test('personalised monthly balance reminders use durable private payment page, n
     balancePence:40250,balanceDueDate:'2027-08-14',balanceAccessToken:invalid}}));
  }
 });
+
+test('booking request explains the 50% deposit and exact date of the second payment link',()=>{
+ const booking={...base,status:'REQUESTED',paymentSchedule:{
+  totalPence:80500,dueNowPence:40250,balancePence:40250,
+  policyMode:'DEPOSIT_50',depositPercent:50,dueDate:'2027-08-14'}};
+ const message=renderBookingLifecycleEmail({type:'requested',booking});
+ assert.match(message.body,/once approved, you will receive a secure payment link/);
+ assert.match(message.body,/50% of the total price \(£402\.50\)/);
+ assert.match(message.body,/On 14 August 2027, we will send you another payment link for the remaining £402\.50/);
+ assert.match(message.body,/No payment has been taken/);
+ assert.match(message.html,/14 August 2027/);
+});
+test('booking requests requiring full payment never promise a 50% deposit',()=>{
+ const booking={...base,status:'REQUESTED',paymentSchedule:{
+  totalPence:80500,dueNowPence:80500,balancePence:0,
+  policyMode:'DEPOSIT_50',depositPercent:100,dueDate:null}};
+ const message=renderBookingLifecycleEmail({type:'requested',booking});
+ assert.match(message.body,/payment link will be for the full booking amount/);
+ assert.doesNotMatch(message.body,/first payment will be 50%|another payment link/);
+});
